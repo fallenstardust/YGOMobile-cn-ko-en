@@ -80,6 +80,9 @@ public class CardDetailPanel {
     private boolean shuffleAllowedByMsg;
     /** cancelOrFinish 按钮当前是否处于可见态（VISIBLE） */
     private boolean cancelOrFinishShown;
+    /** 表情按钮常规可见态：卡组编辑模式隐去时置假，退出回放恢复表情按钮
+     *  时据此不越权恢复（hideReplayControls 在 enterDeckEditorMode 内也会先被调用） */
+    private boolean emoteNormallyVisible = true;
     /** cancelOrFinish 按钮周围的蚂蚁线高亮动画 */
     private MarchingAntsDrawable antsHighlight;
 
@@ -101,12 +104,12 @@ public class CardDetailPanel {
                 // 关键词卡片列表弹窗停靠锚点：详情描述高亮关键词点击后显示在本区域最左侧
                 activity.findViewById(R.id.layout_game_right));
 
-        btnSettings = activity.findViewById(R.id.btn_settings);
-        btnChat = activity.findViewById(R.id.btn_chat);
-        btnSound = activity.findViewById(R.id.btn_sound);
-        btnSpeed = activity.findViewById(R.id.btn_speed);
-        btnEmote = activity.findViewById(R.id.btn_emote);
-        btnNote = activity.findViewById(R.id.btn_note);
+        btnSettings = findSideButton(R.id.btn_settings);
+        btnChat = findSideButton(R.id.btn_chat);
+        btnSound = findSideButton(R.id.btn_sound);
+        btnSpeed = findSideButton(R.id.btn_speed);
+        btnEmote = findSideButton(R.id.btn_emote);
+        btnNote = findSideButton(R.id.btn_note);
 
         layoutBottomActions = activity.findViewById(R.id.layout_bottom_actions);
         btnSurrender = activity.findViewById(R.id.btn_surrender);
@@ -149,6 +152,19 @@ public class CardDetailPanel {
         hideChainButtons();
 
         setupListeners();
+    }
+
+    /**
+     * 侧边六按钮查找：横屏优先绑定 SideButtonsOverlay 浮层按钮（浮在决斗场之上、可见且可点），
+     * 视图树内的 layout_image_buttons_panel 横屏仅作宽度占位（INVISIBLE）；竖屏无浮层时
+     * obtainSideButtonsRoot 为 null，回退到 layout-port 底部按钮行的树内按钮。
+     */
+    private ImageButton findSideButton(int id) {
+        View v = null;
+        View overlayRoot = activity.obtainSideButtonsRoot();
+        if (overlayRoot != null) v = overlayRoot.findViewById(id);
+        if (v == null) v = activity.findViewById(id);
+        return v instanceof ImageButton ? (ImageButton) v : null;
     }
 
     public void setImageLoader(ImageLoader imageLoader) {
@@ -213,10 +229,39 @@ public class CardDetailPanel {
     /**
      * 聊天开关按钮显隐（由 YGOProActivity.updateChatUIVisibility 按场景集中控制：
      * 卡组编辑/录像/残局这些无聊天对象场景隐藏，对齐 gframe 隐藏 wChat；
-     * enter/exitDeckEditorMode 不再直接操作，避免与集中控制冲突）
+     * enter/exitDeckEditorMode 不再直接操作，避免与集中控制冲突）。
+     * 隐藏用 INVISIBLE 而非 GONE（用户规格）：竖屏底部按钮行为 weight 布局，
+     * GONE 会让其余按钮与聊天输入框宽度跳变，INVISIBLE 保持占位稳定
      */
     public void setChatToggleVisible(boolean visible) {
-        if (btnChat != null) btnChat.setVisibility(visible ? View.VISIBLE : View.GONE);
+        if (btnChat != null) btnChat.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
+    }
+
+    /**
+     * 侧边功能按钮整列显隐（用户规格：横屏按钮列已自 carddetailpanel 平移至
+     * layout_game_right 最左侧 GameFieldView 上一层，不再随卡详面板根一起隐藏）：
+     * 竖屏底部按钮行在卡组编辑时随顶部面板仍可见，故卡组编辑经本方法整列 INVISIBLE
+     * 隐藏，与旧「面板隐藏→按钮不可见」行为一致；决斗/大厅场景恢复可见，
+     * 单按钮态（录像隐表情、大厅隐记录/加速）由各自入口叠加管控
+     */
+    public void setSideButtonsVisible(boolean visible) {
+        int v = visible ? View.VISIBLE : View.INVISIBLE;
+        if (btnSettings != null) btnSettings.setVisibility(v);
+        if (btnNote != null) btnNote.setVisibility(v);
+        if (btnSound != null) btnSound.setVisibility(v);
+        if (btnSpeed != null) btnSpeed.setVisibility(v);
+        if (btnEmote != null) btnEmote.setVisibility(v);
+        if (btnChat != null) btnChat.setVisibility(v);
+    }
+
+    /**
+     * 大厅（player waiting）场景按钮裁剪（用户规格）：进入等待界面以 GONE 隐藏
+     * 决斗记录与加速动画按钮，进入游戏时恢复；其余按钮不受影响
+     */
+    public void setLobbyButtonsVisible(boolean duelUiContext) {
+        int v = duelUiContext ? View.VISIBLE : View.GONE;
+        if (btnNote != null) btnNote.setVisibility(v);
+        if (btnSpeed != null) btnSpeed.setVisibility(v);
     }
 
     /** 更新声音按钮图标（对齐 gframe imgVol：声音开启显示 tPlay、静音显示 tMute） */
@@ -782,6 +827,10 @@ public class CardDetailPanel {
         hideChainButtons();
         updateShuffleButton(false);
         hideReplayControls();
+        // 进入游戏（决斗/回放）恢复被大厅（player waiting）以 GONE 裁剪的决斗记录/加速动画按钮
+        //（用户规格：进等待界面隐藏、进入游戏恢复；横屏按钮列已平移至 layout_game_right，
+        // 不再随本面板 hide/show，需在此显式复位）
+        setLobbyButtonsVisible(true);
         if (layoutBottomActions != null) layoutBottomActions.setVisibility(View.VISIBLE);
         // 投降按钮默认隐藏：猜拳(HAND_SELECT)/选先后(TP_SELECT)阶段不显示，
         // 进入决斗(DUELING)且为对战玩家时由 Activity 调用 setSurrenderVisible(true) 显示
@@ -834,6 +883,7 @@ public class CardDetailPanel {
         if (btnNote != null) btnNote.setVisibility(View.INVISIBLE);
         if (btnSpeed != null) btnSpeed.setVisibility(View.INVISIBLE);
         if (btnEmote != null) btnEmote.setVisibility(View.INVISIBLE);
+        emoteNormallyVisible = false;
         // btnChat 不再在此直接隐藏：聊天开关由 YGOProActivity.updateChatUIVisibility
         // 集中按场景核算（卡组编辑属抑制场景），避免 enter/exit 与集中控制互相覆盖
         showDefault();
@@ -849,6 +899,7 @@ public class CardDetailPanel {
         if (btnNote != null) btnNote.setVisibility(View.VISIBLE);
         if (btnSpeed != null) btnSpeed.setVisibility(View.VISIBLE);
         if (btnEmote != null) btnEmote.setVisibility(View.VISIBLE);
+        emoteNormallyVisible = true;
         // btnChat 同 enterDeckEditorMode：由集中核算按退出后的实际场景重定显隐
     }
 
@@ -871,6 +922,9 @@ public class CardDetailPanel {
         if (layoutReplayControl != null) layoutReplayControl.setVisibility(View.VISIBLE);
         if (btnReplayShuffle != null) btnReplayShuffle.setVisibility(View.VISIBLE);
         if (btnReplayQuit != null) btnReplayQuit.setVisibility(View.VISIBLE);
+        // 观看录像隐藏表情按钮（用户规格，横竖屏共用本面板）：回放无对局对手，
+        // 表情发送无接收方；用 INVISIBLE 保持竖屏底部按钮行 weight 布局占位稳定
+        if (btnEmote != null) btnEmote.setVisibility(View.INVISIBLE);
         // 初始状态：正在播放（显示暂停，隐藏播放/上一步/下一步）
         updateReplayButtonStates(false);
     }
@@ -921,6 +975,11 @@ public class CardDetailPanel {
         spectatorMode = false;
         if (layoutReplayControl != null) layoutReplayControl.setVisibility(View.GONE);
         if (layoutSpectatorControl != null) layoutSpectatorControl.setVisibility(View.GONE);
+        // 退出回放恢复表情按钮：卡组编辑模式下 btnEmote 由 enterDeckEditorMode 隐去
+        // （且本方法在其后仍会被调用），据 emoteNormallyVisible 标志不越权恢复
+        if (btnEmote != null && emoteNormallyVisible) {
+            btnEmote.setVisibility(View.VISIBLE);
+        }
     }
 
 }

@@ -19,6 +19,7 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.render.SpecEffectOverlay;
 import cn.garymb.ygomobile.render.TextureLoader;
+import cn.garymb.ygomobile.ui.dialogs.PlayerWaitingDialog;
 
 /**
  * 聊天/弹幕/大厅/表情协作类（由 GameFieldController 按 // === 分栏拆分而来）：
@@ -637,8 +638,25 @@ class FieldChatBoard {
     private void appendLobbyChat(int playerType, String message) {
         if (lobbyChatContainer == null) return;
         if (message == null) message = "";
-        // 表情编码在大厅没有头像气泡可依附，直接忽略
-        if (isEmoticonCode(message)) return;
+        // 玩家(0-3)表情在等待界面对应席位名右对齐处显示气泡（用户规格：player waiting 可
+        // 发表情，气泡跟随席位）：纯表情码直接转气泡；内嵌 &xxx 表情码提取转气泡、
+        // 剩余文字照常入大厅列表；剥离后无剩余文字则只显示气泡不显空行
+        if (playerType >= 0 && playerType < 4) {
+            PlayerWaitingDialog dlg = ctl.activity.getPlayerWaitingDialog();
+            if (isEmoticonCode(message)) {
+                if (dlg != null) dlg.showSeatEmote(playerType, message);
+                return;
+            }
+            StringBuilder emoteSb = new StringBuilder();
+            List<String> embeddedCodes = extractEmbeddedEmoticonCodes(message, emoteSb);
+            if (!embeddedCodes.isEmpty()) {
+                if (dlg != null) {
+                    for (String code : embeddedCodes) dlg.showSeatEmote(playerType, code);
+                }
+                message = emoteSb.toString().trim();
+                if (message.isEmpty()) return;
+            }
+        }
         String text;
         int color;
         if (playerType >= 0 && playerType < 4) {

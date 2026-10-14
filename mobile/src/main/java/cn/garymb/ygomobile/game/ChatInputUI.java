@@ -229,7 +229,9 @@ public class ChatInputUI {
                 imm.hideSoftInputFromWindow(etChatInput.getWindowToken(), 0);
             }
             etChatInput.clearFocus();
-            etChatInput.setVisibility(View.GONE);
+            // 停用聊天隐藏输入框用 INVISIBLE 而非 GONE（用户规格）：竖屏底部聊天输入框
+            // 为 weight 布局，GONE 会让左侧按钮组宽度跳变，INVISIBLE 保持占位稳定
+            etChatInput.setVisibility(View.INVISIBLE);
             
             if (onClearChatMessages != null) {
                 onClearChatMessages.run();
@@ -298,11 +300,11 @@ public class ChatInputUI {
     }
     
     /**
-     * 隐藏聊天输入框
+     * 隐藏聊天输入框（用 INVISIBLE 保持竖屏底部 weight 布局占位稳定，不塌陷）
      */
     public void hide() {
         if (etChatInput != null) {
-            etChatInput.setVisibility(View.GONE);
+            etChatInput.setVisibility(View.INVISIBLE);
         }
     }
     

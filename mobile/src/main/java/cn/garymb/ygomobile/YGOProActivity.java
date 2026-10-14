@@ -1,6 +1,9 @@
 package cn.garymb.ygomobile;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
@@ -12,6 +15,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.OrientationEventListener;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.EditText;
@@ -45,6 +49,7 @@ import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.CardDetailPanel;
 import cn.garymb.ygomobile.render.GameFieldView;
 import cn.garymb.ygomobile.render.SpecEffectOverlay;
+import cn.garymb.ygomobile.render.SideButtonsOverlay;
 import cn.garymb.ygomobile.render.TextureLoader;
 import cn.garymb.ygomobile.ui.dialogs.CreateHostDialog;
 import cn.garymb.ygomobile.ui.dialogs.DuelLogDialog;
@@ -132,6 +137,8 @@ public class YGOProActivity extends AppCompatActivity {
     volatile boolean isGameStarted = false;
 
     CardDetailPanel cardDetailPanel;
+    /** 横屏侧边六按钮浮层（独立 PopupWindow 承载在 GL 决斗面之上，见 SideButtonsOverlay） */
+    private SideButtonsOverlay sideButtonsOverlay;
     private ChatInputUI chatInputUI;
     GameTopInfoManager topInfoManager;
     GameFieldController fieldCtl;
@@ -139,6 +146,31 @@ public class YGOProActivity extends AppCompatActivity {
     private boolean exitOnReturn = true;
     private int directEnterMode = 0; // 0=normal, 1=replay dialog, 2=single dialog
     private FullScreenUtils mFullScreenUtils;
+    /**
+     * 息屏→亮屏周期内冻结显示方向：息屏即锁定当前方向，重新亮屏时保持息屏前布局，
+     * 不切换横竖屏（用户规格）；冻结经 wakeRotationWatcher 在亮屏后物理姿态跨轴变化时
+     * 解除，才按“游戏横屏锁定”设置决定是否允许旋转
+     */
+    private boolean wakeRotationFrozen = false;
+    /** 息屏时刻的显示方向（ORIENTATION_LANDSCAPE/PORTRAIT），供亮屏后姿态比对 */
+    private int frozenOrientation = Configuration.ORIENTATION_UNDEFINED;
+    /** 亮屏后的物理姿态监听：姿态轴与息屏前不同时解除冻结并按设置恢复旋转 */
+    private OrientationEventListener wakeRotationWatcher;
+    /** 前台可交互状态（onResume→onPause 区间）：息屏广播在 onPause 之前送达，时序可靠 */
+    private boolean uiResumed = false;
+
+    /** 息屏/亮屏系统广播：游戏在前台时息屏冻结旋转；亮屏补处息屏广播未收到的快速开关屏 */
+    private final BroadcastReceiver screenStateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (Intent.ACTION_SCREEN_OFF.equals(action)) {
+                if (!isFinishing() && uiResumed) freezeWakeRotation();
+            } else if (Intent.ACTION_SCREEN_ON.equals(action)) {
+                if (!isFinishing() && uiResumed && !wakeRotationFrozen) freezeWakeRotation();
+            }
+        }
+    };
     private String currentBgPath;
     /**
      * 最近一次解码成功的背景图（竖屏下另挂到 layout_game_right 区域平铺背景，旋转重建后据此重贴）
@@ -162,8 +194,32 @@ public class YGOProActivity extends AppCompatActivity {
         warmUpDuelEngine();
         // 启动方向按“游戏横屏锁定”设置决定（见 applyOrientationLock）：
         // 锁定启用→始终横屏（SENSOR_LANDSCAPE 仍可左右横屏对调旋转，不自动转竖屏）；
-        // 未启用→SCREEN_ORIENTATION_USER 跟随系统当前屏幕方向直接以对应方向启动
+        // 未启用→SCREEN_ORIENTATION_FULL_SENSOR，无视系统自动旋转开关也随设备方向自动旋转
         applyOrientationLock();
+        // 息屏/亮屏旋转守卫（用户规格）：游戏显示中息屏后重新亮屏保持原布局，亮屏瞬间不切换
+        // 横竖屏；之后仅当未开启“游戏横屏锁定”设置时才随物理姿态变化旋转切换
+        wakeRotationWatcher = new OrientationEventListener(this) {
+            @Override
+            public void onOrientationChanged(int orientation) {
+                if (!wakeRotationFrozen || orientation == ORIENTATION_UNKNOWN) return;
+                boolean physicalPortrait =
+                        orientation >= 315 || orientation <= 45
+                                || (orientation >= 135 && orientation <= 225);
+                int physical = physicalPortrait ? Configuration.ORIENTATION_PORTRAIT
+                        : Configuration.ORIENTATION_LANDSCAPE;
+                if (physical != frozenOrientation) {
+                    // 亮屏后用户实际改变了持机姿态：解除冻结并按设置恢复旋转——
+                    // 横屏锁定开启→SENSOR_LANDSCAPE（仍不转竖屏）；未开启→FULL_SENSOR（可横竖切换）
+                    wakeRotationFrozen = false;
+                    disable();
+                    applyOrientationLock();
+                }
+            }
+        };
+        IntentFilter screenFilter = new IntentFilter();
+        screenFilter.addAction(Intent.ACTION_SCREEN_OFF);
+        screenFilter.addAction(Intent.ACTION_SCREEN_ON);
+        registerReceiver(screenStateReceiver, screenFilter);
         // 崩溃诊断场景锚点：未捕获异常经全局 CrashHandler 落盘到 ygocore/log
         CrashHandler.getInstance().setScene("游戏-启动初始化");
         setupFullScreen();
@@ -185,14 +241,31 @@ public class YGOProActivity extends AppCompatActivity {
     /**
      * 按“游戏横屏锁定”设置应用启动显示方向：
      * 启用时锁定为横屏但保留左右横屏 180° 对调旋转（SENSOR_LANDSCAPE，不会自动转竖屏）；
-     * 未启用时取 SCREEN_ORIENTATION_USER，按系统当前屏幕方向（竖/横）直接以对应方向显示，
-     * 并随系统自动旋转切换。configChanges 已声明 orientation|screenSize，旋转不重建 Activity。
+     * 未启用时取 SCREEN_ORIENTATION_FULL_SENSOR（用户规格）：即使系统自动旋转未开启，
+     * 也跟随设备物理方向在横/竖屏间自动旋转（FULL_SENSOR 无视系统自动旋转开关，
+     * 区别于 USER——后者仍受系统开关阻断）；锁定开启时的 SENSOR_LANDSCAPE 保持原有语义。
+     * configChanges 已声明 orientation|screenSize，旋转不重建 Activity。
      */
     private void applyOrientationLock() {
         if (AppsSettings.get().isLockSreenOrientation()) {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
         } else {
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER);
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR);
+        }
+    }
+
+    /**
+     * 息屏冻结（用户规格）：游戏显示中息屏后重新亮屏要保持原布局，亮屏瞬间不切换横竖屏——
+     * 息屏广播到达时（早于 onPause）立即用 SCREEN_ORIENTATION_LOCKED 锁定当前显示方向，
+     * 息屏期间即使持机姿态改变，亮屏时系统也不会旋转到新方向；冻结由 wakeRotationWatcher
+     * 在亮屏后物理姿态跨轴（竖↔横）变化时解除，再按横屏锁定设置恢复旋转行为。
+     */
+    private void freezeWakeRotation() {
+        frozenOrientation = getResources().getConfiguration().orientation;
+        wakeRotationFrozen = true;
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
+        if (wakeRotationWatcher != null) {
+            wakeRotationWatcher.enable();
         }
     }
 
@@ -238,6 +311,8 @@ public class YGOProActivity extends AppCompatActivity {
         });
 
         cardDetailPanel = new CardDetailPanel(this);
+        // 横屏侧边六按钮浮层须在 bindViews 前建立：CardDetailPanel 优先绑定浮层按钮（树内列仅作宽度占位）
+        setupSideButtonsOverlay();
         cardDetailPanel.bindViews();
         // 聊天输入框/聊天开关初始可见性：停用聊天设置与抑制场景（卡组编辑/录像/残局）
         // 统一核算（对齐 gframe wChat：停用聊天与无聊天对象场景均隐藏）
@@ -265,6 +340,11 @@ public class YGOProActivity extends AppCompatActivity {
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         if (isFinishing() || isDestroyed()) return;
+        // 息屏→亮屏冻结期的竞态兜底：冻结期内到达的方向变化不重建，保持息屏前布局，
+        // 待物理姿态跨轴变化经 wakeRotationWatcher 解除冻结后再按设置旋转
+        if (wakeRotationFrozen && newConfig.orientation != frozenOrientation) {
+            return;
+        }
         rebuildUiForOrientation();
     }
 
@@ -305,6 +385,8 @@ public class YGOProActivity extends AppCompatActivity {
         if (emotionDialog != null) emotionDialog.dismiss();
         if (engineCallback != null) engineCallback.releaseSpecOverlayForRebuild();
         if (fieldCtl != null) fieldCtl.releaseForRebuild();
+        // 侧边按钮浮层挂在旧锚点上：随旧视图树释放，setContentView 后重挂新树
+        releaseSideButtonsOverlay();
 
         // 3) 重新加载布局变体并恢复沉浸式全屏
         setContentView(R.layout.activity_ygo_game);
@@ -319,6 +401,9 @@ public class YGOProActivity extends AppCompatActivity {
         layoutDeckEditor = findViewById(R.id.layout_deck_editor);
         etChatInput = findViewById(R.id.et_chat_input);
         if (chatInputUI != null) chatInputUI.bindChatInput(etChatInput);
+        // 横屏侧边按钮浮层重挂到新锚点（并在新树里把树内按钮列置为宽度占位 INVISIBLE，
+        // 末尾重同步聊天输入高度），须早于 cardDetailPanel.bindViews 以便优先绑定浮层按钮
+        setupSideButtonsOverlay();
         // 聊天 UI 可见性在重建尾部统一重算（须等 layoutDeckEditor 等新引用就绪，见方法尾）
         // 三大管理器复用实例只重绑视图（保留 ignoreChain 时点三态/大厅聊天等业务状态），
         // 严禁触达 fieldCtl.hide()——会 clear 场面数据
@@ -420,6 +505,88 @@ public class YGOProActivity extends AppCompatActivity {
             dialogUtil.repositionHandSelectDialog();
         }
         // 主菜单阶段：MainMenuDialog 是独立窗口不受 setContentView 影响，无需回显
+    }
+
+    /**
+     * 创建/重建横屏侧边六按钮浮层：GameFieldView 为 setZOrderOnTop(true) 的 GL 曲面，
+     * 视图树内竖列上部按钮（设置/记录/音乐/加速）在决斗中会被不透明场图遮挡——故六按钮
+     * 由独立 PopupWindow 承载浮在决斗场之上（对齐 C++ GUI 在场景之上的层级）；同时把视图树
+     * 里的 layout_image_buttons_panel 置 INVISIBLE 仅作宽度占位，让同行的聊天输入框
+     * （0dp+weight）稳定排在按钮列右侧、不被浮层遮挡。竖屏按钮仍在视图树内，不建浮层。
+     */
+    private void setupSideButtonsOverlay() {
+        releaseSideButtonsOverlay();
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE
+                && layoutGameRight != null) {
+            View panel = findViewById(R.id.layout_image_buttons_panel);
+            if (panel != null) panel.setVisibility(View.INVISIBLE);
+            sideButtonsOverlay = new SideButtonsOverlay(this, layoutGameRight);
+            syncPlaceholderWidthToOverlay();
+        }
+        syncChatInputHeightToToggle();
+    }
+
+    /** 释放侧边按钮浮层：摘监听、注销穿透注册并收起窗口（旋转重建/onDestroy 用） */
+    private void releaseSideButtonsOverlay() {
+        if (sideButtonsOverlay != null) {
+            sideButtonsOverlay.release();
+            sideButtonsOverlay = null;
+        }
+    }
+
+    /** 横屏六按钮浮层根视图（CardDetailPanel 优先绑定入口）；竖屏/未建立时为 null */
+    public View obtainSideButtonsRoot() {
+        return sideButtonsOverlay != null ? sideButtonsOverlay.getRoot() : null;
+    }
+
+    /**
+     * 把视图树占位按钮列的宽度实时锁定为浮层真实按钮列宽度：二者虽用同一布局，但浮层按钮
+     * 已由 CardDetailPanel 换成纹理图标（getSettingsTexture 等），树内占位仍是 XML 默认图，
+     * 实测列宽会有差（占位偏宽会在浮层按钮与聊天输入框之间留出多余空隙）。占位宽对齐浮层宽后，
+     * 聊天输入框（紧随占位右缘）与按钮的实际间距只剩 et_chat_input 的 layout_marginStart（2dp）。
+     * 浮层内容经纹理换图会重新布局，布局监听按最新宽度回写占位列。竖屏无浮层不调用。
+     */
+    private void syncPlaceholderWidthToOverlay() {
+        if (sideButtonsOverlay == null) return;
+        final View overlayRoot = sideButtonsOverlay.getRoot();
+        final View panel = findViewById(R.id.layout_image_buttons_panel);
+        if (overlayRoot == null || panel == null || panel.getLayoutParams() == null) return;
+        overlayRoot.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, ob, olr) -> {
+            int w = r - l;
+            if (w > 0 && panel.getLayoutParams() != null && panel.getLayoutParams().width != w) {
+                panel.getLayoutParams().width = w;
+                panel.requestLayout();
+            }
+        });
+        if (overlayRoot.getWidth() > 0 && panel.getLayoutParams() != null) {
+            panel.getLayoutParams().width = overlayRoot.getWidth();
+            panel.requestLayout();
+        }
+    }
+
+    /**
+     * 用户规格：横屏聊天输入框高度与聊天开关按钮（btn_chat）实测高度一致——六按钮浮层承载在
+     * 决斗场之上，输入框在视图树同行按钮列右侧以 weight 占据剩余宽度；本方法把浮层内 btn_chat
+     * 实测高度同步到输入框（随纹理换图尺寸变化）；竖屏无浮层不同步，维持其底部按钮行原布局。
+     */
+    private void syncChatInputHeightToToggle() {
+        if (etChatInput == null || etChatInput.getLayoutParams() == null
+                || sideButtonsOverlay == null) return;
+        View btnChat = sideButtonsOverlay.getRoot().findViewById(R.id.btn_chat);
+        if (btnChat == null) return;
+        btnChat.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, ob, olr) -> {
+            int h = b - t;
+            if (h > 0 && etChatInput.getLayoutParams() != null
+                    && etChatInput.getLayoutParams().height != h) {
+                etChatInput.getLayoutParams().height = h;
+                etChatInput.requestLayout();
+            }
+        });
+        // 已布局时直接同步一次，避免首帧高度缺省
+        if (btnChat.getHeight() > 0) {
+            etChatInput.getLayoutParams().height = btnChat.getHeight();
+            etChatInput.requestLayout();
+        }
     }
 
     public void toggleEmotionDialog(View anchor) {
@@ -1017,6 +1184,13 @@ public class YGOProActivity extends AppCompatActivity {
         // 均不得展示，修复横屏下进入 PlayerWaitingDialog 时 CardDetailPanel 错误可见
         //（旋转重建后 bindViews 会重绑默认 VISIBLE 的新视图树，因此需显式 hide）
         if (cardDetailPanel != null) cardDetailPanel.hide();
+        // 横屏侧边按钮列已自 carddetailpanel 平移至 layout_game_right（随决斗场区可见，不再随面板
+        // hide 消失）：进入大厅先确定化整列可见（设置/音乐/表情/聊天开关，大厅需可发表情），
+        // 再按用户规格以 GONE 隐藏决斗记录/加速动画按钮（进入游戏由 onGameUIShown 恢复）
+        if (cardDetailPanel != null) {
+            cardDetailPanel.setSideButtonsVisible(true);
+            cardDetailPanel.setLobbyButtonsVisible(false);
+        }
         // 大厅聊天期间隐藏决斗场 GL 渲染（GLSurfaceView 置 GONE，决斗开始时恢复）
         View gameFieldView = findViewById(R.id.game_field_view);
         if (gameFieldView != null) gameFieldView.setVisibility(View.GONE);
@@ -1230,10 +1404,17 @@ public class YGOProActivity extends AppCompatActivity {
         boolean settingAllow = AppsSettings.get().getIntSettings("chkDisableChatting", 0) != 1;
         boolean suppressed = isChatUiSuppressedScene();
         if (etChatInput != null) {
-            // 大厅等待界面例外：输入框是聊天主入口，即使停用聊天设置也无条件显示
-            //（与 chatInputUI.enterLobbyChatUI 的无条件可见语义一致，旋转重建经此不得回退）
+            // 大厅等待界面：输入框作为聊天主入口的初始可见由 enterLobbyChatUI 无条件 VISIBLE 保障；
+            // 但用户经聊天开关明确停用（ChatInputUI 运行时状态）后同样以 INVISIBLE 隐藏输入框
+            //（用户规格：横竖屏点击开关必须隐藏，INVISIBLE 保持占位不影响 gameField 位置）；
+            // 非大厅场景仍按持久停用聊天设置与抑制场景核算
             boolean lobby = playerWaitingDialog != null && playerWaitingDialog.isShowing();
-            etChatInput.setVisibility(lobby || (settingAllow && !suppressed) ? View.VISIBLE : View.GONE);
+            boolean visible = lobby
+                    ? (chatInputUI == null || chatInputUI.isChatEnabled())
+                    : (settingAllow && !suppressed);
+            // 隐藏一律用 INVISIBLE 而非 GONE（用户规格）：竖屏底部聊天输入框为 weight 布局，
+            // GONE 会让左侧按钮组宽度跳变，INVISIBLE 保持占位稳定
+            etChatInput.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
         }
         if (cardDetailPanel != null) {
             // 停用聊天只隐藏输入框与聊天信息，开关恒可见（非抑制场景）
@@ -1356,6 +1537,7 @@ public class YGOProActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        uiResumed = false;
         // 切到桌面/其他应用：暂停 BGM（不释放播放器，回前台原曲续播）
         if (soundManager != null) soundManager.pauseBGM();
     }
@@ -1363,6 +1545,7 @@ public class YGOProActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        uiResumed = true;
         setupFullScreen();
         // 回前台：先续播后台暂停的曲目，再重算场景 BGM（同场景且仍在播时
         // SoundManager 内部去重，不会重新起曲）
@@ -1374,6 +1557,13 @@ public class YGOProActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         CrashHandler.getInstance().setScene("游戏-销毁中");
+        // 侧边按钮浮层为独立窗口，必须先于窗口销毁收起，避免 WindowLeaked
+        releaseSideButtonsOverlay();
+        try {
+            unregisterReceiver(screenStateReceiver);
+        } catch (Exception ignored) {
+            // 未注册/已注销时忽略
+        }
         if (engineCallback != null) engineCallback.cancelReplayProcessing();
         DraggablePopupHelper.resetAllPositions(this);
         // 释放局域网/单机/录像选择对话框，避免持有已销毁的窗口/上下文

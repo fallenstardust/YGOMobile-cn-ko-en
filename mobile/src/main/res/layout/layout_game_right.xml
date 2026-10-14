@@ -506,16 +506,40 @@
         android:scaleType="fitCenter"
         android:visibility="gone" />
 
-    <!-- 聊天输入框（悬浮于决斗场区域底部） -->
-    <EditText
-        android:id="@+id/et_chat_input"
+    <!-- 底部功能行（贴本区域底缘，同一水平行，用户规格：6 按钮列与聊天输入框位置相关联、
+         互不重叠）：六按钮列锚最左，聊天输入框紧随其右、底部对齐 -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:background="@drawable/ygopro_base_background"
-        android:imeOptions="actionSend|flagNoExtractUi"
-        android:inputType="text"
-        android:maxLines="1"
-        android:textColor="@color/white"
-        android:textSize="9sp" />
+        android:clipChildren="false"
+        android:orientation="horizontal">
+
+        <!-- 六按钮列：显式声明 wrap 宽度，确保在水平行内占据最左侧列宽，聊天输入框据其余宽度排布于其右 -->
+        <include
+            layout="@layout/layout_image_buttons_panel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <!-- 聊天输入框：0dp+weight 只占六按钮列右侧的剩余宽度（不再 match_parent 顶到最左被聊天开关遮挡），
+             树内按钮列 INVISIBLE 仅保留宽度占位、浮层落在其上（占位宽由 syncPlaceholderWidthToOverlay 实时
+             锁为浮层真实宽），marginStart=2dp 即输入框与聊天开关按钮列的精确间距，
+             底部对齐与按钮列同高（高度经 YGOProActivity.syncChatInputHeightToToggle 同步 btn_chat 实测值） -->
+        <EditText
+            android:id="@+id/et_chat_input"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_gravity="bottom"
+            android:layout_marginStart="2dp"
+            android:background="@drawable/ygopro_base_background"
+            android:gravity="center_vertical"
+            android:imeOptions="actionSend|flagNoExtractUi"
+            android:inputType="text"
+            android:maxLines="1"
+            android:paddingStart="6dp"
+            android:paddingEnd="6dp"
+            android:textColor="@color/white"
+            android:textSize="9sp" />
+    </LinearLayout>
 </FrameLayout>

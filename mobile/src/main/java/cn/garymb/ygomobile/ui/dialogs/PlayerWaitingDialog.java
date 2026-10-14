@@ -1,8 +1,11 @@
 package cn.garymb.ygomobile.ui.dialogs;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
@@ -12,6 +15,7 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -29,6 +33,7 @@ import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.bean.events.DeckFile;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.network.YGOProtocol;
+import cn.garymb.ygomobile.render.TextureLoader;
 import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
@@ -70,6 +75,13 @@ public class PlayerWaitingDialog {
     private final String[] soloSeatDeckNames = new String[]{"", "", "", ""};
 
     private TextView etPwPlayer1Name, etPwPlayer2Name, etPwPlayer3Name, etPwPlayer4Name;
+    /** 大厅席位表情气泡（用户规格：在 player waiting 发送表情，气泡跟随对应席位名右对齐显示） */
+    private final ImageView[] pwSeatEmoteBubbles = new ImageView[4];
+    /** 气泡定时隐藏任务（按席位下标，重复发送时先撤销上一条再重新计时） */
+    private final Runnable[] pwSeatEmoteHiders = new Runnable[4];
+    private final Handler pwEmoteHandler = new Handler(Looper.getMainLooper());
+    /** 表情气泡显示时长（毫秒），与决斗态头像气泡一致 */
+    private static final long PW_EMOTE_DURATION_MS = 3000L;
     private CheckBox chkPwPlayer1Ready, chkPwPlayer2Ready, chkPwPlayer3Ready, chkPwPlayer4Ready;
     private Button btnPwDuelistMode, btnPwSpectatorMode, btnPwReady, btnPwDeckSelect, btnPwExitWaiting;
     private Button btnPwStartGame;
@@ -204,6 +216,8 @@ public class PlayerWaitingDialog {
         draggableHelper = new DraggablePopupHelper(context, DIALOG_ID);
         // 竖屏宽铺满屏宽且高与宽相等（正方形），转回横屏恢复设计宽高比（用户规格）
         draggableHelper.setupDraggablePopup(popupWindow, customView, popupWidth, popupHeight, true);
+        // 用户规格：本 dialog 横竖屏均不可拖动（对齐 C++ 定位弹窗），其他 dialog 仍可拖动
+        draggableHelper.setDragEnabled(popupWindow, false);
 
         loadLastDeckInfo();
 
@@ -338,6 +352,7 @@ public class PlayerWaitingDialog {
         etPwPlayer2Name = root.findViewById(R.id.et_player2_name);
         etPwPlayer3Name = root.findViewById(R.id.et_player3_name);
         etPwPlayer4Name = root.findViewById(R.id.et_player4_name);
+        bindSeatEmoteBubbles(root);
         chkPwPlayer1Ready = root.findViewById(R.id.chk_player1_ready);
         chkPwPlayer2Ready = root.findViewById(R.id.chk_player2_ready);
         chkPwPlayer3Ready = root.findViewById(R.id.chk_player3_ready);
@@ -372,6 +387,49 @@ public class PlayerWaitingDialog {
 
         if (tvWatchCount != null) {
             tvWatchCount.setOnClickListener(v -> showWatchersToast());
+        }
+    }
+
+    /**
+     * 绑定 4 个席位表情气泡视图与其定时隐藏任务（每次 show 重建视图树后重新绑定）：
+     * 隐藏任务运行时按席位下标取当前视图，故重绑后旧 post 延时任务作废、不会误隐新视图。
+     */
+    private void bindSeatEmoteBubbles(View root) {
+        int[] ids = {R.id.iv_pw_emote_1, R.id.iv_pw_emote_2, R.id.iv_pw_emote_3, R.id.iv_pw_emote_4};
+        for (int i = 0; i < 4; i++) {
+            final int pos = i;
+            pwSeatEmoteBubbles[i] = root.findViewById(ids[i]);
+            if (pwSeatEmoteHiders[i] != null) pwEmoteHandler.removeCallbacks(pwSeatEmoteHiders[i]);
+            pwSeatEmoteHiders[i] = () -> {
+                ImageView iv = pwSeatEmoteBubbles[pos];
+                if (iv != null) iv.setVisibility(View.GONE);
+            };
+        }
+    }
+
+    /**
+     * 在指定席位（pos 0..3）名字右对齐处显示表情气泡（用户规格）：
+     * 大厅收到该席位的表情聊天时由 FieldChatBoard 调用，定时自动隐藏。
+     */
+    public void showSeatEmote(int pos, String code) {
+        if (pos < 0 || pos >= 4) return;
+        ImageView iv = pwSeatEmoteBubbles[pos];
+        if (iv == null) return;
+        Bitmap bmp = TextureLoader.get() != null ? TextureLoader.get().getEmoticon(code) : null;
+        if (bmp == null || bmp.isRecycled()) return;
+        iv.setImageBitmap(bmp);
+        iv.setVisibility(View.VISIBLE);
+        if (pwSeatEmoteHiders[pos] != null) {
+            pwEmoteHandler.removeCallbacks(pwSeatEmoteHiders[pos]);
+            pwEmoteHandler.postDelayed(pwSeatEmoteHiders[pos], PW_EMOTE_DURATION_MS);
+        }
+    }
+
+    /** 撤销全部席位气泡及其延时隐藏（dismiss/重置/释放时调用，避免残留与泄漏） */
+    private void hideAllSeatEmotes() {
+        for (int i = 0; i < 4; i++) {
+            if (pwSeatEmoteHiders[i] != null) pwEmoteHandler.removeCallbacks(pwSeatEmoteHiders[i]);
+            if (pwSeatEmoteBubbles[i] != null) pwSeatEmoteBubbles[i].setVisibility(View.GONE);
         }
     }
 
@@ -435,6 +493,7 @@ public class PlayerWaitingDialog {
     }
 
     public void resetPlayerWaitingState() {
+        hideAllSeatEmotes();
         if (etPwPlayer1Name != null) etPwPlayer1Name.setText("");
         if (etPwPlayer2Name != null) etPwPlayer2Name.setText("");
         if (etPwPlayer3Name != null) etPwPlayer3Name.setText("");
@@ -1380,6 +1439,7 @@ public class PlayerWaitingDialog {
     }
 
     public void dismiss() {
+        hideAllSeatEmotes();
         if (popupWindow != null && popupWindow.isShowing()) {
             popupWindow.dismiss();
         }
@@ -1395,6 +1455,7 @@ public class PlayerWaitingDialog {
      * 抑制 dismiss→restoreMainMenu 兜底回调，返回导航由调用方（onExitWaiting）独占。
      */
     public void releaseOnExit() {
+        hideAllSeatEmotes();
         if (deckSelectorDialog != null) {
             deckSelectorDialog.dismiss();
             deckSelectorDialog = null;

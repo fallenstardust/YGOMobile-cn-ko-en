@@ -48,15 +48,36 @@
                     android:scaleType="fitCenter"
                     android:src="@drawable/ic_failed" />
 
-                <TextView
-                    android:id="@+id/et_player1_name"
+                <FrameLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="0.75"
-                    android:background="@drawable/ygopro_selected_background"
-                    android:gravity="center"
-                    android:text="player1"
-                    android:textColor="@color/white" />
+                    android:layout_weight="0.75">
+
+                    <TextView
+                        android:id="@+id/et_player1_name"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/ygopro_selected_background"
+                        android:gravity="center"
+                        android:text="player1"
+                        android:textColor="@color/white" />
+
+                    <!-- 大厅席位表情气泡（用户规格）：跟随席位名字右对齐，收到该席位表情聊天时显示 -->
+                    <ImageView
+                        android:id="@+id/iv_pw_emote_1"
+                        android:layout_width="34dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="end|center_vertical"
+                        android:layout_marginEnd="2dp"
+                        android:background="@drawable/bg_emote_bubble_seat"
+                        android:contentDescription="@null"
+                        android:paddingStart="9dp"
+                        android:paddingTop="3dp"
+                        android:paddingEnd="4dp"
+                        android:paddingBottom="3dp"
+                        android:scaleType="fitCenter"
+                        android:visibility="gone" />
+                </FrameLayout>
 
                 <CheckBox
                     android:id="@+id/chk_player1_ready"
@@ -82,16 +103,36 @@
                     android:scaleType="fitCenter"
                     android:src="@drawable/ic_failed" />
 
-                <TextView
-                    android:id="@+id/et_player2_name"
+                <FrameLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="0.75"
-                    android:background="@drawable/ygopro_selected_background"
-                    android:gravity="center"
-                    android:text="player2"
-                    android:textColor="@color/white"
-                    android:textColorHint="#FF888888" />
+                    android:layout_weight="0.75">
+
+                    <TextView
+                        android:id="@+id/et_player2_name"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/ygopro_selected_background"
+                        android:gravity="center"
+                        android:text="player2"
+                        android:textColor="@color/white"
+                        android:textColorHint="#FF888888" />
+
+                    <ImageView
+                        android:id="@+id/iv_pw_emote_2"
+                        android:layout_width="34dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="end|center_vertical"
+                        android:layout_marginEnd="2dp"
+                        android:background="@drawable/bg_emote_bubble_seat"
+                        android:contentDescription="@null"
+                        android:paddingStart="9dp"
+                        android:paddingTop="3dp"
+                        android:paddingEnd="4dp"
+                        android:paddingBottom="3dp"
+                        android:scaleType="fitCenter"
+                        android:visibility="gone" />
+                </FrameLayout>
 
                 <CheckBox
                     android:id="@+id/chk_player2_ready"
@@ -152,16 +193,36 @@
                         android:scaleType="fitCenter"
                         android:src="@drawable/ic_failed" />
 
-                    <TextView
-                        android:id="@+id/et_player3_name"
+                    <FrameLayout
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:layout_weight="0.75"
-                        android:background="@drawable/ygopro_selected_background"
-                        android:gravity="center"
-                        android:text="player3"
-                        android:textColor="@color/white"
-                        android:textColorHint="#FF888888" />
+                        android:layout_weight="0.75">
+
+                        <TextView
+                            android:id="@+id/et_player3_name"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/ygopro_selected_background"
+                            android:gravity="center"
+                            android:text="player3"
+                            android:textColor="@color/white"
+                            android:textColorHint="#FF888888" />
+
+                        <ImageView
+                            android:id="@+id/iv_pw_emote_3"
+                            android:layout_width="34dp"
+                            android:layout_height="30dp"
+                            android:layout_gravity="end|center_vertical"
+                            android:layout_marginEnd="2dp"
+                            android:background="@drawable/bg_emote_bubble_seat"
+                            android:contentDescription="@null"
+                            android:paddingStart="9dp"
+                            android:paddingTop="3dp"
+                            android:paddingEnd="4dp"
+                            android:paddingBottom="3dp"
+                            android:scaleType="fitCenter"
+                            android:visibility="gone" />
+                    </FrameLayout>
 
                     <CheckBox
                         android:id="@+id/chk_player3_ready"
@@ -187,16 +248,36 @@
                         android:scaleType="fitCenter"
                         android:src="@drawable/ic_failed" />
 
-                    <TextView
-                        android:id="@+id/et_player4_name"
+                    <FrameLayout
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:layout_weight="0.75"
-                        android:background="@drawable/ygopro_selected_background"
-                        android:gravity="center"
-                        android:text="player4"
-                        android:textColor="@color/white"
-                        android:textColorHint="#FF888888" />
+                        android:layout_weight="0.75">
+
+                        <TextView
+                            android:id="@+id/et_player4_name"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/ygopro_selected_background"
+                            android:gravity="center"
+                            android:text="player4"
+                            android:textColor="@color/white"
+                            android:textColorHint="#FF888888" />
+
+                        <ImageView
+                            android:id="@+id/iv_pw_emote_4"
+                            android:layout_width="34dp"
+                            android:layout_height="30dp"
+                            android:layout_gravity="end|center_vertical"
+                            android:layout_marginEnd="2dp"
+                            android:background="@drawable/bg_emote_bubble_seat"
+                            android:contentDescription="@null"
+                            android:paddingStart="9dp"
+                            android:paddingTop="3dp"
+                            android:paddingEnd="4dp"
+                            android:paddingBottom="3dp"
+                            android:scaleType="fitCenter"
+                            android:visibility="gone" />
+                    </FrameLayout>
 
                     <CheckBox
                         android:id="@+id/chk_player4_ready"
