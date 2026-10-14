@@ -299,7 +299,7 @@ class CardSelectController {
         CardSelectDialog dialog = new CardSelectDialog(util.activity, util.imageLoader);
         util.panel().setCardSelectDialog(dialog);
         dialog.setMode(CardSelectDialog.MODE_SELECT)
-                .setTitle(util.selectTitleText(560, "选择卡片") + "(" + min + "-" + max + ")")
+                .setTitle(util.selectTitleText(560, "选择卡片"))
                 .setCards(items)
                 .setSelectRange(min, max)
                 .setCancelable(cancelable != 0)
@@ -363,7 +363,7 @@ class CardSelectController {
         CardSelectDialog dialog = new CardSelectDialog(util.activity, util.imageLoader);
         util.panel().setCardSelectDialog(dialog);
         dialog.setMode(CardSelectDialog.MODE_SELECT)
-                .setTitle(util.selectTitleText(531, "解放选择") + "(" + min + "-" + max + ")")
+                .setTitle(util.selectTitleText(531, "解放选择"))
                 .setCards(items)
                 .setSelectRange(min, max)
                 .setCancelable(cancelable != 0)
@@ -447,7 +447,7 @@ class CardSelectController {
         CardSelectDialog dialog = new CardSelectDialog(util.activity, util.imageLoader);
         util.panel().setCardSelectDialog(dialog);
         dialog.setMode(CardSelectDialog.MODE_SUM)
-                .setTitle(util.selectTitleText(560, "选择卡片") + "(" + sumVal + ")")
+                .setTitle(util.selectTitleText(560, "选择卡片"))
                 .setCards(items)
                 .setMustCards(mustCards)
                 .setSelectRange(min, max)
@@ -582,7 +582,7 @@ class CardSelectController {
         CardSelectDialog dialog = new CardSelectDialog(util.activity, util.imageLoader);
         util.panel().setCardSelectDialog(dialog);
         dialog.setMode(CardSelectDialog.MODE_UNSELECT)
-                .setTitle(util.selectTitleText(560, "选择卡片") + "(" + min + "-" + max + ")")
+                .setTitle(util.selectTitleText(560, "选择卡片"))
                 .setCards(items)
                 .setPreSelected(preSelected)
                 .setSelectRange(min, max)

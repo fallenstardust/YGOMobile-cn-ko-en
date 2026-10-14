@@ -446,7 +446,7 @@ public class CardSelectDialog {
         tvPositions[4] = root.findViewById(R.id.tv_card_pos_4);
         ivCards[4] = root.findViewById(R.id.iv_card_4);
 
-        tvTitle.setText(title);
+        tvTitle.setText(buildTitleText());
         popupWindow = new PopupWindow(root,
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, false);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
@@ -470,7 +470,7 @@ public class CardSelectDialog {
         // 注册自定义旋转重排，切换方向时重解区域宽、重烘焙卡图、重设弹窗宽并重新居中
         draggableHelper.registerOrientationRelayout(popupWindow, this::applyOrientationRelayout);
         // 收缩模式：点内容左上角「▼」把手缩为与聊天输入框同高的底部横条，确认场地后点横条恢复
-        DraggablePopupHelper.enableCollapse(popupWindow, tvTitle, title);
+        DraggablePopupHelper.enableCollapse(popupWindow, tvTitle, buildTitleText());
 
         // 直接以内容根构建，包装层由 findTipOverlay 向上解析
         tipHelper = new CardStatusTipHelper(context, root);
@@ -664,15 +664,33 @@ public class CardSelectDialog {
     }
 
     /**
-     * 标题与选择状态共用同一个 title TextView：基础标题 + 已选数量/进度后缀
+     * 标题为单段文本「hint(进度)」：括号内进度随每次选择刷新，不再在标题后单独拼接「已选: x/y」后缀
+     *（对齐 gframe 把数量并入标题文本本身的做法：duelclient.cpp L1968 选卡 hint(min-max)、
+     * client_field.cpp L1109 合计 hint(cur/target) 均整段 setText）。
      */
-    private void updateTitle(String statusText) {
+    private void refreshTitle() {
         if (tvTitle == null) return;
-        String text = (statusText == null || statusText.isEmpty())
-                ? title : title + "  " + statusText;
+        String text = buildTitleText();
         tvTitle.setText(text);
         // 收缩横条与弹窗内标题同源，选择进度变化时同步文案
         DraggablePopupHelper.setCollapseBarTitle(popupWindow, text);
+    }
+
+    /** 完整标题文本：基础提示语 + 括号内实时进度 */
+    private String buildTitleText() {
+        return title + "(" + titleProgress() + ")";
+    }
+
+    /** 括号内进度：选卡/反选=已选/上限，排序=点击序/总数，合计=当前值/目标值 */
+    private String titleProgress() {
+        switch (mode) {
+            case MODE_SORT:
+                return sortCounter + "/" + cards.size();
+            case MODE_SUM:
+                return sumProgress();
+            default:
+                return getSelectedCount() + "/" + maxSelect;
+        }
     }
 
     private void onSlotClicked(int slot) {
@@ -710,7 +728,7 @@ public class CardSelectDialog {
                         return;
                     }
                 }
-                updateTitle("点击顺序: " + sortCounter + "/" + cards.size());
+                refreshTitle();
                 break;
             }
             case MODE_SUM: {
@@ -742,7 +760,7 @@ public class CardSelectDialog {
                 updateSlotView(slot, displayIdx);
                 if (listener != null) listener.onCardClicked(index);
                 int sel = getSelectedCount();
-                updateTitle("已选: " + sel + "/" + maxSelect);
+                refreshTitle();
                 if (sel >= maxSelect) {
                     confirm();
                 } else {
@@ -761,7 +779,7 @@ public class CardSelectDialog {
         boolean countOk = optCount >= minSelect && optCount <= maxSelect;
         boolean sumOk = checkSumValue();
         boolean ready = countOk && sumOk;
-        updateTitle(sumText());
+        refreshTitle();
         if (ready && optCount >= maxSelect) {
             confirm();
         } else {
@@ -800,7 +818,8 @@ public class CardSelectDialog {
         return false;
     }
 
-    private String sumText() {
+    /** 合计模式括号内进度：当前值区间/目标值（对齐 client_field.cpp L1109 hint(cur/target)） */
+    private String sumProgress() {
         List<CardItem> all = new ArrayList<>(mustCards);
         for (int i = 0; i < cards.size(); i++) {
             if (selected[i]) all.add(cards.get(i));
@@ -813,7 +832,7 @@ public class CardSelectDialog {
         }
         String cur = (curL == curH) ? String.valueOf(curL) : curL + "-" + curH;
         String target = (sumMode == 0) ? String.valueOf(sumValue) : sumValue + "+";
-        return "当前值: " + cur + "/" + target + " (已选" + all.size() + "张)";
+        return cur + "/" + target;
     }
 
     private void refreshSlots() {
@@ -946,21 +965,21 @@ public class CardSelectDialog {
             switch (mode) {
                 case MODE_SORT:
                     btnOk.setVisibility(View.INVISIBLE);
-                    updateTitle("点击顺序: 0/" + cards.size());
+                    refreshTitle();
                     break;
                 case MODE_UNSELECT:
                     btnOk.setVisibility(finishable ? View.VISIBLE : View.INVISIBLE);
                     if (finishable) {
                         btnOk.setText("完成");
                     }
-                    updateTitle("已选: " + getSelectedCount() + "/" + maxSelect);
+                    refreshTitle();
                     break;
                 case MODE_SUM:
                     updateSumState();
                     break;
                 default:
                     int sel = getSelectedCount();
-                    updateTitle("已选: " + sel + "/" + maxSelect);
+                    refreshTitle();
                     btnOk.setVisibility(sel >= minSelect ? View.VISIBLE : View.INVISIBLE);
                     break;
             }
