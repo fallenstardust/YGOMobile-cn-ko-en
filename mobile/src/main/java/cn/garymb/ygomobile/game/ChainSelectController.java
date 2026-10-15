@@ -51,6 +51,7 @@ class ChainSelectController {
 
         List<String> chainOptions = new ArrayList<>();
         List<Integer> chainFlags = new ArrayList<>();
+        List<YesOrNoDialog.CardChainItem> chainItems = new ArrayList<>(); // Add for horizontal card list display
         boolean chainForced = false;
         boolean contiExist = false;
         boolean panelmode = false;
@@ -127,6 +128,9 @@ class ChainSelectController {
             String descStr = desc > 0 ? DataManager.get().getDesc(desc, "效果") : "效果";
             chainOptions.add(cardName + " - " + descStr);
             chainFlags.add(flag);
+            
+            // Build chain item for horizontal card list display
+            chainItems.add(new YesOrNoDialog.CardChainItem(code, ctrl, loc, seq));
         }
 
         AppsSettings settings = AppsSettings.get();
@@ -196,7 +200,7 @@ class ChainSelectController {
         // duelclient.cpp L2164-2170：panelmode → 保留列表对话框（overlay 单元无法在场上单独点击发动）
         if (panelmode) {
             clearChainSelect();
-            YesOrNoDialog.showChainListDialog(util.activity, contiExist, selectTrigger, chainForced, chainOptions, chainFlags);
+            YesOrNoDialog.showChainListDialog(util.activity, contiExist, selectTrigger, chainForced, chainOptions, chainFlags, chainItems);
             return;
         }
 

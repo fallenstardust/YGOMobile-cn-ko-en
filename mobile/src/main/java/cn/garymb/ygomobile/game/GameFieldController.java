@@ -614,33 +614,30 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         }
         // 点击场上/手卡卡片都刷新卡片详情面板；但详情绑定含关键词可查判定（全卡表扫描，已按关键词
         // 缓存），放到下一帧执行，避免与命令菜单弹出抢占同一 UI 线程消息而拖慢菜单弹出的体感响应
-        View fieldView = viewController != null ? viewController.getView() : null;
+        GameFieldView fieldView = viewController != null ? viewController.getView() : null;
         if (fieldView != null) {
             fieldView.post(() -> activity.showCardInfoPanel(card));
         } else {
             activity.showCardInfoPanel(card);
+        }
+        // 通讯当前值与原始值的差异行走悬浮标签（原长按触发，现改为点击触发；
+        // 对应 gframe：DrawStatus/标签状态信息）
+        GameField field = engine.getField();
+        String tip = CardStatusTipHelper.buildStatusText(field, card);
+        if (tip != null && !tip.isEmpty() && fieldView != null) {
+            // 投影该卡屏幕包围盒，按我方/对方决定气泡锚定到卡片上边缘还是下边缘
+            float[] bounds = fieldView.getCardScreenBounds(player, location, sequence);
+            if (bounds != null) {
+                boolean mine = (player == 0);
+                CardStatusTipHelper.FieldTip.show(activity, fieldView, tip, tapX, tapY, bounds, mine);
+            }
         }
     }
 
     @Override
     public void onFieldLongPress(int player, int location, int sequence, float x, float y) {
         Log.d(TAG, "Long press: p=" + player + " loc=" + location + " seq=" + sequence);
-        GameField field = engine.getField();
-        GameField.ClientCard card = field.getCard(player, location, sequence);
-        if (card == null) return;
-        // 详情面板只显卡表原始数据；通讯当前值与原始值的差异行走悬浮标签
-        // （对应 gframe：ShowCardInfo(code) 原值详情 + DrawStatus/标签状态信息）
-        // 横屏/竖屏统一走卡片详情面板（竖屏为底部详情栏，r2 取消旧长按小窗）
-        activity.showCardInfoPanel(card);
-        String tip = CardStatusTipHelper.buildStatusText(field, card);
-        if (tip != null && !tip.isEmpty() && viewController != null
-                && viewController.getView() != null) {
-            // 投影该卡屏幕包围盒，按我方/对方决定气泡锚定到卡片上边缘还是下边缘
-            float[] bounds = viewController.getView()
-                    .getCardScreenBounds(player, location, sequence);
-            boolean mine = (player == 0);
-            CardStatusTipHelper.FieldTip.show(activity, viewController.getView(), tip, x, y, bounds, mine);
-        }
+        // 长按不再显示卡片详情和状态标签，仅由点击事件触发显示
     }
 
     @Override

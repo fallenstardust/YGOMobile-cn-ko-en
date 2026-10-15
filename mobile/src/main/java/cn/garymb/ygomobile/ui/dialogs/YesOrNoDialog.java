@@ -17,6 +17,8 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.HorizontalScrollView;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.ScrollView;
@@ -41,6 +43,7 @@ import cn.garymb.ygomobile.game.GameEngine;
 import cn.garymb.ygomobile.game.GameField;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.render.CardDetailPanel;
+import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.YGOUtil;
@@ -82,6 +85,10 @@ public class YesOrNoDialog {
     private int messageGravity = -1;
     // 指定弹窗居中区域（如 layout_game_right）；null = 按整个窗口居中（原行为）
     private View centerInView;
+    // 用于显示卡片的卡片代码
+    private int cardCode = 0;
+    // 链式询问的卡片列表
+    private List<CardChainItem> chainCards = null;
 
     public interface OnDismissListener {
         void onDismiss();
@@ -108,6 +115,18 @@ public class YesOrNoDialog {
      */
     public YesOrNoDialog setMessageWithCardName(String message, int code, String cardName) {
         this.message = colorizeCardName(message, code, cardName);
+        return this;
+    }
+
+    /** 设置要显示的卡片代码，当消息包含该卡名称时会在左侧显示卡片图片 */
+    public YesOrNoDialog setCardCode(int code) {
+        this.cardCode = code;
+        return this;
+    }
+
+    /** 设置可发动的链式卡片列表（用于连锁询问对话框） */
+    public YesOrNoDialog setChainCards(List<CardChainItem> chainCards) {
+        this.chainCards = chainCards != null ? new ArrayList<>(chainCards) : null;
         return this;
     }
 
@@ -309,12 +328,53 @@ public class YesOrNoDialog {
         return color;
     }
 
+    /** 检查 cardCode 对应的卡名是否出现在 message 中 */
+    private boolean cardNameInMessage(int code) {
+        if (code <= 0 || message == null) return false;
+        Card card = DataManager.get().getCardManager().getCard(code);
+        if (card == null || card.Name == null || card.Name.isEmpty()) return false;
+        return message.toString().contains(card.Name);
+    }
+
+    /** 根据协议 location 值获取位置文本 */
+    private String getLocationText(int location) {
+        switch (location) {
+            case 0x01: return sysText(1256, "手牌");      // LOCATION_HAND
+            case 0x02: return sysText(1257, "墓地");      // LOCATION_GRAVE
+            case 0x04: return sysText(1258, "卡组");      // LOCATION_DECK
+            case 0x08: return sysText(1259, "额外");      // LOCATION_EXTRA
+            case 0x10: return sysText(1260, "除外");      // LOCATION_REMOVE
+            case 0x20: return sysText(1261, "场上");      // LOCATION_MZONE
+            case 0x40: return sysText(1262, "场地");      // LOCATION_SZONE
+            case 0x80: return sysText(1263, "场侧");      // LOCATION_OVERLAY
+            default: return sysText(1264, "未知");
+        }
+    }
+
+    /** Chain card item container for chain query */
+    public static class CardChainItem {
+        public final int code;
+        public final int controler;
+        public final int location;
+        public final int sequence;
+
+        public CardChainItem(int code, int controler, int location, int sequence) {
+            this.code = code;
+            this.controler = controler;
+            this.location = location;
+            this.sequence = sequence;
+        }
+    }
+
     private void build() {
         float density = context.getResources().getDisplayMetrics().density * DialogScale.factor(context);
         int dialogWidth = (int) (280 * density);
 
         LinearLayout root = (LinearLayout) LayoutInflater.from(DialogScale.wrap(context))
                 .inflate(R.layout.dialog_yes_or_no, null);
+
+        // 设置根布局为垂直方向，以便卡片图片在标题下方、消息左侧显示
+        root.setOrientation(LinearLayout.VERTICAL);
 
         TextView tvTitle = root.findViewById(R.id.tv_yes_no_title);
         ScrollView scrollView = root.findViewById(R.id.yes_no_scroll);
@@ -323,6 +383,14 @@ public class YesOrNoDialog {
         LinearLayout buttonArea = root.findViewById(R.id.yes_no_button_area);
         Button btnPositive = root.findViewById(R.id.btn_yes_no_positive);
         Button btnNegative = root.findViewById(R.id.btn_yes_no_negative);
+        
+        // 卡片图片相关
+        FrameLayout cardImageContainer = root.findViewById(R.id.yes_no_card_image_container);
+        ImageView cardImageView = root.findViewById(R.id.iv_yes_no_card_image);
+        
+        // 横向卡片列表相关
+        HorizontalScrollView chainCardsScrollView = root.findViewById(R.id.hsv_yes_no_chain_cards);
+        LinearLayout chainCardList = root.findViewById(R.id.ll_chain_card_list);
 
         if (title != null && !title.isEmpty()) {
             tvTitle.setVisibility(View.VISIBLE);
@@ -346,6 +414,42 @@ public class YesOrNoDialog {
             if (messageGravity != -1) {
                 tvMessage.setGravity(messageGravity);
             }
+            
+            // 如果有设置 cardCode 且 message 中确实包含该卡名，则显示卡片图片
+            if (cardCode > 0 && cardNameInMessage(cardCode)) {
+                cardImageContainer.setVisibility(View.VISIBLE);
+                ImageLoader imageLoader = new ImageLoader();
+                imageLoader.bindImage(cardImageView, cardCode, 
+                    ImageLoader.Type.small);
+            } else {
+                cardImageContainer.setVisibility(View.GONE);
+            }
+        }
+
+        // ── Chain cards list area ─────────────────────────────────
+        if (chainCards != null && !chainCards.isEmpty()) {
+            chainCardsScrollView.setVisibility(View.VISIBLE);
+            chainCardList.removeAllViews();
+            
+            for (CardChainItem item : chainCards) {
+                View cardItemView = LayoutInflater.from(context)
+                    .inflate(R.layout.item_chain_card, chainCardList, false);
+                
+                ImageView ivCard = cardItemView.findViewById(R.id.iv_chain_card_image);
+                TextView tvPos = cardItemView.findViewById(R.id.tv_chain_card_position);
+                
+                // Load card image
+                ImageLoader imageLoader = new ImageLoader();
+                imageLoader.bindImage(ivCard, item.code, ImageLoader.Type.middle);
+                
+                // Set position text
+                String locationText = getLocationText(item.location);
+                tvPos.setText(locationText);
+                
+                chainCardList.addView(cardItemView);
+            }
+        } else {
+            chainCardsScrollView.setVisibility(View.GONE);
         }
 
         // ── Button area ──────────────────────────────────────────
@@ -577,9 +681,8 @@ public class YesOrNoDialog {
         } else {
             dialog.setMessage(message);
         }
-        // 对齐 gframe wQuery（MSG_SELECT_YESNO/EFFECTYN）：只有「是/否」两键，不显示也不联动
-        // cancelOrFinish 按钮——旧代码在此弹出文字为「否」的取消/完成按钮属残留错误交互
-        dialog.asYesNo()
+        dialog.setCardCode(cardCode)
+                .asYesNo()
                 .setPositiveButton(v -> activity.sendResponseInt(1))
                 .setNegativeButton(v -> activity.sendResponseInt(0))
                 .setCenterInView(gameDialogRegion(activity))
@@ -634,18 +737,18 @@ public class YesOrNoDialog {
         String message;
         if (desc == 0) {
             // duelclient.cpp MSG_SELECT_EFFECTYN L1886-1889：desc==0 → textBuffer = event_string + "\n" + sys200。
-            // event_string 即最近事件的时点文案（召唤之际=sys1603「[%ls]召唤中」、召唤成功=sys1604「怪兽召唤成功」、
-            // 反转召唤成功=sys1608、特殊召唤成功=sys1606…），故询问窗首行按通讯具体显示对应时点，再拼接「是否在[..]发动[..]的效果？」
+            // event_string 即最近事件的时点文案（召唤之际=sys1603「[%ls] 召唤中」、召唤成功=sys1604「怪兽召唤成功」、
+            // 反转召唤成功=sys1608、特殊召唤成功=sys1606…），故询问窗首行按通讯具体显示对应时点，再拼接「是否在[..] 发动[..] 的效果？」
             message = prependChainEvent(activity,
-                    sysFormat(200, "是否在[%s]发动[%s]的效果？", locationName, cardName));
+                    sysFormat(200, "是否在[%s] 发动 [%s] 的效果？", locationName, cardName));
         } else if (desc == 221) {
             // duelclient.cpp MSG_SELECT_EFFECTYN L1890-1893：desc==221 → event_string + "\n" + sys221 + "\n" + sys223
             message = prependChainEvent(activity,
-                    sysFormat(221, "是否在[%s]发动[%ls]的诱发类效果？", locationName, cardName)
+                    sysFormat(221, "是否在 [%s] 发动 [%ls] 的诱发类效果？", locationName, cardName)
                             + "\n" + sysText(223, "稍后将询问其他可以发动的效果。"));
         } else if (SELECT_EFFECTYN_ID.contains(desc)) {
             // sys95/96/97/218/219/220：单个 %ls 填卡名
-            message = sysFormat(desc, "是否使用[%s]的效果？", cardName);
+            message = sysFormat(desc, "是否使用 [%s] 的效果？", cardName);
         } else {
             // 其余 desc 走 GetDesc；C++ 用 L"%ls" 打印，即把结果当数据而非格式串，故这里不做替换
             String raw = dm.getDesc(desc, "");
@@ -709,7 +812,8 @@ public class YesOrNoDialog {
      * 仍按列表对话框呈现全部可连锁项，点击项直接应答其索引（对齐 gframe ShowChainCard）。
      */
     public static void showChainListDialog(YGOProActivity activity, boolean contiExist, boolean selectTrigger,
-                                           boolean chainForced, List<String> chainOptions, List<Integer> chainFlags) {
+                                           boolean chainForced, List<String> chainOptions, List<Integer> chainFlags,
+                                           List<CardChainItem> chainItems) {
         // 单窗询问：弹列表窗前关闭仍在显示的旧询问窗，避免与上一条询问的残留窗叠加
         dismissShowingDialogs();
         String title;
@@ -725,7 +829,8 @@ public class YesOrNoDialog {
         final boolean forced = chainForced;
         YesOrNoDialog dialog = new YesOrNoDialog(activity);
         panel(activity).setCurrentDialog(dialog);
-        dialog.setTitle(title).setOptionsContentView();
+        dialog.setTitle(title).setOptionsContentView()
+                .setChainCards(chainItems); // Add horizontal card list
         for (int i = 0; i < chainOptions.size(); i++) {
             final int idx = i;
             int bg = (chainFlags.get(i) & 0x100) != 0 ? YGOUtil.c(R.color.option_bg_red) : YGOUtil.c(R.color.option_bg_blue);
@@ -803,7 +908,7 @@ public class YesOrNoDialog {
             return;
         }
         DataManager dm = DataManager.get();
-        String title = dm.formatSystemString(204, "请取除%d个[%s]", counterCount, dm.getCounterName(counterType));
+        String title = dm.formatSystemString(204, "请取除%d个 [%s]", counterCount, dm.getCounterName(counterType));
         YesOrNoDialog dialog = new YesOrNoDialog(activity);
         dialog.setTitle(title).setOptionsContentView();
         for (int i = 1; i <= counterCount; i++) {
