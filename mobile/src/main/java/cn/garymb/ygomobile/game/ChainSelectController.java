@@ -212,10 +212,13 @@ class ChainSelectController {
         }
 
         // 非强制连锁：弹出 wQuery 式是/否询问窗（stQMessage 文案），场上可发动卡片已标 is_selectable（蚂蚁线轮廓）。
+        // 询问窗左侧卡图取当前连锁顶端发动中的卡（currentChain.code，即 event_string 里的 [XXX]），
+        // 右侧横向列表展示本次报文里可以连锁的候选卡（chainItems）。
         String queryText = selectTrigger
                 ? util.sysText(222, "是否要发动诱发类效果？") + "\n" + util.sysText(223, "稍后将询问其他可以发动的效果。")
                 : util.sysText(203, "是否要进行连锁？");
-        YesOrNoDialog.showChainQuery(util.activity, queryText);
+        int activatingCode = (field != null && field.currentChain != null) ? field.currentChain.code : 0;
+        YesOrNoDialog.showChainQuery(util.activity, queryText, activatingCode, chainItems);
     }
 
     /**

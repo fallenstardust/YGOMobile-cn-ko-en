@@ -336,19 +336,34 @@ public class YesOrNoDialog {
         return message.toString().contains(card.Name);
     }
 
-    /** 根据协议 location 值获取位置文本 */
-    private String getLocationText(int location) {
-        switch (location) {
-            case 0x01: return sysText(1256, "手牌");      // LOCATION_HAND
-            case 0x02: return sysText(1257, "墓地");      // LOCATION_GRAVE
-            case 0x04: return sysText(1258, "卡组");      // LOCATION_DECK
-            case 0x08: return sysText(1259, "额外");      // LOCATION_EXTRA
-            case 0x10: return sysText(1260, "除外");      // LOCATION_REMOVE
-            case 0x20: return sysText(1261, "场上");      // LOCATION_MZONE
-            case 0x40: return sysText(1262, "场地");      // LOCATION_SZONE
-            case 0x80: return sysText(1263, "场侧");      // LOCATION_OVERLAY
-            default: return sysText(1264, "未知");
+    /**
+     * 为卡片图像绑定点击：点击后在卡片详情面板显示该卡详情（供 iv_yes_no_card_image
+     * 与连锁卡片项复用）。仅当宿主为 YGOProActivity 且卡码有效时可点；否则置不可点。
+     */
+    private void bindCardDetailClick(View view, final int code) {
+        if (view == null) return;
+        if (code <= 0 || !(context instanceof YGOProActivity)) {
+            view.setClickable(false);
+            view.setOnClickListener(null);
+            return;
         }
+        view.setClickable(true);
+        view.setOnClickListener(v -> {
+            Card card = DataManager.get().getCardManager().getCard(code & 0x7fffffff);
+            if (card != null) {
+                ((YGOProActivity) context).getCardDetailPanel().showCard(card);
+            }
+        });
+    }
+
+    /**
+     * 根据协议 location 值获取区域文本。此前手写十六进制映射把 ocgcore 常量对错了位
+     *（0x02 实为手卡却写成墓地、0x10 实为墓地却写成除外……），改为直接复用
+     * {@link DataManager#formatLocation(int, int)}（已按 0x1&lt;&lt;i → 系统串 1000+i 对齐 gframe，
+     * 并对灵摆/场地/魔陷区按 sequence 细分）。去掉 0x80 等叠加位后传入。
+     */
+    private String getLocationText(int location, int sequence) {
+        return DataManager.get().formatLocation(location & 0x7f, sequence);
     }
 
     /** Chain card item container for chain query */
@@ -373,9 +388,6 @@ public class YesOrNoDialog {
         LinearLayout root = (LinearLayout) LayoutInflater.from(DialogScale.wrap(context))
                 .inflate(R.layout.dialog_yes_or_no, null);
 
-        // 设置根布局为垂直方向，以便卡片图片在标题下方、消息左侧显示
-        root.setOrientation(LinearLayout.VERTICAL);
-
         TextView tvTitle = root.findViewById(R.id.tv_yes_no_title);
         ScrollView scrollView = root.findViewById(R.id.yes_no_scroll);
         TextView tvMessage = root.findViewById(R.id.tv_yes_no_message);
@@ -383,12 +395,12 @@ public class YesOrNoDialog {
         LinearLayout buttonArea = root.findViewById(R.id.yes_no_button_area);
         Button btnPositive = root.findViewById(R.id.btn_yes_no_positive);
         Button btnNegative = root.findViewById(R.id.btn_yes_no_negative);
-        
-        // 卡片图片相关
-        FrameLayout cardImageContainer = root.findViewById(R.id.yes_no_card_image_container);
+
+        // 卡片图片（dialog_yes_or_no 新结构：iv_yes_no_card_image 直接作为消息行左侧子视图）
+        LinearLayout contentRow = (LinearLayout) scrollView.getParent();
         ImageView cardImageView = root.findViewById(R.id.iv_yes_no_card_image);
-        
-        // 横向卡片列表相关
+
+        // 连锁卡片横向列表（ll_chain_card_list 位于 hsv_yes_no_chain_cards 内，同行消息区右侧）
         HorizontalScrollView chainCardsScrollView = root.findViewById(R.id.hsv_yes_no_chain_cards);
         LinearLayout chainCardList = root.findViewById(R.id.ll_chain_card_list);
 
@@ -400,8 +412,11 @@ public class YesOrNoDialog {
         }
 
         // ── Content area ─────────────────────────────────────────
+        boolean hasChainCards = chainCards != null && !chainCards.isEmpty();
+        boolean showCardImage = customContentView == null && cardCode > 0 && cardNameInMessage(cardCode);
         if (customContentView != null) {
             scrollView.setVisibility(View.GONE);
+            cardImageView.setVisibility(View.GONE);
             customContainer.setVisibility(View.VISIBLE);
             customContainer.addView(customContentView, new FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.MATCH_PARENT,
@@ -414,42 +429,64 @@ public class YesOrNoDialog {
             if (messageGravity != -1) {
                 tvMessage.setGravity(messageGravity);
             }
-            
-            // 如果有设置 cardCode 且 message 中确实包含该卡名，则显示卡片图片
-            if (cardCode > 0 && cardNameInMessage(cardCode)) {
-                cardImageContainer.setVisibility(View.VISIBLE);
-                ImageLoader imageLoader = new ImageLoader();
-                imageLoader.bindImage(cardImageView, cardCode, 
-                    ImageLoader.Type.small);
+
+            // 召唤/反转召唤/特殊召唤/效果发动等含 [%ls] 卡名的询问：
+            // 消息行左侧 iv_yes_no_card_image 显示该卡片图案，点击可看卡片详情
+            if (showCardImage) {
+                cardImageView.setVisibility(View.VISIBLE);
+                new ImageLoader().bindImage(cardImageView, cardCode, ImageLoader.Type.small);
+                bindCardDetailClick(cardImageView, cardCode);
             } else {
-                cardImageContainer.setVisibility(View.GONE);
+                cardImageView.setVisibility(View.GONE);
+                bindCardDetailClick(cardImageView, 0);
             }
         }
 
         // ── Chain cards list area ─────────────────────────────────
-        if (chainCards != null && !chainCards.isEmpty()) {
+        if (hasChainCards) {
             chainCardsScrollView.setVisibility(View.VISIBLE);
             chainCardList.removeAllViews();
-            
+
+            ImageLoader chainImageLoader = new ImageLoader();
+            // 同一张卡（同 code+控制者+区域+序列）有多个可发动效果时只显示 1 个图，不重复
+            Set<String> seenChainCards = new HashSet<>();
             for (CardChainItem item : chainCards) {
-                View cardItemView = LayoutInflater.from(context)
+                String cardKey = item.code + "/" + item.controler + "/" + item.location + "/" + item.sequence;
+                if (!seenChainCards.add(cardKey)) continue;
+
+                View cardItemView = LayoutInflater.from(DialogScale.wrap(context))
                     .inflate(R.layout.item_chain_card, chainCardList, false);
-                
+
                 ImageView ivCard = cardItemView.findViewById(R.id.iv_chain_card_image);
                 TextView tvPos = cardItemView.findViewById(R.id.tv_chain_card_position);
-                
-                // Load card image
-                ImageLoader imageLoader = new ImageLoader();
-                imageLoader.bindImage(ivCard, item.code, ImageLoader.Type.middle);
-                
-                // Set position text
-                String locationText = getLocationText(item.location);
-                tvPos.setText(locationText);
-                
+
+                // 卡片图案 + 所在区域文本，点击卡片项可看详情
+                chainImageLoader.bindImage(ivCard, item.code, ImageLoader.Type.middle);
+                tvPos.setText(getLocationText(item.location, item.sequence));
+                bindCardDetailClick(cardItemView, item.code);
+
                 chainCardList.addView(cardItemView);
             }
+            // 连锁列表从消息行摘除、独立成一行：放在内容区（消息行所在纵向 LinearLayout）
+            // 下方、按钮区上方全宽展示。弹窗仅 280dp 宽，若与卡图/消息挤在同一水平行，
+            // 列表可用宽度被压到几乎不可见（即用户反馈的“连锁列表没显示”），故统一拆行
+            LinearLayout contentBlock = (LinearLayout) contentRow.getParent();
+            if (chainCardsScrollView.getParent() == contentRow) {
+                contentRow.removeView(chainCardsScrollView);
+            }
+            if (chainCardsScrollView.getParent() != contentBlock) {
+                LinearLayout.LayoutParams chainLp = new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT);
+                chainLp.topMargin = (int) (4 * density);
+                contentBlock.addView(chainCardsScrollView, chainLp);
+            }
+            // 自定义内容（列表窗）时消息行的卡图/消息均已隐藏且列表已拆行，消息行为空壳 → 隐藏
+            if (customContentView != null) contentRow.setVisibility(View.GONE);
         } else {
             chainCardsScrollView.setVisibility(View.GONE);
+            // 自定义内容且无连锁列表：消息行已无可见子视图，隐藏空壳行避免留白
+            if (customContentView != null) contentRow.setVisibility(View.GONE);
         }
 
         // ── Button area ──────────────────────────────────────────
@@ -790,8 +827,11 @@ public class YesOrNoDialog {
     /**
      * 连锁是/否询问窗（对齐 gframe wQuery + stQMessage）：不再罗列可发动卡片按钮，改由场上高亮卡片承载点击发动。
      * 「是」进入场上点击模式，「否」放弃连锁；chainQueryDialog 保留引用以支持「取消操作」重新弹出。
+     * cardCode>0 且询问文本（event_string）含该卡名时，消息行左侧 iv_yes_no_card_image 显示发动中的卡片图案；
+     * chainItems 非空时右侧 ll_chain_card_list 横向展示可以连锁的卡片。
      */
-    public static void showChainQuery(YGOProActivity activity, String queryText) {
+    public static void showChainQuery(YGOProActivity activity, String queryText,
+                                      int cardCode, List<CardChainItem> chainItems) {
         // 单窗询问：先关闭仍在显示的旧询问窗，再建新窗——服务端对连锁询问按席位串行下发
         // （当前回合玩家先答，答“否”后才下发对方的），此处保证两窗不叠加、按序逐个弹出
         dismissShowingDialogs();
@@ -799,6 +839,8 @@ public class YesOrNoDialog {
         chainQueryDialog = dialog;
         panel(activity).setCurrentDialog(dialog);
         dialog.setMessage(prependChainEvent(activity, queryText))
+                .setCardCode(cardCode)
+                .setChainCards(chainItems)
                 .asYesNo()
                 .setPositiveButton(v -> activity.getDialogUtil().enterChainFieldMode(true))
                 .setNegativeButton(v -> activity.getDialogUtil().finishChainPass())

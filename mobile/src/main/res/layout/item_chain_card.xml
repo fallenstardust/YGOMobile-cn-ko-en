@@ -5,12 +5,12 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:paddingHorizontal="4dp"
-    android:background="@drawable/selected_light">
+    android:background="@drawable/ygopro_unable_background">
 
     <ImageView
         android:id="@+id/iv_chain_card_image"
-        android:layout_width="52dp"
-        android:layout_height="74dp"
+        android:layout_width="26dp"
+        android:layout_height="37dp"
         android:scaleType="fitCenter"
         android:adjustViewBounds="true"
         android:background="@android:color/transparent"/>
@@ -19,8 +19,8 @@
         android:id="@+id/tv_chain_card_position"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:textSize="9sp"
+        android:layout_marginTop="1dp"
+        android:textSize="6sp"
         android:textColor="@color/white"
         android:gravity="center"
         android:singleLine="true"
