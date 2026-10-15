@@ -17,6 +17,7 @@ import java.util.List;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.game.GameEngine;
 import cn.garymb.ygomobile.game.GameField;
+import cn.garymb.ygomobile.game.GameFieldController;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.CardDetailPanel;
@@ -32,7 +33,8 @@ import ocgcore.enums.CardType;
  * 无标题栏/滚动区：弹窗总高度随菜单项数量动态变化；
  * 不追加“取消”项（点击菜单外或返回键即关闭）；
  * 菜单构建逻辑（showCardCommandMenu）已迁入本类：
- * 卡片信息直接显示到 CardDetailPanel，菜单仅承载可执行命令；
+ * 菜单仅承载可执行命令；卡片详情刷新由调用方 GameFieldController 延后到下一帧
+ *（菜单优先渲染，避免全卡表扫描等同步重操作拖慢弹窗体感）；
  * 按钮文字统一只从 StringManager 的系统字符串索引获取（与 gframe ShowMenu 一致），不附加其他文本符号。
  */
 public class CmdMenuDialog {
@@ -81,6 +83,9 @@ public class CmdMenuDialog {
     private final PopupWindow popupWindow;
     private final View contentView;
     private final LinearLayout layoutItems;
+    /** 本次 dismiss 是否由菜单项动作触发：点菜单项关闭不收起状态标签，
+     *  点菜单以外/返回键关闭则联动隐藏（视同「点击卡片以外的位置」） */
+    private boolean dismissedByAction;
 
     public CmdMenuDialog(YGOProActivity activity) {
         this.activity = activity;
@@ -92,8 +97,14 @@ public class CmdMenuDialog {
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setFocusable(true);
         popupWindow.setOutsideTouchable(true);
-        // 菜单隐藏后恢复决斗场阶段按钮
-        popupWindow.setOnDismissListener(() -> activity.notifyGameDialogHidden(this));
+        // 菜单隐藏后恢复决斗场阶段按钮；非菜单项触发的关闭同时收起卡片状态标签
+        popupWindow.setOnDismissListener(() -> {
+            activity.notifyGameDialogHidden(this);
+            if (!dismissedByAction) {
+                GameFieldController ctl = activity.getFieldCtl();
+                if (ctl != null) ctl.hideFieldStatusTip();
+            }
+        });
     }
 
     /**
@@ -107,6 +118,7 @@ public class CmdMenuDialog {
             final Runnable action = actions.get(i);
             Button btn = createItemButton(labels.get(i));
             btn.setOnClickListener(v -> {
+                dismissedByAction = true;
                 dismiss();
                 if (action != null) action.run();
             });
@@ -214,6 +226,8 @@ public class CmdMenuDialog {
         }
 
         popupWindow.showAtLocation(decor, Gravity.TOP | Gravity.START, left, top);
+        // 新一轮显示：复位「菜单项动作触发关闭」标记
+        dismissedByAction = false;
         // 菜单显示期间禁用决斗场阶段按钮
         activity.notifyGameDialogShown(this);
     }
@@ -230,7 +244,8 @@ public class CmdMenuDialog {
 
     /**
      * 根据卡片 cmdFlag 构建命令菜单并弹出（由 GameFieldController.showCardCommandMenu 迁移）。
-     * 卡片信息直接同步到 CardDetailPanel，菜单仅承载可执行命令；
+     * 菜单仅承载可执行命令；卡片详情刷新由调用方（转发壳）延后到下一帧，本方法内
+     * 不再在弹出前同步执行 showCardInfoPanel（曾是菜单变慢的主因）；
      * 按钮文字统一只取 StringManager 对应索引的字符串，不附加其他文本符号。
      *
      * @param card        被点击的卡片
@@ -247,7 +262,7 @@ public class CmdMenuDialog {
 
     /**
      * @param viewButton 为 true 时（点击持有超量素材的怪兽 / 卡组 / 额外 / 墓地 / 除外），
-     *                   菜单始终提供「查看」入口且不因无命令而自动关闭；卡片信息改由「查看」按钮触发。
+     *                   菜单始终提供「查看」入口且不因无命令而自动关闭。
      */
     public void showCardCommandMenu(GameField.ClientCard card, GameEngine engine, int cmdContext,
                                     View anchorView, float tapX, float tapY, boolean viewButton) {
@@ -260,16 +275,7 @@ public class CmdMenuDialog {
             // 点击持有超量素材的怪兽 / 卡组 / 额外 / 墓地 / 除外——
             // 查看/发动/特殊召唤按钮均打开 CardDisplayDialog 列出该位置对应卡片
             buildPositionMenu(card, engine, cmdContext, options, actions);
-            // 堆叠区顶部是正面卡（墓地/除外/额外可见卡面）时，菜单弹出的同时
-            // 即时在左侧 CardDetailPanel 显示该卡详情（卡组/超量素材背面被
-            // isFaceUp 自然过滤，不触发）
-            int loc = card.location;
-            if (card.code > 0 && card.isFaceUp()
-                    && (loc == 0x10 || loc == 0x20 || loc == 0x40 || loc == 0x01)) {
-                activity.showCardInfoPanel(card);
-            }
         } else {
-            if (card.code > 0) activity.showCardInfoPanel(card);
             buildCardCommandMenu(card, engine, cmdContext, options, actions);
         }
 

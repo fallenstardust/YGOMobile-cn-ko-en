@@ -28,9 +28,13 @@ final class FieldTouchPicker {
      * 点按手势统一入口：先试场内阶段按钮命中，再走高亮选区 / 卡片拾取
      */
     void handleTap(float x, float y) {
-        // 场内阶段按钮命中优先（当前阶段按钮也吞掉点击）
-        if (view.phase.handlePhaseButtonTap(x, y)) return;
         GameFieldView.OnCardClickListener listener = view.cardClickListener;
+        // 场内阶段按钮命中优先（当前阶段按钮也吞掉点击）；属于卡片以外的点击，
+        // 同样通知宿主收起状态悬浮标签
+        if (view.phase.handlePhaseButtonTap(x, y)) {
+            if (listener != null) listener.onFieldBlankClick(x, y);
+            return;
+        }
         GameField f = view.field;
         if (listener == null || f == null) return;
         float[] ray = buildRay(x, y);
@@ -78,7 +82,8 @@ final class FieldTouchPicker {
                 // 优先级在卡片拾取之后、空格子拾取之前（与 gframe 卡 hover 优先于 hint 区一致）
                 listener.onContiActClick(x, y);
             } else {
-                // 空格子拾取：命中场上格时仍置选中区，使 selfield/连接箭头随点击显示
+                // 空格子拾取：命中场上格时仍置选中区，使 selfield/连接箭头随点击显示；
+                // 未命中卡片：通知宿主收起状态悬浮标签
                 int[] zone = pickFieldZone(ray, f);
                 if (zone != null) {
                     view.setSelectedCard(zone[0], zone[1], zone[2]);
@@ -86,6 +91,7 @@ final class FieldTouchPicker {
                     view.clearSelection();
                 }
                 view.applyShowMarks(null);
+                listener.onFieldBlankClick(x, y);
             }
         } catch (Throwable ignored) {
         }

@@ -488,6 +488,14 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         }
         cmdMenuDialog.showCardCommandMenu(card, engine, cmdContext,
                 viewController != null ? viewController.getView() : null, tapX, tapY, viewButton);
+        // 菜单优先渲染：详情面板刷新（含关键词可查判定的全卡表扫描）延后到下一帧，
+        // 不再在菜单弹出前同步执行（菜单变慢的主因），所有调用路径经本转发壳统一延后
+        GameFieldView fieldView = viewController != null ? viewController.getView() : null;
+        if (fieldView != null) {
+            fieldView.post(() -> activity.showCardInfoPanel(card));
+        } else {
+            activity.showCardInfoPanel(card);
+        }
     }
 
     /** 本次点击无可执行命令时，关闭残留的旧菜单 */
@@ -538,7 +546,15 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
 
     @Override
     public void onZoneClick(int player, int location, int sequence, float tapX, float tapY) {
+        // 点到格子（非卡片命中）属于「卡片以外」：收起状态悬浮标签
+        hideFieldStatusTip();
         select.onZoneClick(player, location, sequence, tapX, tapY);
+    }
+
+    @Override
+    public void onFieldBlankClick(float tapX, float tapY) {
+        // 点击卡片以外的位置（空白处/场内阶段按钮/无卡区域）：隐藏状态悬浮标签
+        hideFieldStatusTip();
     }
 
     // === 聊天转发（FieldChatBoard） ===
@@ -592,13 +608,20 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     public void onCardClick(int player, int location, int sequence, float tapX, float tapY) {
         Log.d(TAG, "Card click: p=" + player + " loc=" + location + " seq=" + sequence);
         if (engine == null) return;
+        GameFieldView fieldView = viewController != null ? viewController.getView() : null;
         if (select.isCardSelecting) {
             select.handleCardSelection(player, location, sequence);
+            // 场上直接选卡的点击同样展示状态气泡（与旧长按可见性持平）
+            GameField.ClientCard picked = engine.getField().getCard(player, location, sequence);
+            if (picked != null) {
+                scheduleFieldStatusTip(fieldView, picked, player, location, sequence, tapX, tapY);
+            }
             return;
         }
         GameField.ClientCard card = engine.getField().getCard(player, location, sequence);
         if (card == null) {
             dismissCmdMenu();
+            hideFieldStatusTip();
             return;
         }
         // 持有超量素材的怪兽，以及卡组/额外/墓地/除外堆叠区，弹出含「查看」的命令菜单，
@@ -607,42 +630,72 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
                 || location == 0x10 || location == 0x20);
         boolean xyzWithMats = (location == 0x04) && !card.overlayed.isEmpty();
         if (card.cmdFlag != 0 || isPile || xyzWithMats) {
+            // 菜单先弹；详情刷新已在转发壳内延后到下一帧
             showCardCommandMenu(card, tapX, tapY, isPile || xyzWithMats);
         } else {
-            // 无可执行命令：关闭残留的命令菜单（详情面板已在下方延后显示，手卡确认动画由场内完成）
+            // 无可执行命令：关闭残留的命令菜单（旧菜单点外关闭会联动收起标签，
+            // 代际自增发生在本方法取 gen 之前，不影响本次点击的气泡）
             dismissCmdMenu();
-        }
-        // 点击场上/手卡卡片都刷新卡片详情面板；但详情绑定含关键词可查判定（全卡表扫描，已按关键词
-        // 缓存），放到下一帧执行，避免与命令菜单弹出抢占同一 UI 线程消息而拖慢菜单弹出的体感响应
-        GameFieldView fieldView = viewController != null ? viewController.getView() : null;
-        if (fieldView != null) {
-            fieldView.post(() -> activity.showCardInfoPanel(card));
-        } else {
-            activity.showCardInfoPanel(card);
-        }
-        // 通讯当前值与原始值的差异行走悬浮标签（原长按触发，现改为点击触发；
-        // 对应 gframe：DrawStatus/标签状态信息）
-        GameField field = engine.getField();
-        String tip = CardStatusTipHelper.buildStatusText(field, card);
-        if (tip != null && !tip.isEmpty() && fieldView != null) {
-            // 投影该卡屏幕包围盒，按我方/对方决定气泡锚定到卡片上边缘还是下边缘
-            float[] bounds = fieldView.getCardScreenBounds(player, location, sequence);
-            if (bounds != null) {
-                boolean mine = (player == 0);
-                CardStatusTipHelper.FieldTip.show(activity, fieldView, tip, tapX, tapY, bounds, mine);
+            // 点击场上/手卡卡片都刷新卡片详情面板；但详情绑定含关键词可查判定（全卡表扫描，
+            // 已按关键词缓存），放到下一帧执行，避免与菜单弹出抢占同一 UI 线程消息
+            if (fieldView != null) {
+                fieldView.post(() -> activity.showCardInfoPanel(card));
+            } else {
+                activity.showCardInfoPanel(card);
             }
         }
+        // 通讯当前值与原始值的差异行走悬浮标签（原长按触发，现改为点击触发，点卡片
+        // 以外位置隐藏）：气泡为独立全屏窗口，创建耗时，同样延后到下一帧，
+        // 不得与命令菜单同消息显示拖慢菜单上屏
+        scheduleFieldStatusTip(fieldView, card, player, location, sequence, tapX, tapY);
+    }
+
+    /** 排期展示点击气泡：取代际后延后一帧执行，期间任何隐藏使本次排期作废 */
+    private void scheduleFieldStatusTip(GameFieldView fieldView, GameField.ClientCard card,
+                                        int player, int location, int sequence,
+                                        float tapX, float tapY) {
+        final long gen = ++tipGeneration;
+        if (fieldView != null) {
+            fieldView.post(() -> showFieldStatusTip(gen, card, player, location, sequence, tapX, tapY));
+        } else {
+            showFieldStatusTip(gen, card, player, location, sequence, tapX, tapY);
+        }
+    }
+
+    /** 状态气泡延后显示的代际：期间任何「点击卡片以外」的隐藏都会自增，使过期气泡作废 */
+    private long tipGeneration;
+
+    /** 隐藏场上/手卡点击气泡（public：CmdMenuDialog 点菜单以外关闭时联动收起） */
+    public void hideFieldStatusTip() {
+        tipGeneration++;
+        CardStatusTipHelper.FieldTip.hide();
+    }
+
+    /** 点击卡片后的状态气泡：无状态文字/投影失败时收起旧标签，有则直接替换（show 内部先 hide） */
+    private void showFieldStatusTip(long gen, GameField.ClientCard card, int player,
+                                    int location, int sequence, float tapX, float tapY) {
+        if (gen != tipGeneration) return;   // 延后期间已被其他点击取代
+        GameFieldView fieldView = viewController != null ? viewController.getView() : null;
+        GameField field = engine != null ? engine.getField() : null;
+        String tip = CardStatusTipHelper.buildStatusText(field, card);
+        float[] bounds = fieldView != null
+                ? fieldView.getCardScreenBounds(player, location, sequence) : null;
+        if (tip == null || tip.isEmpty() || bounds == null) {
+            hideFieldStatusTip();
+            return;
+        }
+        CardStatusTipHelper.FieldTip.show(activity, fieldView, tip, tapX, tapY, bounds, player == 0);
     }
 
     @Override
     public void onFieldLongPress(int player, int location, int sequence, float x, float y) {
         Log.d(TAG, "Long press: p=" + player + " loc=" + location + " seq=" + sequence);
-        // 长按不再显示卡片详情和状态标签，仅由点击事件触发显示
+        // 长按不再显示卡片详情和状态标签，均由点击事件触发
     }
 
     @Override
     public void onFieldLongPressEnd() {
-        CardStatusTipHelper.FieldTip.hide();
+        // 状态标签改为点击后持续显示（直到点击卡片以外/另一张卡取代），抬手不再隐藏
     }
 
     /** 当前是否竖屏（聊天/详情等展示形态分支保留入口，供其余分栏代码使用） */
@@ -658,6 +711,8 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
      */
     @Override
     public void onContiActClick(float tapX, float tapY) {
+        // 中央结算堆不属于单张卡片的点击：先收起状态悬浮标签
+        hideFieldStatusTip();
         if (engine == null || cmdContext == 0) return;
         GameField field = engine.getField();
         if (field == null || !field.contiAct || field.contiCards.isEmpty()) return;

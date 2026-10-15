@@ -76,15 +76,7 @@ public class GameFieldViewController
                 fieldView.dispatchLongPress(e.getX(), e.getY());
             }
         });
-        fieldView.setOnTouchListener((v, event) -> {
-            boolean handled = gestureDetector.onTouchEvent(event);
-            int action = event.getActionMasked();
-            if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
-                // 长按状态标签随抬手隐藏（未显示时为空操作）
-                fieldView.dispatchLongPressEnd();
-            }
-            return handled;
-        });
+        fieldView.setOnTouchListener((v, event) -> gestureDetector.onTouchEvent(event));
     }
 
     public void init(GameField field, ImageLoader imageLoader, GameFieldView.OnCardClickListener listener) {
@@ -216,6 +208,12 @@ public class GameFieldViewController
     public void onZoneClick(int player, int location, int sequence, float tapX, float tapY) {
         GameFieldView.OnCardClickListener l = cardClickDelegate;
         if (l != null) l.onZoneClick(player, location, sequence, tapX, tapY);
+    }
+
+    @Override
+    public void onFieldBlankClick(float tapX, float tapY) {
+        GameFieldView.OnCardClickListener l = cardClickDelegate;
+        if (l != null) l.onFieldBlankClick(tapX, tapY);
     }
 
     @Override

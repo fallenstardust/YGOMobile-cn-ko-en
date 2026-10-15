@@ -55,6 +55,9 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
 
         void onZoneClick(int player, int location, int sequence, float tapX, float tapY);
 
+        /** 点击未命中卡片（空白处/场内阶段按钮/无卡区域）：宿主据此隐藏状态悬浮标签 */
+        void onFieldBlankClick(float tapX, float tapY);
+
         /** 长按命中卡片：x/y 为视图内触点坐标（状态悬浮标签锚定用） */
         void onFieldLongPress(int player, int location, int sequence, float x, float y);
 
