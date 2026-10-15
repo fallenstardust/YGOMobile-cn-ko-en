@@ -279,6 +279,39 @@ public class YesOrNoDialog {
     /** 卡名→着色缓存：命中/未命中都缓存（未命中存 0），避免每次弹窗重复全表扫描 */
     private static final Map<String, Integer> sCardNameColorCache = new HashMap<>();
 
+    /** 卡名→卡码缓存：命中/未命中都缓存（未命中存 0），供攻击宣言等无 currentChain.code 场景回退取卡图 */
+    private static final Map<String, Integer> sCardNameCodeCache = new HashMap<>();
+
+    /** 依卡名查卡码：全表匹配 c.Name（与 cardColorByName 同一匹配口径）；找不到返回 0 并缓存 */
+    private static int cardCodeByName(String name) {
+        Integer cached = sCardNameCodeCache.get(name);
+        if (cached != null) return cached;
+        int code = 0;
+        SparseArray<Card> all = DataManager.get().getCardManager().getAllCards();
+        for (int i = 0; i < all.size(); i++) {
+            Card c = all.valueAt(i);
+            if (c == null || !name.equals(c.Name)) continue;
+            code = c.Code;
+            break;
+        }
+        sCardNameCodeCache.put(name, code);
+        return code;
+    }
+
+    /**
+     * 扫描文本首个 "[...]"，若括号内文字是某张卡的名字则返回其卡码，否则 0。
+     * 用于攻击宣言/直接攻击等连锁询问：这些时点没有 MSG_CHAINING，field.currentChain.code 为 0，
+     * 攻击者卡名只存在于 event_string 的 [XXX] 中，据此回退取攻击者卡图。
+     */
+    private static int firstBracketedCardCode(String text) {
+        if (text == null) return 0;
+        int i = text.indexOf('[');
+        if (i < 0) return 0;
+        int j = text.indexOf(']', i + 1);
+        if (j <= i + 1) return 0;
+        return cardCodeByName(text.substring(i + 1, j));
+    }
+
     /**
      * 通用着色：扫描文本中每一处 "[...]"，若方括号内的文字恰好是某张卡的名字，
      * 则按卡片类型给该卡名着色（只染名称本身，不含方括号）。
@@ -413,7 +446,12 @@ public class YesOrNoDialog {
 
         // ── Content area ─────────────────────────────────────────
         boolean hasChainCards = chainCards != null && !chainCards.isEmpty();
-        boolean showCardImage = customContentView == null && cardCode > 0 && cardNameInMessage(cardCode);
+        // 攻击宣言/直接攻击等连锁询问：cardCode 可能为 0（无 MSG_CHAINING），
+        // 回退按消息文本首个 [XXX] 卡名解析攻击者卡码，使左侧仍显示其卡图
+        int effectiveCardCode = cardCode > 0 ? cardCode : firstBracketedCardCode(
+                message != null ? message.toString() : null);
+        boolean showCardImage = customContentView == null && effectiveCardCode > 0
+                && cardNameInMessage(effectiveCardCode);
         if (customContentView != null) {
             scrollView.setVisibility(View.GONE);
             cardImageView.setVisibility(View.GONE);
@@ -434,8 +472,8 @@ public class YesOrNoDialog {
             // 消息行左侧 iv_yes_no_card_image 显示该卡片图案，点击可看卡片详情
             if (showCardImage) {
                 cardImageView.setVisibility(View.VISIBLE);
-                new ImageLoader().bindImage(cardImageView, cardCode, ImageLoader.Type.small);
-                bindCardDetailClick(cardImageView, cardCode);
+                new ImageLoader().bindImage(cardImageView, effectiveCardCode, ImageLoader.Type.small);
+                bindCardDetailClick(cardImageView, effectiveCardCode);
             } else {
                 cardImageView.setVisibility(View.GONE);
                 bindCardDetailClick(cardImageView, 0);

@@ -25,6 +25,23 @@ class DeckEditorViewHost {
     }
 
     void show() {
+        showInternal(false);
+    }
+
+    /**
+     * 横竖屏切换专用的重新显示：与 show() 同样回显编辑器布局与侧栏，但管理器
+     * 走 rebindAfterRotation 而非 initialize——旋转后实例常驻、内存态（当前卡组含
+     * 未保存修改、卡包展示模式、搜索结果）仍在，initialize 的 loadLastDeck 会用
+     * 持久化设置重载卡组，导致丢失当前卡组/卡包与修改状态。
+     */
+    void showForRotation() {
+        showInternal(true);
+    }
+
+    private void showInternal(boolean rotationRebind) {
+        // 旋转回显但管理器尚未建立（罕见：旋转前未进过编辑器）：无内存态可保留，
+        // 退回完整 initialize 流程，避免 rebind 面对空卡组/未绑定视图
+        boolean rebind = rotationRebind && activity.deckEditorManager != null;
         activity.setWindowBackground(Constants.CORE_SKIN_PATH + "/" + Constants.CORE_SKIN_BG_DECK);
         activity.getMainMenuDialog().hideMainMenu();
         activity.hideGameUI();
@@ -116,7 +133,11 @@ class DeckEditorViewHost {
             });
         }
         if (activity.layoutDeckEditor != null) {
-            activity.deckEditorManager.initialize(activity.layoutDeckEditor);
+            if (rebind) {
+                activity.deckEditorManager.rebindAfterRotation(activity.layoutDeckEditor);
+            } else {
+                activity.deckEditorManager.initialize(activity.layoutDeckEditor);
+            }
         }
         // 卡组编辑器（含副卡组替换）布局已显示：切换 DECK 场景（对齐 Game::playBGM 的 is_building 分支）
         activity.updateBGM();

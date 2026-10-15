@@ -171,6 +171,18 @@ public class CardSearcherManager {
         rvSearchResults.setAdapter(searchAdapter);
     }
 
+    /**
+     * 旋转重建后把常驻内存的上次搜索结果回填到新视图树的空适配器：
+     * setupSearchRecyclerView 每次新建 DeckCardAdapter（初始无卡），而
+     * searchResults 随本实例跨旋转保留，不回填则搜索结果列表清空。
+     */
+    public void rebindResultsToNewAdapter() {
+        if (searchAdapter == null || searchResults.isEmpty()) return;
+        searchAdapter.setCards(searchResults);
+        if (tvSearchResult != null)
+            tvSearchResult.setText(searchResultPrefix + " " + searchResults.size());
+    }
+
     public void setupSpinners() {
         int dropBg = YGOUtil.c(R.color.ygopro_list_background);
         List<SimpleSpinnerItem> typeItems = new ArrayList<>();

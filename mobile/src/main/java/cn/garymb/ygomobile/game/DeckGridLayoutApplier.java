@@ -151,6 +151,21 @@ class DeckGridLayoutApplier {
     void applyPackMode(boolean packMode) {
         if (owner.isPackMode == packMode) return;
         owner.isPackMode = packMode;
+        applyPackModeLayout();
+    }
+
+    /**
+     * 旋转重建后按当前 isPackMode 在新视图树上重新应用卡包展示版面：
+     * applyPackMode 的状态相等守卫（isPackMode==packMode 即返回）针对的是
+     * “逻辑模式未变”，但旋转换了整棵视图树，新树的显隐/标签/网格高度均为 XML
+     * 默认态，必须跳过守卫无条件重应用一次。
+     */
+    void reapplyPackModeForNewTree() {
+        applyPackModeLayout();
+    }
+
+    private void applyPackModeLayout() {
+        boolean packMode = owner.isPackMode;
         if (owner.tvLabelMainDeck != null) {
             owner.tvLabelMainDeck.setText(owner.mStringManager.getSystemString(packMode ? 1477 : 1330, "主卡组:"));
         }

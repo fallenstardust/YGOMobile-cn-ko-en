@@ -429,8 +429,9 @@ public class YGOProActivity extends AppCompatActivity {
         // 5) 按重建前阶段回显
         if (layoutGameContent != null) layoutGameContent.setVisibility(View.GONE);
         if (deckEditorVisible) {
-            // 卡组/副卡组编辑器：host.show() 幂等（懒建 manager + initialize 重绑新视图）
-            deckEditorHost.show();
+            // 卡组/副卡组编辑器：旋转专用重绑——只把视图与监听重挂到新树并按现态重渲染，
+            // 保留当前卡组/卡包展示与未保存修改（show() 的 initialize 会 loadLastDeck 重载覆盖）
+            deckEditorHost.showForRotation();
             // 与决斗分支同规格回显卡详：enterDeckEditorMode 内部 showDefault 已清面板，
             // 此处按重建前快照（detailShowing/detailCardCode）回显当前卡，对齐用户
             // 规格“横竖屏切换前后保持同一张卡详情显示”

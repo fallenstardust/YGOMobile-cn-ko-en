@@ -168,6 +168,44 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     }
 
     public void initialize(View rootView) {
+        bindAndSetupViews(rootView);
+        loadLastDeck();
+        statsPanel.updateCounts();
+        isModified = false;
+    }
+
+    /**
+     * 横竖屏切换专用重绑：旋转后 Activity 不重建、本实例常驻，currentDeck/isPackMode/
+     * isModified/searchResults 等内存态均仍在，只需把视图与监听重挂到新视图树并按
+     * 现态重新渲染。绝不可走 initialize 的 loadLastDeck 路径：那会用持久化设置里的
+     * 旧卡组覆盖内存中已编辑的 currentDeck（丢修改）、并因未持久化 lastdeckpath
+     * 而加载到另一个卡组/卡包（丢卡包展示）。
+     */
+    public void rebindAfterRotation(View rootView) {
+        bindAndSetupViews(rootView);
+        // 当前卡组名/分类/按钮文本随实例保留，仅需刷到新视图树的控件上
+        updateDeckManagerButtonText();
+        if (isPackMode) {
+            // 新视图树额外/副卡组区默认 VISIBLE，卡包模式需按现态重新压回 GONE 并铺满主网格
+            // （applyPackMode 的 isPackMode==packMode 守卫会跳过，走无守卫重应用变体）
+            gridLayout.reapplyPackModeForNewTree();
+        }
+        // 把内存中的卡组（含未保存的增删/拖拽改序）重新渲染到新网格
+        notifyDeckChanged();
+        // 搜索结果列表：setupSearchRecyclerView 新建了空适配器，把旧列表回填
+        cardSearcherManager.rebindResultsToNewAdapter();
+        refreshReadonly();
+        // 副卡组替换（side）模式：把筛选面板隐藏/侧栏控制行显隐按现态重挂到新树
+        if (isSiding) {
+            if (layoutFilterPanel != null) layoutFilterPanel.setVisibility(View.GONE);
+            if (llSideController != null) llSideController.setVisibility(View.VISIBLE);
+        }
+        statsPanel.updateCounts();
+        // 注意：不重置 isModified、不重载卡组，保持编辑态与当前卡组/卡包不变
+    }
+
+    /** initialize / rebindAfterRotation 共用的视图绑定与装配（不含数据加载与状态重置） */
+    private void bindAndSetupViews(View rootView) {
         this.rootView = rootView;
         bindViews(rootView);
         setupLabels();
@@ -191,9 +229,6 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
             cardDetailPanel.setDeckCardListHandler(cardSearcherManager::showRelatedCards);
         }
         setupDeckSelectorDialog();
-        loadLastDeck();
-        statsPanel.updateCounts();
-        isModified = false;
     }
 
     public void terminate() {
@@ -506,6 +541,9 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         updateDeckManagerButtonText();
         AppsSettings.get().saveSettings("lastcategory", categoryName);
         AppsSettings.get().saveSettings("lastdeck", deckName);
+        // 同步持久化路径（此前仅在退出编辑器时保存）：会话中换卡组后若 Activity 被系统
+        // 整体重建，loadLastDeck 才能回到同一卡组/卡包，而非停留在旧 lastdeckpath
+        AppsSettings.get().saveSettings("lastdeckpath", deckPath);
     }
 
     private void updateDeckManagerButtonText() {
