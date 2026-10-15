@@ -431,6 +431,12 @@ public class YGOProActivity extends AppCompatActivity {
         if (deckEditorVisible) {
             // 卡组/副卡组编辑器：host.show() 幂等（懒建 manager + initialize 重绑新视图）
             deckEditorHost.show();
+            // 与决斗分支同规格回显卡详：enterDeckEditorMode 内部 showDefault 已清面板，
+            // 此处按重建前快照（detailShowing/detailCardCode）回显当前卡，对齐用户
+            // 规格“横竖屏切换前后保持同一张卡详情显示”
+            if (cardDetailPanel != null) {
+                cardDetailPanel.restoreAfterRebind(detailShowing, detailCardCode);
+            }
         } else if (lobbyChat) {
             enterLobbyChatUI();
         } else if (duelUiVisible) {

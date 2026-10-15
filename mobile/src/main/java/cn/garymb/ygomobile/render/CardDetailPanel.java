@@ -501,7 +501,7 @@ public class CardDetailPanel {
     public int getCurrentCardCode() {
         return binder.getCurrentCardCode();
     }
-
+    
     public void closeGameButtons() {
         // 对齐 game.cpp Game::CloseGameButtons() L2395-2400：隐藏时点按钮、取消/完成与洗切手卡按钮
         // 决斗/回放结束额外复位时点三态逻辑标志（用户规格：本场无论选过哪个时点按钮，
