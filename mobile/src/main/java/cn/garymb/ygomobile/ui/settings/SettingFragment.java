@@ -317,7 +317,7 @@ public class SettingFragment extends BaseFragemnt implements View.OnClickListene
                     .loadUrl("file:///android_asset/changelog.html", Color.TRANSPARENT)
                     .show();
         } else if (id == R.id.cell_join_qq) {
-            String groupkey = "anEjPCDdhLgxtfLre-nT52G1Coye3LkK";
+            String groupkey = "7yPZyvF3VmNgZe3Lt6Ai9WlQOCFyhChS";
             joinQQGroup(groupkey);
         } else if (id == R.id.cell_bilibili) {
             Intent intent = new Intent(Intent.ACTION_VIEW);
