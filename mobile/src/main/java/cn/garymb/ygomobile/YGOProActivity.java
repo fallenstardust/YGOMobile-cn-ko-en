@@ -134,6 +134,12 @@ public class YGOProActivity extends AppCompatActivity {
      */
     private final List<YesOrNoDialog> undoHiddenDialogs = new ArrayList<>();
 
+    /**
+     * 当前正在显示的投降确认对话框：显示期间（直至其消失）忽略投降按钮的重复点击，
+     * 避免玩家多次点击弹出多个投降确认对话框（用户规格，竖屏/横屏按钮共用本入口）
+     */
+    private YesOrNoDialog surrenderDialog;
+
     volatile boolean isGameStarted = false;
 
     CardDetailPanel cardDetailPanel;
@@ -1443,6 +1449,9 @@ public class YGOProActivity extends AppCompatActivity {
     public void requestSurrender() {
         if (engine == null || !engine.isInDuel()) return;
         if (engine.isTagMode() && engine.isSurrenderPending()) return;
+        // 投降确认对话框正在显示时忽略重复点击：直到该对话框消失前不再弹出新的，
+        // 避免多次点击堆叠出多个投降确认对话框（用户规格）
+        if (surrenderDialog != null && surrenderDialog.isShowing()) return;
         YesOrNoDialog dialog = new YesOrNoDialog(this);
         dialog.setTitle(mStringManager.getSystemString(1351, "投降"))
                 .setMessage(mStringManager.getSystemString(1359, "是否确定投降？"))
@@ -1453,7 +1462,12 @@ public class YGOProActivity extends AppCompatActivity {
                     if (engine != null) engine.sendSurrender();
                 })
                 .setCenterInView(layoutGameRight)
-                .setCancelable(false);
+                .setCancelable(false)
+                .setOnDismissListener(() -> {
+                    // 对话框消失后清空引用，重新放行下一次投降点击
+                    if (surrenderDialog == dialog) surrenderDialog = null;
+                });
+        surrenderDialog = dialog;
         dialog.show();
     }
 
@@ -1623,44 +1637,9 @@ public class YGOProActivity extends AppCompatActivity {
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                if (mainMenuDialog != null && mainMenuDialog.isShowing()) {
-                    soundManager.stopBGM();
-                    finish();
-                    return;
-                }
-                // 回放进行中：返回键 = 退出回放回主菜单（对应 gframe 回放窗口关闭）
-                ReplayPlayer rp = getReplayPlayer();
-                if (rp != null && rp.hasActiveSession()) {
-                    ReplayModeDialog.quitReplay(YGOProActivity.this);
-                    return;
-                }
-                // 玩家等待界面显示中：弹窗不再获焦（聊天输入框需窗口焦点），返回键转发为退出等待回局域网主界面
-                if (playerWaitingDialog != null && playerWaitingDialog.isShowing()) {
-                    getPlayerWaitingListener().onExitWaiting();
-                    return;
-                }
-                if (!isGameStarted) {
-                    getMainMenuDialog().restoreMainMenu();
-                    return;
-                }
-                YesOrNoDialog dialog = new YesOrNoDialog(YGOProActivity.this);
-                dialog.setTitle("退出决斗")
-                        .setMessage("确定要退出当前决斗吗？")
-                        .setType(YesOrNoDialog.TYPE_YES_NO)
-                        .setPositiveButtonText("确定")
-                        .setNegativeButtonText("取消")
-                        .setPositiveButton(v -> {
-                            if (engine != null) {
-                                if (engine.getState() == GameEngine.GameState.DUELING) {
-                                    engine.sendSurrender();
-                                } else {
-                                    engine.disconnect();
-                                }
-                            }
-                            setEnabled(false);
-                            getOnBackPressedDispatcher().onBackPressed();
-                        });
-                dialog.show();
+                // 已禁用返回键响应：用户需要细化每个场景的返回键操作需求，当前保持返回键无效
+                // （避免在决斗进行中意外弹出退出询问对话框，或影响其他场景的交互）
+                // TODO: 后续根据用户规格细化返回键行为（主菜单/决斗中/回放中等不同场景）
             }
         });
     }

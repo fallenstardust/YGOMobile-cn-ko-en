@@ -43,7 +43,9 @@ public class MainMenuDialog {
                 ViewGroup.LayoutParams.WRAP_CONTENT, 
                 ViewGroup.LayoutParams.WRAP_CONTENT, true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        popupWindow.setOutsideTouchable(true);
+        // 禁止外部触摸导致弹窗自动关闭：主菜单覆盖全屏背景，不允许通过点击外部区域关闭，
+        // 也不应因下拉状态栏/通知栏等系统手势导致的 ACTION_OUTSIDE 而意外消失（用户规格）
+        popupWindow.setOutsideTouchable(false);
         popupWindow.setFocusable(false);
         popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
 
