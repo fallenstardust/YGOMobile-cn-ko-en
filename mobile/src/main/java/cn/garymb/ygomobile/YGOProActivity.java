@@ -379,6 +379,9 @@ public class YGOProActivity extends AppCompatActivity {
         boolean detailShowing = cardDetailPanel != null && cardDetailPanel.isShowing();
         int detailCardCode = (detailShowing && cardDetailPanel != null)
                 ? cardDetailPanel.getCurrentCardCode() : -1;
+        // 「取消操作/完成选择」按钮旋转前若在显示（选择会话进行中）：快照其可见态与文字，
+        // 供重建尾部 onGameUIShown 复位后回显——会话跨旋转保留，按钮不得凭空消失（用户反馈）
+        if (cardDetailPanel != null) cardDetailPanel.saveCancelOrFinishForRotation();
 
         // 2) 关闭挂在旧视图树上的瞬态浮层：表情面板/drawspec 覆盖层（LP浮字/弹幕/居中特效）/
         // 卡片命令菜单；后续特效/弹幕经懒建新实例回到新树
@@ -484,6 +487,9 @@ public class YGOProActivity extends AppCompatActivity {
                     }
                 }
                 cardDetailPanel.restoreAfterRebind(detailShowing, detailCardCode);
+                // 回显旋转前的取消/完成按钮：选择会话跨旋转保留，按钮续显后玩家可继续
+                // 取消/完成该会话（currentSelectType 随复用的面板保留，点击即走正确分支）
+                cardDetailPanel.restoreCancelOrFinishAfterRotation();
             }
         } else {
             // 其他场景（主菜单/局域网与建主等待弹窗/设置等，用户规格）：竖屏布局变体的

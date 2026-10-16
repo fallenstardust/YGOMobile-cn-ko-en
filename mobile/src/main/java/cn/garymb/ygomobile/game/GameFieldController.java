@@ -107,7 +107,12 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
      */
     public void rebindAfterRotation() {
         viewController = new GameFieldViewController(activity);
-        select = new FieldSelectManager(this);
+        // 选择会话协作类跨旋转复用同一实例（对齐 chat/phaseBar 的保留策略）：isPlaceSelecting /
+        // isCardSelecting / isSumSelecting / 已选累计位等都是纯会话状态，新建实例会把进行中的
+        // 选格/选卡会话清零——决斗中横竖屏切换后高亮格子消失、且点击不再被路由到选择处理
+        //（远程联机无法撤回 → 彻底卡死无法继续操作）。随实例保留会话，下面再把选格高亮 mask
+        // 回灌到新视图即可无缝续用（卡片可选轮廓源自 field 级 is_selectable，本随场面数据保留）
+        if (select == null) select = new FieldSelectManager(this);
         // 聊天协作类跨旋转复用同一实例：myChatLines/opChatLines 是纯数据，随实例保留即保住
         // 双方聊天记录（历史新建实例导致横竖屏切换后聊天内容全丢失，用户反馈）；
         // bindChatViews 后把保存的聊天行整列回灌到新覆盖层（旧覆盖层随旋转销毁）
@@ -124,6 +129,11 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         chat.retainAcrossRotation();
         if (engine != null && imageLoaderRef != null) {
             viewController.init(engine.getField(), imageLoaderRef, this);
+        }
+        // 回灌旋转前的选格高亮：视图态 highlightFieldMask 随旧 GameFieldView 销毁归零，
+        // 而询问的 selectFieldMask 存活于引擎——选格会话进行中则按同一 mask 重推给新视图
+        if (select.isPlaceSelecting && engine != null) {
+            viewController.highlightField(engine.selectFieldMask);
         }
         // 回灌旋转前的阶段按钮显示状态到新 GameFieldView，并重放模态禁用登记
         //（activeModalDialogs 在控制器层跨旋转保留，新视图默认 enabled 需按登记重置）
@@ -327,6 +337,9 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         // 离场同样复位视图蚂蚁线 mask，下次进入决斗不残留上局格子高亮
         if (viewController != null) viewController.clearHighlight();
         if (viewController != null) viewController.hide();
+        // 退出对战（layout_game_right 隐藏）一并收起场上/手卡状态悬浮气泡：它是独立全屏窗口，
+        // 不随决斗场视图显隐销毁，决斗结束时若不主动 dismiss 会残留浮在返回界面上
+        hideFieldStatusTip();
         if (topInfoManager != null) topInfoManager.hide();
         if (layoutChatMessages != null) layoutChatMessages.setVisibility(View.GONE);
         if (cmdMenuDialog != null) cmdMenuDialog.dismiss();

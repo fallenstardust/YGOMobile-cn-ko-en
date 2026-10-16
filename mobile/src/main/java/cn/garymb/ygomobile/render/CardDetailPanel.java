@@ -682,6 +682,37 @@ public class CardDetailPanel {
     }
 
     /**
+     * 旋转重建期间的按钮快照字段：onGameUIShown() 会无条件 hideCancelOrFinishButton()
+     * 复位按钮组，而选择会话（isPlaceSelecting / isCardSelecting / 连锁等待）跨旋转保留，
+     * currentSelectType 也随复用的面板实例保留——若不回显按钮，玩家横竖屏切换后「取消操作/
+     * 完成选择」凭空消失，既无法取消/完成进行中的会话，又会对残留询问乱点卡片（命令菜单把应答
+     * 发进错位的问题里 → 无实际作用）→ 卡死无法继续（用户反馈）。
+     * savedCancelOrFinishShown/Text 记录旋转前是否正在显示及按钮文字，供重建尾部回显。
+     */
+    private boolean savedCancelOrFinishShown;
+    private String savedCancelOrFinishText;
+
+    /**
+     * 重建前（bindViews 换新视图树、onGameUIShown 复位之前）快照当前按钮态与文字。
+     * 只捕获确实处于显示态的按钮：隐藏态无需回显，避免旋转后凭空出现取消/完成按钮。
+     */
+    public void saveCancelOrFinishForRotation() {
+        savedCancelOrFinishShown = cancelOrFinishShown;
+        savedCancelOrFinishText = btnCancelOrFinish != null
+                ? btnCancelOrFinish.getText().toString() : null;
+    }
+
+    /**
+     * 重建尾部回显：仅当旋转前按钮在显示时，按快照的文字重新点亮（连带恢复蚂蚁线描边、
+     * 洗切手卡联动隐藏，与正常 updateCancelOrFinishButton 显示路径完全一致）。
+     */
+    public void restoreCancelOrFinishAfterRotation() {
+        if (savedCancelOrFinishShown && btnCancelOrFinish != null) {
+            setCancelOrFinishShown(true, savedCancelOrFinishText);
+        }
+    }
+
+    /**
      * cancelOrFinish 可见态统一入口：切换按钮显隐、同步蚂蚁线高亮、并联动洗切手卡按钮显隐
      *（显示时暂时隐藏洗切手卡，隐藏后若通讯允许则恢复）。
      */

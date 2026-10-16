@@ -61,9 +61,21 @@ public class CardSelectDialog {
      * 竖屏整体放大系数（宽与文本同比）：竖屏时 layout_game_right 即整屏宽，按 {@link #DIALOG_WIDTH_RATIO}
      * (0.75) 解算后弹窗与每张卡图明显小于横屏（横屏 layout_game_right 为长边、绝对宽更大）。按需求把竖屏弹窗
      * 再放大——宽度以整屏两侧收进为准（0.75×1.25≈0.94，两侧各收进约 3%），卡图随宽度变大，标题/卡位文本/
-     * 确定按钮文本按同系数增大，消除旋转后「卡片图和它上面的文本被缩得更小」的观感。横屏恒为 1.0（行为不变）。
+     * 确定按钮文本按同系数增大，消除旋转后「卡片图和它上面的文本被缩得更小」的观感。
      */
     private static final float PORTRAIT_SCALE = 1.25f;
+    /**
+     * 横屏整体缩小系数（宽与文本同比）：横屏 {@code layout_game_right} 为长边、绝对宽更大，
+     * 按 {@link #DIALOG_WIDTH_RATIO} (0.75) 解算后弹窗与每张卡图仍偏大。按需求把横屏弹窗再
+     * 等比例小一号——弹窗宽、卡图、标题/卡位文本/确定按钮字号同乘本系数，列表观感更紧凑。
+     */
+    private static final float LANDSCAPE_SCALE = 0.9f;
+    /**
+     * 每个卡槽的水平外边距（dp，左右各一份）：与各 dialog_card_*.xml 中槽位
+     * {@code layout_marginHorizontal} 一致，由原 4dp 收紧为 2dp 使卡片列表更紧凑
+     *（卡宽据此反推，需与 {@link #applyCardImageSize(int)} 扣除量同步）。
+     */
+    private static final float SLOT_MARGIN_DP = 2f;
 
     public static class CardItem {
         public final int code;
@@ -165,7 +177,7 @@ public class CardSelectDialog {
     private final View[] slotViews = new View[SLOT_COUNT];
     private final TextView[] tvPositions = new TextView[SLOT_COUNT];
     private final ImageView[] ivCards = new ImageView[SLOT_COUNT];
-    /** 单卡槽步进（px，卡宽 + 左右外边距 4dp×2）：滚动条翻页动画的位移基准，随卡图在 {@link #applyCardImageSize(int)} 烘焙 */
+    /** 单卡槽步进（px，卡宽 + 左右外边距 {@link #SLOT_MARGIN_DP}dp×2）：滚动条翻页动画的位移基准，随卡图在 {@link #applyCardImageSize(int)} 烘培 */
     private int slotStepPx = 0;
     /**
      * 标题/卡位文本/确定按钮的基准字号（px，取自 XML，横竖屏 density 相同故一致）：首次 {@link #applyContentScale()}
@@ -529,9 +541,9 @@ public class CardSelectDialog {
         return Math.round(w * DIALOG_WIDTH_RATIO * contentScale());
     }
 
-    /** 当前方向的内容放大系数：横屏 1.0（行为不变），竖屏 {@link #PORTRAIT_SCALE} */
+    /** 当前方向的内容缩放系数：横屏 {@link #LANDSCAPE_SCALE}（等比例小一号），竖屏 {@link #PORTRAIT_SCALE} */
     private float contentScale() {
-        return DialogScale.isLandscape(context) ? 1f : PORTRAIT_SCALE;
+        return DialogScale.isLandscape(context) ? LANDSCAPE_SCALE : PORTRAIT_SCALE;
     }
 
     /**
@@ -554,15 +566,15 @@ public class CardSelectDialog {
     }
 
     /**
-     * 按对话框宽度反推每张卡宽（扣除根内边距 16dp×2 与每槽水平外边距 4dp×2），
+     * 按对话框宽度反推每张卡宽（扣除根内边距 16dp×2 与每槽水平外边距 {@link #SLOT_MARGIN_DP}dp×2），
      * 高度按 177:254 卡图比例计算，保证 ImageView 宽高与卡片比例一致；
      * 槽位为 wrap_content，固定宽度后空槽位 GONE 时其余槽位尺寸不变并整体居中
      */
     private void applyCardImageSize(int dialogWidthPx) {
         int containerW = dialogWidthPx - 2 * dp2px(16);
-        int cardW = (containerW - SLOT_COUNT * 2 * dp2px(4)) / SLOT_COUNT;
+        int cardW = (containerW - SLOT_COUNT * 2 * dp2px(SLOT_MARGIN_DP)) / SLOT_COUNT;
         if (cardW <= 0) return;
-        slotStepPx = cardW + 2 * dp2px(4);
+        slotStepPx = cardW + 2 * dp2px(SLOT_MARGIN_DP);
         int cardH = Math.round(cardW * CARD_ASPECT);
         for (ImageView iv : ivCards) {
             ViewGroup.LayoutParams lp = iv.getLayoutParams();
