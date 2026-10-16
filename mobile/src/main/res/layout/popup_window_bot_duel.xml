@@ -1,193 +1,493 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?><!--
+    顶部 TabLayout 限半宽（左侧），下方 body 用 FrameLayout 在两套内容间整页切换：
+      - layout_bot_puzzle：人机/残局共享布局（恢复修改前结构：左列 AI/残局列表 + 右列信息/卡组/规则/复选框/按钮，
+        切 tab 靠换 adapter 与逐个可见性 toggling，不拆成两套）。
+      - layout_solo：纯单人模式(左右互搏)——结构对齐 popup_window_create_host，但去掉
+        纯单人模式复选框、主机名称+EditText、主机密码+EditText；确定=建局域网纯单人模式。
+        为避免与上面人机/残局共享控件的 id 冲突，本区所有控件用 solo_ 前缀独立命名。
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/window2"
-    android:orientation="horizontal"
+    android:orientation="vertical"
     android:padding="12dp">
 
-    <!-- 左侧：模式选择和AI列表 -->
+    <!-- 模式选择Tab：限半宽并左对齐（回到原本只有页面宽度一半） -->
     <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="0.55"
-        android:orientation="vertical">
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
 
-        <!-- 模式选择Tab -->
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/tab_layout_mode"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="0.1"
+            android:layout_width="0dp"
+            android:layout_height="20dp"
+            android:layout_weight="1"
             app:tabGravity="fill"
             app:tabMode="fixed"
             app:tabSelectedTextColor="@color/white"
-            app:tabTextAppearance="@style/wallet_third_tab_layout"
+            app:tabTextAppearance="@style/bot_duel_tab_layout"
             app:tabTextColor="@color/grayDark2" />
 
-        <!-- AI列表 -->
-        <ListView
-            android:id="@+id/lv_bot_list"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="0.9"
-            android:background="@drawable/ygopro_base_background" />
+        <!-- 右侧等分占位，使 TabLayout 只占页面宽度一半 -->
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
     </LinearLayout>
 
-    <!-- 右侧：AI信息和设置 -->
-    <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="0.45"
-        android:layout_marginEnd="5dp"
-        android:orientation="vertical">
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="6dp"
+        android:layout_weight="1">
 
+        <!-- ============ 人机/残局共享区（修改前结构） ============ -->
         <LinearLayout
+            android:id="@+id/layout_bot_puzzle"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:layout_marginStart="5dp"
-            android:orientation="vertical">
+            android:layout_height="match_parent"
+            android:visibility="gone"
+            android:orientation="horizontal">
 
-            <!-- AI信息标题 -->
-            <TextView
-                android:id="@+id/tv_bot_info_header"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="5dp"
-                android:text="人机信息："
-                android:textColor="@color/white"
-                android:textSize="11sp"
-                android:textStyle="bold" />
+            <!-- 左侧：模式列表（人机/残局共用同一 ListView，切 tab 换 adapter） -->
+            <ListView
+            android:id="@+id/lv_bot_list"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.55"
+            android:background="@drawable/ygopro_base_background" />
 
-            <!-- AI描述 -->
-            <TextView
-                android:id="@+id/tv_bot_desc"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:lineSpacingExtra="4dp"
-                android:text="人机卡组由你选择。随缘出牌。暂不支持使用扩展卡。"
-                android:textColor="@color/white"
-                android:textSize="10sp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:orientation="vertical">
-
-            <!-- 选择卡组按钮 -->
-            <Button
-                android:id="@+id/btn_select_deck"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:layout_marginStart="5dp"
-                android:background="@drawable/button3_bg"
-                android:text="@string/select_deck"
-                android:textAllCaps="false"
-                android:textColor="@color/white"
-                android:textSize="10sp" />
-
-            <!-- 规则选择 + 残局专属"不洗切时回卡顶"复选框：同一行；复选框仅残局模式显示，
-                 人机模式直接隐藏（初始 visibility=gone，代码切残局模式时才点亮） -->
+            <!-- 右侧：AI信息和设置 -->
             <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:layout_marginStart="5dp"
-                android:layout_marginVertical="2dp"
-                android:orientation="horizontal">
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="5dp"
+                android:layout_weight="0.45"
+                android:orientation="vertical">
 
-                <Spinner
-                    android:id="@+id/spinner_rule"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:background="@drawable/ygopro_spinner" />
-
-                <CheckBox
-                    android:id="@+id/chk_return_to_top"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:checked="false"
-                    android:textColor="@color/white"
-                    android:textSize="9dp"
-                    android:visibility="gone" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="2"
-                android:orientation="horizontal">
-
-                <!-- 选项复选框 -->
                 <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_marginStart="5dp"
                     android:layout_weight="1"
                     android:orientation="vertical">
 
-                    <CheckBox
-                        android:id="@+id/chk_ai_only_scissors"
+                    <!-- AI信息标题 -->
+                    <TextView
+                        android:id="@+id/tv_bot_info_header"
                         android:layout_width="match_parent"
-                        android:layout_height="0dp"
-                        android:layout_weight="1"
-                        android:checked="false"
-                        android:text="AI只出剪刀"
-                        android:textSize="9dp"
-                        android:textColor="@color/white" />
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="5dp"
+                        android:text="人机信息："
+                        android:textColor="@color/white"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
 
-                    <CheckBox
-                        android:id="@+id/chk_no_check_deck"
+                    <!-- AI描述 -->
+                    <TextView
+                        android:id="@+id/tv_bot_desc"
                         android:layout_width="match_parent"
-                        android:layout_height="0dp"
+                        android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:layout_marginVertical="2dp"
-                        android:checked="false"
-                        android:textSize="9dp"
-                        android:text="不检查卡组"
-                        android:textColor="@color/white" />
-
-                    <CheckBox
-                        android:id="@+id/chk_no_shuffle_deck"
-                        android:layout_width="match_parent"
-                        android:layout_height="0dp"
-                        android:layout_weight="1"
-                        android:checked="false"
-                        android:textSize="9dp"
-                        android:text="不洗切卡组"
-                        android:textColor="@color/white" />
+                        android:lineSpacingExtra="4dp"
+                        android:text="人机卡组由你选择。随缘出牌。暂不支持使用扩展卡。"
+                        android:textColor="@color/white"
+                        android:textSize="10sp" />
                 </LinearLayout>
 
-                <!-- 按钮区域 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <!-- 选择卡组按钮 -->
+                    <Button
+                        android:id="@+id/btn_select_deck"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginStart="5dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/button3_bg"
+                        android:text="@string/select_deck"
+                        android:textAllCaps="false"
+                        android:textColor="@color/white"
+                        android:textSize="10sp" />
+
+                    <!-- 规则选择 + 残局专属"不洗切时回卡顶"复选框：同一行；复选框仅残局模式显示，
+                         人机模式直接隐藏（初始 visibility=gone，代码切残局模式时才点亮） -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginVertical="2dp"
+                        android:layout_marginStart="5dp"
+                        android:layout_weight="1"
+                        android:orientation="horizontal">
+
+                        <Spinner
+                            android:id="@+id/spinner_rule"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:background="@drawable/ygopro_spinner" />
+
+                        <CheckBox
+                            android:id="@+id/chk_return_to_top"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:checked="false"
+                            android:textColor="@color/white"
+                            android:textSize="9dp"
+                            android:visibility="gone" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="2"
+                        android:orientation="horizontal">
+
+                        <!-- 选项复选框 -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <CheckBox
+                                android:id="@+id/chk_ai_only_scissors"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"
+                                android:checked="false"
+                                android:text="AI只出剪刀"
+                                android:textColor="@color/white"
+                                android:textSize="9dp" />
+
+                            <CheckBox
+                                android:id="@+id/chk_no_check_deck"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_marginVertical="2dp"
+                                android:layout_weight="1"
+                                android:checked="false"
+                                android:text="不检查卡组"
+                                android:textColor="@color/white"
+                                android:textSize="9dp" />
+
+                            <CheckBox
+                                android:id="@+id/chk_no_shuffle_deck"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"
+                                android:checked="false"
+                                android:text="不洗切卡组"
+                                android:textColor="@color/white"
+                                android:textSize="9dp" />
+                        </LinearLayout>
+
+                        <!-- 按钮区域 -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_gravity="bottom"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <Button
+                                android:id="@+id/btn_start_bot_duel"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_marginBottom="5dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/button3_bg"
+                                android:text="@string/OK"
+                                android:textColor="@color/white"
+                                android:textSize="12sp" />
+
+                            <Button
+                                android:id="@+id/btn_exit_bot"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/button3_bg"
+                                android:text="@string/quit"
+                                android:textColor="@color/white"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ============ 纯单人模式(左右互搏)区：对齐 create_host 布局，去掉 solo 勾选/主机名/主机密 ============ -->
+        <LinearLayout
+            android:id="@+id/layout_solo"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:layout_marginEnd="5dp"
+            android:visibility="visible">
+
+            <!-- 行1：禁限卡表 + 规则 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginBottom="4dp"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/solo_tv_banlist_label"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="left|center"
+                    android:text="禁限卡表："
+                    android:textColor="@color/white"
+                    android:textSize="10sp" />
+
+                <Spinner
+                    android:id="@+id/solo_spinner_banlist"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="3"
+                    android:background="@drawable/ygopro_spinner" />
+
+                <TextView
+                    android:id="@+id/solo_tv_rule_label"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:gravity="left|center"
+                    android:text="规则："
+                    android:textColor="@color/white"
+                    android:textSize="10sp" />
+
+                <Spinner
+                    android:id="@+id/solo_spinner_rule"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="3"
+                    android:background="@drawable/ygopro_spinner" />
+            </LinearLayout>
+
+            <!-- 行2：卡片允许 + 初始基本分 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginBottom="4dp"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/solo_tv_card_allowed_label"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="left|center"
+                    android:text="卡片允许："
+                    android:textColor="@color/white"
+                    android:textSize="10sp" />
+
+                <Spinner
+                    android:id="@+id/solo_spinner_card_allowed"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="3"
+                    android:background="@drawable/ygopro_spinner" />
+
+                <TextView
+                    android:id="@+id/solo_tv_start_lp_label"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:gravity="left|center"
+                    android:text="初始基本分："
+                    android:textColor="@color/white"
+                    android:textSize="10sp" />
+
+                <EditText
+                    android:id="@+id/solo_et_start_lp"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="3"
+                    android:background="@drawable/ygopro_base_background"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:text="8000"
+                    android:textColor="#FFFFFF" />
+            </LinearLayout>
+
+            <!-- 行3：决斗模式 + 初始手卡数 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginBottom="4dp"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/solo_tv_duel_mode_label"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="left|center"
+                    android:text="决斗模式："
+                    android:textColor="@color/white"
+                    android:textSize="10sp" />
+
+                <Spinner
+                    android:id="@+id/solo_spinner_duel_mode"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="3"
+                    android:background="@drawable/ygopro_spinner" />
+
+                <TextView
+                    android:id="@+id/solo_tv_start_hand_label"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:gravity="left|center"
+                    android:text="初始手卡数："
+                    android:textColor="@color/white"
+                    android:textSize="10sp" />
+
+                <EditText
+                    android:id="@+id/solo_et_start_hand"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="3"
+                    android:background="@drawable/ygopro_base_background"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:text="5"
+                    android:textColor="#FFFFFF" />
+            </LinearLayout>
+
+            <!-- 行4：每回合时间 + 每回合抽卡 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginBottom="4dp"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/solo_tv_time_limit_label"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="left|center"
+                    android:text="每回合时间："
+                    android:textColor="@color/white"
+                    android:textSize="10sp" />
+
+                <EditText
+                    android:id="@+id/solo_et_time_limit"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="3"
+                    android:background="@drawable/ygopro_base_background"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:text="180"
+                    android:textColor="#FFFFFF" />
+
+                <TextView
+                    android:id="@+id/solo_tv_draw_count_label"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:gravity="left|center"
+                    android:text="每回合抽卡："
+                    android:textColor="@color/white"
+                    android:textSize="10sp" />
+
+                <EditText
+                    android:id="@+id/solo_et_draw_count"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="3"
+                    android:background="@drawable/ygopro_base_background"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:text="1"
+                    android:textColor="#FFFFFF" />
+            </LinearLayout>
+
+            <!-- 行5：不检查卡组 + 不洗切卡组（去掉纯单人模式复选框） -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginTop="10dp"
+                android:layout_weight="1.5"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="3.5"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <CheckBox
+                        android:id="@+id/solo_chk_no_check_deck"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_marginEnd="20dp"
+                        android:text="不检查卡组"
+                        android:textColor="@color/white"
+                        android:textSize="12sp" />
+
+                    <CheckBox
+                        android:id="@+id/solo_chk_no_shuffle_deck"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:text="不洗切卡组"
+                        android:textColor="@color/white"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <!-- 行6：确定 + 退出（建局域网纯单人模式） -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:layout_gravity="bottom"
+                    android:gravity="center_vertical"
                     android:orientation="vertical">
 
                     <Button
-                        android:id="@+id/btn_start_bot_duel"
+                        android:id="@+id/solo_btn_confirm"
                         android:layout_width="match_parent"
-                        android:layout_height="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginBottom="5dp"
                         android:layout_weight="1"
-                        android:layout_marginBottom="2dp"
                         android:background="@drawable/button3_bg"
                         android:text="@string/OK"
                         android:textColor="@color/white"
                         android:textSize="12sp" />
 
                     <Button
-                        android:id="@+id/btn_exit_bot"
+                        android:id="@+id/solo_btn_cancel"
                         android:layout_width="match_parent"
-                        android:layout_height="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
                         android:layout_weight="1"
                         android:background="@drawable/button3_bg"
                         android:text="@string/quit"
@@ -195,6 +495,8 @@
                         android:textSize="12sp" />
                 </LinearLayout>
             </LinearLayout>
+
+
         </LinearLayout>
-    </LinearLayout>
+    </FrameLayout>
 </LinearLayout>

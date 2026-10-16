@@ -1,16 +1,18 @@
 package cn.garymb.ygomobile.ui.dialogs;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.util.DisplayMetrics;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.Spinner;
@@ -32,7 +34,6 @@ import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 import cn.garymb.ygomobile.utils.BotUtil;
-import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.PuzzleUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
@@ -62,6 +63,11 @@ public class SingleModeDialog {
                             int duelRule, boolean noCheckDeck, boolean noShuffleDeck);
 
         void onStartSingleMode(String luaFilePath, boolean noShuffleToDeck);
+
+        /** 纯单人模式(左右互搏)：参数对齐 CreateHostDialog，soloMode 由接收方编码到 mode bit4(0x10) */
+        void onStartSoloHost(int lflist, int cardAllowed, int modeIdx, int duelRule,
+                             int startLP, int startHand, int drawCount, int timeLimit,
+                             boolean noCheckDeck, boolean noShuffleDeck);
     }
 
     private OnSingleModeListener listener;
@@ -86,6 +92,10 @@ public class SingleModeDialog {
         View customView = LayoutInflater.from(context).inflate(R.layout.popup_window_bot_duel, null);
 
         TabLayout tabLayoutMode = customView.findViewById(R.id.tab_layout_mode);
+        View layoutBotPuzzle = customView.findViewById(R.id.layout_bot_puzzle);
+        View layoutSolo = customView.findViewById(R.id.layout_solo);
+
+        // 人机/残局共享控件（修改前结构：单一列表 + 右列信息设置，切 tab 靠换 adapter 与可见性 toggling）
         ListView lvBotList = customView.findViewById(R.id.lv_bot_list);
         TextView tvBotDesc = customView.findViewById(R.id.tv_bot_desc);
         TextView tvBotInfoHeader = customView.findViewById(R.id.tv_bot_info_header);
@@ -109,6 +119,21 @@ public class SingleModeDialog {
         btnStartBotDuel.setText(mStringManager.getSystemString(1211, "确定"));
         btnExitBot.setText(mStringManager.getSystemString(1210, "退出"));
 
+        // 纯单人模式(左右互搏)控件：布局对齐 CreateHostDialog，去掉 solo 勾选/主机名/主机密
+        Spinner soloSpinnerBanlist = customView.findViewById(R.id.solo_spinner_banlist);
+        Spinner soloSpinnerRule = customView.findViewById(R.id.solo_spinner_rule);
+        Spinner soloSpinnerCardAllowed = customView.findViewById(R.id.solo_spinner_card_allowed);
+        Spinner soloSpinnerDuelMode = customView.findViewById(R.id.solo_spinner_duel_mode);
+        EditText soloEtStartLp = customView.findViewById(R.id.solo_et_start_lp);
+        EditText soloEtStartHand = customView.findViewById(R.id.solo_et_start_hand);
+        EditText soloEtTimeLimit = customView.findViewById(R.id.solo_et_time_limit);
+        EditText soloEtDrawCount = customView.findViewById(R.id.solo_et_draw_count);
+        CheckBox soloChkNoCheckDeck = customView.findViewById(R.id.solo_chk_no_check_deck);
+        CheckBox soloChkNoShuffleDeck = customView.findViewById(R.id.solo_chk_no_shuffle_deck);
+        Button soloBtnConfirm = customView.findViewById(R.id.solo_btn_confirm);
+        Button soloBtnCancel = customView.findViewById(R.id.solo_btn_cancel);
+        applySoloStrings(customView, soloBtnConfirm, soloBtnCancel);
+
         List<SimpleSpinnerItem> ruleItems = new ArrayList<>();
         ruleItems.add(new SimpleSpinnerItem(5, mStringManager.getSystemString(1264, "大师规则（2020）")));
         ruleItems.add(new SimpleSpinnerItem(4, mStringManager.getSystemString(1263, "新大师规则")));
@@ -118,6 +143,10 @@ public class SingleModeDialog {
         ruleAdapter.set(ruleItems);
         spinnerRule.setAdapter(ruleAdapter);
         spinnerRule.setSelection(0);
+
+        // 纯单人页四个下拉复用 CreateHostDialog 的初始化（禁限卡表/规则/卡片允许/决斗模式）
+        CreateHostDialog.configureSpinners(context, soloSpinnerBanlist, soloSpinnerRule,
+                soloSpinnerCardAllowed, soloSpinnerDuelMode);
 
         final int[] currentMode = {0};
         final int[] selectedPosition = {-1};
@@ -136,8 +165,18 @@ public class SingleModeDialog {
         final SimpleListAdapter puzzleAdapter = new SimpleListAdapter(context);
         puzzleAdapter.set(puzzleNames);
 
-        tabLayoutMode.addTab(tabLayoutMode.newTab().setText(mStringManager.getSystemString(1380, "人机模式(双方无禁)")));
-        tabLayoutMode.addTab(tabLayoutMode.newTab().setText(mStringManager.getSystemString(1381, "残局模式(含教学局)")));
+        // 半宽三页签文字易溢出：Material 1.12 的 TabView 会在测量时重套文本外观，
+        // tabTextAppearance 在自定义视图上不起作用；故用自定义 TextView 作页签，并在 makeTabView 中
+        // 显式应用 styles.xml 的 bot_duel_tab_layout（字号/加粗/非全大写由样式统一控制）
+        tabLayoutMode.addTab(tabLayoutMode.newTab()
+                .setText(mStringManager.getSystemString(1380, "人机模式"))
+                .setCustomView(makeTabView(mStringManager.getSystemString(1380, "人机模式"))));
+        tabLayoutMode.addTab(tabLayoutMode.newTab()
+                .setText(mStringManager.getSystemString(1381, "残局模式"))
+                .setCustomView(makeTabView(mStringManager.getSystemString(1381, "残局模式"))));
+        tabLayoutMode.addTab(tabLayoutMode.newTab()
+                .setText("纯单人模式")
+                .setCustomView(makeTabView("纯单人模式")));
 
         lvBotList.setAdapter(botAdapter);
         tvBotDesc.setText(mStringManager.getSystemString(1382, "请选择一个AI查看信息"));
@@ -151,6 +190,9 @@ public class SingleModeDialog {
         // 初始即人机模式（首个 tab）：残局专属"不洗切时回卡顶"复选框直接隐藏，
         // 无需等到切到残局再切回人机才触发隐藏逻辑
         chkReturnToTop.setVisibility(View.GONE);
+        // 人机/残局共享区显示，纯单人区隐藏（切到第三 tab 才整页切换）
+        layoutBotPuzzle.setVisibility(View.VISIBLE);
+        layoutSolo.setVisibility(View.GONE);
 
         loadLastDeckInfo(btnSelectDeck);
 
@@ -201,6 +243,14 @@ public class SingleModeDialog {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 int position = tab.getPosition();
+                // 第三页（纯单人模式）切换到独立整页布局，人机/残局共享区整体隐藏
+                if (position == 2) {
+                    layoutSolo.setVisibility(View.VISIBLE);
+                    layoutBotPuzzle.setVisibility(View.GONE);
+                    return;
+                }
+                layoutSolo.setVisibility(View.GONE);
+                layoutBotPuzzle.setVisibility(View.VISIBLE);
                 currentMode[0] = position;
                 selectedPosition[0] = -1;
 
@@ -209,6 +259,8 @@ public class SingleModeDialog {
                     botAdapter.setSelectedPosition(-1);
                     puzzleAdapter.setSelectedPosition(-1);
                     tvBotDesc.setText(mStringManager.getSystemString(1382, "请选择一个AI查看信息"));
+                    // 人机页：信息标题用 1382 人机信息：
+                    if (tvBotInfoHeader != null) tvBotInfoHeader.setText(mStringManager.getSystemString(1382, "人机信息："));
                     btnSelectDeck.setVisibility(View.INVISIBLE);
                     btnStartBotDuel.setEnabled(false);
                     btnStartBotDuel.setTextColor(YGOUtil.c(R.color.grayDark2));
@@ -223,6 +275,8 @@ public class SingleModeDialog {
                     puzzleAdapter.setSelectedPosition(-1);
                     botAdapter.setSelectedPosition(-1);
                     tvBotDesc.setText("选择一个残局开始挑战。");
+                    // 残局页：信息标题改用 1352 主要信息（对齐 game.cpp tabSingle 的 GetSysString(1352)）
+                    if (tvBotInfoHeader != null) tvBotInfoHeader.setText(mStringManager.getSystemString(1352, "主要信息："));
                     btnSelectDeck.setVisibility(View.INVISIBLE);
                     btnStartBotDuel.setEnabled(false);
                     btnStartBotDuel.setTextColor(YGOUtil.c(R.color.grayDark2));
@@ -247,7 +301,7 @@ public class SingleModeDialog {
 
         int popupWidth = (int) (Constants.DIALOG_POPUP_WIDTH_DP * density);
         int popupHeight = (int) (Constants.DIALOG_POPUP_HEIGHT_DP * density);
-        
+
         // 横屏时，根据 Activity 的实际宽度的 2/3 来限制弹窗宽度；竖屏保持正方形样式
         final android.app.Activity act = context instanceof android.app.Activity
                 ? (android.app.Activity) context : null;
@@ -333,10 +387,82 @@ public class SingleModeDialog {
             }
         });
 
+        // 纯单人模式确定：解析面板参数后回调外部建立局域网纯单人主机（soloMode 由接收方编码到 mode）
+        soloBtnConfirm.setOnClickListener(v -> {
+            String banlist = SimpleSpinnerAdapter.getSelectText(soloSpinnerBanlist);
+            String rule = SimpleSpinnerAdapter.getSelectText(soloSpinnerRule);
+            String duelMode = SimpleSpinnerAdapter.getSelectText(soloSpinnerDuelMode);
+            int lflist = CreateHostDialog.parseBanlistIndex(banlist);
+            int ruleIdx = CreateHostDialog.parseRuleIndex(rule);
+            int modeIdx = CreateHostDialog.parseDuelModeIndex(duelMode);
+            int duelRule = ruleIdx + 1;
+            // 卡片允许下拉选中索引即协议 HostInfo.rule（对齐 duelclient.cpp cscg.info.rule）
+            int cardAllowed = soloSpinnerCardAllowed.getSelectedItemPosition();
+            int lp = CreateHostDialog.parseIntSafe(soloEtStartLp.getText().toString(), 8000);
+            int hand = CreateHostDialog.parseIntSafe(soloEtStartHand.getText().toString(), 5);
+            int draw = CreateHostDialog.parseIntSafe(soloEtDrawCount.getText().toString(), 1);
+            int time = CreateHostDialog.parseIntSafe(soloEtTimeLimit.getText().toString(), 0);
+            boolean noCheckDeck = soloChkNoCheckDeck.isChecked();
+            boolean noShuffleDeck = soloChkNoShuffleDeck.isChecked();
+
+            // 纯单人建主属内部跳转：抑制 dismiss → restoreMainMenu
+            hideForNavigation();
+            if (listener != null) {
+                listener.onStartSoloHost(lflist, cardAllowed, modeIdx, duelRule,
+                        lp, hand, draw, time, noCheckDeck, noShuffleDeck);
+            }
+        });
+
         btnExitBot.setOnClickListener(v -> popupWindow.dismiss());
+        soloBtnCancel.setOnClickListener(v -> popupWindow.dismiss());
 
         anchorView.setVisibility(View.GONE);
         draggableHelper.showPopup(popupWindow, anchorView);
+    }
+
+    /**
+     * 纯单人页静态文字改走 getSystemString，编号对齐 gframe game.cpp wCreateHost（同 CreateHostDialog）：
+     * 1226 禁限卡表 / 1236 规则 / 1225 卡片允许 / 1231 初始LP / 1227 决斗模式 /
+     * 1232 初始手卡 / 1237 每回合时间 / 1233 每回合抽卡 / 1229 不检查卡组 / 1230 不洗切卡组 /
+     * 1211 确定 / 1210 退出（此页无纯单人勾选与房间名/密码行）
+     */
+    private void applySoloStrings(View root, Button btnConfirm, Button btnCancel) {
+        setSysText(root, R.id.solo_tv_banlist_label, 1226, "禁限卡表：");
+        setSysText(root, R.id.solo_tv_rule_label, 1236, "规则：");
+        setSysText(root, R.id.solo_tv_card_allowed_label, 1225, "卡片允许：");
+        setSysText(root, R.id.solo_tv_start_lp_label, 1231, "初始基本分：");
+        setSysText(root, R.id.solo_tv_duel_mode_label, 1227, "决斗模式：");
+        setSysText(root, R.id.solo_tv_start_hand_label, 1232, "初始手卡数：");
+        setSysText(root, R.id.solo_tv_time_limit_label, 1237, "每回合时间：");
+        setSysText(root, R.id.solo_tv_draw_count_label, 1233, "每回合抽卡：");
+        setSysText(root, R.id.solo_chk_no_check_deck, 1229, "不检查卡组");
+        setSysText(root, R.id.solo_chk_no_shuffle_deck, 1230, "不洗切卡组");
+        setSysTextOn(btnConfirm, 1211, "确定");
+        setSysTextOn(btnCancel, 1210, "退出");
+    }
+
+    private void setSysText(View root, int viewId, int sysIdx, String def) {
+        View v = root.findViewById(viewId);
+        if (v instanceof TextView) setSysTextOn((TextView) v, sysIdx, def);
+    }
+
+    private void setSysTextOn(TextView tv, int sysIdx, String def) {
+        if (tv != null) tv.setText(mStringManager.getSystemString(sysIdx, def));
+    }
+
+    /** 半宽三页签专用页签视图：显式应用 styles.xml 的 bot_duel_tab_layout 文字外观
+     * （字号/加粗/非全大写均由该样式决定），颜色仍随选中态切换白/grayDark2 */
+    private TextView makeTabView(CharSequence label) {
+        TextView tv = new TextView(context);
+        tv.setText(label);
+        // 自定义页签视图绕开了 Material 的 tabTextAppearance 机制，故在此显式把样式应用到 TextView，
+        // 使 bot_duel_tab_layout 真正生效（改样式即可统一调字号，无需再动本代码）
+        tv.setTextAppearance(context, R.style.bot_duel_tab_layout);
+        tv.setGravity(Gravity.CENTER);
+        int[][] states = new int[][]{{android.R.attr.state_selected}, new int[]{}};
+        int[] colors = new int[]{YGOUtil.c(R.color.white), YGOUtil.c(R.color.grayDark2)};
+        tv.setTextColor(new ColorStateList(states, colors));
+        return tv;
     }
 
     private void loadLastDeckInfo(Button btnSelectDeck) {
@@ -442,6 +568,36 @@ public class SingleModeDialog {
             @Override
             public void onStartSingleMode(String luaFilePath, boolean noShuffleToDeck) {
                 activity.getEngine().startSingleMode(luaFilePath, noShuffleToDeck);
+            }
+
+            @Override
+            public void onStartSoloHost(int lflist, int cardAllowed, int modeIdx, int duelRule,
+                                        int startLP, int startHand, int drawCount, int timeLimit,
+                                        boolean noCheckDeck, boolean noShuffleDeck) {
+                GameEngine engine = activity.getEngine();
+                engine.setPlayerName(Constants.PlayerName);
+                // soloMode 编码到 mode bit4(0x10)，服务端 GameRoom.createGame 从 hostInfo.soloMode() 读取，
+                // 同一连接归位 players[0]==players[1]（对齐 MainMenuNavigator.onCreateHostConfirmed 纯单人分支）
+                engine.soloMode = true;
+                int modeWithSolo = modeIdx | 0x10;
+                engine.startLocalServerWithSettings(lflist, cardAllowed, modeWithSolo, duelRule,
+                        noCheckDeck, noShuffleDeck,
+                        startLP, startHand, drawCount, timeLimit,
+                        "Solo Game", "");
+                // 房主已掌握全部房间设置：预写入引擎缓存并置 hasJoinRoomInfoCache，
+                // 使等待界面就绪即刷新房间设置显示（无需等后台引导环回）
+                engine.gameLflist = lflist;
+                engine.gameRule = cardAllowed;
+                engine.gameMode = modeIdx;
+                engine.gameNoCheckDeck = noCheckDeck ? 1 : 0;
+                engine.gameNoShuffleDeck = noShuffleDeck ? 1 : 0;
+                engine.gameStartLp = startLP;
+                engine.gameStartHand = startHand;
+                engine.gameDrawCount = drawCount;
+                engine.gameTimeLimit = timeLimit;
+                engine.hasJoinRoomInfoCache = true;
+                // 进入玩家等待界面（房主 + solo UI 开）
+                PlayerWaitingDialog.showPlayerWaitingForSoloHost(activity);
             }
         });
         dialog.show(activity.getDialogContainer(), botList, puzzleList);

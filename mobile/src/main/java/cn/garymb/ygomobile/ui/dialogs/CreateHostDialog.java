@@ -294,6 +294,15 @@ public class CreateHostDialog {
 
     private void setupSpinners(Spinner spinnerBanlist, Spinner spinnerRule,
                                Spinner spinnerCardAllowed, Spinner spinnerDuelMode) {
+        configureSpinners(context, spinnerBanlist, spinnerRule, spinnerCardAllowed, spinnerDuelMode);
+    }
+
+    /**
+     * 建主/纯单人共用的下拉初始化：禁限卡表(按 Genesys 模式取表名)、规则(默认大师规则2020)、
+     * 卡片允许(默认 OCG)、决斗模式(默认单局)。抽出为静态以便 SingleModeDialog 纯单人页复用。
+     */
+    public static void configureSpinners(Context ctx, Spinner spinnerBanlist, Spinner spinnerRule,
+                                         Spinner spinnerCardAllowed, Spinner spinnerDuelMode) {
         LimitManager limitManager = DataManager.get().getLimitManager();
 
         List<SimpleSpinnerItem> banlistItems = new ArrayList<>();
@@ -308,7 +317,7 @@ public class CreateHostDialog {
             banlistItems.add(new SimpleSpinnerItem(banlistItems.size(), limitName));
         }
 
-        SimpleSpinnerAdapter banlistAdapter = new SimpleSpinnerAdapter(context);
+        SimpleSpinnerAdapter banlistAdapter = new SimpleSpinnerAdapter(ctx);
         banlistAdapter.setColor(Color.WHITE);
         banlistAdapter.setDropDownBackgroundColor(YGOUtil.c(R.color.ygopro_list_background));
         banlistAdapter.set(banlistItems);
@@ -333,7 +342,7 @@ public class CreateHostDialog {
         ruleItems.add(new SimpleSpinnerItem(3, mStringManager.getSystemString(1263, "新大师规则（2017）")));
         ruleItems.add(new SimpleSpinnerItem(4, mStringManager.getSystemString(1264, "大师规则（2020）")));
 
-        SimpleSpinnerAdapter ruleAdapter = new SimpleSpinnerAdapter(context);
+        SimpleSpinnerAdapter ruleAdapter = new SimpleSpinnerAdapter(ctx);
         ruleAdapter.setColor(Color.WHITE);
         ruleAdapter.setDropDownBackgroundColor(YGOUtil.c(R.color.ygopro_list_background));
         ruleAdapter.set(ruleItems);
@@ -350,7 +359,7 @@ public class CreateHostDialog {
         cardAllowedItems.add(new SimpleSpinnerItem(4, mStringManager.getSystemString(1485, "无独有卡")));
         cardAllowedItems.add(new SimpleSpinnerItem(5, mStringManager.getSystemString(1486, "所有卡片")));
 
-        SimpleSpinnerAdapter cardAllowedAdapter = new SimpleSpinnerAdapter(context);
+        SimpleSpinnerAdapter cardAllowedAdapter = new SimpleSpinnerAdapter(ctx);
         cardAllowedAdapter.setColor(Color.WHITE);
         cardAllowedAdapter.setDropDownBackgroundColor(YGOUtil.c(R.color.ygopro_list_background));
         cardAllowedAdapter.set(cardAllowedItems);
@@ -363,7 +372,7 @@ public class CreateHostDialog {
         duelModeItems.add(new SimpleSpinnerItem(1, mStringManager.getSystemString(1245, "比赛模式")));
         duelModeItems.add(new SimpleSpinnerItem(2, mStringManager.getSystemString(1246, "TAG")));
 
-        SimpleSpinnerAdapter duelModeAdapter = new SimpleSpinnerAdapter(context);
+        SimpleSpinnerAdapter duelModeAdapter = new SimpleSpinnerAdapter(ctx);
         duelModeAdapter.setColor(Color.WHITE);
         duelModeAdapter.setDropDownBackgroundColor(YGOUtil.c(R.color.ygopro_list_background));
         duelModeAdapter.set(duelModeItems);

@@ -1506,4 +1506,24 @@ public class PlayerWaitingDialog {
             dialog.setPlayerName(0, playerName);
 		});
     }
+
+    /**
+     * 纯单人模式(左右互搏)建主后进入玩家等待界面（房主）：与人机主机入口同形，
+     * 额外据 engine.soloMode 开关 solo UI（选择对方卡组），对齐 MainMenuNavigator.showPlayerWaiting。
+     */
+    public static void showPlayerWaitingForSoloHost(YGOProActivity activity) {
+        activity.hideGameUI();
+        final String playerName = Constants.PlayerName;
+        View anchor = activity.getDialogContainer();
+        anchor.post(() -> {
+            if (activity.isFinishing() || activity.isDestroyed()) return;
+            PlayerWaitingDialog dialog = new PlayerWaitingDialog(activity, activity.getPlayerWaitingListener());
+            activity.setPlayerWaitingDialog(dialog);
+            dialog.setOnDismissListener(() -> activity.getMainMenuDialog().restoreMainMenu());
+            dialog.show(anchor);
+            dialog.setPlayerName(0, playerName);
+            final cn.garymb.ygomobile.game.GameEngine engine = activity.getEngine();
+            dialog.setSoloMode(engine != null && engine.soloMode);
+        });
+    }
 }
