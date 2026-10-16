@@ -512,8 +512,8 @@
     <string name="quality_high">高</string>
     <string name="settings_opengl_version">OpenGL版本</string>
     <string name="settings_screen_padding_summary">瀑布螢幕邊距</string>
-    <string name="settings_native_game_mode">原生UI遊戲模式</string>
-    <string name="settings_native_game_mode_summary">使用 Android 原生 UI 代替 Irrlicht 引擎（實驗性）</string>
+    <string name="settings_native_game_mode">原生 UI 遊戲模式</string>
+    <string name="settings_native_game_mode_summary">比原版有更多新功能</string>
     <string name="solo_mode">純單人模式</string>
 
     <!-- System Strings for UI Localization (index 1740+) -->

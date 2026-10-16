@@ -509,7 +509,7 @@
     <string name="settings_opengl_version">Versión de OpenGL</string>
     <string name="settings_screen_padding_summary">Margen de pantalla</string>
     <string name="settings_native_game_mode">Modo de juego UI nativa</string>
-    <string name="settings_native_game_mode_summary">Usa la interfaz nativa de Android en lugar del motor Irrlicht (experimental)</string>
+    <string name="settings_native_game_mode_summary">Más funciones que la versión original</string>
 
     <!-- System Strings for UI Localization (index 1740+) -->
     <string name="spectator_skip_to_current">Al actual</string>

@@ -528,7 +528,7 @@
     <string name="settings_opengl_version">OpenGL 버전</string>
     <string name="settings_screen_padding_summary">화면 여백</string>
     <string name="settings_native_game_mode">네이티브 UI 게임 모드</string>
-    <string name="settings_native_game_mode_summary">Irrlicht 엔진 대신 Android 네이티브 UI 사용 (실험적)</string>
+    <string name="settings_native_game_mode_summary">원본보다 더 많은 새로운 기능</string>
 
     <!-- System Strings for UI Localization (index 1740+) -->
     <string name="spectator_skip_to_current">현재로 이동</string>

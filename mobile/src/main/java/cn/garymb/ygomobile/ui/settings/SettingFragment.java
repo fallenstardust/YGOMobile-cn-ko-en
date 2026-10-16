@@ -131,6 +131,7 @@ public class SettingFragment extends BaseFragemnt implements View.OnClickListene
     private boolean updatingUi = false;
 
     private View rootView;
+    private View llYgoproJniSettings;
     private Switch swReadEx, swDuelAssistant, swImmersive, swLockScreen, swAntiAlias, swPendulum, swNativeGame;
     private TextView tvVersionInfo, tvOpenGLValue, tvPaddingValue;
     private TextView btnQualityLow, btnQualityHigh;
@@ -219,6 +220,7 @@ public class SettingFragment extends BaseFragemnt implements View.OnClickListene
         swAntiAlias = view.findViewById(R.id.switch_font_antialias);
         swPendulum = view.findViewById(R.id.switch_pendulum);
         swNativeGame = view.findViewById(R.id.switch_native_game);
+        llYgoproJniSettings = view.findViewById(R.id.ll_ygopro_jni_settings);
         swReadEx.setOnCheckedChangeListener(this::onSwitchChanged);
         swDuelAssistant.setOnCheckedChangeListener(this::onSwitchChanged);
         swImmersive.setOnCheckedChangeListener(this::onSwitchChanged);
@@ -259,7 +261,8 @@ public class SettingFragment extends BaseFragemnt implements View.OnClickListene
         setSwitch(swAntiAlias, mSettings.isFontAntiAlias());
         setSwitch(swPendulum, mSettings.isPendulumScale());
         setSwitch(swNativeGame, mSettings.isNativeGameMode());
-        //OpenGL与瀑布屏边距
+        updateJniSettingsVisibility();
+        //OpenGL 与瀑布屏边距
         String[] oglEntries = getResources().getStringArray(R.array.opengl_version);
         int ogl = Constants.PREF_DEF_OPENGL_VERSION;
         try {
@@ -423,6 +426,17 @@ public class SettingFragment extends BaseFragemnt implements View.OnClickListene
             setPendlumScale(checked);
         } else if (id == R.id.switch_native_game) {
             putPrefBool(PREF_NATIVE_GAME_MODE, checked);
+            updateJniSettingsVisibility();
+        }
+    }
+
+    /**
+     * 根据原生 UI 游戏模式开关状态，显示/隐藏 JNI 设置项
+     */
+    private void updateJniSettingsVisibility() {
+        if (llYgoproJniSettings != null) {
+            boolean nativeGameMode = mSettings.isNativeGameMode();
+            llYgoproJniSettings.setVisibility(nativeGameMode ? View.GONE : View.VISIBLE);
         }
     }
 

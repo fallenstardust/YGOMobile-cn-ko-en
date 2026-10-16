@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="StringFormatInvalid">
     <string name="action_settings">設定</string>
     <string name="action_game">AI対戦</string>
@@ -512,7 +512,7 @@
     <string name="settings_opengl_version">OpenGL バージョン</string>
     <string name="settings_screen_padding_summary">画面の余白</string>
     <string name="settings_native_game_mode">ネイティブUIゲームモード</string>
-    <string name="settings_native_game_mode_summary">Irrlichtエンジンの代わりにAndroidネイティブUIを使用（試験的）</string>
+    <string name="settings_native_game_mode_summary">原版より多くの新機能</string>
 
     <!-- System Strings for UI Localization (index 1740+) -->
     <string name="spectator_skip_to_current">現在へ移動</string>
