@@ -143,8 +143,8 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
     }
 
     @Override
-    public void onFlipSummoning(int code, int controler, int location, int sequence) {
-        engine.summonAnim.onFlipSummoning(code, controler, location, sequence);
+    public void onFlipSummoning(int code, int controler, int location, int sequence, int position) {
+        engine.summonAnim.onFlipSummoning(code, controler, location, sequence, position);
     }
 
     // ==== 场地事件实现 ====
@@ -658,6 +658,9 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
         }
         String atkName = atkCard != null ? DataManager.get().getName(atkCard.code) : "";
         boolean skipArc = engine.field.instantPlace; // 回放快进重排：不写弧线、不持闸
+        /** 战斗阶段点击「攻击宣言」选中的怪兽：cmdFlag 已清空但尚未进入 arcAttacker 前需隐藏其 attack 箭头；
+         *   该卡通讯中还有剩余攻击次数时会重新显示（见 CardOverlayRenderer.drawFieldCardOverlays 对 selectAttacking 的判断）。 */
+        engine.field.selectAttacking = atkCard;
         if (dLoc != 0) {
             engine.soundManager.playSoundEffect(SoundManager.SFX.ATTACK);
             GameField.ClientCard defCard = engine.field.getCard(engine.localPlayer(dCtrl & 1), dLoc & 0x7f, dSeq);
@@ -668,6 +671,8 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
                 engine.field.arcAttacker = atkCard;
                 engine.field.arcTarget = defCard;
                 engine.field.arcStartMs = System.currentTimeMillis();
+                // selectAttacking 已移入 arcAttacker，立即清零
+                engine.field.selectAttacking = null;
             }
         } else {
             engine.soundManager.playSoundEffect(SoundManager.SFX.DIRECT_ATTACK);
@@ -677,6 +682,8 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
                 engine.field.arcAttacker = atkCard;
                 engine.field.arcTarget = null;
                 engine.field.arcStartMs = System.currentTimeMillis();
+                // selectAttacking 已移入 arcAttacker，立即清零
+                engine.field.selectAttacking = null;
             }
         }
         // 对齐 duelclient.cpp MSG_ATTACK L3864 WaitFrameSignal(40)：弧光展示期内关闭闸门，

@@ -332,7 +332,23 @@ public class GameField {
             }
             if ((flag & QUERY_POSITION) != 0 && buf.remaining() >= 4) {
                 int pdata = (buf.getInt() >> 24) & 0xff;
-                position = pdata;
+                /** 翻转召唤/位置变更：position 改变需强制客户端重置动画插值状态并重绘。
+                 *   旧实现仅写 position，未清除动画字段，导致卡片仍沿用旧 curRotX/curRotY
+                 *   插值结果渲染（如仍显示里侧守备），玩家误以为操作未生效；此处清动画
+                 *   字段可让 buildCardModel 立即用新姿态计算正确旋转角。 */
+                if (position != pdata && code > 0) {
+                    position = pdata;
+                    /** 重置动画插值起点/终点与帧数，确保下帧立即用新姿态目标值，不继续旧动画 */
+                    animFromX = animToX = curX;
+                    animFromY = animToY = curY;
+                    animFromZ = animToZ = curZ;
+                    animFromRotX = animToRotX = dRotX;
+                    animFromRotY = animToRotY = dRotY;
+                    animFromRotZ = animToRotZ = dRotZ;
+                    animTotalFrame = 0;
+                } else {
+                    position = pdata;
+                }
             }
             if ((flag & QUERY_ALIAS) != 0 && buf.remaining() >= 4) alias = buf.getInt();
             if ((flag & QUERY_TYPE) != 0 && buf.remaining() >= 4) type = buf.getInt();
@@ -582,6 +598,9 @@ public class GameField {
     public volatile ClientCard arcAttacker;
     public volatile ClientCard arcTarget;
     public volatile long arcStartMs;
+
+    /** 战斗阶段点击「攻击宣言」选中的怪兽：cmdFlag 已清空但尚未进入 arcAttacker 前需隐藏其 attack 箭头；该卡通讯中还有剩余攻击次数时会重新显示（见 CardOverlayRenderer.drawFieldCardOverlays）。 */
+    public volatile ClientCard selectAttacking;
 
     public List<ClientCard> selectableCards = new ArrayList<>();
     public List<ClientCard> selectedCards = new ArrayList<>();

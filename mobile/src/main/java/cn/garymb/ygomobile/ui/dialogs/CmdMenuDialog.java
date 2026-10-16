@@ -336,7 +336,15 @@ public class CmdMenuDialog {
             if (idx >= 0) {
                 options.add(sysString(SYS_ATTACK));
                 final int attackIdx = idx;
-                actions.add(() -> activity.sendResponseInt((attackIdx << 16) + 1));
+                // 点击「攻击宣言」瞬间即把攻击者写入 selectAttacking：覆盖「CMD 应答 → 玩家选攻击对象 →
+                // 服务端下发 MSG_ATTACK」这段时间窗口，让 CardOverlayRenderer 立刻抑制该卡上的
+                // attack.png 浮动箭头（对齐用户反馈：绿色攻击弧动画出现时 attack 箭头须同步隐藏）。
+                // MSG_ATTACK 到达后由 DuelEventHandler.onAttack 无缝接续，转入 arcAttacker 后清零。
+                final GameField.ClientCard atkCard = card;
+                actions.add(() -> {
+                    engine.field.selectAttacking = atkCard;
+                    activity.sendResponseInt((attackIdx << 16) + 1);
+                });
             }
         }
 
@@ -448,7 +456,14 @@ public class CmdMenuDialog {
             if (idx >= 0) {
                 options.add(sysString(SYS_ATTACK));
                 final int attackIdx = idx;
-                actions.add(() -> activity.sendResponseInt((attackIdx << 16) + 1));
+                // 与 buildCardCommandMenu 中「攻击宣言」一致：应答瞬间先置位 selectAttacking，
+                // 让攻击者卡上的 attack.png 在选择攻击对象窗口期就已隐藏，MSG_ATTACK 到达后
+                // 由 arcAttacker 接续抑制。
+                final GameField.ClientCard atkCard = card;
+                actions.add(() -> {
+                    engine.field.selectAttacking = atkCard;
+                    activity.sendResponseInt((attackIdx << 16) + 1);
+                });
             }
         }
 

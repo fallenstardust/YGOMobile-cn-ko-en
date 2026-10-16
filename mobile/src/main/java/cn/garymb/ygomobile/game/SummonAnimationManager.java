@@ -71,12 +71,32 @@ public class SummonAnimationManager {
         if (code != 0) postSummonAnimation(code, SUMMON_SPECIAL);
     }
 
-    public void onFlipSummoning(int code, int ctrl, int loc, int seq) {
+    public void onFlipSummoning(int code, int ctrl, int loc, int seq, int position) {
         // duelclient.cpp MSG_FLIPSUMMONING L3312-3313：先试召唤主题歌，无对应曲目才回退 flip 音效
         if (!engine.soundManager.playChant(code))
             engine.soundManager.playSoundEffect(SoundManager.SFX.FLIP);
         // duelclient.cpp MSG_FLIPSUMMONING L3314-3320：event_string=sys1607「[%ls]反转召唤中」+ showcard=7（翻面进入）
         engine.hintManager.setEventString(1607, "[%s]反转召唤中", DataManager.get().getName(code));
+        
+        // 获取卡片并更新位置和代码，触发翻转动画（对齐 C++ duelclient.cpp MSG_FLIPSUMMONING L3307-3318：
+        // pcard->SetCode(code); pcard->position = cp; mainGame->dField.MoveCard(pcard, 10)）。
+        // ctrl 必须先经 localPlayer 换算为本地视角座位再查卡——GameField.getCard 接收的是本地 controler，
+        // 与 MoveEventApplier.applyPosChange（同为里侧翻开/攻守互转的翻面动画权威实现）同一套映射；
+        // 旧实现直接用协议原始 ctrl 查找，本方非先攻（或观战/换边）时 pcard 取空 → 整个翻转分支被跳过，
+        // 卡片既不翻开也不改变矩形（背面横向 → 正面纵向）。
+        int localCtrl = engine.localPlayer(ctrl & 1);
+        GameField.ClientCard pcard = engine.field.getCard(localCtrl, loc & 0x7f, seq);
+        if (pcard != null) {
+            pcard.setCode(code);
+            pcard.position = position;  // 设置新位置（POS_FACEUP_ATTACK/DEFENSE 等）
+            // getCardLocation 依新 position 求目标姿态：里侧翻开 curRotY、攻守互转 curRotZ，
+            // 播放横向卡背翻为纵向正面的转动动画（frame=10 与 C++ 一致）
+            engine.field.moveCard(pcard, 10);
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onFieldChanged();
+            });
+        }
+        
         postSummonAnimation(code, SUMMON_FLIP);
     }
 }

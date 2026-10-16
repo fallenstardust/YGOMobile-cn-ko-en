@@ -186,6 +186,15 @@ final class CardOverlayRenderer {
                 hideAttackCard = f.arcAttacker;
                 hideAttackTarget = f.arcTarget;
             }
+        } else if (f.arcAttacker == null && f.selectAttacking != null) {
+            /** 战斗阶段点击「攻击宣言」选中的怪兽：cmdFlag 已清空但尚未进入 arcAttacker，
+             *   此时应立即隐藏其 attack.png 浮动箭头，避免玩家误以为可继续宣言多次攻击（用户反馈）。 */
+            hideAttackCard = f.selectAttacking;
+        }
+        /** 关键修复：已选定为攻击目标的对方怪兽（arcTarget），无论弧是否启动，都应立即隐藏
+         *   其 attack.png 浮动箭头——箭头只应标记攻击者，不应出现在目标卡上（用户反馈核心点）。 */
+        if (f.arcTarget != null) {
+            hideAttackTarget = f.arcTarget;
         }
         boolean mr4 = f.dInfo.duelRule >= 4;
         // 对方战斗阶段（攻击宣言窗口 BATTLE_START/BATTLE_STEP）：服务端不会把对方的 battle cmd
@@ -538,13 +547,13 @@ final class CardOverlayRenderer {
         // 处一并把 arcAttacker 归零，导致这次攻击的绿色弧被永久清除（是否触发取决于消息与帧的
         // 时序运气，表现为某些攻击/某些格子的弧随机不显示）。负值按 0 进度继续绘制，仅真正超时才清弧。
         if (elapsed < 0) elapsed = 0;
-        // 攻击弧显示期间攻击者的 tAttack(attack.png) 浮动箭头我方/对方都绘制——
-        // 对方攻击手收不到 battle cmd（cmdFlag 恒为 0），此处统一补绘；overlayCardStatus
-        // 已用 hideAttackCard 抑制该卡常规绘制，避免我方攻击手重复叠加。
-        try {
-            drawAttackIcon(atk);
-        } catch (Throwable ignored) {
-        }
+        // 攻击弧显示期间：攻击者的 tAttack(attack.png) 浮动箭头必须立即隐藏，不再在此补绘。
+        // 用户反馈核心点：绿色箭头动画（攻击弧）出现时 attack 攻击箭头应同步消失，
+        // 避免攻击者卡上同时出现「弧形绿箭头 + 上下浮动的 attack.png」两重攻击标记。
+        // 旧实现为对方攻击手 cmdFlag 恒为 0 补绘，现已改为攻击者由 CMD_MENU 点击
+        // 「攻击宣言」的瞬间写入 selectAttacking（见 CmdMenuDialog），overlayCardStatus
+        // 已经据 hideAttackCard 抑制常规绘制，无需在此处重绘。
+        // （旧代码：try { drawAttackIcon(atk); } catch (Throwable ignored) {}）
         // 弧线端点（渲染空间，X 已镜像）。有目标取目标卡当前坐标；直接攻击落到
         // 被攻击方一侧的固定点（duelclient.cpp L3850-3853：xd=场地中心 3.95，yd=ca==0?-3.5:3.5）。
         // 两端点均随攻击者 curX/curY 变化，故箭头角度天然随格子与目标实时改变。

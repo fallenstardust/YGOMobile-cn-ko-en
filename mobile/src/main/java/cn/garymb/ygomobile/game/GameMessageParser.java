@@ -71,7 +71,7 @@ public class GameMessageParser {
         void onSummoned();
         void onSpSummoning(int code, int controler, int location, int sequence);
         void onSpSummoned();
-        void onFlipSummoning(int code, int controler, int location, int sequence);
+        void onFlipSummoning(int code, int controler, int location, int sequence, int position);
         void onFlipSummoned();
         void onChaining(int code, int pcc, int pcl, int pcs, int subs, int cc, int cl, int cs, int desc);
         void onChained(int chainCount);
@@ -345,8 +345,8 @@ public class GameMessageParser {
                 int ctrl = buf.get() & 0xFF;
                 int loc = buf.get() & 0xFF;
                 int seq = buf.get() & 0xFF;
-                buf.get(); // position
-                handler.onFlipSummoning(code, ctrl, loc, seq);
+                int pos = buf.get() & 0xFF;  // 读取反转召唤后的新位置
+                handler.onFlipSummoning(code, ctrl, loc, seq, pos);
                 break;
             }
             case Summoned:
