@@ -76,6 +76,12 @@ public class SettingsDialog {
     private void bindInstantSave(AppsSettings appsSettings, CheckBox chk, String key) {
         chk.setOnCheckedChangeListener((buttonView, isChecked) -> {
             appsSettings.saveIntSettings(key, isChecked ? 1 : 0);
+            // 交换按钮位置设置变化时，刷新所有已显示的 YesOrNoDialog
+            if ("swapButtonPositions".equals(key)) {
+                for (YesOrNoDialog dialog : YesOrNoDialog.snapshotShowingDialogs()) {
+                    dialog.refreshSwapButtonPositions();
+                }
+            }
             notifySettingsChanged();
         });
     }
@@ -144,6 +150,8 @@ public class SettingsDialog {
         chkMuteSpectators.setText(stringManager.getSystemString(1291, ""));
         CheckBox chkDisableChatting = rootLayout.findViewById(R.id.chkDisableChatting);
         chkDisableChatting.setText(stringManager.getSystemString(1290, ""));
+        CheckBox chkSwapYesNoButtons = rootLayout.findViewById(R.id.chkSwapYesNoButtons);
+        chkSwapYesNoButtons.setText(stringManager.getSystemString(1388, ""));
         CheckBox chkAutoSaveReplay = rootLayout.findViewById(R.id.chkAutoSaveReplay);
         chkAutoSaveReplay.setText(stringManager.getSystemString(1366, ""));
         CheckBox chkSwitchBGM = rootLayout.findViewById(R.id.chkSwitchBGM);
@@ -156,6 +164,9 @@ public class SettingsDialog {
         SeekBar seekbarMusic = rootLayout.findViewById(R.id.seekbar_music);
         ImageButton btnCancel = rootLayout.findViewById(R.id.btn_cancel);
 
+        // 交换正负按钮位置：Yes/No Dialog 左边显示"否"右边显示"是"
+        String swapButtonText = stringManager.getSystemString(1388, "Swap Yes/No button positions");
+        
         chkMAutoPos.setChecked(appsSettings.getIntSettings("chkMAutoPos", 0) == 1);
         chkSTAutoPos.setChecked(appsSettings.getIntSettings("chkSTAutoPos", 0) == 1);
         chkRandomPos.setChecked(appsSettings.getIntSettings("chkRandomPos", 0) == 1);
@@ -169,13 +180,14 @@ public class SettingsDialog {
         chkGenesysMode.setChecked(appsSettings.getGenesysMode() == 1);
         chkMuteSpectators.setChecked(appsSettings.getIntSettings("chkMuteSpectators", 0) == 1);
         chkDisableChatting.setChecked(appsSettings.getIntSettings("chkDisableChatting", 0) == 1);
+        chkSwapYesNoButtons.setChecked(appsSettings.getIntSettings("swapButtonPositions", 0) == 1);
         chkAutoSaveReplay.setChecked(appsSettings.getIntSettings("chkAutoSaveReplay", 0) == 1);
         chkSwitchBGM.setChecked(appsSettings.getIntSettings("chkSwitchBGM", 1) == 1);
         chkEnableSound.setChecked(appsSettings.getIntSettings("chkEnableSound", 1) == 1);
         seekbarSound.setProgress(appsSettings.getIntSettings("soundVolume", 50));
         chkEnableMusic.setChecked(appsSettings.getIntSettings("chkEnableMusic", 1) == 1);
         seekbarMusic.setProgress(appsSettings.getIntSettings("musicVolume", 50));
-        // 禁卡表开关按当前模式读取use_lflist/use_genesys_lflist，默认值为1
+        // 禁卡表开关按当前模式读取 use_lflist/use_genesys_lflist，默认值为 1
         chkBanList.setChecked(appsSettings.getIntSettings(
                 appsSettings.getGenesysMode() == 1 ? "use_genesys_lflist" : "use_lflist", 1) == 1);
 
@@ -192,6 +204,7 @@ public class SettingsDialog {
         bindInstantSave(appsSettings, chkDrawSingleChain, "draw_single_chain");
         bindInstantSave(appsSettings, chkMuteSpectators, "chkMuteSpectators");
         bindInstantSave(appsSettings, chkDisableChatting, "chkDisableChatting");
+        bindInstantSave(appsSettings, chkSwapYesNoButtons, "swapButtonPositions");
         bindInstantSave(appsSettings, chkAutoSaveReplay, "chkAutoSaveReplay");
         bindInstantSave(appsSettings, chkSwitchBGM, "chkSwitchBGM");
         bindInstantSave(appsSettings, chkEnableSound, "chkEnableSound");
@@ -226,6 +239,8 @@ public class SettingsDialog {
                 notifySettingsChanged();
             }
         });
+        
+        // 监听器注册完毕后再添加到布局容器中：swapButtonPositions 默认值 0（不互换）
 
         LimitManager limitManager = DataManager.get().getLimitManager();
         List<String> currentBanListNames = new ArrayList<>();

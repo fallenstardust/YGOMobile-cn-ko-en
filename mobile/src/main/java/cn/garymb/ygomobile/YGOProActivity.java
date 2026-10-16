@@ -1453,6 +1453,7 @@ public class YGOProActivity extends AppCompatActivity {
         // 避免多次点击堆叠出多个投降确认对话框（用户规格）
         if (surrenderDialog != null && surrenderDialog.isShowing()) return;
         YesOrNoDialog dialog = new YesOrNoDialog(this);
+        boolean swapPos = AppsSettings.get().getIntSettings("swapButtonPositions", 0) == 1;
         dialog.setTitle(mStringManager.getSystemString(1351, "投降"))
                 .setMessage(mStringManager.getSystemString(1359, "是否确定投降？"))
                 .setType(YesOrNoDialog.TYPE_YES_NO)
@@ -1466,7 +1467,8 @@ public class YGOProActivity extends AppCompatActivity {
                 .setOnDismissListener(() -> {
                     // 对话框消失后清空引用，重新放行下一次投降点击
                     if (surrenderDialog == dialog) surrenderDialog = null;
-                });
+                })
+                .setSwapButtonPositions(swapPos);
         surrenderDialog = dialog;
         dialog.show();
     }

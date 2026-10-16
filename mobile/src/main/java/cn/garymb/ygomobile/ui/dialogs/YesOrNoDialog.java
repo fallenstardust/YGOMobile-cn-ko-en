@@ -75,7 +75,7 @@ public class YesOrNoDialog {
     private View.OnClickListener positiveListener;
     private View.OnClickListener negativeListener;
     private OnDismissListener dismissListener;
-
+    
     private boolean cancelable = true;
     private View contentView;
     private View customContentView;
@@ -89,6 +89,8 @@ public class YesOrNoDialog {
     private int cardCode = 0;
     // 链式询问的卡片列表
     private List<CardChainItem> chainCards = null;
+    // 是否启用左右互换「是/否」按钮位置（用户规格）
+    private boolean swapButtonPositions = false;
 
     public interface OnDismissListener {
         void onDismiss();
@@ -236,12 +238,18 @@ public class YesOrNoDialog {
         return this;
     }
 
-    /** 预设为“是/否询问”样式（对齐 gframe wQuery）：TYPE_YES_NO + 按钮“是”/“否” + 不可取消。 */
+    /** 预设为"是/否询问"样式（对齐 gframe wQuery）：TYPE_YES_NO + 按钮"是"/"否" + 不可取消。 */
     public YesOrNoDialog asYesNo() {
         return setType(TYPE_YES_NO)
                 .setPositiveButtonText(sysText(1213, "是"))
                 .setNegativeButtonText(sysText(1214, "否"))
                 .setCancelable(false);
+    }
+    
+    /** 是否启用左右互换「是/否」按钮位置，启用后左边显示"否"右边显示"是"（用户规格）*/
+    public YesOrNoDialog setSwapButtonPositions(boolean swap) {
+        this.swapButtonPositions = swap;
+        return this;
     }
 
     /** 将 message 中出现的卡名按卡片类型着色，返回可显示的 CharSequence */
@@ -424,7 +432,6 @@ public class YesOrNoDialog {
         TextView tvTitle = root.findViewById(R.id.tv_yes_no_title);
         ScrollView scrollView = root.findViewById(R.id.yes_no_scroll);
         TextView tvMessage = root.findViewById(R.id.tv_yes_no_message);
-        FrameLayout customContainer = root.findViewById(R.id.yes_no_custom_content);
         LinearLayout buttonArea = root.findViewById(R.id.yes_no_button_area);
         Button btnPositive = root.findViewById(R.id.btn_yes_no_positive);
         Button btnNegative = root.findViewById(R.id.btn_yes_no_negative);
@@ -450,34 +457,22 @@ public class YesOrNoDialog {
         // 回退按消息文本首个 [XXX] 卡名解析攻击者卡码，使左侧仍显示其卡图
         int effectiveCardCode = cardCode > 0 ? cardCode : firstBracketedCardCode(
                 message != null ? message.toString() : null);
-        boolean showCardImage = customContentView == null && effectiveCardCode > 0
-                && cardNameInMessage(effectiveCardCode);
-        if (customContentView != null) {
-            scrollView.setVisibility(View.GONE);
-            cardImageView.setVisibility(View.GONE);
-            customContainer.setVisibility(View.VISIBLE);
-            customContainer.addView(customContentView, new FrameLayout.LayoutParams(
-                    FrameLayout.LayoutParams.MATCH_PARENT,
-                    FrameLayout.LayoutParams.MATCH_PARENT));
+        boolean showCardImage = effectiveCardCode > 0 && cardNameInMessage(effectiveCardCode);
+        if (showCardImage) {
+            cardImageView.setVisibility(View.VISIBLE);
+            new ImageLoader().bindImage(cardImageView, effectiveCardCode, ImageLoader.Type.small);
+            bindCardDetailClick(cardImageView, effectiveCardCode);
         } else {
-            tvMessage.setText(colorizeBracketedCardNames(message));
-            if (messageBgColor != 0) {
-                tvMessage.setBackgroundColor(messageBgColor);
-            }
-            if (messageGravity != -1) {
-                tvMessage.setGravity(messageGravity);
-            }
-
-            // 召唤/反转召唤/特殊召唤/效果发动等含 [%ls] 卡名的询问：
-            // 消息行左侧 iv_yes_no_card_image 显示该卡片图案，点击可看卡片详情
-            if (showCardImage) {
-                cardImageView.setVisibility(View.VISIBLE);
-                new ImageLoader().bindImage(cardImageView, effectiveCardCode, ImageLoader.Type.small);
-                bindCardDetailClick(cardImageView, effectiveCardCode);
-            } else {
-                cardImageView.setVisibility(View.GONE);
-                bindCardDetailClick(cardImageView, 0);
-            }
+            cardImageView.setVisibility(View.GONE);
+            bindCardDetailClick(cardImageView, 0);
+        }
+                
+        tvMessage.setText(colorizeBracketedCardNames(message));
+        if (messageBgColor != 0) {
+            tvMessage.setBackgroundColor(messageBgColor);
+        }
+        if (messageGravity != -1) {
+            tvMessage.setGravity(messageGravity);
         }
 
         // ── Chain cards list area ─────────────────────────────────
@@ -493,21 +488,18 @@ public class YesOrNoDialog {
                 if (!seenChainCards.add(cardKey)) continue;
 
                 View cardItemView = LayoutInflater.from(DialogScale.wrap(context))
-                    .inflate(R.layout.item_chain_card, chainCardList, false);
+                        .inflate(R.layout.item_chain_card, chainCardList, false);
 
                 ImageView ivCard = cardItemView.findViewById(R.id.iv_chain_card_image);
                 TextView tvPos = cardItemView.findViewById(R.id.tv_chain_card_position);
 
-                // 卡片图案 + 所在区域文本，点击卡片项可看详情
                 chainImageLoader.bindImage(ivCard, item.code, ImageLoader.Type.middle);
                 tvPos.setText(getLocationText(item.location, item.sequence));
                 bindCardDetailClick(cardItemView, item.code);
 
                 chainCardList.addView(cardItemView);
             }
-            // 连锁列表从消息行摘除、独立成一行：放在内容区（消息行所在纵向 LinearLayout）
-            // 下方、按钮区上方全宽展示。弹窗仅 280dp 宽，若与卡图/消息挤在同一水平行，
-            // 列表可用宽度被压到几乎不可见（即用户反馈的“连锁列表没显示”），故统一拆行
+            // 连锁列表独立成一行：放在内容区（消息行所在纵向 LinearLayout）下方、按钮区上方全宽展示
             LinearLayout contentBlock = (LinearLayout) contentRow.getParent();
             if (chainCardsScrollView.getParent() == contentRow) {
                 contentRow.removeView(chainCardsScrollView);
@@ -519,12 +511,8 @@ public class YesOrNoDialog {
                 chainLp.topMargin = (int) (4 * density);
                 contentBlock.addView(chainCardsScrollView, chainLp);
             }
-            // 自定义内容（列表窗）时消息行的卡图/消息均已隐藏且列表已拆行，消息行为空壳 → 隐藏
-            if (customContentView != null) contentRow.setVisibility(View.GONE);
         } else {
             chainCardsScrollView.setVisibility(View.GONE);
-            // 自定义内容且无连锁列表：消息行已无可见子视图，隐藏空壳行避免留白
-            if (customContentView != null) contentRow.setVisibility(View.GONE);
         }
 
         // ── Button area ──────────────────────────────────────────
@@ -534,6 +522,7 @@ public class YesOrNoDialog {
             buttonArea.setVisibility(View.GONE);
         } else {
             btnPositive.setText(positiveText);
+            btnPositive.setTextColor(YGOUtil.c(R.color.neon_green));
             btnNegative.setText(negativeText);
             if (type == TYPE_YES_NO) {
                 btnNegative.setVisibility(View.VISIBLE);
@@ -543,6 +532,27 @@ public class YesOrNoDialog {
                         (LinearLayout.LayoutParams) btnPositive.getLayoutParams();
                 positiveLp.setMarginEnd(0);
             }
+            
+            // 交换正负按钮位置：按 setSwapButtonPositions 设置；
+            // 用户规格——启用后左「否」右「是」；点击事件仍绑定在原按钮对象上，
+            // btnPositive→positiveListener（「是」语义）、btnNegative→negativeListener（「否」语义）不变。
+            if (swapButtonPositions && type == TYPE_YES_NO) {
+                LinearLayout.LayoutParams lpPositive = (LinearLayout.LayoutParams) btnPositive.getLayoutParams();
+                LinearLayout.LayoutParams lpNegative = (LinearLayout.LayoutParams) btnNegative.getLayoutParams();
+                // 等宽：两个按钮各占一半（此前 XML 已设 weight=1，此处再兜底防止外部改动）
+                lpPositive.weight = 1.0f;
+                lpNegative.weight = 1.0f;
+                // 20dp 间隙留给「位于左边的按钮」的 marginEnd——swap 后左边是 btnNegative
+                int twentyDp = (int) (density * 20 + 0.5f);
+                lpPositive.setMarginEnd(0);
+                lpNegative.setMarginEnd(twentyDp);
+                // 真正交换父 LinearLayout 中的物理子 View 顺序：
+                // XML 默认 btnPositive(index=0) 左、btnNegative(index=1) 右；
+                // swap 后需要 btnNegative 在左、btnPositive 在右，仅调 marginEnd/weight 不生效
+                buttonArea.removeView(btnPositive);
+                buttonArea.addView(btnPositive, buttonArea.getChildCount());
+            }
+            
             btnPositive.setOnClickListener(v -> {
                 if (positiveListener != null) positiveListener.onClick(v);
                 dismiss();
@@ -588,6 +598,53 @@ public class YesOrNoDialog {
         String collapseBarTitle = (title != null && !title.isEmpty())
                 ? title : (message != null ? message.toString() : "");
         DraggablePopupHelper.enableCollapse(popupWindow, tvTitle, collapseBarTitle);
+    }
+
+    /**
+     * 当 swapButtonPositions 设置变化时，原地刷新当前已显示 Dialog 的按钮左右顺序。
+     * 用户规格：SettingsDialog 勾选/取消后立即生效，正在显示的 YesOrNoDialog 也要即时切换；
+     * 且交换后点击事件仍对应原本「是」「否」语义——通过只调换 buttonArea 中两个 Button 子 View
+     * 的物理顺序（btnPositive ↔ btnNegative 索引交换）实现，click listener 保持绑定在原按钮对象上。
+     * 不 dismiss、不重建 PopupWindow，避免动画与焦点抖动。
+     */
+    public void refreshSwapButtonPositions() {
+        if (popupWindow == null || !popupWindow.isShowing()) return;
+        if (type != TYPE_YES_NO || contentView == null) return;
+        boolean swap = AppsSettings.get().getIntSettings("swapButtonPositions", 0) == 1;
+        this.swapButtonPositions = swap;
+        LinearLayout area = contentView.findViewById(R.id.yes_no_button_area);
+        Button pos = contentView.findViewById(R.id.btn_yes_no_positive);
+        Button neg = contentView.findViewById(R.id.btn_yes_no_negative);
+        if (area == null || pos == null || neg == null) return;
+        if (neg.getVisibility() != View.VISIBLE) return; // 单按钮态不参与交换
+        float density = context.getResources().getDisplayMetrics().density * DialogScale.factor(context);
+        int twentyDp = (int) (density * 20 + 0.5f);
+        LinearLayout.LayoutParams lpP = (LinearLayout.LayoutParams) pos.getLayoutParams();
+        LinearLayout.LayoutParams lpN = (LinearLayout.LayoutParams) neg.getLayoutParams();
+        lpP.weight = 1.0f;
+        lpN.weight = 1.0f;
+        int idxP = area.indexOfChild(pos);
+        int idxN = area.indexOfChild(neg);
+        if (swap) {
+            // 目标：左 = neg、右 = pos；20dp 间隙归左边的 neg
+            if (idxN > idxP) {
+                area.removeView(pos);
+                area.addView(pos, area.getChildCount());
+            }
+            lpP.setMarginEnd(0);
+            lpN.setMarginEnd(twentyDp);
+        } else {
+            // 目标：左 = pos、右 = neg；20dp 间隙归左边的 pos
+            if (idxP > idxN) {
+                area.removeView(neg);
+                area.addView(neg, area.getChildCount());
+            }
+            lpP.setMarginEnd(twentyDp);
+            lpN.setMarginEnd(0);
+        }
+        pos.setLayoutParams(lpP);
+        neg.setLayoutParams(lpN);
+        area.requestLayout();
     }
 
     public void show() {
@@ -667,6 +724,10 @@ public class YesOrNoDialog {
         return popupWindow != null && popupWindow.isShowing();
     }
 
+    /**
+     * 获取内容视图：优先返回自定义内容（setOptionsContentView / setContentView 注入的布局），
+     * 否则返回 dialog_yes_or_no 默认 root。
+     */
     public View getContentView() {
         return customContentView != null ? customContentView : contentView;
     }
@@ -756,8 +817,11 @@ public class YesOrNoDialog {
         } else {
             dialog.setMessage(message);
         }
+        // 读取 swapButtonPositions 设置：启用时左边"否"右边"是"
+        boolean swapPos = AppsSettings.get().getIntSettings("swapButtonPositions", 0) == 1;
         dialog.setCardCode(cardCode)
                 .asYesNo()
+                .setSwapButtonPositions(swapPos)
                 .setPositiveButton(v -> activity.sendResponseInt(1))
                 .setNegativeButton(v -> activity.sendResponseInt(0))
                 .setCenterInView(gameDialogRegion(activity))
