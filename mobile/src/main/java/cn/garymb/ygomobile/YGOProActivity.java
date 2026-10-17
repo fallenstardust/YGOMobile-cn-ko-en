@@ -190,6 +190,9 @@ public class YGOProActivity extends AppCompatActivity {
     String lastJoinRoomName = "";
     // 上一局主机/加入密码：决斗结束或退出玩家等待重新显示 LanModeDialog 时回填房间密码（用户规格，不清空）
     String lastJoinPassword = "";
+    // 纯单人建主来源区分：仅当由 SingleModeDialog 纯单人页确定时置 true（退出等待应回 MainMenuDialog），
+    // 由 LanMode→CreateHostDialog 勾选纯单人时保持 false（退出等待仍回 LanModeDialog）
+    public boolean soloLaunchedFromSingleMode = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

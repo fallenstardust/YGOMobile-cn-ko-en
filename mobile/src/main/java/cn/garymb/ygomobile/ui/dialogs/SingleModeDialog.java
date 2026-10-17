@@ -175,8 +175,8 @@ public class SingleModeDialog {
                 .setText(mStringManager.getSystemString(1381, "残局模式"))
                 .setCustomView(makeTabView(mStringManager.getSystemString(1381, "残局模式"))));
         tabLayoutMode.addTab(tabLayoutMode.newTab()
-                .setText("纯单人模式")
-                .setCustomView(makeTabView("纯单人模式")));
+                .setText("左右互博")
+                .setCustomView(makeTabView("左右互博")));
 
         lvBotList.setAdapter(botAdapter);
         tvBotDesc.setText(mStringManager.getSystemString(1382, "请选择一个AI查看信息"));
@@ -596,6 +596,9 @@ public class SingleModeDialog {
                 engine.gameDrawCount = drawCount;
                 engine.gameTimeLimit = timeLimit;
                 engine.hasJoinRoomInfoCache = true;
+                // 标记本次纯单人建主来自 SingleModeDialog 纯单人页（区别于 LanMode→CreateHostDialog 勾选纯单人）：
+                // 退出等待时依此路由 → MainMenuDialog；LAN 建主入口会主动置回 false 保证不串道
+                activity.soloLaunchedFromSingleMode = true;
                 // 进入玩家等待界面（房主 + solo UI 开）
                 PlayerWaitingDialog.showPlayerWaitingForSoloHost(activity);
             }

@@ -76,6 +76,10 @@ class MainMenuNavigator implements
         activity.engine.hasJoinRoomInfoCache = true;
 
         if (activity.createHostDialog != null) activity.createHostDialog.hideForNavigation();
+        // LAN 建主入口（含勾选纯单人）与 SingleModeDialog 纯单人页同会置 engine.soloMode=true，
+        // 但退出等待的目标不同：LAN 建主（无论否勾选纯单人）退出后应回 LanModeDialog；
+        // 仅当来源为 SingleModeDialog 纯单人页时才回 MainMenuDialog，故此处主动置回 false 避免串道
+        activity.soloLaunchedFromSingleMode = false;
         showPlayerWaiting(userName, modeIdx == 2);
     }
 
@@ -130,6 +134,11 @@ class MainMenuNavigator implements
         // 人机模式（从 SingleModeDialog 建主进入等待界面）退出后应回 SingleModeDialog，
         // 而非 LanModeDialog；且不得出现 MainMenuDialog
         final boolean botMode = activity.engine != null && activity.engine.isBotMode;
+        // 纯单人模式且本次建主来自 SingleModeDialog 纯单人页时，退出等待应直接回 MainMenuDialog，
+        // 而非 LanModeDialog；若同为 soloMode 但来源为 LanMode→CreateHostDialog 的纯单人勾选，
+        // 仍回落到 LanModeDialog，保证与原有 LAN建主退出行为一致
+        final boolean soloMode = activity.engine != null && activity.engine.soloMode;
+        final boolean soloFromSingleMode = soloMode && activity.soloLaunchedFromSingleMode;
         // 先彻底释放等待界面（本弹窗退出即释放、不保留拖拽布局），抑制其 dismiss→restoreMainMenu 兜底，再断开连接；
         // DISCONNECTED 的自动 returnToLanMain（会连带弹 LanMode/MainMenu）已被
         // suppressNextDisconnectedReturn 抑制，返回导航由本入口独占
@@ -142,9 +151,17 @@ class MainMenuNavigator implements
             activity.suppressNextDisconnectedReturn();
             activity.engine.disconnect();
             if (botMode) activity.engine.setBotMode(false);
+            if (soloMode) activity.engine.soloMode = false;
         }
         if (botMode) {
             SingleModeDialog.showSingleModeDialog(activity);
+            return;
+        }
+        if (soloFromSingleMode) {
+            // 来自 SingleModeDialog 纯单人页：直接回 MainMenuDialog，不重开 SingleModeDialog（用户规格），
+            // 不回落 LanModeDialog；处理完毕将来源位清零，避免后续无关退出误命中此分支
+            activity.soloLaunchedFromSingleMode = false;
+            activity.getMainMenuDialog().restoreMainMenu();
             return;
         }
         LanModeDialog.showLanModeDialog(activity);

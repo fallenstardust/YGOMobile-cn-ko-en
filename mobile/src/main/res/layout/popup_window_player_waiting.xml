@@ -6,7 +6,6 @@
     android:layout_height="match_parent"
     android:background="@drawable/window2"
     android:padding="15dp"
-    android:weightSum="7.5"
     android:orientation="vertical">
 
     <LinearLayout
@@ -43,6 +42,7 @@
                     android:id="@+id/btn_kick_player1"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
+                    android:layout_marginEnd="5dp"
                     android:layout_weight="0.1"
                     android:background="@color/transparent"
                     android:scaleType="fitCenter"
@@ -99,6 +99,7 @@
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="0.1"
+                    android:layout_marginEnd="5dp"
                     android:background="@color/transparent"
                     android:scaleType="fitCenter"
                     android:src="@drawable/ic_failed" />
@@ -189,6 +190,7 @@
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="0.1"
+                        android:layout_marginEnd="5dp"
                         android:background="@color/transparent"
                         android:scaleType="fitCenter"
                         android:src="@drawable/ic_failed" />
@@ -244,6 +246,7 @@
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="0.1"
+                        android:layout_marginEnd="5dp"
                         android:background="@color/transparent"
                         android:scaleType="fitCenter"
                         android:src="@drawable/ic_failed" />

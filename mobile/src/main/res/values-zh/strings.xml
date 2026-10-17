@@ -495,9 +495,9 @@
     <string name="cat_side">副卡组</string>
     <string name="stat_usage_count">使用次数：</string>
     <string name="stat_user_count">使用人数：</string>
-    <string name="play_3">投入3张：</string>
-    <string name="play_2">投入2张：</string>
-    <string name="play_1">投入1张：</string>
+    <string name="play_3">满3：</string>
+    <string name="play_2">下2：</string>
+    <string name="play_1">带1：</string>
     <string name="winrate_first">先攻胜率</string>
     <string name="winrate_second">后攻胜率</string>
     <string name="winrate_total">综合胜率</string>
