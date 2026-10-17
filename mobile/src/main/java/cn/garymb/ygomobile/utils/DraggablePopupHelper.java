@@ -133,7 +133,8 @@ public class DraggablePopupHelper {
     /**
      * @param swapForPortrait 竖屏宽高比重排（供建主/局域网/单机/录像/玩家等待这类横屏设计为宽大于高的弹窗使用）：
      *                        竖屏宽铺满屏宽（与 Activity 同宽）且高与宽相等（正方形），转回横屏
-     *                        恢复设计宽高比（宽大于高）；其余弹窗传 false 行为不变。
+     *                        恢复设计宽高比（宽大于高）；平板/折叠屏大分辨率近方屏下正方形边长按
+     *                        设计宽 420dp 封顶（见 {@link DialogScale#portraitSquareCapPx}）；其余弹窗传 false 行为不变。
      */
     public void setupDraggablePopup(PopupWindow popupWindow, View contentView,
                                      int designW, int designH, boolean swapForPortrait) {
@@ -552,7 +553,11 @@ public class DraggablePopupHelper {
     /**
      * 按当前方向解算弹窗显示尺寸。swapForPortrait 且竖屏时（供建主/局域网/单机/录像/玩家等待这类
      * 横屏设计为宽大于高的弹窗）：宽度铺满屏宽（与 Activity 同宽，避免按钮/表单文字被挤得换行），
-     * 高度取与宽度一致的正方形比例（边长=屏宽，不超过屏高）；横屏（含转回）走 {@link #fitSizeToScreen}
+     * 高度取与宽度一致的正方形比例（边长=屏宽，不超过屏高）；但平板/折叠屏大分辨率近方屏
+     * （短边&gt;1080px 且长短边比&lt;1.7，见 {@link DialogScale#isLargeFormatDisplay}）下 4:3 屏宽即屏高的
+     * 75%，满屏宽正方形会占据屏高 75% 而显得过大，改按 {@link DialogScale#portraitSquareCapPx}
+     * （=弹窗设计宽 420dp）封顶边长，四周留边居中，与常规手机的 dp 量级一致；常规手机不命中该档，
+     * 取到 0 封顶值即行为完全不变。横屏（含转回）走 {@link #fitSizeToScreen}
      * 按设计宽高恢复横屏比例。弹窗创建与旋转重排共用。
      */
     private static int[] orientedFitSize(Context context, int designW, int designH, boolean swapForPortrait) {
@@ -560,6 +565,11 @@ public class DraggablePopupHelper {
             DisplayMetrics dm = DialogScale.screenMetrics(context);
             // 竖屏：正方形，边长取屏宽（竖屏下屏宽≤屏高，自然不超屏高）
             int side = Math.min(dm.widthPixels, dm.heightPixels);
+            // 平板/折叠屏大分辨率近方屏：边长按 dp 上限封顶，不再贴满屏宽（常规手机返回 0 不封顶）
+            int cap = DialogScale.portraitSquareCapPx(context);
+            if (cap > 0 && side > cap) {
+                side = cap;
+            }
             return new int[]{side, side};
         }
         return fitSizeToScreen(context, designW, designH);

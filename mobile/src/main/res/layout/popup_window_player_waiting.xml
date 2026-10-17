@@ -153,7 +153,7 @@
                 <Button
                     android:id="@+id/btn_spectator_mode"
                     android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:layout_gravity="left"
                     android:background="@drawable/button3_bg"
                     android:text="→观战"
@@ -163,7 +163,7 @@
                 <Button
                     android:id="@+id/btn_ready"
                     android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:layout_gravity="right"
                     android:background="@drawable/button3_bg"
                     android:text="点击准备"
@@ -318,7 +318,7 @@
 
         <LinearLayout
             android:layout_width="0dp"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:layout_weight="0.6"
             android:gravity="center_vertical"
             android:orientation="vertical">
@@ -346,8 +346,9 @@
 
         <LinearLayout
             android:layout_width="0dp"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:layout_weight="0.4"
+            android:gravity="center_vertical"
             android:layout_marginStart="10dp"
             android:orientation="vertical">
 
@@ -361,14 +362,15 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
                 android:gravity="center_vertical|end"
                 android:orientation="horizontal">
 
                 <Button
                     android:id="@+id/btn_start_game"
                     android:layout_width="0dp"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:layout_marginEnd="5dp"
                     android:background="@drawable/button3_bg"
@@ -379,7 +381,7 @@
                 <Button
                     android:id="@+id/btn_exit_waiting"
                     android:layout_width="0dp"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:background="@drawable/button3_bg"
                     android:text="退出"

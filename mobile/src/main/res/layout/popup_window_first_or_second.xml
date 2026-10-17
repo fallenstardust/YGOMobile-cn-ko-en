@@ -21,7 +21,7 @@
         android:id="@+id/btn_ft_second"
         android:layout_width="match_parent"
         android:layout_height="40dp"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="5dp"
         android:textSize="15dp"
         android:text="后攻"
         android:background="@drawable/button3_bg"
