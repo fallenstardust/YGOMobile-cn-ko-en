@@ -465,7 +465,7 @@
                     android:maxLines="1"
                     android:padding="2dp"
                     android:textColor="@color/white"
-                    android:textSize="12sp"
+                    android:textSize="10sp"
                     android:visibility="invisible" />
 
                 <TextView

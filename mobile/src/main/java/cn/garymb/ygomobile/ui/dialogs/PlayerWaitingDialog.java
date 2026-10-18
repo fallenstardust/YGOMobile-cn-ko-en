@@ -536,11 +536,6 @@ public class PlayerWaitingDialog {
         updateSelfCheckboxInteractivity();
     }
 
-    /** 席位有人加入时的半透明背景色
-     * （对齐 gframe duelclient.cpp STOC_HS_PLAYER_ENTER L1175 /
-     *  STOC_HS_PLAYER_CHANGE L1198：stHostPrepDuelist[pos]->setBackgroundColor(0x60045f6a)） */
-    private static final int SEAT_OCCUPIED_COLOR = YGOUtil.c(R.color.seat_occupied_teal);
-
     public void setPlayerName(int pos, String name) {
         TextView seat = null;
         switch (pos) {
@@ -560,7 +555,7 @@ public class PlayerWaitingDialog {
         if (seat == null) return;
         seat.setText(name);
         // 玩家加入(名字非空)时叠加半透明色提醒该席位已被占据，离开/清空时恢复透明
-        seat.setBackgroundColor(TextUtils.isEmpty(name) ? Color.TRANSPARENT : SEAT_OCCUPIED_COLOR);
+        seat.setBackground(TextUtils.isEmpty(name) ? context.getDrawable(R.drawable.ygopro_selected_background) : context.getDrawable(R.drawable.ygopro_base_background));
     }
 
     public String getPlayerName(int pos) {
