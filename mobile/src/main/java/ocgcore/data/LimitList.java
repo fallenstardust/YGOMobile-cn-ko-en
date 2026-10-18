@@ -16,8 +16,13 @@ import ocgcore.enums.LimitType;
  * 3判断某张卡是否属于禁止卡、限制卡、准限制卡
  */
 public class LimitList {
+    // GeneSys: 主卡组少于该数量时不触发 extra_score 加成，与 C++ 端 DECK_MIN_SIZE 保持一致
+    private static final int GENESYS_MIN_MAIN = 40;
     private String name = "?";
     private Integer credit_limits;//GeneSys模式特有的上限值
+    // GeneSys: 由lflist.conf中的"$__extra_score__"行解析而来，
+    // 表示主卡组超过40张后，每多一张卡可为积分上限提高的分数（小数）。未配置则为null/0。
+    private Double extra_score;
     private Map<Integer, Integer> credits;//GeneSys模式特有的单张卡ID和其点数
     /**
      * 0
@@ -80,6 +85,38 @@ public class LimitList {
 
     public Integer getCreditLimits() {
         return credit_limits;
+    }
+
+    public Double getExtraScore() {
+        return extra_score;
+    }
+
+    public void addExtraScore(Double score) {
+        extra_score = score;
+    }
+
+    /**
+     * 根据当前主卡组数量即时计算实际生效的GeneSys积分上限。
+     * <p>
+     * 规则：主卡组超过40张后，每多一张卡上限提高 extra_score 分；
+     * 主卡组不足40张时不向下扣减，仍为基础上限；
+     * 最终上限取整（丢弃小数部分），例如100.3334仍显示/适用为100。
+     *
+     * @param mainCount 当前主卡组卡片数量
+     * @return 实际生效的积分上限；若未设置基础上限则返回null
+     */
+    public Integer getEffectiveCreditLimit(int mainCount) {
+        if (credit_limits == null) {
+            return null;
+        }
+        if (extra_score == null || extra_score <= 0 || mainCount <= GENESYS_MIN_MAIN) {
+            return credit_limits;
+        }
+        double effective = credit_limits + (double) (mainCount - GENESYS_MIN_MAIN) * extra_score;
+        if (effective < credit_limits) {
+            return credit_limits; // 不做向下扣减保护
+        }
+        return (int) Math.floor(effective); // 丢弃小数部分
     }
 
     public Map<Integer, Integer> getCredits() {
@@ -156,6 +193,37 @@ public class LimitList {
     }
 
 
+    /**
+     * 解析一张卡在当前 GeneSys 禁卡表中应对应的点数。
+     * <p>
+     * 本方法是“是否为计分卡”“卡面/搜索结果点数显示”“卡组总分累计”“加卡校验”的
+     * 唯一取值口径，避免各处因使用不同的键而导致行为分叉。
+     * <p>
+     * 取值优先级：
+     * 1) 宽松同名折叠键（等价 {@code CardData.getCode()}：|alias-code|<=20 时取 alias，否则取 code），
+     *    保证同卡异画共享表中同一分值；
+     * 2) 若折叠键未命中但卡片自身 code 在表中命中，则用 code 的分值——
+     *    修复“卡片 code 在表中、但 alias 不在表中(|alias-code|<=20)”时该卡不显示点数的 BUG。
+     *
+     * @return 命中的点数；两键均未命中返回 null（视为不计分卡）
+     */
+    public Integer getGeneSysCredit(Integer code, Integer alias) {
+        if (credits == null || code == null) {
+            return null;
+        }
+        int ali = alias == null ? 0 : alias;
+        int key = (ali > 0 && Math.abs(ali - code) <= 20) ? ali : code;
+        Integer value = credits.get(key);
+        if (value == null && key != code) {
+            value = credits.get(code);
+        }
+        return value;
+    }
+
+    public Integer getGeneSysCredit(Card card) {
+        return card == null ? null : getGeneSysCredit(card.Code, card.Alias);
+    }
+
     public boolean check(Card cardInfo, LimitType type) {
         return check(cardInfo.Code, cardInfo.Alias, type);
     }
@@ -179,7 +247,8 @@ public class LimitList {
         } else if (type == LimitType.Forbidden) {
             return forbidden.contains(code) || forbidden.contains(alias);
         } else if (type == LimitType.GeneSys) {
-            return credits != null && (credits.containsKey(code) || credits.containsKey(alias));
+            // 与分值取值共用同一口径 getGeneSysCredit，保证“判定为计分卡”与“能取到分值”同进同出
+            return getGeneSysCredit(code, alias) != null;
         } else {
             return false;
         }

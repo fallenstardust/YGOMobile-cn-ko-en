@@ -387,6 +387,11 @@
     <string name="like_deck_thumb">デッキに「いいね」をつける</string>
     <string name="pre_view">プレビュー</string>
     <string name="tip_credit_max">" %dの上限を超えています"</string>
+    <string name="tip_drag_main_full" formatted="false">メインデッキが上限（%d枚）に達しました</string>
+    <string name="tip_drag_extra_full" formatted="false">エクストラデッキが上限（%d枚）に達しました</string>
+    <string name="tip_drag_side_full" formatted="false">サイドデッキが上限（%d枚）に達しました</string>
+    <string name="tip_drag_extra_in_main">エクストラデッキのカードはメインデッキに置けません</string>
+    <string name="tip_drag_normal_in_extra">通常モンスター・魔法・罠カードはエクストラデッキに置けません</string>
     <string name="point_cost">ポイント消費</string>
     <string name="credit_limit">ポイント上限</string>
     <string name="switch_genesys_mode">起源点数モード</string>
@@ -485,4 +490,24 @@
     <string name="duel_ranking">デュエル順位</string>
     <string name="card_ranking">カード順位</string>
     <string name="deck_dist_pie_analysis">デッキ分布円グラフ分析</string>
+
+    <!-- 资源分享相关 -->
+    <string name="resource_share_title">リソース共有のリクエスト</string>
+    <string name="resource_share_message">%s が以下のリソースの共有を請求しています:\n%s</string>
+    <string name="resource_cdb">· カードデータベース</string>
+    <string name="resource_lflist">· リミットレギュレーション</string>
+    <string name="resource_strings">· 文字列などの設定</string>
+    <string name="resource_pics">· カード画像アーカイブ</string>
+
+    <!-- 画像と画面の設定 -->
+    <string name="follow_bilibili">Bilibili のフィードをフォロー</string>
+    <string name="scale_original">元の比率</string>
+    <string name="scale_full">全画面表示</string>
+    <string name="scale_switch_hint">いずれかのプレビューをタップで切り替え</string>
+    <string name="label_self">自分</string>
+    <string name="label_opponent">相手</string>
+    <string name="quality_low">低</string>
+    <string name="quality_high">高</string>
+    <string name="settings_opengl_version">OpenGL バージョン</string>
+    <string name="settings_screen_padding_summary">画面の余白</string>
 </resources>

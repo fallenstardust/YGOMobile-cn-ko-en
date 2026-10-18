@@ -36,6 +36,26 @@ struct LFList {
 	std::unordered_map<uint32_t, int> content;
 	std::unordered_map<std::wstring, uint32_t> credit_limits;
 	std::unordered_map<uint32_t, std::unordered_map<std::wstring, uint32_t>> credits;
+	// GeneSys: 由lflist.conf中的"$__extra_score__"行解析而来，
+	// 表示主卡组超过DECK_MIN_SIZE(40)张后，每多一张卡可为积分上限提高的分数（小数）。
+	// 未配置该行的禁卡表默认为0，即积分上限不随主卡组数量变化。
+	double extra_score{};
+
+	// 根据当前主卡组数量计算即时生效的积分上限。
+	// 规则：主卡组超过40张后，每多一张，上限提高 extra_score 分；
+	// 主卡组不足40张时不向下扣减，仍为基础上限；
+	// 最终上限取整（丢弃小数部分）。
+	uint32_t GetEffectiveCreditLimit(uint32_t base_limit, size_t main_count) const {
+		if(extra_score <= 0.0)
+			return base_limit;
+		if(main_count <= DECK_MIN_SIZE)
+			return base_limit;
+		double extra = static_cast<double>(main_count - DECK_MIN_SIZE) * extra_score;
+		double effective = static_cast<double>(base_limit) + extra;
+		if(effective < static_cast<double>(base_limit))
+			return base_limit; // 不做向下扣减保护
+		return static_cast<uint32_t>(effective); // 正数强转即向下取整，丢弃小数
+	}
 };
 
 class DeckManager {

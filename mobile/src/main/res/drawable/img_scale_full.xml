@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 全屏示意：游戏画面铺满整个 16:9 屏幕 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="72dp"
+    android:height="40dp"
+    android:viewportWidth="72"
+    android:viewportHeight="40">
+    <path
+        android:fillColor="#222222"
+        android:pathData="M1,1 L71,1 L71,39 L1,39 Z" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1"
+        android:pathData="M1.5,1.5 L70.5,1.5 L70.5,38.5 L1.5,38.5 Z" />
+    <path
+        android:fillColor="@color/holo_blue_bright"
+        android:pathData="M2,2 L70,2 L70,38 L2,38 Z" />
+</vector>

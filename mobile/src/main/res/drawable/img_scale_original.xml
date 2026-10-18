@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 原始比例示意：16:9 画面内居中的 4:3 游戏区域 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="72dp"
+    android:height="40dp"
+    android:viewportWidth="72"
+    android:viewportHeight="40">
+    <path
+        android:fillColor="#222222"
+        android:pathData="M1,1 L71,1 L71,39 L1,39 Z" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1"
+        android:pathData="M1.5,1.5 L70.5,1.5 L70.5,38.5 L1.5,38.5 Z" />
+    <path
+        android:fillColor="@color/holo_blue_bright"
+        android:pathData="M16,4 L56,4 L56,36 L16,36 Z" />
+</vector>

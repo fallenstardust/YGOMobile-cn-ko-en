@@ -384,6 +384,11 @@
     <string name="like_deck_thumb">Dar like al deck</string>
     <string name="pre_view">Vista previa</string>
     <string name="tip_credit_max">Excede el límite de %d</string>
+    <string name="tip_drag_main_full" formatted="false">El mazo principal está lleno (máx. %d)</string>
+    <string name="tip_drag_extra_full" formatted="false">El mazo extra está lleno (máx. %d)</string>
+    <string name="tip_drag_side_full" formatted="false">El side deck está lleno (máx. %d)</string>
+    <string name="tip_drag_extra_in_main">Las cartas del mazo extra no pueden colocarse en el mazo principal</string>
+    <string name="tip_drag_normal_in_extra">Las cartas normales no pueden colocarse en el mazo extra</string>
     <string name="point_cost">Consumo de puntos</string>
     <string name="credit_limit">Límite de puntos</string>
     <string name="switch_genesys_mode">GENESYS</string>
@@ -482,6 +487,26 @@
     <string name="duel_ranking">Ranking Duelos</string>
     <string name="card_ranking">Ranking Cartas</string>
     <string name="deck_dist_pie_analysis">Análisis de distribución de mazos en gráfico circular</string>
+
+    <!-- 资源分享相关 -->
+    <string name="resource_share_title">Solicitud de compartir recursos</string>
+    <string name="resource_share_message">%s solicita compartir los siguientes recursos:\n%s</string>
+    <string name="resource_cdb">· Base de datos de cartas</string>
+    <string name="resource_lflist">· Lista de prohibidas</string>
+    <string name="resource_strings">· Configuración de textos</string>
+    <string name="resource_pics">· Archivo de imágenes de cartas</string>
+
+    <!-- ajustes de imagen y pantalla -->
+    <string name="follow_bilibili">Seguir feed de Bilibili</string>
+    <string name="scale_original">Proporción original</string>
+    <string name="scale_full">Pantalla completa</string>
+    <string name="scale_switch_hint">Toca cualquier vista previa para cambiar</string>
+    <string name="label_self">Yo</string>
+    <string name="label_opponent">Rival</string>
+    <string name="quality_low">Baja</string>
+    <string name="quality_high">Alta</string>
+    <string name="settings_opengl_version">Versión de OpenGL</string>
+    <string name="settings_screen_padding_summary">Margen de pantalla</string>
 </resources>
 
 

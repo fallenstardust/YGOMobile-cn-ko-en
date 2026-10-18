@@ -76,6 +76,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     };
     private DialogPlus dialog = null;
     private boolean isNewVersion;
+    private int mPendingVersion;
 
     @SuppressWarnings("deprecation")
     public ResCheckTask(Context context, ResCheckListener listener) {
@@ -170,8 +171,11 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         dialog = DialogPlus.show(mContext, null, mContext.getString(R.string.check_res));
         int vercode = SystemUtils.getVersion(mContext);
         if (mSettings.getAppVersion() < vercode) {//刚安装app时，mSettings.getAppVersion()返回值为0
-            mSettings.setAppVersion(vercode);
             isNewVersion = true;
+            // 版本号不在这里提交：只有在资源复制成功后（onPostExecute）才写入，
+            // 否则一旦大文件（pics.zip/scripts.zip）复制失败或进程被杀，
+            // 下次启动 isNewVersion 为 false 就不会再强制重新复制，导致资源永久丢失。
+            mPendingVersion = vercode;
         } else {
             isNewVersion = false;
         }
@@ -182,6 +186,10 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         super.onPostExecute(result);
         if (taskException != null) {
             Toast.makeText(mContext, "ERROR COPY: " + taskException.getMessage(), Toast.LENGTH_LONG).show();
+        }
+        // 只有复制成功才提交版本号，失败时下次启动仍会以 needsUpdate=true 重试
+        if (isNewVersion && result != null && result == ERROR_NONE) {
+            mSettings.setAppVersion(mPendingVersion);
         }
         //关闭异常
         if (dialog.isShowing()) {

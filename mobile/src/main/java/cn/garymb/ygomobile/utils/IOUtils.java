@@ -191,28 +191,57 @@ public class IOUtils {
     }
 
     public static boolean hasAssets(Context context, String name) {
+        InputStream is = null;
         try {
-            context.getAssets().open(name);
+            is = context.getAssets().open(name);
+            return true;
         } catch (IOException e) {
             return false;
+        } finally {
+            close(is);
         }
-        return true;
     }
 
-    public static void copyToFile(InputStream in, String file) {
+    public static void copyToFile(InputStream in, String file) throws IOException {
+        if (in == null) {
+            throw new IOException("copyToFile: source stream is null");
+        }
+        File target = new File(file);
+        File dir = target.getParentFile();
+        if (dir != null && !dir.exists()) {
+            dir.mkdirs();
+        }
+        // 先写入临时文件，完整写完并校验后再替换目标文件。
+        // 直接使用 new FileOutputStream(file) 会立刻把已存在的文件（如可用的 pics.zip/scripts.zip）
+        // 截断为 0 字节，一旦拷贝中途失败（磁盘满、IO 错误、进程被杀）旧文件就被破坏且无法恢复。
+        File tmp = new File(file + ".tmp");
         FileOutputStream outputStream = null;
+        boolean success = false;
         try {
-//            File dir = new File(file).getParentFile();
-//            if (dir != null && !dir.exists()) {
-//                dir.mkdirs();
-//            }
-            outputStream = new FileOutputStream(file);
+            outputStream = new FileOutputStream(tmp);
             copy(in, outputStream);
-        } catch (Exception e) {
-
+            outputStream.flush();
+            outputStream.getFD().sync();
+            outputStream.close();
+            outputStream = null;
+            if (tmp.length() <= 0) {
+                throw new IOException("copied file is empty: " + tmp.getAbsolutePath());
+            }
+            // 完整写入成功后才替换真正的目标文件
+            if (target.exists() && !target.delete()) {
+                throw new IOException("cannot remove existing file: " + file);
+            }
+            if (!tmp.renameTo(target)) {
+                throw new IOException("cannot rename temp file to: " + file);
+            }
+            success = true;
         } finally {
             close(outputStream);
             close(in);
+            // 失败时清理临时文件，保留原有可用文件
+            if (!success && tmp.exists()) {
+                tmp.delete();
+            }
         }
     }
 
