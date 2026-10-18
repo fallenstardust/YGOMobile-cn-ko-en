@@ -1041,4 +1041,9 @@ public class CardDetailPanel {
         }
     }
 
+    /** 释放资源（由 YGOProActivity 在销毁时调用） */
+    public void onDestroy() {
+        binder.onDestroy();
+    }
+
 }

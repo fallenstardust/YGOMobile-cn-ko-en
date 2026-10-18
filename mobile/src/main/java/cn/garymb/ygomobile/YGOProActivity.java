@@ -103,7 +103,9 @@ public class YGOProActivity extends AppCompatActivity {
     View layoutDeckEditor;
 
     LinearLayout layoutDeckControl;
-    FrameLayout layoutGameRight;
+    // layout_game_right 横竖屏根节点均为 LinearLayout（六按钮列与聊天输入行横排流），
+    // 消费点只用 View 级 API（可见性/背景/居中锚），声明为 View 兼容布局演进
+    View layoutGameRight;
     /**
      * 竖屏顶部面板（卡片详情+时点/录像/卡组按钮行，占屏高 1/3）；横屏无此节点，全程空保护
      */
@@ -1638,6 +1640,10 @@ public class YGOProActivity extends AppCompatActivity {
             imageLoader.close();
         }
         TextureLoader.get().release();
+        // 释放卡片详情面板资源
+        if (cardDetailPanel != null) {
+            cardDetailPanel.onDestroy();
+        }
     }
 
     private void setupBackPressedHandler() {

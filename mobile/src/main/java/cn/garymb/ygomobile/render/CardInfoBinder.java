@@ -4,6 +4,8 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.SpannableString;
 import android.text.TextPaint;
 import android.text.method.LinkMovementMethod;
@@ -23,6 +25,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.Stack;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.game.CardSearcherManager;
@@ -79,10 +83,14 @@ class CardInfoBinder {
     /** 关联卡片入口（横竖屏布局同 ID btn_related_cards，ic_related 图标 ImageButton）：
      *  由 CardDetailPanel 注入，仅当前卡存在关联卡时显示；类型用 View 兼容不同布局容器 */
     private View btnRelatedCards;
-    /** 当前卡描述里解析出的「」/"" 关键词，供 relatedCards 匹配（对齐 CardDetail.spanStringList） */
+    /** 当前卡描述里解析出的「」/""关键词，供 relatedCards 匹配（对齐 CardDetail.spanStringList） */
     private final List<String> spanStringList = new ArrayList<>();
     /** 当前卡已计算的关联卡列表：随卡详绑定刷新，点击按钮时直接复用避免再次全表扫描 */
     private List<Card> lastRelatedCards = Collections.emptyList();
+        
+    // 异步线程池用于关联卡片和高亮词存在性检查
+    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     /** 关键词点击导航回调（卡组编辑模式复用卡详高亮，点击直接作用到卡组搜索列表） */
     public interface KeywordNavigator {
@@ -283,6 +291,11 @@ class CardInfoBinder {
         }
     }
 
+    /** 释放资源 */
+    void onDestroy() {
+        executorService.shutdown();
+    }
+
     void showUnknownCard() {
         currentCardCode = -1;
         currentDisplayCard = null;
@@ -428,8 +441,8 @@ class CardInfoBinder {
             setHighlightTextWithClickableSpans(desc);
         }
         // 描述关键词已解析完毕（spanStringList 就绪），据此计算当前卡关联卡并刷新关联按钮显隐
-        lastRelatedCards = relatedCards(cardData);
-        updateRelatedButtonVisibility();
+        // 使用异步方式提高性能，避免阻塞主线程
+        checkRelatedCardsAsync(cardData);
     }
 
     /**
@@ -537,6 +550,31 @@ class CardInfoBinder {
             keywordDialog.dismiss();
             keywordDialog = null;
         }
+    }
+
+    /**
+     * 异步检查关联卡片存在性并更新 UI
+     * 通过在子线程进行查询卡片是否有关联卡片和高亮词结果唯一性来提高 CardDetailPanel 显示速度
+     */
+    private void checkRelatedCardsAsync(Card cardData) {
+        executorService.execute(() -> {
+            // 在子线程中进行关联卡片查询
+            List<Card> relatedCards = relatedCards(cardData);
+            
+            // 在主线程中更新 UI
+            mainHandler.post(() -> {
+                lastRelatedCards = relatedCards;
+                updateRelatedButtonVisibility();
+            });
+        });
+    }
+
+    /**
+     * 同步版本：用于不需要异步处理的场景（如旋转重建时）
+     */
+    private void checkRelatedCardsSync(Card cardData) {
+        lastRelatedCards = relatedCards(cardData);
+        updateRelatedButtonVisibility();
     }
 
     // === 关联卡片（参考 CardDetail.relatedCards / relatable / btn_related） ===
