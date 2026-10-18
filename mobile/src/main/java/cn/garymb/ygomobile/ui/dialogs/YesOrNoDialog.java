@@ -83,6 +83,8 @@ public class YesOrNoDialog {
     private DraggablePopupHelper draggableHelper;
     private int messageBgColor = 0;
     private int messageGravity = -1;
+    // 标题颜色（0 = 沿用布局默认）：纯单人模式下按被询问方着色
+    private int titleColor = 0;
     // 指定弹窗居中区域（如 layout_game_right）；null = 按整个窗口居中（原行为）
     private View centerInView;
     // 用于显示卡片的卡片代码
@@ -102,6 +104,20 @@ public class YesOrNoDialog {
 
     public YesOrNoDialog setTitle(String title) {
         this.title = title;
+        return this;
+    }
+
+    /** 在标题首行之前追加一行（纯单人询问提示）；原标题为空时直接作为标题 */
+    public YesOrNoDialog prependTitle(String prefix) {
+        if (prefix == null || prefix.isEmpty()) return this;
+        this.title = (this.title == null || this.title.isEmpty())
+                ? prefix : prefix + "\n" + this.title;
+        return this;
+    }
+
+    /** 设置标题文字颜色（如纯单人询问按被询问方着色）；0 表示沿用布局默认 */
+    public YesOrNoDialog setTitleTextColor(int color) {
+        this.titleColor = color;
         return this;
     }
 
@@ -447,6 +463,7 @@ public class YesOrNoDialog {
         if (title != null && !title.isEmpty()) {
             tvTitle.setVisibility(View.VISIBLE);
             tvTitle.setText(colorizeBracketedCardNames(title));
+            if (titleColor != 0) tvTitle.setTextColor(titleColor);
         } else {
             tvTitle.setVisibility(View.GONE);
         }
@@ -801,13 +818,43 @@ public class YesOrNoDialog {
         return (event == null || event.isEmpty()) ? text : event + "\n" + text;
     }
 
+    /**
+     * 纯单人模式（{@link GameEngine#soloMode}）专用：为询问窗标题首行加「询问-玩家名」提示，
+     * 并按被询问方着色（我方 holo_blue_bright、对方 holo_orange_bright）。
+     * <p>
+     * selectingPlayer 为协议首字节 selecting_player（发出询问时点明的 seat），
+     * 经 {@link GameEngine#localPlayer(int)} 折算到本地视角（0=我方、1=对方）后取名。
+     * 联机 / 回放 / 残局不进入本方法；selectingPlayer &lt; 0（报文残缺、无从判定被询问方）
+     * 时同样不加提示，避免把询问错标到另一方。
+     */
+    private static void applySoloAskHint(YGOProActivity activity, YesOrNoDialog dialog, int selectingPlayer) {
+        GameEngine engine = activity.getEngine();
+        if (engine == null || !engine.soloMode || selectingPlayer < 0) return;
+        int local = engine.localPlayer(selectingPlayer & 1);
+        String name = engine.displayName(local);
+        // 席位名尚未回显（未选卡组且昵称空）时回落到我方/对方，保证提示不缺失
+        if (name == null || name.isEmpty()) name = local == 0 ? "我方" : "对方";
+        dialog.prependTitle("询问-" + name)
+                .setTitleTextColor(YGOUtil.c(local == 0
+                        ? R.color.holo_blue_bright : R.color.holo_orange_bright));
+    }
+
     /** 是/否确认弹窗（MSG_SELECT_YESNO / MSG_SELECT_EFFECTYN）：是=1 否=0 */
     public static void showYesNoQuery(YGOProActivity activity, String message) {
-        showYesNoQuery(activity, message, 0, null);
+        showYesNoQuery(activity, message, 0, null, -1);
     }
 
     /** 是/否确认弹窗（可带卡名着色）：cardCode>0 且 cardName 非空时按卡片类型着色 */
     public static void showYesNoQuery(YGOProActivity activity, String message, int cardCode, String cardName) {
+        showYesNoQuery(activity, message, cardCode, cardName, -1);
+    }
+
+    /**
+     * 是/否确认弹窗：selectingPlayer 为协议 selecting_player（被询问 seat，0/1），
+     * 仅纯单人模式据此加「询问-玩家名」标题提示；传 -1 表示不加。
+     */
+    public static void showYesNoQuery(YGOProActivity activity, String message, int cardCode,
+                                      String cardName, int selectingPlayer) {
         // 单窗询问：弹新询问窗前关闭仍在显示的全部旧询问窗（含上一条连锁询问的残留窗），
         // 保证同屏至多一个询问，纯单人模式按协议顺序先当前回合玩家、后对方逐个询问
         dismissShowingDialogs();
@@ -829,6 +876,7 @@ public class YesOrNoDialog {
         // 收起早前选择会话可能残留可见的 cancelOrFinish：是/否询问期间不参与，
         // 也不留一个点击后无法正确代答的旧按钮（旧代码在此弹「否」字按钮属残留交互）
         panel(activity).hideCancelOrFinishButton();
+        applySoloAskHint(activity, dialog, selectingPlayer);
         dialog.show();
     }
 
@@ -839,11 +887,12 @@ public class YesOrNoDialog {
      */
     public static void showYesNoDialog(YGOProActivity activity, ByteBuffer data) {
         int descId = 0;
+        int selectingPlayer = -1;
         if (data != null && data.remaining() >= 5) {
-            data.get(); // selecting_player
+            selectingPlayer = data.get() & 0xFF; // selecting_player
             descId = data.getInt();
         }
-        showYesNoQuery(activity, DataManager.get().getDesc(descId, "是否发动效果？"));
+        showYesNoQuery(activity, DataManager.get().getDesc(descId, "是否发动效果？"), 0, null, selectingPlayer);
     }
 
     /**
@@ -863,7 +912,7 @@ public class YesOrNoDialog {
             showYesNoQuery(activity, sysText(94, "是否现在使用这张卡的效果？"));
             return;
         }
-        data.get();                        // selecting_player
+        int selectingPlayer = data.get() & 0xFF; // selecting_player
         int code = data.getInt();
         data.get();                        // c（控制者）
         int location = data.get() & 0xFF;  // l
@@ -893,7 +942,7 @@ public class YesOrNoDialog {
             String raw = dm.getDesc(desc, "");
             message = raw.isEmpty() ? "是否发动「" + cardName + "」的效果？" : raw;
         }
-        showYesNoQuery(activity, message, code, cardName);
+        showYesNoQuery(activity, message, code, cardName, selectingPlayer);
     }
 
     /** SIDE 换卡组：列出卡组目录下的 .ydk 供选择，选中后交 ShowDialogUtil 载入并发送 */
@@ -933,7 +982,7 @@ public class YesOrNoDialog {
      * chainItems 非空时右侧 ll_chain_card_list 横向展示可以连锁的卡片。
      */
     public static void showChainQuery(YGOProActivity activity, String queryText,
-                                      int cardCode, List<CardChainItem> chainItems) {
+                                      int cardCode, List<CardChainItem> chainItems, int selectingPlayer) {
         // 单窗询问：先关闭仍在显示的旧询问窗，再建新窗——服务端对连锁询问按席位串行下发
         // （当前回合玩家先答，答“否”后才下发对方的），此处保证两窗不叠加、按序逐个弹出
         dismissShowingDialogs();
@@ -948,6 +997,7 @@ public class YesOrNoDialog {
                 .setNegativeButton(v -> activity.getDialogUtil().finishChainPass())
                 .setCenterInView(gameDialogRegion(activity))
                 .setOnDismissListener(() -> panel(activity).setCurrentDialog(null));
+        applySoloAskHint(activity, dialog, selectingPlayer);
         dialog.show();
     }
 
@@ -957,7 +1007,7 @@ public class YesOrNoDialog {
      */
     public static void showChainListDialog(YGOProActivity activity, boolean contiExist, boolean selectTrigger,
                                            boolean chainForced, List<String> chainOptions, List<Integer> chainFlags,
-                                           List<CardChainItem> chainItems) {
+                                           List<CardChainItem> chainItems, int selectingPlayer) {
         // 单窗询问：弹列表窗前关闭仍在显示的旧询问窗，避免与上一条询问的残留窗叠加
         dismissShowingDialogs();
         String title;
@@ -1000,6 +1050,7 @@ public class YesOrNoDialog {
                     panel(activity).setCurrentDialog(null);
                 });
         if (!forced) panel(activity).showCancelOrFinishButton(sysText(1295, "取消操作"));
+        applySoloAskHint(activity, dialog, selectingPlayer);
         dialog.show();
     }
 
@@ -1007,7 +1058,7 @@ public class YesOrNoDialog {
      * MSG_SELECT_CHAIN 且 count == 0 时的询问（sys201 + sys202）：
      * 是 → 仅显示「取消操作」按钮；否 → 放弃连锁（应答 -1）。
      */
-    public static void showChainEmptyQuery(YGOProActivity activity) {
+    public static void showChainEmptyQuery(YGOProActivity activity, int selectingPlayer) {
         // 单窗询问：先关闭仍在显示的旧询问窗再建新窗
         dismissShowingDialogs();
         chainForcedMode = false;
@@ -1026,6 +1077,7 @@ public class YesOrNoDialog {
                 .setNegativeButton(v -> activity.getDialogUtil().finishChainPass())
                 .setCenterInView(gameDialogRegion(activity))
                 .setOnDismissListener(() -> panel(activity).setCurrentDialog(null));
+        applySoloAskHint(activity, dialog, selectingPlayer);
         dialog.show();
     }
 

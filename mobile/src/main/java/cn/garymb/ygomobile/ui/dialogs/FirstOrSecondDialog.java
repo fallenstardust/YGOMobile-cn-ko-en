@@ -26,6 +26,10 @@ import ocgcore.DataManager;
  * 该弹窗必须选择后才能关闭（协议在等待应答）：
  * outsideTouchable=false + focusable=false（BACK 不关闭）+ TouchInterceptor
  * 吞掉 ACTION_OUTSIDE 双保险，禁止任何外部点击关闭。
+ *
+ * <p>同 RPSDialog 一样以绝对坐标定位、不经 DraggablePopupHelper 包装，故旋转重排不会覆盖它，
+ * 横竖屏切换后须由 {@link #repositionAfterRotation()} 按新的 layout_game_right 重新居中
+ *（局域网与纯单人模式的先后攻选择走同一弹窗，故一并生效）。
  */
 public class FirstOrSecondDialog {
 
@@ -84,23 +88,9 @@ public class FirstOrSecondDialog {
 
         Activity activity = (Activity) context;
         View gameRight = activity.findViewById(R.id.layout_game_right);
-        if (gameRight != null && gameRight.getWidth() > 0) {
-            // 已布局完成：直接按 layout_game_right 实际尺寸定位
-            showAtFieldCenter(gameRight);
+        if (gameRight != null) {
             showing = true;
-        } else if (gameRight != null) {
-            // 决斗 UI 刚切为可见（enterDuelingUI 同帧），此时宽度为 0，
-            // 必须等布局完成后再显示，否则会退化为按整个窗口居中
-            showing = true;
-            gameRight.getViewTreeObserver().addOnGlobalLayoutListener(
-                    new ViewTreeObserver.OnGlobalLayoutListener() {
-                        @Override
-                        public void onGlobalLayout() {
-                            gameRight.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                            if (!showing) return; // 等待期间已被 dismiss 取消
-                            showAtFieldCenter(gameRight);
-                        }
-                    });
+            showAtFieldCenterOrAwaitLayout(gameRight);
         } else {
             // 极端兜底：找不到锚点时屏幕居中
             popupWindow.showAtLocation(activity.getWindow().getDecorView(), Gravity.CENTER, 0, 0);
@@ -109,9 +99,43 @@ public class FirstOrSecondDialog {
     }
 
     /**
+     * 按 layout_game_right 的当前尺寸显示弹窗：已布局完成则直接按实际尺寸定位；
+     * 宽度为 0（决斗 UI 刚切为可见，enterDuelingUI 同帧）时注册一次性布局监听待完成后显示，
+     * 否则会退化为按整个窗口居中。首次显示与旋转重建后的延迟补显示共用本方法。
+     */
+    private void showAtFieldCenterOrAwaitLayout(View gameRight) {
+        if (gameRight.getWidth() > 0) {
+            showAtFieldCenter(gameRight);
+            return;
+        }
+        gameRight.getViewTreeObserver().addOnGlobalLayoutListener(
+                new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        gameRight.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                        // 等待期间已被 dismiss 取消，或已按旋转后的新视图树补显示，均不再处理
+                        if (!showing || popupWindow == null || popupWindow.isShowing()) return;
+                        showAtFieldCenter(gameRight);
+                    }
+                });
+    }
+
+    /**
      * 水平、垂直均在 layout_game_right 实际区域内居中（对齐 game.cpp wFTSelect 屏幕居中语义）
      */
     private void showAtFieldCenter(View gameRight) {
+        int[] pos = computeCenterPosition(gameRight);
+        popupWindow.showAtLocation(gameRight, Gravity.NO_GRAVITY, pos[0], pos[1]);
+    }
+
+    /**
+     * 解算弹窗在窗口坐标系下的左上角 (x, y)：水平、垂直都在 layout_game_right 实际区域内居中。
+     * 供首次显示与屏幕旋转后重定位复用，保证旋转后仍按新方向的 layout_game_right 区域重新居中
+     *（横屏为右侧决斗区、竖屏为整宽决斗区，沿用旧绝对坐标会偏出中央）。
+     *
+     * @return int[]{x, y}
+     */
+    private int[] computeCenterPosition(View gameRight) {
         contentView.measure(
                 View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
                 View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
@@ -124,8 +148,47 @@ public class FirstOrSecondDialog {
         int y = loc[1] + (gameRight.getHeight() - popupH) / 2;
         if (x < 0) x = 0;
         if (y < 0) y = 0;
+        return new int[]{x, y};
+    }
 
-        popupWindow.showAtLocation(gameRight, Gravity.NO_GRAVITY, x, y);
+    /**
+     * 屏幕旋转后重新定位：本弹窗以绝对坐标 showAtLocation 定位、不经 DraggablePopupHelper 包装，
+     * 故 {@code relayoutActivePopupsForOrientation} 不会重排它；旋转重建后 layout_game_right 的窗口位置
+     * 与宽高都变了，沿用旧绝对坐标会停在旋转前的位置而不在中央。本方法按重建后的新视图重新解算
+     * 居中坐标并 update。由 YGOProActivity 旋转重建末尾经 ShowDialogUtil 调用；新视图树此刻可能尚未
+     * 完成布局（宽度为 0），则注册一次性布局监听待完成后再重定位。
+     */
+    public void repositionAfterRotation() {
+        if (!showing || popupWindow == null || !(context instanceof Activity)) return;
+        Activity activity = (Activity) context;
+        final View gameRight = activity.findViewById(R.id.layout_game_right);
+        if (gameRight == null) return;
+        if (!popupWindow.isShowing()) {
+            // 旋转前仍处于「等待布局完成后显示」的延迟分支：旧监听挂在已被 setContentView 销毁的
+            // 视图树上不会再触发，按新树重新走一次显示，避免弹窗永不出现且 showing 卡死挡住重显
+            showAtFieldCenterOrAwaitLayout(gameRight);
+            return;
+        }
+        if (gameRight.getWidth() > 0) {
+            doReposition(gameRight);
+        } else {
+            gameRight.getViewTreeObserver().addOnGlobalLayoutListener(
+                    new ViewTreeObserver.OnGlobalLayoutListener() {
+                        @Override
+                        public void onGlobalLayout() {
+                            gameRight.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                            if (showing && popupWindow != null && popupWindow.isShowing()) {
+                                doReposition(gameRight);
+                            }
+                        }
+                    });
+        }
+    }
+
+    /** 按当前 layout_game_right 重新解算居中坐标并更新已显示弹窗位置（保持原尺寸） */
+    private void doReposition(View gameRight) {
+        int[] pos = computeCenterPosition(gameRight);
+        popupWindow.update(pos[0], pos[1], -1, -1);
     }
 
     public void dismiss() {

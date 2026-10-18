@@ -35,7 +35,7 @@ class ChainSelectController {
             util.sendResponseInt(-1);
             return;
         }
-        data.get(); // selecting_player
+        int selectingPlayer = data.get() & 0xFF; // selecting_player（纯单人询问提示按被询问方着色）
         int count = data.get() & 0xFF;
         int specount = data.get() & 0xFF;
         int hint0 = data.getInt();
@@ -188,7 +188,7 @@ class ChainSelectController {
         // duelclient.cpp L2173-2174：count == 0 且未自动放弃（说明开了"显示时点"）
         // → 弹 sys201 + sys202 询问，而不是直接应答 -1
         if (chainOptions.isEmpty()) {
-            YesOrNoDialog.showChainEmptyQuery(util.activity);
+            YesOrNoDialog.showChainEmptyQuery(util.activity, selectingPlayer);
             return;
         }
 
@@ -200,7 +200,7 @@ class ChainSelectController {
         // duelclient.cpp L2164-2170：panelmode → 保留列表对话框（overlay 单元无法在场上单独点击发动）
         if (panelmode) {
             clearChainSelect();
-            YesOrNoDialog.showChainListDialog(util.activity, contiExist, selectTrigger, chainForced, chainOptions, chainFlags, chainItems);
+            YesOrNoDialog.showChainListDialog(util.activity, contiExist, selectTrigger, chainForced, chainOptions, chainFlags, chainItems, selectingPlayer);
             return;
         }
 
@@ -218,7 +218,7 @@ class ChainSelectController {
                 ? util.sysText(222, "是否要发动诱发类效果？") + "\n" + util.sysText(223, "稍后将询问其他可以发动的效果。")
                 : util.sysText(203, "是否要进行连锁？");
         int activatingCode = (field != null && field.currentChain != null) ? field.currentChain.code : 0;
-        YesOrNoDialog.showChainQuery(util.activity, queryText, activatingCode, chainItems);
+        YesOrNoDialog.showChainQuery(util.activity, queryText, activatingCode, chainItems, selectingPlayer);
     }
 
     /**

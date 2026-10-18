@@ -521,10 +521,12 @@ public class YGOProActivity extends AppCompatActivity {
         // gameEngine 相关对话框（PopupWindow 独立窗口，不随 setContentView 重建）按新屏宽
         // 重新解算显示宽度并重新居中，避免横转竖宽度超屏文字截断、竖转横显示过小（用户规格）
         DraggablePopupHelper.relayoutActivePopupsForOrientation(this);
-        // 猜拳弹窗以绝对坐标定位、不经 DraggablePopupHelper 包装，旋转后需单独重定位，
-        // 保证竖屏转横屏时仍在 layout_game_right 底部居中（避免停留在左下角）
+        // 猜拳/先后攻弹窗以绝对坐标定位、不经 DraggablePopupHelper 包装，旋转后需单独重定位，
+        // 保证竖屏转横屏时仍在 layout_game_right 内各自对齐位置（猜拳底部居中、先后攻正中），
+        // 而非停留在旋转前的旧坐标
         if (dialogUtil != null) {
             dialogUtil.repositionHandSelectDialog();
+            dialogUtil.repositionTPSelectDialog();
         }
         // 主菜单阶段：MainMenuDialog 是独立窗口不受 setContentView 影响，无需回显
     }
