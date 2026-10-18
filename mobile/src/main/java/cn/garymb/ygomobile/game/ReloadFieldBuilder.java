@@ -32,7 +32,7 @@ class ReloadFieldBuilder {
             Log.w(TAG, "onReloadField: truncated payload");
             return;
         }
-        field.dInfo.duelRule = data.get() & 0xFF;
+        field.setDuelRule(data.get() & 0xFF);
         for (int i = 0; i < 2; i++) {
             int p = engine.localPlayer(i);
             if (data.remaining() < 4) {

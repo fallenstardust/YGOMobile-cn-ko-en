@@ -71,11 +71,16 @@ public class ChatInputUI {
         });
     }
 
-    /** 按 HUD 系数缩放输入框：基准与 XML 一致（字号 9sp、左右边距 6dp、竖屏固定高 32dp）；
-     *  手机上系数≈1 保持原样，上限 3 倍防平板过度放大 */
+    /** 按 HUD 系数缩放输入框：基准与 XML 一致（字号 9sp、左右边距 6dp、竖屏固定高）；
+     *  手机上系数≈1 保持原样，上限 3 倍防平板过度放大；下限强为 1（不随全面屏的 HUD 内缩变小）：
+     *  横屏输入框的高度由 YGOProActivity.syncChatInputHeightToToggle 锁为侧按钮列 btn_chat 实测高
+     *  （与六按钮同高同基线，用户规格），本类只能改字号/边距；若让它跟着 relief 缩字就会白变小而
+     *  不能回收任何纵向净空（下锚线不变），故内缩只作用于血条面板与提示行边距。
+     *  竖屏不参与缩放（系数强为 1）：竖屏底部行的 6 个功能按钮为 XML 固定高，输入框
+     *  若随 HUD 系数放大（30dp×系数）就会高于按钮且不再贴底（用户规格：同高且贴底） */
     private void applyChatInputScale(float f) {
         if (etChatInput == null) return;
-        float scale = Math.max(1f, Math.min(3f, f));
+        float scale = isPortrait() ? 1f : Math.max(1f, Math.min(3f, f));
         etChatInput.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 9f * scale);
         float density = context.getResources().getDisplayMetrics().density;
         int pad = Math.round(6f * scale * density);
@@ -85,6 +90,12 @@ public class ChatInputUI {
             lp.height = Math.round(baseInputHeight * scale);
             etChatInput.setLayoutParams(lp);
         }
+    }
+
+    /** 当前是否竖屏（竖屏底部行为「6 按钮 + 输入框」同一行，高度以按钮为基准不随屏缩放） */
+    private boolean isPortrait() {
+        return context.getResources().getConfiguration().orientation
+                == android.content.res.Configuration.ORIENTATION_PORTRAIT;
     }
     
     /**

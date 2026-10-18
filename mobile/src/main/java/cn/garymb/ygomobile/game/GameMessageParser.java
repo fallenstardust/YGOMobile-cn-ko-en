@@ -761,7 +761,7 @@ public class GameMessageParser {
         engine.field.clear();
         engine.inDuel = true;
         engine.siding = false;
-        engine.field.dInfo.duelRule = duelRule;
+        engine.field.setDuelRule(duelRule);
         // 回放视角恒以录制者为参照（ReplayPlayer.startSession 置恒等映射/切换视角翻转），
         // 不得由 MSG_START 的先攻方重新推断：undo/从头重放重投本消息时会把用户已切换的
         // 视角静默翻回（C++ gframe 也仅在 ReplayThread 开始设 isFirst=true，ReplaySwap 翻转）

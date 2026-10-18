@@ -639,6 +639,18 @@ public class GameField {
 
     public final DuelInfo dInfo = new DuelInfo();
 
+    /** dInfo.duelRule 的静态镜像：几何门面入口（getZoneRect/getPileRect）为 static，
+     *  需按 master rule 选 materials.cpp 的 rule0(field2)/rule1(field3) 格子布局；
+     *  经 {@link #setDuelRule(int)} 统一写入（GameMessageParser/ReloadFieldBuilder/ReplayPlayer），
+     *  默认 4（当前环境恒 New Master Rule） */
+    public static volatile int sDuelRule = 4;
+
+    /** 设置本局 master rule：同时写实例 dInfo 与静态镜像，几何分支单一入口 */
+    public void setDuelRule(int rule) {
+        dInfo.duelRule = rule;
+        sDuelRule = rule;
+    }
+
     /** 同包协作类：坐标几何 / 卡片增删改 / 动画与 HUD。构造注入门面引用，经包级私有直连共享状态。 */
     final GameFieldGeometry geometry;
     final GameFieldCards cards;

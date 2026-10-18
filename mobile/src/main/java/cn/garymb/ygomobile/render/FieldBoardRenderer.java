@@ -44,9 +44,10 @@ final class FieldBoardRenderer {
         // 矩形范围按需求限制在双方怪兽/魔陷主体区的包围盒内，不外溢到整块 gamefield
         if (transparent) drawFieldSpellArt(code1, code2, rule == 1);
         int tex = view.tex.obtainFieldTexture(rule, transparent);
-        // 因魔陷行新增纵向缝隙、卡区整体更外扩，场地底板贴图矩形随之稍微外扩（中心不变、四边各向外
-        // 放大 BOARD_MARGIN），使卡片区仍完整落在底板内。
-        final float boardMargin = 0.25f;
+        // 底板矩形 = materials.cpp vField（-1..9 × -4..4）经 fx 同仿射，零外扩：
+        // field2/field3 贴图烘焙的网格线世界位置与 GameFieldGeometry 格子中心严格重合
+        // （旧 boardMargin=0.25 把贴图四边外拉伸，网格线整体外移 → 卡片/槽与底图错位）
+        final float boardMargin = 0f;
         float w = (FieldGeometry.FIELD_X_MAX - FieldGeometry.FIELD_X_MIN) + boardMargin * 2f;
         float h = (FieldGeometry.FIELD_Y_MAX - FieldGeometry.FIELD_Y_MIN) + boardMargin * 2f;
         float cx = FieldGeometry.mirrorX((FieldGeometry.FIELD_X_MIN + FieldGeometry.FIELD_X_MAX) / 2f);
@@ -157,17 +158,19 @@ final class FieldBoardRenderer {
             }
             for (int i = 0; i <= 5; i++) {
                 float[] c = FieldGeometry.zoneCenter(p, 0x08, i);
-                // 场地区（seq5）绘制为与墓地一致的长方形（PILE_W×PILE_H），其余魔陷格保持方格
+                // 场地区（seq5）为与墓地一致的竖格（PILE_W×PILE_H，materials.cpp 0.8×1.2），
+                // 主魔陷格 0-4 保持方格
                 float zw = (i == 5) ? FieldGeometry.PILE_W : FieldGeometry.ZONE_W;
                 float zh = (i == 5) ? FieldGeometry.PILE_H : FieldGeometry.ZONE_H;
                 drawZoneSlot(f, p, 0x08, i, c[0], c[1], zw, zh, pulse);
             }
             if (!mr4) {
-                // MR<4：field2 底板额外魔法陷阱格（左下/右下，几何真值见 GameFieldGeometry s==6/7 分支）
+                // MR<4：field2 底板额外魔法陷阱格（侧列中格 seq6 / 右列中格 seq7），
+                // materials.cpp 均为 0.8×1.2 竖格
                 for (int i = 6; i <= 7; i++) {
                     float[] c = FieldGeometry.zoneCenter(p, 0x08, i);
                     drawZoneSlot(f, p, 0x08, i, c[0], c[1],
-                            FieldGeometry.ZONE_W, FieldGeometry.ZONE_H, pulse);
+                            FieldGeometry.PILE_W, FieldGeometry.PILE_H, pulse);
                 }
             }
             for (int loc : new int[]{0x01, 0x10, 0x20, 0x40}) {

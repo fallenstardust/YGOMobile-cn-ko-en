@@ -19,26 +19,13 @@ class GameFieldGeometry {
      */
     private static final float OVERLAY_PEEK = 0.16f;
 
-    /**
-     * 主怪兽区/魔陷区相邻格子间的额外缝隙（原始单位，与格子步长基准 1.1 同量纲）。
-     * 原 5 主格中心步长恰等于格宽 1.1（槽矩形边对边贴合、无间隙），现按需求以中心保持
-     * （中轴 3.95 固定、两侧对称外扩）将主 5 格（s<5）步长改为 1.1 + ZONE_GAP，使相邻格之间
-     * 出现宽度约 ZONE_GAP×X_SCALE 的缝隙。按需求本间隙进一步统一作用于：额外怪兽区与双方
-     * 主怪兽行的纵向间隔、主怪兽行与魔陷行的纵向间隔、场地/额外卡组/墓地/除外/卡组各堆叠格
-     * 彼此及其与怪兽区/魔陷区之间（横向邻接用原始值 0.1，纵向邻接用 vg = 0.1×X_SCALE，
-     * 使两方向的世界单位缝宽一致）。卡片落点 / 选中框 / 拾取 / 场地槽均派生自本组几何，
-     * 会自动跟随。注：本选择有意不跟随 field3.png 烘焙网格线（需接受与底图网格的错位）。
-     */
-    private static final float ZONE_GAP = 0.1f;
-
-    /** 纵向缝隙的世界单位等价值：X 向经 fx 放大 X_SCALE 倍，Y 向不放大，
-     *  故 Y 向间隔需乘 X_SCALE 才能与横向缝隙视觉等宽 */
-    private static float vg() {
-        return ZONE_GAP * GameField.X_SCALE;
+    /** 当前对局 master rule ≥4（field3 布局）？静态镜像见 GameField.sDuelRule */
+    private static boolean mr4() {
+        return GameField.sDuelRule >= 4;
     }
 
-    /** 对方手卡沿纵轴额外向远离场地中心方向平移量（Y 世界单位）：因场地区/魔陷行等
-     *  按 ZONE_GAP 外扩后对方手卡更易遮挡魔陷区格子，按需求整体外推减少遮挡。
+    /** 对方手卡沿纵轴额外向远离场地中心方向平移量（Y 世界单位）：因场地区等外扩后
+     *  对方手卡更易遮挡魔陷区格子，按需求整体外推减少遮挡。
      *  横屏决斗场位置调整后本偏移会让对方场上魔陷行与手卡间距显大，按需求收窄至 0.15
      *  以拉近两者、仅保留少量防遮挡余量；改动需同步 FieldCamera.OPP_HAND_Y(-3.4-本值)。 */
     private static final float OPP_HAND_PUSH = 0.15f;
@@ -51,7 +38,13 @@ class GameFieldGeometry {
         this.field = field;
     }
 
-    // === ClientField::GetCardLocation 忠实移植（MR4，rule=1；坐标真值来自 materials.cpp）===
+    // === ClientField::GetCardLocation 忠实移植（坐标真值来自 materials.cpp）===
+    // 格子布局真值 = vFieldMzone/vFieldSzone/vFieldDeck/Grave/Remove/Extra（rule 维按
+    // duel_rule 选 0/1，对应 field2.png / field3.png 烘焙网格线）：主怪兽/魔陷列中心
+    // x = 1.75 + 1.1·seq（p1 镜像 6.15 − 1.1·seq），格边对边严丝合缝（步长 = 格宽 1.1）；
+    // 主怪兽行 y=±1.4、魔陷行 y=±2.6、额外怪兽区 y=0（x=2.85/5.05）。
+    // 历史上此处曾按需求加 ZONE_GAP=0.1 统一缝隙并内收行位，实测导致卡片/格子槽与
+    // 底图网格错位，现整体还原 C++ 值；横向仍经 fx() 等比拉伸（底板贴图同映射）。
 
     /**
      * 区域规格：怪兽/魔陷区宽 290px、高 254px，格子间 2px 间隔 → 横向间距 292px；
@@ -77,8 +70,9 @@ class GameFieldGeometry {
             return new float[]{mzoneCX(controler, sequence), mzoneCY(controler, sequence), GameField.ZONE_W, GameField.ZONE_H};
         }
         if (location == 0x08) {
-            // 场地区（szone seq5）改为与墓地堆叠区一致的长方形（PILE_W×PILE_H），其余魔陷格保持 ZONE_W×ZONE_H
-            if (sequence == 5) {
+            // materials.cpp：魔陷主列 0-4 为 1.1×1.2 方格；场地区(seq5)与 MR<4 额外灵摆列
+            // (seq6/7)均为 0.8×1.2 竖格（与侧列堆叠格同宽）
+            if (sequence >= 5) {
                 return new float[]{szoneCX(controler, sequence), szoneCY(controler, sequence), GameField.PILE_W, GameField.PILE_H};
             }
             return new float[]{szoneCX(controler, sequence), szoneCY(controler, sequence), GameField.ZONE_W, GameField.ZONE_H};
@@ -86,28 +80,29 @@ class GameFieldGeometry {
         return null;
     }
 
-    /** 堆叠区矩形 {cx, cy, w, h}（materials.cpp vFieldDeck/Grave/Remove/Extra 中心，
-     *  按 ZONE_GAP 统一间隙外扩：侧列与魔陷行最外格留 0.1 原始横向间隙，
-     *  列内相邻格纵向间隔留 vg，与怪兽/魔陷区缝隙等宽） */
+    /** 堆叠区矩形 {cx, cy, w, h}：materials.cpp vFieldDeck/Grave/Remove/Extra 中心经 fx 缩放。
+     *  MR4(rule1)：墓地与除外同列上下两格（±2.0 / ±0.7）；MR<4(rule0)：墓地下移 ±0.7、
+     *  除外改画外侧凸格（p0 x=8.3 / p1 x=-0.4），与 field2.png 印刷一致 */
     static float[] getPileRect(int controler, int location) {
+        boolean mr4 = mr4();
         float cx;
         float cy;
         switch (location) {
             case 0x01:
-                cx = fx(controler == 0 ? 7.4f : 0.5f);
-                cy = controler == 0 ? 3.2f + vg() : -(3.2f + vg());
+                cx = fx(controler == 0 ? 7.3f : 0.6f);
+                cy = controler == 0 ? 3.3f : -3.3f;
                 break;
             case 0x10:
-                cx = fx(controler == 0 ? 7.4f : 0.5f);
-                cy = controler == 0 ? 2.0f : -2.0f;
+                cx = fx(controler == 0 ? 7.3f : 0.6f);
+                cy = controler == 0 ? (mr4 ? 2.0f : 0.7f) : -(mr4 ? 2.0f : 0.7f);
                 break;
             case 0x20:
-                cx = fx(controler == 0 ? 7.4f : 0.5f);
-                cy = controler == 0 ? 0.8f - vg() : -(0.8f - vg());
+                cx = fx(controler == 0 ? (mr4 ? 7.3f : 8.3f) : (mr4 ? 0.6f : -0.4f));
+                cy = controler == 0 ? 0.7f : -0.7f;
                 break;
             case 0x40:
-                cx = fx(controler == 0 ? 0.5f : 7.4f);
-                cy = controler == 0 ? 3.2f + vg() : -(3.2f + vg());
+                cx = fx(controler == 0 ? 0.6f : 7.3f);
+                cy = controler == 0 ? 3.3f : -3.3f;
                 break;
             default:
                 return null;
@@ -116,46 +111,38 @@ class GameFieldGeometry {
     }
 
     private static float mzoneCX(int c, int s) {
-        float step = 1.1f + ZONE_GAP;
-        // 额外怪兽区(s5/s6)与主怪兽行第 2/4 列(seq1/seq3 = 3.95∓step)严格对齐：
-        // 旧值 ±1.1 未含 ZONE_GAP，间隙统一后与主怪兽列错位，现改用同一 step 消除偏差
-        if (c == 0) return fx(s < 5 ? 3.95f + (s - 2) * step : (s == 5 ? 3.95f - step : 3.95f + step));
-        return fx(s < 5 ? 3.95f + (2 - s) * step : (s == 5 ? 3.95f + step : 3.95f - step));
+        // materials.cpp vFieldMzone：主 5 格中心 1.75+1.1·i（p1 镜像 6.15−1.1·i），
+        // 额外怪兽区 seq5/seq6 = 2.85/5.05（p1 对调），与主格同列对齐
+        if (c == 0)
+            return fx(s < 5 ? 1.75f + 1.1f * s : (s == 5 ? 2.85f : 5.05f));
+        return fx(s < 5 ? 6.15f - 1.1f * s : (s == 5 ? 5.05f : 2.85f));
     }
 
     private static float mzoneCY(int c, int s) {
-        // 额外怪兽区行固定 Y=0（行高 1.2、上缘 0.6），主怪兽行按与额外怪兽区间隙
-        // = vg 内收：中心 = 0.6 + 0.6 + vg = 1.2 + vg（原 1.4，间隙 0.2 偏大）
+        // 额外怪兽区行中心 Y=0（-0.6~0.6）；主怪兽行中心 ±1.4（0.8~2.0），与底板网格线一致
         if (s >= 5) return 0f;
-        return c == 0 ? 1.2f + vg() : -(1.2f + vg());
+        return c == 0 ? 1.4f : -1.4f;
     }
 
     private static float szoneCX(int c, int s) {
-        float step = 1.1f + ZONE_GAP;
         if (c == 0) {
-            if (s < 5) return fx(3.95f + (s - 2) * step);
-            if (s == 5) return fx(0.5f);
-            if (s == 6) return fx(0.5f);
-            return fx(8.45f);
+            if (s < 5) return fx(1.75f + 1.1f * s);
+            if (s == 7) return fx(mr4() ? 8.3f : 7.3f);
+            return fx(0.6f);
         }
-        if (s < 5) return fx(3.95f + (2 - s) * step);
-        if (s == 5) return fx(7.4f);
-        if (s == 6) return fx(7.4f);
-        return fx(-0.55f);
+        if (s < 5) return fx(6.15f - 1.1f * s);
+        if (s == 7) return fx(mr4() ? -0.4f : 0.6f);
+        return fx(7.3f);
     }
 
     private static float szoneCY(int c, int s) {
-        // 纵向间隔统一为 vg（与横向缝隙世界等宽）：魔陷行（s<5）距主怪兽行
-        // (1.2+vg) 再隔 1.2+vg → 2.4+2vg；场地区(s==5)保持 ±2.0 与墓地堆叠同高；
-        // 灵摆列(s>=6)距场地区下缘隔 vg → 0.8-vg，与除外堆叠同排。
-        if (c == 0) {
-            if (s < 5) return 2.4f + 2 * vg();
-            if (s == 5) return 2.0f;
-            return 0.8f - vg();
-        }
-        if (s < 5) return -(2.4f + 2 * vg());
-        if (s == 5) return -2.0f;
-        return -(0.8f - vg());
+        // materials.cpp vFieldSzone[rule]：主魔陷行 ±2.6（2.0~3.2，与主怪兽行共边 2.0）；
+        // 场地区 seq5：MR4 与魔陷同排 ±2.0，MR<3 在侧列底格 ±0.7；
+        // 额外灵摆 seq6/7（仅 MR<4 使用）：±2.0
+        float sign = c == 0 ? 1f : -1f;
+        if (s < 5) return sign * 2.6f;
+        if (s == 5) return sign * (mr4() ? 2.0f : 0.7f);
+        return sign * (mr4() ? 0.7f : 2.0f);
     }
 
     /**
@@ -190,15 +177,15 @@ class GameFieldGeometry {
                 if (count <= 0) count = 1;
                 float spacing = handSpacing(count);
                 // 手牌整排宽度硬边界（用户规格）：最左/最右卡不得越入两侧侧列——限制在本侧
-                // 卡组格内沿（controler0 在 fx(7.4)−PW/2，即卡组格左下角）与额外卡组格内沿
-                // （fx(0.5)＋PW/2，即额外格右下角）之间，整排恒夹在两侧列格中间的净空带内；
+                // 卡组格内沿（fx(7.3)−PW/2，即卡组格左下角）与额外卡组格内沿
+                // （fx(0.6)＋PW/2，即额外格右下角）之间，整排恒夹在两侧列格中间的净空带；
                 // 带宽对两席、横竖屏均对称于中心 3.95，世界坐标封顶与相机无关。参照 C++
                 // client_field.cpp GetCardLocation LOCATION_HAND 的 count>6 时把整排压进固定区间
                 // t->X=1.9+seq*4.0/(count-1)：张数多时间距同步收窄、层叠面积增大，
                 // 但保留最小可见露出量 HAND_MIN_GAP，不完全遮挡其余手卡
                 if (count > 1) {
-                    float band = (fx(7.4f) - GameField.PILE_W / 2f)
-                            - (fx(0.5f) + GameField.PILE_W / 2f);
+                    float band = (fx(7.3f) - GameField.PILE_W / 2f)
+                            - (fx(0.6f) + GameField.PILE_W / 2f);
                     float fit = (band - 0.8f) / (count - 1); // 0.8 = 手卡卡宽（世界单位）
                     spacing = Math.max(Math.min(HAND_MIN_GAP, fit), Math.min(spacing, fit));
                 }

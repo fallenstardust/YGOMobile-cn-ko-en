@@ -98,6 +98,17 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     public static final float DEFAULT_CAMERA_ELEVATION = 52f;
     public static final float MIN_CAMERA_ELEVATION = 35f;
     public static final float MAX_CAMERA_ELEVATION = 75f;
+    /**
+     * 横屏 HUD 纵向名义占地（dp）：血条行下限 50dp + 提示行 40dp + 聊天输入行 35dp。
+     * <p>两处共用同一真值：{@link FieldCamera} 用它换算全面屏的仰角自适应抬升量（只按设备
+     * 纵向 dp 高度算名义挤占度，不读实测内缩），GameTopInfoManager 用它算横屏 HUD 等比内缩
+     * 系数——后者正是为放大卡片而回收实测内缩，必须与仰角解耦，否则回收净空会把仰角跌回
+     * 设置值（用户规格：全面屏倾斜度保持现状）。
+     * <p><b>2026-10-18 更新</b>：tv_hint_message 从固定 30dp→wrap_content+10sp，提示栏占地减小；
+     * 原预算 125dp= 血条 50+ 提示 30+ 输入框 30+ 冗余 15，现调整为 115dp（减 10dp）以回收更多
+     * 纵向空间给决斗场取景，使卡片与场地在 GameFieldView 中最大化显示（对齐 C++ libygomobile.so）。
+     */
+    public static final float LANDSCAPE_HUD_NOMINAL_DP = 115f;
     private static final String PREF_CAMERA_ELEVATION = "camera_elevation";
     // 视点到注视点距离默认值（与俯仰角共同决定相机位置）
     private static final float CAMERA_DISTANCE = 7.6f;
@@ -425,9 +436,12 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     }
 
     /**
-     * 顶部内缩像素（问题1）：传入 gameTopInfo（layout_top_info）的实测高度，
-     * 相机以离轴视锥把对方手卡上缘压到该高度之下，确保对方手卡不遮挡顶部信息条。
-     * 随屏幕旋转 / 折叠屏 / 顶部条高度变化调用即可自适应重建相机。
+     * 顶部内缩像素（上锚线）：传入顶部 HUD（血条行 + 其下聊天/提示行）的实测底边高，
+     * 相机以离轴视锥把底板远缘与对方手卡上缘压到该高度之下，确保不遮挡顶部信息条与
+     * tv_hint_message（本 View 为 setZOrderOnTop 的 GL 曲面，不透内容会盖住其下的普通 View）。
+     * 调用方必须传入与提示显隐无关的恒定量（提示栏恒占位 + 固定高），否则决斗场会因提示
+     * 的显示/隐藏而反复重解取景（用户反馈的界面晃动）。横竖屏均生效；随屏幕旋转 / 折叠屏 /
+     * HUD 高度变化再次调用即自适应重建相机。
      */
     public void setTopInsetPx(float px) {
         float v = Math.max(0f, px);
@@ -441,8 +455,8 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
 
     /**
      * 底部内缩像素：传入聊天输入框顶边距决斗场视图底边的高度（可另加少量间隙），
-     * 横屏相机以此为下锚线，使我方手卡底缘落在输入框上方、纵向富余留在顶部（决斗场下移）。
-     * 输入框高度变化 / 旋转 / 折叠屏切换都会再次调用而自适应重建相机；竖屏解算忽略该值。
+     * 相机以此为下锚线，使我方手卡底缘落在输入框上方、纵向富余留在顶部（决斗场下移）。
+     * 输入框高度变化 / 旋转 / 折叠屏切换都会再次调用而自适应重建相机；横竖屏均生效。
      */
     public void setBottomInsetPx(float px) {
         float v = Math.max(0f, px);
@@ -455,8 +469,9 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     }
 
     /**
-     * 对方手卡屏幕上缘的屏幕 y（像素，相对本 View 左上角）：供覆盖层把聊天信息与中央提示文本
-     * 锚定在「对方手卡正上方」。相机未就绪时回退为当前顶部内缩量。
+     * 对方手卡屏幕上缘的屏幕 y（像素，相对本 View 左上角）：只读查询原语，供需要贴对方
+     * 手卡定位的覆盖层使用（聊天/提示行已不再据此平移，提示栏恒在 gameTopInfo 布局位置）。
+     * 相机未就绪时回退为当前顶部内缩量。
      */
     public float getOpponentHandTopScreenY() {
         return cam.computeOpponentHandTopScreenY();
@@ -515,6 +530,19 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
      */
     public void dispatchLongPressEnd() {
         picker.dispatchLongPressEnd();
+    }
+
+    /**
+     * 阶段按钮按下态入口：控制器在 ACTION_DOWN 时调用，命中的按钮即刻换按下图（sbutton_p），
+     * 与后续点击命中同一判定，使按下反馈与实际响应一致
+     */
+    public void dispatchPhaseButtonPressStart(float x, float y) {
+        if (phase != null) phase.handlePhaseButtonPress(x, y);
+    }
+
+    /** 阶段按钮按下态结束入口（ACTION_UP/CANCEL） */
+    public void dispatchPhaseButtonPressEnd() {
+        if (phase != null) phase.clearPhaseButtonPress();
     }
 
     /**

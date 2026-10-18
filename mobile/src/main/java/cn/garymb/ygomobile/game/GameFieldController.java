@@ -163,10 +163,14 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     }
 
     /**
-     * 问题1：把 gameTopInfo 实测高度喂给相机作为顶部内缩（对方手卡不遮挡顶部条），
-     * 并以下锚线（聊天输入框顶边）+ 提示栏间隙把决斗场整体下移，并在相机每次重建后把
-     * 聊天信息 + 中央提示文本重新锚定到「对方手卡正上方」。
-     * 顶部条/输入框高度变化 / 屏幕旋转 / 折叠屏切换都会经 OnLayoutChange 与相机回调自适应。
+     * 把 gameTopInfo 实测高度（血条行 + 其下聊天/提示行）喂给相机作为顶部内缩（上锚线），
+     * 并以下锚线（聊天输入框顶边）把决斗场整体下移，使提示文本始终落在 HUD 保留带内。
+     * 顶部条/输入框高度变化 / 屏幕旋转 / 折叠屏切换均经 OnLayoutChange 重算。
+     * <p>
+     * 用户规格：提示栏必须保持在 gameTopInfo 布局位置，不跟随对方手卡升降，也不得因其
+     * 显隐而改变决斗场取景——故本方法只接线「与提示显隐无关的恒定量」：聊天/提示行不再
+     * 做任何 translationY 动态锚定（旧 anchorChatAboveOpponentHand 已删除），行高恒定的前提
+     * 则由提示栏恒占位（隐藏用 INVISIBLE）+ XML 固定高度保证（见 layout(_port)layout_game_right）
      */
     private void setupOverlayAnchoring() {
         if (viewController == null) return;
@@ -175,43 +179,59 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
             updateCameraBottomInset();
         };
         if (layoutTopInfo != null) layoutTopInfo.addOnLayoutChangeListener(insetListener);
-        // 竖屏顶部流容器 layout_top_stack（gameTopInfo 血条行→聊天/提示行）：聊天行数
-        // 变化等把 HUD 内容撑高时靠 stack 布局变更重算（顶部 1/3 面板在 layout_game_right
-        // 之外，其显隐直接改变决斗场区域尺寸并由 onSurfaceChanged 重解相机，无需内缩补偿）
+        // 聊天/提示行（tv_hint_message 宿主）：上锚线必须包含整行（否则卡片绘在其上），
+        // 故本行布局变化也要重算内缩；行高恒定（提示栏恒占位 + 固定高）⇒ 重算结果不变，
+        // 只在血条面板本身尺寸变化（旋转/折叠屏/HUD 缩放）时才真正改动取景
+        if (layoutChatMessages != null) layoutChatMessages.addOnLayoutChangeListener(insetListener);
+        // 竖屏顶部流容器 layout_top_stack（gameTopInfo 血条行→聊天/提示行）：内容撑高时
+        // 靠 stack 布局变更重算（顶部 1/3 面板在 layout_game_right 之外，其显隐直接改变
+        // 决斗场区域尺寸并由 onSurfaceChanged 重解相机，无需内缩补偿）
         View stack = activity.findViewById(R.id.layout_top_stack);
         if (stack != null) stack.addOnLayoutChangeListener(insetListener);
         if (etChatInput != null) etChatInput.addOnLayoutChangeListener(insetListener);
-        viewController.setOnCameraChangedListener(this::anchorChatAboveOpponentHand);
     }
 
-    /** 相机顶部内缩 = layout_top_info 视觉底边（相对决斗场视图）距场顶的距离：
-     *  横屏生效；竖屏决斗场已排在详情栏下方的内容区内且解算居中，传入值被 FieldCamera 忽略 */
+    /**
+     * 相机顶部内缩 = 顶部 HUD 视觉底边（相对决斗场视图）距场顶的距离：包含血条行与其下方的
+     * 聊天/提示行（tv_hint_message）。GameFieldView 为 setZOrderOnTop(true) 的 GL 曲面，不透的
+     * 底板与手卡会把该行的普通 View 整层盖住（旧实现只量血条行 → 提示文本常被对方手卡遮挡），
+     * 现横竖屏相机均以此作上锚线。该锚线只由血条面板高度与提示带固定高决定，与提示文本
+     * 是否正在显示无关，因而不再出现「提示一显示决斗场就缩小/下移、一隐藏又弹回」的晃动
+     */
     private void updateCameraTopInset() {
         if (viewController == null || layoutTopInfo == null) return;
-        int rawH = layoutTopInfo.getHeight();
-        if (rawH <= 0) return;
-        float scale = layoutHudTop != null ? layoutHudTop.getScaleY() : 1f; // 现均 1，保留兼容
-        int hgt;
         View field = activity.findViewById(R.id.game_field_view);
-        if (field != null) {
-            int[] a = new int[2];
-            int[] b = new int[2];
-            layoutTopInfo.getLocationInWindow(a);
-            field.getLocationInWindow(b);
-            hgt = (a[1] - b[1]) + (int) (rawH * scale);
-        } else {
-            hgt = (int) (rawH * scale);
-        }
+        if (field == null || field.getHeight() <= 0) return;
+        int[] b = new int[2];
+        field.getLocationInWindow(b);
+        int hgt = visualBottomInField(layoutTopInfo, b[1]);
+        // 竖屏 HUD 整体包在 layout_hud_top（血条行 + 聊天/提示行）内，直接取其实测底边
+        hgt = Math.max(hgt, visualBottomInField(layoutHudTop, b[1]));
+        hgt = Math.max(hgt, visualBottomInField(layoutChatMessages, b[1]));
         if (hgt > 0) viewController.setTopInsetPx(hgt);
     }
 
+    /**
+     * 视图在决斗场视图坐标系内的底边（相对场顶，像素）；仅 GONE（真正退出布局、不占位）
+     * 或未测量时返回 0。INVISIBLE 必须照样计入：它仍占着布局空间，相机不为其保留就会把
+     * 卡片画在这段空白上，等视图转 VISIBLE 时再重解取景 —— 正是提示栏显隐引起决斗场晃动的成因
+     */
+    private int visualBottomInField(View v, int fieldTopInWindow) {
+        if (v == null || v.getHeight() <= 0 || v.getVisibility() == View.GONE) return 0;
+        int[] p = new int[2];
+        v.getLocationInWindow(p);
+        return (p[1] - fieldTopInWindow) - (int) v.getTranslationY() + v.getHeight();
+    }
+
     /** 相机底部内缩 = 决斗场视图底边→聊天输入框顶边的距离（再加 4dp 间隙，使我方手卡底缘
-     *  只比输入框高一点）：横屏作为纵向下锚线使决斗场整体下移；输入框隐藏/不存在时内缩归零 */
+     *  只比输入框高一点）：横竖屏均作为纵向下锚线使决斗场整体下移。与上锚线同一原则：
+     *  只有真正退出布局的 GONE 才取消保留，停用聊天用的 INVISIBLE 仍占位（竖屏底部行为
+     *  weight 布局），否则聊天开关一变就会重解取景而晃动；输入框不存在时内缩归零 */
     private void updateCameraBottomInset() {
         if (viewController == null) return;
         View field = activity.findViewById(R.id.game_field_view);
         if (etChatInput == null || field == null
-                || etChatInput.getVisibility() != View.VISIBLE
+                || etChatInput.getVisibility() == View.GONE
                 || etChatInput.getHeight() <= 0 || field.getHeight() <= 0) {
             viewController.setBottomInsetPx(0f);
             return;
@@ -227,27 +247,6 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         }
         float gap = 4f * activity.getResources().getDisplayMetrics().density;
         viewController.setBottomInsetPx(inset + gap);
-    }
-
-    private void anchorChatAboveOpponentHand() {
-        if (viewController == null || layoutChatMessages == null) return;
-        // 竖屏（layout-port）聊天区在顶部流内自然位于双方血条行正下方（与横屏同构），
-        // 不再叠加横屏的 translationY 动态锚定，复位后直接返回
-        if (activity.getResources().getConfiguration().orientation
-                == android.content.res.Configuration.ORIENTATION_PORTRAIT) {
-            layoutChatMessages.setTranslationY(0f);
-            return;
-        }
-        final float oppTopY = viewController.getOpponentHandTopScreenY();
-        final int topH = layoutTopInfo != null ? layoutTopInfo.getHeight() : 0;
-        layoutChatMessages.post(() -> {
-            int hgt = layoutChatMessages.getHeight();
-            if (hgt <= 0) return;
-            // 让聊天/提示容器的底边贴到对方手卡上缘之上（容器顶基准 = 顶部条高度）
-            float ty = oppTopY - topH - hgt;
-            if (ty < 0f) ty = 0f;
-            layoutChatMessages.setTranslationY(ty);
-        });
     }
 
     /** 模态对话框显示——登记并禁用三个阶段按钮 */
@@ -453,10 +452,11 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         if (hideHintRunnable == null) {
             hideHintRunnable = () -> {
                 // 临时知会到期：若仍有存续的选择/等待类提示（stHintMsg）则恢复其文本，否则隐藏
+                //（一律 INVISIBLE，见 hideDuelHint）
                 if (pendingDuelHint != null) {
                     tvHintMessage.setText(pendingDuelHint);
                 } else {
-                    tvHintMessage.setVisibility(View.GONE);
+                    tvHintMessage.setVisibility(View.INVISIBLE);
                 }
             };
         }
@@ -479,10 +479,13 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         tvHintMessage.setVisibility(View.VISIBLE);
     }
 
-    /** 隐藏通讯提示（对齐 duelclient.cpp ClientAnalyze 开头 stHintMsg->setVisible(false)） */
+    /** 隐藏通讯提示（对齐 duelclient.cpp ClientAnalyze 开头 stHintMsg->setVisible(false)）：
+     *  用 INVISIBLE 而非 GONE（用户规格）——提示栏必须恒占住 gameTopInfo 下方那条布局空间，
+     *  相机上锚线（HUD 视觉底边）才能是恒定量；若用 GONE，行高在提示显/隐时变化，取景随之
+     *  重解（决斗场一时缩小/下移、一时弹回），即用户反馈的「界面经常晃动」 */
     public void hideDuelHint() {
         pendingDuelHint = null;
-        if (tvHintMessage != null) tvHintMessage.setVisibility(View.GONE);
+        if (tvHintMessage != null) tvHintMessage.setVisibility(View.INVISIBLE);
     }
 
     // === 卡片命令菜单 ===

@@ -109,8 +109,9 @@ final class FieldEditPreview {
         info.setColor(YGOUtil.c(R.color.white_aa));
         info.setTextSize(9f * density);
         canvas.drawText(String.format(Locale.US,
-                        "GameFieldView 设计预览  俯仰角=%.0f° 视点距离=%.2f 场地倍率=%.2f 宽度=%.2f 长度=%.2f 上下高=%.3f 手卡后移=%.3f(解算) 视高=%.1f°",
-                        view.cameraElevationDeg, view.cameraDistance, view.fieldZoom, view.fieldWidth,
+                        "GameFieldView 设计预览  俯仰角=%.0f°(设置%.0f°) 视点距离=%.2f 场地倍率=%.2f 宽度=%.2f 长度=%.2f 上下高=%.3f 手卡后移=%.3f(解算) 视高=%.1f°",
+                        cam.effectiveElevation, view.cameraElevationDeg, view.cameraDistance, view.fieldZoom,
+                        view.fieldWidth,
                         view.fieldLength, view.fieldHeight, cam.selfHandShift,
                         Math.toDegrees(2.0 * Math.atan(cam.halfH))),
                 6f * density, h - 6f * density, info);
@@ -179,6 +180,7 @@ final class FieldEditPreview {
         float halfH, halfW;          // 竖向半高 tan（离轴=frustumHH）与横向半宽 tan（=halfH*aspect）
         float frustumC;              // 离轴视锥竖向中心偏移 tan
         float selfHandShift;         // 我方手卡行后移量
+        float effectiveElevation;    // 解算真正生效的俯仰角（横屏含净空自适应抬升）
     }
 
     private EditCamera computeEditCamera(int w, int h) {
@@ -205,6 +207,7 @@ final class FieldEditPreview {
         // field_height（上下高度）：与运行期一致在离轴量上叠加垂直平移
         cam.frustumC = s.frustumC + view.fieldHeight;
         cam.selfHandShift = s.selfHandShift;
+        cam.effectiveElevation = s.effectiveElevation;
         return cam;
     }
 

@@ -34,7 +34,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:field_camera_elevation="52"
-            app:field_camera_distance="6.8"
+            app:field_camera_distance="8.0"
             app:field_zoom="1.1"
             app:field_width="1.0"
             app:field_length="1.0"

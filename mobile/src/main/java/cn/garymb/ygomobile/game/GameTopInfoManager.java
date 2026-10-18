@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.render.GameFieldView;
 import cn.garymb.ygomobile.render.TextureLoader;
 import cn.garymb.ygomobile.utils.YGOUtil;
 
@@ -82,7 +83,9 @@ public class GameTopInfoManager {
     private final YGOProActivity activity;
     private final Handler mainHandler;
 
-    private FrameLayout layoutGameRight;
+    // layout_game_right 横竖屏根节点均为 LinearLayout（六按钮组并入底部行），
+    // 本类只用 View 级 API（宽高/坐标/布局监听），声明为 View 免隐式强转 CCE
+    private View layoutGameRight;
     // 横竖屏同为水平 LinearLayout（我方5:计数器1:对方5），但仅作可见性控制故声明为 View
     private View layoutTopInfo;
     // 双方血条面板（lpbarf 容器）：运行时按 layout_game_right 尺寸等比缩放面板高度与内容尺寸（applyTopInfoSize）
@@ -226,6 +229,19 @@ public class GameTopInfoManager {
     private static final float LANDSCAPE_BASE_HEIGHT_DP = 50f;
     /** 横屏面板高占 layout_game_right 实测高度的比例（对齐 drawing.cpp 70/640≈0.109 的窗口高度占比） */
     private static final float LANDSCAPE_PANEL_HEIGHT_FRACTION = 0.11f;
+    /**
+     * 横屏 HUD 纵向占地占视图高的参照比例：取自老式 16:9 横屏实机（实测净空 74.1%），
+     * 也是用户已经满意的平板净空（76.6%）与 16:9 之间的保守取值。全面屏 17~24:9 的
+     * 纵向 dp 高只 375~430dp（16:9 为 540dp），同样 dp 定值的 HUD 要挤占约 30%，
+     * 而决斗场/卡片在相机姿态不变时只能装进两条锚线之间的净空带（卡片投影高≈净空带高的
+     * 12.6%），故本参照把超出的占地等比下放给 HUD，回收的像素 1:1 还给取景（用户规格：
+     * 保持倾斜度的前提下把卡片与决斗场画得更大，卡片宽高比 177:254 严格不变）
+     */
+    private static final float LANDSCAPE_HUD_BUDGET_RATIO = 0.259f;
+    /** HUD 等比内缩下限：再小 LP 数字（基准 12sp）/昵称（基准 10sp）可读性不保 */
+    private static final float LANDSCAPE_HUD_RELIEF_MIN = 0.8f;
+    /** 参与 HUD 内缩的场区宽高比下限：0.7×16/9（横屏决斗场视图只占屏宽 0.7） */
+    private static final float LANDSCAPE_RELIEF_ASPECT_REF = 1.24f;
 
     /** 最近一次 applyTopInfoSize 解算出的 HUD 等比系数（f=面板高/基准高），供聊天输入框等游戏内 UI 同源缩放 */
     private float hudScaleFactor = 1f;
@@ -246,7 +262,10 @@ public class GameTopInfoManager {
      * <p>面板高度 h 决定整条 HUD 的缩放基准 f = h / 基准高，头像框/昵称/LP数字/卡数/倒计时/
      * 回合数/撤回图标/卡背图标均乘 f，故不论 layout_game_right 多大（如 >1080p 平板）比例恒定。
      * <p>竖屏：面板宽≈屏宽×5/11，h 由 lpbarf 305:70 宽高比反推并夹在 [44dp,72dp]（保持原竖屏表现）。
-     * <p>横屏：h = layout_game_right 实测高 × 0.11，下限为基准高（手机不缩），上限 150dp（平板不过厚）。
+     * <p>横屏：h = layout_game_right 实测高 × 0.11 × relief，下限为基准高×relief（relief 为全面屏
+     * 专用等比内缩系数，16:9/平板恒为 1 → 与旧行为一致），上限 150dp（平板不过厚）。全面屏的
+     * relief &lt; 1 把省下的纵向空间 1:1 让给相机上锚线，使决斗场与场上卡片等比变大（仰角不变，
+     * 详见 {@link #landscapeHudRelief} 与 FieldCamera 的净空带取景说明）。
      * <p>头像框容器宽度按 64:70 比例随 h 设定，使头像框贴合头像、血条框（占余宽）自由横向拉伸。
      */
     private void applyTopInfoSize() {
@@ -268,11 +287,17 @@ public class GameTopInfoManager {
         } else {
             int gh = (layoutGameRight != null && layoutGameRight.getHeight() > 0)
                     ? layoutGameRight.getHeight() : dm.heightPixels;
-            int min = Math.round(LANDSCAPE_BASE_HEIGHT_DP * dm.density);
+            int gw = (layoutGameRight != null && layoutGameRight.getWidth() > 0)
+                    ? layoutGameRight.getWidth() : dm.widthPixels;
+            // 全面屏专用等比内缩系数（relief=1 时代入即原公式 → 16:9/平板结果与旧行为完全一致）
+            float relief = landscapeHudRelief(gw, gh, dm.density);
+            int min = Math.round(LANDSCAPE_BASE_HEIGHT_DP * relief * dm.density);
             int max = Math.round(150f * dm.density);
-            h = Math.round(gh * LANDSCAPE_PANEL_HEIGHT_FRACTION);
+            h = Math.round(gh * LANDSCAPE_PANEL_HEIGHT_FRACTION * relief);
             h = Math.max(min, Math.min(max, h));
-            baseH = min;
+            // 基准高不随 relief 变：于是 f = h/基准高 就是 relief 本身（内容随之内缩），
+            // 而 relief 只由设备几何决定 → 同一设备恒定，不会随对局内容改变上/下锚线（不晃动）
+            baseH = Math.round(LANDSCAPE_BASE_HEIGHT_DP * dm.density);
         }
         setPanelHeight(layoutPlayerPanel, h);
         setPanelHeight(layoutOpponentPanel, h);
@@ -312,6 +337,25 @@ public class GameTopInfoManager {
                 new ArrayList<>(hudScaleObservers)) {
             obs.accept(f);
         }
+    }
+
+    /**
+     * 横屏 HUD 等比内缩系数（1=不内缩）。只有同时满足两个条件才 &lt;1：
+     * <ul>
+     * <li>场区宽高比超过 16:9 参照（{@link #LANDSCAPE_RELIEF_ASPECT_REF}）——排除 4:3/16:10 平板与
+     * 折叠屏横屏（它们的决斗场走竖屏近俯视分支，内缩对取景尺寸无益反而只把字变小）；</li>
+     * <li>按 {@link #LANDSCAPE_HUD_BUDGET_RATIO} 算出的本机 HUD 预算（dp）小于名义占地
+     * {@link GameFieldView#LANDSCAPE_HUD_NOMINAL_DP}——16:9 手机（540dp）预算 140dp &gt; 125dp，自然不内缩。</li>
+     * </ul>
+     * 返回值只由 (场区宽高、场区高、屏幕密度) 三个设备恒定量决定，因而上/下锚线仍为恒定量：
+     * 不会引入「提示/聊天显隐→取景重解」的晃动，也与 FieldCamera 的仰角抬升互不干扰。
+     */
+    private float landscapeHudRelief(int gw, int gh, float density) {
+        if (gw <= 0 || gh <= 0 || density <= 0.001f) return 1f;
+        if ((float) gw / gh <= LANDSCAPE_RELIEF_ASPECT_REF) return 1f;
+        float budgetDp = LANDSCAPE_HUD_BUDGET_RATIO * gh / density;
+        float relief = budgetDp / GameFieldView.LANDSCAPE_HUD_NOMINAL_DP;
+        return Math.max(LANDSCAPE_HUD_RELIEF_MIN, Math.min(1f, relief));
     }
 
     /** 设置面板（lpbarf 容器）固定高度，令整条 HUD 高度由 h 主导、内容 match_parent 填满 */

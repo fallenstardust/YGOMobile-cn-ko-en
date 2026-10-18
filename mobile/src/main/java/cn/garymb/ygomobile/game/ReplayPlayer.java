@@ -481,7 +481,7 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
     private void buildInitialField() {
         field.clear();
         int startLp = replayData.params.startLp;
-        field.dInfo.duelRule = replayData.params.duelFlag >> 16;
+        field.setDuelRule(replayData.params.duelFlag >> 16);
         // 初始场按当前视角建立：视角切换后重跑/重放时引擎 P0（录制者）落 localPlayer(0)
         // 容器，与后续消息的 localPlayer 映射一致（C++ replay_mode.cpp::StartDuel
         // dField.Initial(LocalPlayer(i)) 同口径）

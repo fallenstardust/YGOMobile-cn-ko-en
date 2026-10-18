@@ -599,7 +599,10 @@ class FieldChatBoard {
     void enterLobbyChatMode() {
         lobbyChatMode = true;
         clearDanmaku();
-        if (ctl.layoutChatMessages != null) ctl.layoutChatMessages.setVisibility(View.GONE);
+        // 聊天/提示容器用 INVISIBLE 而非 GONE：GONE 会让整行退出布局而改变相机上锚线（HUD
+        // 视觉底边），决斗场取景随之重解；大厅聊天不显示此列内容，保留占位不影响任何观感
+        if (ctl.layoutChatMessages != null)
+            ctl.layoutChatMessages.setVisibility(View.INVISIBLE);
         if (ctl.layoutDanmaku == null) return;
         if (lobbyChatContainer == null) {
             lobbyChatContainer = new LinearLayout(ctl.activity);

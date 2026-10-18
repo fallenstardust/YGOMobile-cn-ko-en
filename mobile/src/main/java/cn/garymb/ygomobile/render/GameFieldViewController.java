@@ -62,6 +62,8 @@ public class GameFieldViewController
         gestureDetector = new GestureDetector(activity, new GestureDetector.SimpleOnGestureListener() {
             @Override
             public boolean onDown(MotionEvent e) {
+                // 阶段按钮按下反馈：场内绘制无视图状态，由本处下发按下/抬起（button3_bg 语义）
+                fieldView.dispatchPhaseButtonPressStart(e.getX(), e.getY());
                 return true;
             }
 
@@ -76,7 +78,12 @@ public class GameFieldViewController
                 fieldView.dispatchLongPress(e.getX(), e.getY());
             }
         });
-        fieldView.setOnTouchListener((v, event) -> gestureDetector.onTouchEvent(event));
+        fieldView.setOnTouchListener((v, event) -> {
+            int action = event.getActionMasked();
+            if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL)
+                fieldView.dispatchPhaseButtonPressEnd();
+            return gestureDetector.onTouchEvent(event);
+        });
     }
 
     public void init(GameField field, ImageLoader imageLoader, GameFieldView.OnCardClickListener listener) {
