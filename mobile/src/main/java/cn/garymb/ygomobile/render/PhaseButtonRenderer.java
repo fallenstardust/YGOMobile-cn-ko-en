@@ -112,8 +112,18 @@ final class PhaseButtonRenderer {
             if (s != null) out[PHASE_CURRENT] = new float[]{s[0], s[1], bw, bh};
         }
         if (nextVisible) {
-            float[] s = view.projectWorldPoint(FieldGeometry.FIELD_CENTER_X, 0f, 0f);
-            if (s != null) out[PHASE_NEXT] = new float[]{s[0], s[1], bw, bh};
+            // 严格居中于两额外怪兽区内侧缘的屏幕像素中点：场地世界对称中心 FIELD_CENTER_X(3.95)
+            // 与两额外区内侧 (emzL+halfZoneW / emzR-halfZoneW) 的屏幕中点在相机透视投影下并不
+            // 完全重合（一侧略偏），沿用世界中心投影会表现为 BP 按钮偏离间隙正中（用户反馈BP偏右）；
+            // 改用实测两内侧像素中点作锚，与上方 gapPx 计算同源，保证视觉精确居中
+            if (lIn != null && rIn != null) {
+                float cx = (lIn[0] + rIn[0]) / 2f;
+                float cy = (lIn[1] + rIn[1]) / 2f;
+                out[PHASE_NEXT] = new float[]{cx, cy, bw, bh};
+            } else {
+                float[] s = view.projectWorldPoint(FieldGeometry.FIELD_CENTER_X, 0f, 0f);
+                if (s != null) out[PHASE_NEXT] = new float[]{s[0], s[1], bw, bh};
+            }
         }
         if (epVisible) {
             // 右侧额外怪兽区右缘再向外（屏幕更右 = 绘制空间 x 更小）

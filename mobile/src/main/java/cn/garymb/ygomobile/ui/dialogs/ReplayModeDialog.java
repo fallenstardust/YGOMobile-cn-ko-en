@@ -635,7 +635,9 @@ public class ReplayModeDialog {
                 activity.runOnUiThread(() -> {
                     switch (state) {
                         case PLAYING:
-                            activity.getFieldCtl().setPhaseText("\u25b6");
+                            // 不再覆盖阶段按钮文字（原 setPhaseText("▶") 会把最左侧当前
+                            // 阶段格变为播放图标，与“阶段格严格反映当前阶段”的语义相左）；
+                            // 阶段文字由 setPhaseByValue 根据回放内实际 phase 驱动
                             activity.getCardDetailPanel().showReplayControls();
                             activity.getCardDetailPanel().updateReplayButtonStates(false);
                             // 回放会话直到本回调才真正建立（startSession 置 replayMode 在
@@ -644,11 +646,11 @@ public class ReplayModeDialog {
                             activity.updateChatUIVisibility();
                             break;
                         case PAUSED:
-                            activity.getFieldCtl().setPhaseText("\u23f8");
+                            // 同 PLAYING：保持最左阶段格当前阶段文字，不再换为“⏸”图标
                             activity.getCardDetailPanel().updateReplayButtonStates(true);
                             break;
                         case FINISHED:
-                            activity.getFieldCtl().setPhaseText("\u23f9");
+                            // 同 PLAYING：阶段格保留最后一次的真实阶段文字，不用“⏹”图标覆盖
                             // 回放自然结束：即时隐藏录像控制条与残留时点/洗切按钮，
                             // 再弹结束提示框（确认后才 quitReplay 回录像选择窗）
                             activity.getCardDetailPanel().hideReplayControls();
@@ -656,7 +658,7 @@ public class ReplayModeDialog {
                             showReplayEndDialog(activity, player, endDlgShown, false);
                             break;
                         case ERROR:
-                            activity.getFieldCtl().setPhaseText("\u23f9");
+                            // 同 PLAYING：阶段格不用“⏹”图标覆盖，保持当前阶段语义
                             // 对齐 MSG_RETRY 分支 L311-316："Error occurs." 提示后等待确认
                             showReplayEndDialog(activity, player, endDlgShown, true);
                             break;
