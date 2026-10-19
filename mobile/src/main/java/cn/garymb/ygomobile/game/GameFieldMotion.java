@@ -582,6 +582,44 @@ class GameFieldMotion {
     }
 
     /**
+     * 卡组 / 额外卡组顶卡揭示翻开动画（对齐 duelclient.cpp MSG_CONFIRM_DECKTOP L2464-2481 /
+     * MSG_CONFIRM_EXTRATOP L2502-2518 的逐张 dPos+dRot 翻开 + is_moving）：把顶卡从堆叠中横向
+     * 滑出（shiftX 随席位，对应 C++ ±0.15）、旋转面朝相机（rotY=π→0）以露出卡面，并抬高 Z 使其
+     * 凸于堆顶；期间置 {@code top_reveal=true} 使渲染层对非表侧的卡组 / 额外顶卡也贴卡面（对齐
+     * C++ drawing.cpp is_moving 同绘正反两面）。frame 帧后卡片停在揭示姿态（is_moving 归零但停留段
+     * 仍亮面），由调用方随后 {@link #moveCardAnimated} 转回原位盖回卡背、并在整段序列末尾清除 top_reveal。
+     */
+    public void revealTopCardOut(ClientCard pcard, float shiftX, int frame) {
+        if (pcard == null || frame <= 0) return;
+        if (field.instantPlace) {
+            setCardPos(pcard);
+            pcard.top_reveal = false;
+            return;
+        }
+        float[] loc = field.getCardLocation(pcard);
+        pcard.top_reveal = true;
+        pcard.animJitterX = 0f;
+        pcard.animDelayFrame = 0;
+        pcard.animFromX = pcard.curX;
+        pcard.animFromY = pcard.curY;
+        pcard.animFromZ = pcard.curZ;
+        // 横向滑出堆叠 + 抬高 0.06 使揭示卡凸出，避免与堆顶共面被遮挡
+        pcard.animToX = loc[0] + shiftX;
+        pcard.animToY = loc[1];
+        pcard.animToZ = loc[2] + 0.06f;
+        pcard.animFromRotX = pcard.curRotX;
+        pcard.animFromRotY = pcard.curRotY;
+        pcard.animFromRotZ = pcard.curRotZ;
+        pcard.animToRotX = loc[3];
+        // 转到面朝相机（rotY=0）露出卡面：卡背起点 rotY≈π→0 为线性最短路径，无需归一化
+        pcard.animToRotY = 0f;
+        pcard.animToRotZ = loc[5];
+        pcard.animTotalFrame = frame;
+        pcard.is_moving = true;
+        pcard.aniFrame = frame;
+    }
+
+    /**
      * 逐帧推进一侧手卡的翻面进度：目标恒由卡码决定（code!=0 → 正面，否则卡背），以
      * 0.2/帧的恒定速率靠拢（5 帧翻完，对应 duelclient.cpp MSG_SHUFFLE_HAND L2672 的
      * dRot 步进 1.322/5 与 π/5）；handFlipT<0 为尚未参与翻面，首帧直接吸附目标值，

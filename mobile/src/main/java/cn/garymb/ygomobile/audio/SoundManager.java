@@ -90,6 +90,8 @@ public class SoundManager {
 
     private SoundPool soundPool;
     private final Map<SFX, Integer> sfxMap = new HashMap<>();
+    /** 按需补载后等待解码完成再补播一次的样本：soundId → SFX（见 playSoundEffect 安全网） */
+    private final Map<Integer, SFX> pendingPlay = new HashMap<>();
     private MediaPlayer bgmPlayer;
     private final Context context;
     private final Random random = new Random();
@@ -140,6 +142,15 @@ public class SoundManager {
                 .setMaxStreams(8)
                 .setAudioAttributes(attrs)
                 .build();
+        // 解码完成监听：为「init 时资源尚未同步到位、后续按需补载」的音效在就绪后补播一次，
+        // 消除补载首帧静音（SoundPool.load 异步，play 早于就绪会静默失败）
+        soundPool.setOnLoadCompleteListener((pool, sampleId, status) -> {
+            if (status != 0) return;
+            SFX s = pendingPlay.remove(sampleId);
+            if (s != null && !effectsSuppressed && soundsEnabled) {
+                pool.play(sampleId, soundVolume, soundVolume, 1, 0, 1.0f);
+            }
+        });
 
         loadAllSFX();
         refreshBGMList();
@@ -150,16 +161,26 @@ public class SoundManager {
     }
 
     private void loadAllSFX() {
-        String soundDir = getSoundDir();
         for (SFX sfx : SFX.values()) {
-            File file = new File(soundDir, sfx.fileName);
-            if (file.exists()) {
-                int id = soundPool.load(file.getAbsolutePath(), 1);
+            int id = loadSfxFile(sfx);
+            if (id != 0) {
                 sfxMap.put(sfx, id);
-            } else {
-                Log.w(TAG, "SFX file not found: " + file.getAbsolutePath());
             }
         }
+    }
+
+    /** 从资源 sound 目录按文件名加载单个音效到 SoundPool，返回 soundId；文件缺失/加载失败返回 0 */
+    private int loadSfxFile(SFX sfx) {
+        File file = new File(getSoundDir(), sfx.fileName);
+        if (file.exists()) {
+            int id = soundPool.load(file.getAbsolutePath(), 1);
+            if (id == 0) {
+                Log.w(TAG, "SFX load failed: " + file.getAbsolutePath());
+            }
+            return id;
+        }
+        Log.w(TAG, "SFX file not found: " + file.getAbsolutePath());
+        return 0;
     }
 
     /** 回放快进重排期间的音效静默开关：置位时 playSoundEffect 全部丢弃，
@@ -174,9 +195,18 @@ public class SoundManager {
         if (effectsSuppressed) return;
         if (!soundsEnabled || soundPool == null) return;
         Integer id = sfxMap.get(sound);
-        if (id != null && id != 0) {
-            soundPool.play(id, soundVolume, soundVolume, 1, 0, 1.0f);
+        if (id == null || id == 0) {
+            // 安全网：init 时该 wav 若尚未同步到资源目录则当时未入池（如 shuffle/coinflip/
+            // diceroll/reveal 等后加入或分语言目录未覆盖的文件）；此处按需补载，文件一旦出现
+            // 即可发声——登记 pendingPlay，解码完成后由 onLoaded 监听补播一次，之后走常规即时播放
+            id = loadSfxFile(sound);
+            if (id != 0) {
+                sfxMap.put(sound, id);
+                pendingPlay.put(id, sound);
+            }
+            return;
         }
+        soundPool.play(id, soundVolume, soundVolume, 1, 0, 1.0f);
     }
 
     public void refreshBGMList() {

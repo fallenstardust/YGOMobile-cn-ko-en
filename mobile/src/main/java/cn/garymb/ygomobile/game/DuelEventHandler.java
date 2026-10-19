@@ -155,6 +155,11 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
     }
 
     @Override
+    public void onConfirmExtratop(int player, int count, ByteBuffer data) {
+        engine.deckMotion.applyConfirmExtratop(player, count, data);
+    }
+
+    @Override
     public void onConfirmCards(int player, int skipPanel, int count, ByteBuffer data) {
         engine.deckMotion.applyConfirmCards(player, skipPanel, count, data);
     }
@@ -167,6 +172,11 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
     @Override
     public void onShuffleHand(ByteBuffer data) {
         engine.deckMotion.applyShuffleHand(data);
+    }
+
+    @Override
+    public void onShuffleExtra(int player, int count, ByteBuffer data) {
+        engine.deckMotion.applyShuffleExtra(player, count, data);
     }
 
     @Override
@@ -487,6 +497,12 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
             pcard.controler = p;
             if (idx < codes.length) pcard.setCode(codes[idx] & 0x7fffffff);
         }
+        // 我方抽卡入手恒为正面（对齐 C++ gframe 我方手卡只按卡码贴卡面、从不走卡背）：从卡组顶
+        // 取回的 ClientCard 对象可能残留此前作为手卡 / 洗切被置 0 的 handFlipT，若放任不管，
+        // updateHandFlip 会以 0→1 逐帧推进，出现「背面入手→短暂停留→翻开」与原版不一致的观感。
+        // 入手前直接把翻面进度吸附到正面终态，渲染线程永不看到其卡背态；code==0 时渲染层仍按卡码
+        // 画卡背不会误露。仅对 p==0（我方视角）生效，对方抽卡维持遮蔽背面语义不变
+        if (p == 0) pcard.handFlipT = 1f;
         engine.field.addCard(p, handLoc, 0, pcard);
         for (GameField.ClientCard hc : engine.field.players[p].hand) {
             // 冻结待码的入手卡不参与让位重排，避免被提前拽离卡组顶坐标

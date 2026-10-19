@@ -208,7 +208,9 @@ class FieldCardRenderer {
                 //（用户反馈：观战跳到当前后，里侧公开卡的呼吸动画显示 unknown）
                 drawBreathReveal(c, c.displayCode(), alpha, wave);
             }
-        } else if (faceUp && code > 0) {
+        } else if ((faceUp || c.top_reveal) && code > 0) {
+            // 表侧卡与顶卡揭示中的卡组/额外卡（top_reveal，对齐 drawing.cpp is_moving 同绘两面）：
+            // 后者虽非表侧但已转到面朝相机且携真实卡码，翻开的顶卡须亮出卡面
             int tex = obtainTexture(code, FieldGeometry.pendulumMode(c), FieldGeometry.pendulumScale(c));
             if (tex > 0) {
                 view.quad.drawQuadTex(view.mModel, tex, alpha);

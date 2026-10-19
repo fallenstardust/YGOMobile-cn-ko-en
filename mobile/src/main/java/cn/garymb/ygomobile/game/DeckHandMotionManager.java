@@ -4,6 +4,7 @@ import android.util.Log;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.audio.SoundManager;
@@ -46,16 +47,96 @@ public class DeckHandMotionManager {
 
     public void applyConfirmDecktop(int player, int count, ByteBuffer data) {
         Log.d(TAG, "ConfirmDecktop: player=" + player + " count=" + count);
-        // 对齐 duelclient.cpp MSG_CONFIRM_DECKTOP L2456-2458：非回放快进时播 reveal 音效 + 记日志
+        final int p = engine.localPlayer(player);
+        final int deckLoc = CardLocation.Deck.value();
+        // 对齐 duelclient.cpp MSG_CONFIRM_DECKTOP L2456-2463：非回放快进时播 reveal 音效 + 记日志
         if (!engine.replaySkip)
             engine.soundManager.playSoundEffect(SoundManager.SFX.REVEAL);
         DuelLogDialog.addLog(DuelLogDialog.sysFormat(207, "翻开卡组上方%d张卡：", count));
 
+        // L2452-2458：第一段循环——读 count 个卡码并写回卡组顶对应卡（rbegin+i → 顶部第 i 张，
+        // 本端以 getCardCount-1-i 取顶卡）。旧实现只读码记日志、不 SetCode、无任何翻面动画，
+        // 故「翻开卡组顶部卡片」只见日志不见卡面。
+        final int top = engine.field.getCardCount(p, deckLoc) - 1;
+        final GameField.ClientCard[] revealed = new GameField.ClientCard[count];
         for (int i = 0; i < count && data.remaining() >= 7; i++) {
             int code = data.getInt() & 0x7fffffff;
             data.position(data.position() + 3);
+            GameField.ClientCard c = engine.field.getCard(p, deckLoc, top - i);
+            revealed[i] = c;
+            if (c != null && code != 0) c.setCode(code);
             DuelLogDialog.addLog("*[" + DataManager.get().getName(code) + "]", code);
         }
+        // L2464-2481：第二段逐张翻开揭示动画（滑出堆叠→旋转到面朝相机亮出卡面→停留→转回盖回）
+        if (count > 0 && !engine.replaySkip) {
+            scheduleTopReveal(revealed, (p == 1) ? 0.15f : -0.15f, count);
+        }
+        postFieldChanged();
+    }
+
+    /** 翻开额外卡组顶卡（对齐 duelclient.cpp MSG_CONFIRM_EXTRATOP L2484-2519，与卡组顶同类揭示动画）：
+     *  此前该消息在 GameMessageParser 无 case、完全未处理，翻开额外顶卡既无动画也无揭示音效。 */
+    public void applyConfirmExtratop(int player, int count, ByteBuffer data) {
+        Log.d(TAG, "ConfirmExtratop: player=" + player + " count=" + count);
+        final int p = engine.localPlayer(player);
+        final int extraLoc = CardLocation.Extra.value();
+        if (!engine.replaySkip)
+            engine.soundManager.playSoundEffect(SoundManager.SFX.REVEAL);
+        DuelLogDialog.addLog(DuelLogDialog.sysFormat(207, "翻开卡组上方%d张卡：", count));
+        final int top = engine.field.getCardCount(p, extraLoc) - 1;
+        final GameField.ClientCard[] revealed = new GameField.ClientCard[count];
+        for (int i = 0; i < count && data.remaining() >= 7; i++) {
+            int code = data.getInt() & 0x7fffffff;
+            data.position(data.position() + 3);
+            GameField.ClientCard c = engine.field.getCard(p, extraLoc, top - i);
+            revealed[i] = c;
+            if (c != null && code != 0) c.setCode(code);
+            DuelLogDialog.addLog("*[" + DataManager.get().getName(code) + "]", code);
+        }
+        // L2502-2518：额外顶卡翻开揭示，与卡组顶同一套逐张动画（shift 随席位）
+        if (count > 0 && !engine.replaySkip) {
+            scheduleTopReveal(revealed, (p == 1) ? 0.15f : -0.15f, count);
+        }
+        postFieldChanged();
+    }
+
+    /**
+     * 卡组 / 额外顶卡逐张翻开揭示动画的串行调度（对齐 duelclient.cpp MSG_CONFIRM_DECKTOP/
+     * MSG_CONFIRM_EXTRATOP 逐张 WaitFrameSignal 的时序）：第 i 张在 i*step 帧后滑出翻开（5 帧），
+     * 停留 holdFrames 帧后 5 帧转回原位盖回卡背，再清除揭示态；count>5 时停留缩短（同 C++
+     * count>5?12:45）。整段以 {@code animHoldUntilMs} 持统一动画闸门，令后续消息串行等待揭示播完。
+     * 回放快进（instantPlace）下 revealTopCardOut/moveCardAnimated 自动同步落位、不排程不持闸。
+     */
+    private void scheduleTopReveal(GameField.ClientCard[] revealed, float shift, int count) {
+        if (engine.field.instantPlace) {
+            // 快进重排：只同步落位（卡码已写回），不排程翻开动画、不持闸
+            for (GameField.ClientCard c : revealed) {
+                if (c != null) engine.field.revealTopCardOut(c, 0f, 1);
+            }
+            return;
+        }
+        final long holdFrames = count > 5 ? 12 : 45;
+        final long stepMs = (holdFrames + 6) * 17L;
+        long lastEndMs = 0L;
+        for (int i = 0; i < revealed.length; i++) {
+            final GameField.ClientCard c = revealed[i];
+            if (c == null) continue;
+            final long base = i * stepMs;
+            engine.mainHandler.postDelayed(() -> {
+                engine.field.revealTopCardOut(c, shift, 5);
+                if (engine.listener != null) engine.listener.onFieldChanged();
+            }, base);
+            engine.mainHandler.postDelayed(() -> {
+                engine.field.moveCardAnimated(c, 5);
+                if (engine.listener != null) engine.listener.onFieldChanged();
+            }, base + holdFrames * 17L);
+            engine.mainHandler.postDelayed(() -> {
+                c.top_reveal = false;
+                if (engine.listener != null) engine.listener.onFieldChanged();
+            }, base + (holdFrames + 6) * 17L);
+            lastEndMs = base + (holdFrames + 6) * 17L;
+        }
+        engine.animHoldUntilMs = System.currentTimeMillis() + lastEndMs + 50L;
     }
 
     public void applyConfirmCards(int player, int skipPanel, int count, ByteBuffer data) {
@@ -249,6 +330,33 @@ public class DeckHandMotionManager {
                 c.clearDescHints();
                 idx++;
             }
+        }
+        postFieldChanged();
+    }
+
+    /** 洗切额外卡组（对齐 duelclient.cpp MSG_SHUFFLE_EXTRA L2705-2733）：此前该消息在
+     *  GameMessageParser 无 case、完全未处理，洗切额外卡组既无抖动动画也无 shuffle 音效。
+     *  仅里侧（非表侧）额外卡参与抖动与换码；不足 2 张直接返回（同 C++ L2708，无声无动画）。 */
+    public void applyShuffleExtra(int player, int count, ByteBuffer data) {
+        final int p = engine.localPlayer(player);
+        final List<GameField.ClientCard> extra = engine.field.players[p].extra;
+        // 收集里侧额外卡（对齐 C++ !(position & POS_FACEUP)）
+        final List<GameField.ClientCard> facedowns = new ArrayList<>();
+        for (GameField.ClientCard c : extra) {
+            if (c != null && (c.position & GameField.POS_FACEUP) == 0) facedowns.add(c);
+        }
+        if (facedowns.size() < 2) return;
+        // L2710-2712：非回放快进、count>1 时播 shuffle 音效
+        if (!engine.replaySkip && count > 1)
+            engine.soundManager.playSoundEffect(SoundManager.SFX.SHUFFLE);
+        // L2713-2727：5 轮抖动（复用 startDeckShake 的 30 帧单动画，仅里侧卡；instantPlace 下其内部同步落位）
+        for (GameField.ClientCard c : facedowns) engine.field.startDeckShake(c);
+        if (!engine.field.instantPlace) {
+            engine.animHoldUntilMs = System.currentTimeMillis() + 30L * 17L + 100L;
+        }
+        // L2729-2731：抖后逐张写入洗后卡码（里侧卡以背面呈现，换码不露正面）
+        for (GameField.ClientCard c : facedowns) {
+            if (data.remaining() >= 4) c.setCode(data.getInt() & 0x7fffffff);
         }
         postFieldChanged();
     }

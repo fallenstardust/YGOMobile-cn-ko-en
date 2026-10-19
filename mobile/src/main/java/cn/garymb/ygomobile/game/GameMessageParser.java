@@ -47,12 +47,18 @@ public class GameMessageParser {
         void onSortCard(ByteBuffer data);
         void onSelectUnselectCard(ByteBuffer data);
         void onConfirmDecktop(int player, int count, ByteBuffer data);
+        /** duelclient.cpp MSG_CONFIRM_EXTRATOP L2484-2519：player(1) count(1) + count×[code4 pad3]，
+         *  翻开额外卡组顶卡（与卡组顶同类揭示动画），handler 内自读卡码并写回顶卡 */
+        void onConfirmExtratop(int player, int count, ByteBuffer data);
         void onConfirmCards(int player, int skipPanel, int count, ByteBuffer data);
         /** duelclient.cpp MSG_SHUFFLE_DECK L2620-2657：player(1)，handler 内自读 */
         void onShuffleDeck(ByteBuffer data);
         /** duelclient.cpp MSG_SHUFFLE_HAND L2659-2701：player(1) count(1) + count×code(4)，
          *  新卡面在聚拢动画停留段才换入（L2689-2692），故 handler 内自行读字段 */
         void onShuffleHand(ByteBuffer data);
+        /** duelclient.cpp MSG_SHUFFLE_EXTRA L2705-2732：player(1) count(1) + count×code(4)，
+         *  洗切额外卡组（仅里侧卡参与抖动与换码），handler 内自读 */
+        void onShuffleExtra(int player, int count, ByteBuffer data);
         void onRefreshDeck(int player);
         void onSwapGraveDeck(int player);
         void onShuffleSetCard(int player, int count, ByteBuffer data);
@@ -228,6 +234,13 @@ public class GameMessageParser {
                 handler.onConfirmDecktop(player, count, buf);
                 break;
             }
+            case ConfirmExtratop: {
+                // duelclient.cpp MSG_CONFIRM_EXTRATOP L2484-2486：player(1) count(1) + count×[code4 pad3]
+                int player = buf.get() & 0xFF;
+                int count = buf.get() & 0xFF;
+                handler.onConfirmExtratop(player, count, buf);
+                break;
+            }
             case ConfirmCards: {
                 // duelclient.cpp L2519-2522：player(1) skip_panel(1) count(1) + n×[code4 ctrl1 loc1 seq1]
                 int player = buf.get() & 0xFF;
@@ -242,6 +255,13 @@ public class GameMessageParser {
             case ShuffleHand:
                 handler.onShuffleHand(buf);
                 break;
+            case ShuffleExtra: {
+                // duelclient.cpp MSG_SHUFFLE_EXTRA L2706-2707：player(1) count(1)，卡码交 handler 自读
+                int player = buf.get() & 0xFF;
+                int count = buf.get() & 0xFF;
+                handler.onShuffleExtra(player, count, buf);
+                break;
+            }
             case RefreshDeck:
                 handler.onRefreshDeck(buf.get() & 0xFF);
                 break;

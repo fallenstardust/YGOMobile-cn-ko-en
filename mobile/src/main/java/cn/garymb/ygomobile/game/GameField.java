@@ -183,6 +183,15 @@ public class GameField {
          */
         public boolean pendingFaceupAdd;
 
+        /**
+         * 卡组 / 额外卡组顶卡揭示态（对齐 duelclient.cpp MSG_CONFIRM_DECKTOP / MSG_CONFIRM_EXTRATOP
+         * 的 dRot(π/5)+is_moving 翻开露出卡面）：本标记为真时，渲染层即使卡片非表侧
+         * （卡组 / 额外顶卡 isFaceUp()==false）也按卡码贴卡面，与 C++ drawing.cpp 移动中卡片
+         * 同绘正反两面（is_moving）等效。由 {@code GameFieldMotion.revealTopCardOut} 置位，
+         * 翻回卡背后由 DeckHandMotionManager 调度清除（不入通用落定清理，以免中途抹掉停留段）。
+         */
+        public boolean top_reveal;
+
         public boolean isFaceUp() {
             return (position & (CardPosition.FaceUpAttack.value() | CardPosition.FaceUpDefence.value())) != 0;
         }
@@ -1068,6 +1077,12 @@ public class GameField {
     /** 卡片经效果入手的揭示：对方手卡从卡背翻到正面供对手确认，己方卡仅亮出不翻面 */
     public void startHandReveal(ClientCard pcard, boolean flip) {
         motion.startHandReveal(pcard, flip);
+    }
+
+    /** 卡组 / 额外卡组顶卡揭示翻开（duelclient.cpp MSG_CONFIRM_DECKTOP / MSG_CONFIRM_EXTRATOP）：
+     *  顶卡横向滑出堆叠并旋转面朝相机露出卡面，停留段亮面，调用方随后 moveCardAnimated 转回原位盖回 */
+    public void revealTopCardOut(ClientCard pcard, float shiftX, int frame) {
+        motion.revealTopCardOut(pcard, shiftX, frame);
     }
 
     public void setAnimationSpeed(float speed) {
