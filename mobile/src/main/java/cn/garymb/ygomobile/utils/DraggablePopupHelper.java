@@ -61,39 +61,6 @@ public class DraggablePopupHelper {
      */
     private static final List<DragFrameLayout> ACTIVE_LAYERS = new ArrayList<>();
 
-    /**
-     * 需始终可点击的独立浮层窗口注册表（如横屏侧边六按钮 PopupWindow）：这类层不是
-     * DragFrameLayout、不参与拖拽与置顶排序；全屏透明 dialog 窗口盖在其上时，落在
-     * 浮层范围内的触点不转发 Activity decorView 兜底，而是跨窗口转发给浮层自身，
-     * 保证 dialog 显示期间聊天开关等侧边按钮仍可点击
-     */
-    private static final List<View> TOUCH_OVERLAYS = new ArrayList<>();
-
-    public static void registerTouchOverlay(View overlay) {
-        if (overlay != null && !TOUCH_OVERLAYS.contains(overlay)) {
-            TOUCH_OVERLAYS.add(overlay);
-        }
-    }
-
-    public static void unregisterTouchOverlay(View overlay) {
-        TOUCH_OVERLAYS.remove(overlay);
-    }
-
-    /** 由后往前查找触点所在且可见的注册浮层，都不命中返回 null */
-    private static View findOverlayAt(float rawX, float rawY) {
-        for (int i = TOUCH_OVERLAYS.size() - 1; i >= 0; i--) {
-            View overlay = TOUCH_OVERLAYS.get(i);
-            if (overlay == null || !overlay.isShown()) continue;
-            int[] loc = new int[2];
-            overlay.getLocationOnScreen(loc);
-            if (rawX >= loc[0] && rawX < loc[0] + overlay.getWidth()
-                    && rawY >= loc[1] && rawY < loc[1] + overlay.getHeight()) {
-                return overlay;
-            }
-        }
-        return null;
-    }
-
     private final Context context;
     private final SharedPreferences prefs;
     private final String dialogId;
@@ -1056,15 +1023,12 @@ public class DraggablePopupHelper {
          * 判定本次手势的转发目标：
          * 1) 触点在本层内容区 → null（自身处理，按钮点击/拖拽照旧）；
          * 2) 触点在其他弹窗层内容区 → 该层（跨窗口转发，抬手后置顶）；
-         * 3) 触点在注册的常驻浮层（TOUCH_OVERLAYS，如横屏侧边按钮）区 → 该浮层；
-         * 4) 都不命中 → Activity decorView（决斗场、手卡等下层 UI 继续响应）
+         * 3) 都不命中 → Activity decorView（决斗场、手卡、侧边六按钮等树内下层 UI 继续响应）
          */
         private View resolveGestureTarget(MotionEvent ev) {
             if (isTouchInsideContent(ev.getX(), ev.getY())) return null;
             DragFrameLayout layer = findTopLayerAt(ev.getRawX(), ev.getRawY());
             if (layer != null && layer != this) return layer;
-            View overlay = findOverlayAt(ev.getRawX(), ev.getRawY());
-            if (overlay != null) return overlay;
             return passThroughTarget;
         }
 

@@ -535,10 +535,10 @@
             android:clipChildren="false"
             android:orientation="horizontal">
 
-            <!-- 聊天输入框：0dp+weight 只占六按钮列右侧的剩余宽度（不再 match_parent 顶到最左被聊天开关遮挡），
-                 树内按钮列 INVISIBLE 仅保留宽度占位、浮层落在其上（占位宽由 syncPlaceholderWidthToOverlay 实时
-                 锁为浮层真实宽），marginStart=2dp 即输入框与聊天开关按钮列的精确间距，
-                 底部对齐与按钮列同高（高度经 YGOProActivity.syncChatInputHeightToToggle 同步 btn_chat 实测值） -->
+            <!-- 聊天输入框：本区域（FrameLayout）已位于六按钮列右侧，输入框 0dp+weight 铺满其底行宽度，
+                 marginStart=2dp 即输入框与六按钮列（区域左邻、现直接可见）的精确间距；底行锚本区域底缘、
+                 输入框底部对齐与按钮列同线，高度经 YGOProActivity.syncChatInputHeightToToggle 同步树内
+                 btn_chat 实测值，使聊天开关与聊天输入框同高、底缘齐平 -->
             <EditText
                 android:id="@+id/et_chat_input"
                 android:layout_width="0dp"

@@ -49,7 +49,6 @@ import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.CardDetailPanel;
 import cn.garymb.ygomobile.render.GameFieldView;
 import cn.garymb.ygomobile.render.SpecEffectOverlay;
-import cn.garymb.ygomobile.render.SideButtonsOverlay;
 import cn.garymb.ygomobile.render.TextureLoader;
 import cn.garymb.ygomobile.ui.dialogs.CreateHostDialog;
 import cn.garymb.ygomobile.ui.dialogs.DuelLogDialog;
@@ -145,8 +144,6 @@ public class YGOProActivity extends AppCompatActivity {
     volatile boolean isGameStarted = false;
 
     CardDetailPanel cardDetailPanel;
-    /** 横屏侧边六按钮浮层（独立 PopupWindow 承载在 GL 决斗面之上，见 SideButtonsOverlay） */
-    private SideButtonsOverlay sideButtonsOverlay;
     private ChatInputUI chatInputUI;
     GameTopInfoManager topInfoManager;
     GameFieldController fieldCtl;
@@ -322,8 +319,9 @@ public class YGOProActivity extends AppCompatActivity {
         });
 
         cardDetailPanel = new CardDetailPanel(this);
-        // 横屏侧边六按钮浮层须在 bindViews 前建立：CardDetailPanel 优先绑定浮层按钮（树内列仅作宽度占位）
-        setupSideButtonsOverlay();
+        // 横屏侧边六按钮列直接承载在视图树 layout_game_right 内（不再用浮层，见方法注释），
+        // 把聊天输入框高度同步为 btn_chat 实测高使其与聊天开关同高、底部同线
+        syncChatInputHeightToToggle();
         cardDetailPanel.bindViews();
         // 聊天输入框/聊天开关初始可见性：停用聊天设置与抑制场景（卡组编辑/录像/残局）
         // 统一核算（对齐 gframe wChat：停用聊天与无聊天对象场景均隐藏）
@@ -399,8 +397,6 @@ public class YGOProActivity extends AppCompatActivity {
         if (emotionDialog != null) emotionDialog.dismiss();
         if (engineCallback != null) engineCallback.releaseSpecOverlayForRebuild();
         if (fieldCtl != null) fieldCtl.releaseForRebuild();
-        // 侧边按钮浮层挂在旧锚点上：随旧视图树释放，setContentView 后重挂新树
-        releaseSideButtonsOverlay();
 
         // 3) 重新加载布局变体并恢复沉浸式全屏
         setContentView(R.layout.activity_ygo_game);
@@ -415,9 +411,9 @@ public class YGOProActivity extends AppCompatActivity {
         layoutDeckEditor = findViewById(R.id.layout_deck_editor);
         etChatInput = findViewById(R.id.et_chat_input);
         if (chatInputUI != null) chatInputUI.bindChatInput(etChatInput);
-        // 横屏侧边按钮浮层重挂到新锚点（并在新树里把树内按钮列置为宽度占位 INVISIBLE，
-        // 末尾重同步聊天输入高度），须早于 cardDetailPanel.bindViews 以便优先绑定浮层按钮
-        setupSideButtonsOverlay();
+        // 横屏侧边六按钮列直接承载在新视图树 layout_game_right 内，把聊天输入框高度重新
+        // 同步为树内 btn_chat 实测高（旋转重建后新树默认尺寸需重算）
+        syncChatInputHeightToToggle();
         // 聊天 UI 可见性在重建尾部统一重算（须等 layoutDeckEditor 等新引用就绪，见方法尾）
         // 三大管理器复用实例只重绑视图（保留 ignoreChain 时点三态/大厅聊天等业务状态），
         // 严禁触达 fieldCtl.hide()——会 clear 场面数据
@@ -534,71 +530,19 @@ public class YGOProActivity extends AppCompatActivity {
     }
 
     /**
-     * 创建/重建横屏侧边六按钮浮层：GameFieldView 为 setZOrderOnTop(true) 的 GL 曲面，
-     * 视图树内竖列上部按钮（设置/记录/音乐/加速）在决斗中会被不透明场图遮挡——故六按钮
-     * 由独立 PopupWindow 承载浮在决斗场之上（对齐 C++ GUI 在场景之上的层级）；同时把视图树
-     * 里的 layout_image_buttons_panel 置 INVISIBLE 仅作宽度占位，让同行的聊天输入框
-     * （0dp+weight）稳定排在按钮列右侧、不被浮层遮挡。竖屏按钮仍在视图树内，不建浮层。
-     */
-    private void setupSideButtonsOverlay() {
-        releaseSideButtonsOverlay();
-        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE
-                && layoutGameRight != null) {
-            View panel = findViewById(R.id.layout_image_buttons_panel);
-            if (panel != null) panel.setVisibility(View.INVISIBLE);
-            sideButtonsOverlay = new SideButtonsOverlay(this, layoutGameRight);
-            syncPlaceholderWidthToOverlay();
-        }
-        syncChatInputHeightToToggle();
-    }
-
-    /** 释放侧边按钮浮层：摘监听、注销穿透注册并收起窗口（旋转重建/onDestroy 用） */
-    private void releaseSideButtonsOverlay() {
-        if (sideButtonsOverlay != null) {
-            sideButtonsOverlay.release();
-            sideButtonsOverlay = null;
-        }
-    }
-
-    /** 横屏六按钮浮层根视图（CardDetailPanel 优先绑定入口）；竖屏/未建立时为 null */
-    public View obtainSideButtonsRoot() {
-        return sideButtonsOverlay != null ? sideButtonsOverlay.getRoot() : null;
-    }
-
-    /**
-     * 把视图树占位按钮列的宽度实时锁定为浮层真实按钮列宽度：二者虽用同一布局，但浮层按钮
-     * 已由 CardDetailPanel 换成纹理图标（getSettingsTexture 等），树内占位仍是 XML 默认图，
-     * 实测列宽会有差（占位偏宽会在浮层按钮与聊天输入框之间留出多余空隙）。占位宽对齐浮层宽后，
-     * 聊天输入框（紧随占位右缘）与按钮的实际间距只剩 et_chat_input 的 layout_marginStart（2dp）。
-     * 浮层内容经纹理换图会重新布局，布局监听按最新宽度回写占位列。竖屏无浮层不调用。
-     */
-    private void syncPlaceholderWidthToOverlay() {
-        if (sideButtonsOverlay == null) return;
-        final View overlayRoot = sideButtonsOverlay.getRoot();
-        final View panel = findViewById(R.id.layout_image_buttons_panel);
-        if (overlayRoot == null || panel == null || panel.getLayoutParams() == null) return;
-        overlayRoot.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, ob, olr) -> {
-            int w = r - l;
-            if (w > 0 && panel.getLayoutParams() != null && panel.getLayoutParams().width != w) {
-                panel.getLayoutParams().width = w;
-                panel.requestLayout();
-            }
-        });
-        if (overlayRoot.getWidth() > 0 && panel.getLayoutParams() != null) {
-            panel.getLayoutParams().width = overlayRoot.getWidth();
-            panel.requestLayout();
-        }
-    }
-
-    /**
-     * 用户规格：横屏聊天输入框高度与聊天开关按钮（btn_chat）实测高度一致——六按钮浮层承载在
-     * 决斗场之上，输入框在视图树同行按钮列右侧以 weight 占据剩余宽度；本方法把浮层内 btn_chat
-     * 实测高度同步到输入框（随纹理换图尺寸变化）；竖屏无浮层不同步，维持其底部按钮行原布局。
+     * 用户规格：横屏聊天输入框高度与聊天开关按钮（btn_chat）实测高度一致，使两者底部同线、
+     * 视觉等高。六按钮列 layout_image_buttons_panel 直接作为 layout_game_right 水平行的最左侧
+     * 一格承载在视图树内（GameFieldView 所在 FrameLayout 的同级左邻，不与 GL 曲面重叠），
+     * 底部贴合区域下缘；本方法把树内 btn_chat 实测高同步到同行的 et_chat_input（随纹理换图尺寸
+     * 变化）。竖屏底部按钮行按钮与输入框同为固定 30dp 一行、已等高，不做同步。
      */
     private void syncChatInputHeightToToggle() {
-        if (etChatInput == null || etChatInput.getLayoutParams() == null
-                || sideButtonsOverlay == null) return;
-        View btnChat = sideButtonsOverlay.getRoot().findViewById(R.id.btn_chat);
+        if (etChatInput == null || etChatInput.getLayoutParams() == null)
+            return;
+        if (getResources().getConfiguration().orientation
+                != Configuration.ORIENTATION_LANDSCAPE)
+            return;
+        final View btnChat = findViewById(R.id.btn_chat);
         if (btnChat == null) return;
         btnChat.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, ob, olr) -> {
             int h = b - t;
@@ -1593,8 +1537,6 @@ public class YGOProActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         CrashHandler.getInstance().setScene("游戏-销毁中");
-        // 侧边按钮浮层为独立窗口，必须先于窗口销毁收起，避免 WindowLeaked
-        releaseSideButtonsOverlay();
         try {
             unregisterReceiver(screenStateReceiver);
         } catch (Exception ignored) {

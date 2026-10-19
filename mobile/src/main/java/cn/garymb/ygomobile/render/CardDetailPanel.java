@@ -165,15 +165,12 @@ public class CardDetailPanel {
     }
 
     /**
-     * 侧边六按钮查找：横屏优先绑定 SideButtonsOverlay 浮层按钮（浮在决斗场之上、可见且可点），
-     * 视图树内的 layout_image_buttons_panel 横屏仅作宽度占位（INVISIBLE）；竖屏无浮层时
-     * obtainSideButtonsRoot 为 null，回退到 layout-port 底部按钮行的树内按钮。
+     * 侧边六按钮查找：横屏、竖屏均直接从视图树取——横屏六按钮列 layout_image_buttons_panel
+     * 作为 layout_game_right 水平行最左侧一格直接承载在树内（不再用独立 PopupWindow 浮层，
+     * 以免盖住可拖动的 popup 窗口），竖屏则取底部按钮行的树内按钮。
      */
     private ImageButton findSideButton(int id) {
-        View v = null;
-        View overlayRoot = activity.obtainSideButtonsRoot();
-        if (overlayRoot != null) v = overlayRoot.findViewById(id);
-        if (v == null) v = activity.findViewById(id);
+        View v = activity.findViewById(id);
         return v instanceof ImageButton ? (ImageButton) v : null;
     }
 
