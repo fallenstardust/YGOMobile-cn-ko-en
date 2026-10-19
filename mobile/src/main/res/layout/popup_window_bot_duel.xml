@@ -376,7 +376,7 @@
                     android:textColor="#FFFFFF" />
             </LinearLayout>
 
-            <!-- 行4：每回合时间 + 每回合抽卡 -->
+            <!-- 行4：每回合时间（纯单人模式不需要选择回合时间，默认无限，占位保留布局平衡） + 每回合抽卡 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
@@ -385,26 +385,11 @@
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/solo_tv_time_limit_label"
+                <!-- 纯单人模式无回合时间选择（固定无限），以等权重占位保留原抽卡项的布局位置 -->
+                <View
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:gravity="left|center"
-                    android:text="每回合时间："
-                    android:textColor="@color/white"
-                    android:textSize="10sp" />
-
-                <EditText
-                    android:id="@+id/solo_et_time_limit"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="3"
-                    android:background="@drawable/ygopro_base_background"
-                    android:gravity="center"
-                    android:inputType="number"
-                    android:text="180"
-                    android:textColor="#FFFFFF" />
+                    android:layout_weight="4" />
 
                 <TextView
                     android:id="@+id/solo_tv_draw_count_label"

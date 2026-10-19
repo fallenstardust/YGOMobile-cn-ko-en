@@ -126,7 +126,6 @@ public class SingleModeDialog {
         Spinner soloSpinnerDuelMode = customView.findViewById(R.id.solo_spinner_duel_mode);
         EditText soloEtStartLp = customView.findViewById(R.id.solo_et_start_lp);
         EditText soloEtStartHand = customView.findViewById(R.id.solo_et_start_hand);
-        EditText soloEtTimeLimit = customView.findViewById(R.id.solo_et_time_limit);
         EditText soloEtDrawCount = customView.findViewById(R.id.solo_et_draw_count);
         CheckBox soloChkNoCheckDeck = customView.findViewById(R.id.solo_chk_no_check_deck);
         CheckBox soloChkNoShuffleDeck = customView.findViewById(R.id.solo_chk_no_shuffle_deck);
@@ -401,7 +400,8 @@ public class SingleModeDialog {
             int lp = CreateHostDialog.parseIntSafe(soloEtStartLp.getText().toString(), 8000);
             int hand = CreateHostDialog.parseIntSafe(soloEtStartHand.getText().toString(), 5);
             int draw = CreateHostDialog.parseIntSafe(soloEtDrawCount.getText().toString(), 1);
-            int time = CreateHostDialog.parseIntSafe(soloEtTimeLimit.getText().toString(), 0);
+            // 纯单人模式不提供回合时间选择，固定为无限时间（timeLimit=0，对齐 GameField "0=无限时"）
+            int time = 0;
             boolean noCheckDeck = soloChkNoCheckDeck.isChecked();
             boolean noShuffleDeck = soloChkNoShuffleDeck.isChecked();
 
@@ -433,7 +433,6 @@ public class SingleModeDialog {
         setSysText(root, R.id.solo_tv_start_lp_label, 1231, "初始基本分：");
         setSysText(root, R.id.solo_tv_duel_mode_label, 1227, "决斗模式：");
         setSysText(root, R.id.solo_tv_start_hand_label, 1232, "初始手卡数：");
-        setSysText(root, R.id.solo_tv_time_limit_label, 1237, "每回合时间：");
         setSysText(root, R.id.solo_tv_draw_count_label, 1233, "每回合抽卡：");
         setSysText(root, R.id.solo_chk_no_check_deck, 1229, "不检查卡组");
         setSysText(root, R.id.solo_chk_no_shuffle_deck, 1230, "不洗切卡组");
