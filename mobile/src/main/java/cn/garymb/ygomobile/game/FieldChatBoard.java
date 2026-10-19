@@ -1,14 +1,20 @@
 package cn.garymb.ygomobile.game;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -34,6 +40,10 @@ class FieldChatBoard {
 
     /** 每侧玩家聊天最大行数：超过 5 行向上滚动（清除第一条，最新一条落在最下行） */
     private static final int MAX_CHAT_LINES = 5;
+
+    /** 每侧聊天行数大于此值时，最早一条的在屏存活时长按 2 倍速消耗（提前一半即消失，
+     *  用户规格：刷屏时最早那条记录消失速度加快为现在的 2 倍） */
+    private static final int CHAT_ACCELERATE_LINE_COUNT = 3;
 
     /**
      * 单条玩家聊天在屏存活时长（毫秒），超时后从最早一行开始自动清除——对齐
@@ -120,6 +130,40 @@ class FieldChatBoard {
             this.color = color;
         }
     }
+
+    /**
+     * 一条在屏弹幕的运行数据：目标位移、宿主层与覆盖层、密度。弹幕用 ViewPropertyAnimator 匀速左移，
+     * 无法中途改速；「按住弹幕全体减速至一半 / 松开恢复」经此按当前 translationX 到目标的剩余距离、
+     * 以新速度取消并重启动画（存于 TextView.tag）。layer 为 null 表示回退层 layout_danmaku（不入覆盖层收口）。
+     */
+    private static final class DanmakuRunner {
+        final TextView tv;
+        final ViewGroup parent;
+        final FrameLayout layer;
+        final SpecEffectOverlay overlay;
+        final float density;
+        float targetX;
+        DanmakuRunner(TextView tv, ViewGroup parent, FrameLayout layer,
+                      SpecEffectOverlay overlay, float density) {
+            this.tv = tv;
+            this.parent = parent;
+            this.layer = layer;
+            this.overlay = overlay;
+            this.density = density;
+        }
+    }
+
+    /** 当前是否处于「按住弹幕」状态：为真时在屏与新入场弹幕一律以一半速度滚动，松开恢复原速 */
+    private boolean danmakuHeld = false;
+
+    /** 长按观察：待触发的长按任务（ACTION_DOWN 排期，超时且未移动即命中复制/减速） */
+    private Runnable pendingLongPress;
+    /** 本次按下起点窗口坐标（与 getLocationInWindow 同基准，判定移动是否超 slop） */
+    private float downWinX, downWinY;
+    /** 长按判定时是否已初始化触摸阈值 */
+    private boolean touchConfigReady = false;
+    private int longPressTimeoutMs = 500;
+    private int touchSlopPx = 24;
 
     /** 大厅（player waiting）聊天模式：全部消息在 layout_danmaku 静态列表显示 */
     private boolean lobbyChatMode = false;
@@ -391,14 +435,17 @@ class FieldChatBoard {
         }
     };
 
-    /** 移除 lines/pending 队首已超时（addedAt + 存活时长 ≤ now）的行，返回 lines 是否有移除。 */
+    /** 移除 lines/pending 队首已超时的行，返回 lines 是否有移除。当行数大于
+     *  {@link #CHAT_ACCELERATE_LINE_COUNT} 时按半程时长（2 倍速）判定，使最早一条更快消失。 */
     private static boolean trimExpiredChat(LinkedList<TimedLine> lines, LinkedList<TimedLine> pending, long now) {
         boolean removed = false;
-        while (!lines.isEmpty() && now - lines.peekFirst().addedAt >= CHAT_LINE_LIFETIME_MS) {
+        long limit = lines.size() > CHAT_ACCELERATE_LINE_COUNT
+                ? CHAT_LINE_LIFETIME_MS / 2 : CHAT_LINE_LIFETIME_MS;
+        while (!lines.isEmpty() && now - lines.peekFirst().addedAt >= limit) {
             lines.removeFirst();
             removed = true;
         }
-        while (!pending.isEmpty() && now - pending.peekFirst().addedAt >= CHAT_LINE_LIFETIME_MS) {
+        while (!pending.isEmpty() && now - pending.peekFirst().addedAt >= limit) {
             pending.removeFirst();
         }
         return removed;
@@ -516,6 +563,8 @@ class FieldChatBoard {
      * 再把保存的双方聊天行整列重挂到新覆盖层，避免横竖屏切换后聊天记录丢失（用户反馈）。
      */
     void retainAcrossRotation() {
+        cancelPendingLongPress();
+        danmakuHeld = false;   // 旋转清场：撤销按住减速态，避免残留标志使新弹幕错速
         for (TextView tv : danmakuViews) {
             tv.animate().cancel();
         }
@@ -549,6 +598,9 @@ class FieldChatBoard {
         // 停止聊天/离开决斗/进大厅：取消按时间清除的轮询链，避免残留 postDelayed
         ctl.mainHandler.removeCallbacks(chatExpireTask);
         chatExpireScheduled = false;
+        // 清场撤销长按观察：取消待触发长按并复位按住减速标志，防止残留 postDelayed/状态
+        cancelPendingLongPress();
+        danmakuHeld = false;
         myChatPending.clear();
         opChatPending.clear();
         for (TextView tv : danmakuViews) {
@@ -841,23 +893,149 @@ class FieldChatBoard {
         tv.post(() -> {
             if (gen != danmakuPumpGeneration) return;   // 清场后旧视图回调作废
             int w = tv.getWidth();
-            // 完全滑入屏幕所需时间：右缘由 (父宽+自身宽) 移到父宽，路程 = 自身宽；到点整组进完则放行下一组
-            long enterMs = Math.max(1, (long) (w / (DANMAKU_SPEED_DP_PER_MS * density)));
+            // 登记运行数据到 tag：目标位移 = -自身宽（leftMargin 已为 0，完全从最左侧离场），
+            // 供长按减速/恢复按剩余距离重新起 anim；总路程 = 宿主层宽 + 自身宽
+            DanmakuRunner runner = new DanmakuRunner(tv, parent, layer, overlay, density);
+            runner.targetX = -w;
+            tv.setTag(runner);
+            // 完全滑入屏幕所需时间：路程 = 自身宽；按住时速度减半，入场计时同样翻倍
+            float speed = DANMAKU_SPEED_DP_PER_MS * (danmakuHeld ? 0.5f : 1f);
+            long enterMs = Math.max(1, (long) (w / (speed * density)));
             parent.postDelayed(() -> {
                 if (gen == danmakuPumpGeneration) onDanmakuOneEntered();
             }, enterMs);
-            // 整段匀速：总路程 = 宿主层宽 + 自身宽（右缘外入场到完全从最左侧离场）；
-            // 终点 translationX = -自身宽（leftMargin 已为 0，不能再按旧公式多减一个宿主宽）
-            int distance = parent.getWidth() + w;
-            long duration = Math.max(1, (long) (distance / (DANMAKU_SPEED_DP_PER_MS * density)));
-            tv.animate().translationX(-w).setDuration(duration)
-                    .withEndAction(() -> {
-                        danmakuViews.remove(tv);
-                        parent.removeView(tv);
-                        // 最后一条弹幕离场且无特效在播 → 覆盖层自行关闭（不占消息闸门）
-                        if (layer != null) overlay.notifyDanmakuRemoved();
-                    }).start();
+            startDanmakuAnim(runner);
         });
+    }
+
+    /**
+     * 从当前 translationX 匀速推进到 targetX（完全离场），速度随 {@link #danmakuHeld} 减半；
+     * 到终点移除视图并在覆盖层空闲时收口。首次入场与「按住减速 / 松开恢复」均经此按剩余
+     * 距离重新起 anim（取消旧 ViewPropertyAnimator 后以新速度续跑，视觉上为即时变速）。
+     */
+    private void startDanmakuAnim(DanmakuRunner r) {
+        float cur = r.tv.getTranslationX();
+        float speed = DANMAKU_SPEED_DP_PER_MS * (danmakuHeld ? 0.5f : 1f);
+        float remaining = cur - r.targetX;   // 自右向左：cur > targetX，px
+        long duration = Math.max(1, (long) (remaining / (speed * r.density)));
+        r.tv.animate().cancel();
+        r.tv.animate().translationX(r.targetX).setDuration(duration)
+                .withEndAction(() -> {
+                    danmakuViews.remove(r.tv);
+                    r.parent.removeView(r.tv);
+                    // 最后一条弹幕离场且无特效在播 → 覆盖层自行关闭（不占消息闸门）
+                    if (r.layer != null) r.overlay.notifyDanmakuRemoved();
+                }).start();
+    }
+
+    /**
+     * 切换「按住弹幕」减速状态：置位/复位 {@link #danmakuHeld} 并对所有在屏弹幕按剩余距离
+     * 以新速度重启动画（进入减半、恢复原速）。新入场弹幕在 spawnDanmakuView 中读取本标志自动跟随。
+     */
+    private void setDanmakuHeld(boolean held) {
+        if (danmakuHeld == held) return;
+        danmakuHeld = held;
+        for (TextView tv : new ArrayList<>(danmakuViews)) {
+            Object tag = tv.getTag();
+            if (tag instanceof DanmakuRunner) startDanmakuAnim((DanmakuRunner) tag);
+        }
+    }
+
+    // === 决斗内聊天行/弹幕长按观察（覆盖层事件穿透，触摸由 Activity 派发后命中文字） ===
+
+    /**
+     * 由 {@code YGOProActivity.dispatchTouchEvent} 转发的全局触摸观察（不消费事件，普通点按仍穿透到
+     * 下层决斗场）：
+     * · 按住血条下方聊天行 → 复制该行文本（静态不滚动，无需减速）；
+     * · 按住横向弹幕 → 复制该条文本，并把全部弹幕减速至当前速度的一半，松开（ACTION_UP/CANCEL）恢复原速。
+     * 起点命中判定在长按超时（ViewConfiguration 长按时长）且未超 slop 移动时成立。
+     */
+    void onFieldTouch(MotionEvent e) {
+        initTouchConfig();
+        switch (e.getActionMasked()) {
+            case MotionEvent.ACTION_DOWN: {
+                downWinX = e.getX();
+                downWinY = e.getY();
+                final float x = downWinX, y = downWinY;
+                cancelPendingLongPress();
+                pendingLongPress = () -> onLongPressHit(x, y);
+                ctl.mainHandler.postDelayed(pendingLongPress, longPressTimeoutMs);
+                return;
+            }
+            case MotionEvent.ACTION_MOVE: {
+                // 长按成立前移动超 slop 视为滑动/正常操作，取消长按；成立后（已 held）保持到松开
+                if (pendingLongPress != null) {
+                    float dx = e.getX() - downWinX;
+                    float dy = e.getY() - downWinY;
+                    if (dx * dx + dy * dy > touchSlopPx * touchSlopPx) {
+                        cancelPendingLongPress();
+                    }
+                }
+                return;
+            }
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL: {
+                cancelPendingLongPress();
+                if (danmakuHeld) setDanmakuHeld(false);   // 松开恢复原速
+                return;
+            }
+            default:
+        }
+    }
+
+    private void cancelPendingLongPress() {
+        if (pendingLongPress != null) {
+            ctl.mainHandler.removeCallbacks(pendingLongPress);
+            pendingLongPress = null;
+        }
+    }
+
+    /** 长按到点：优先命中弹幕（复制并全体减速），其次血条下方聊天行（仅复制）。 */
+    private void onLongPressHit(float x, float y) {
+        pendingLongPress = null;
+        TextView dm = hitTestDanmaku(x, y);
+        if (dm != null) {
+            copyChatText(dm.getText().toString());
+            setDanmakuHeld(true);
+            return;
+        }
+        SpecEffectOverlay overlay = ctl.activity.getSpecOverlay();
+        if (overlay != null) {
+            TextView row = overlay.hitTestChatRow(x, y);
+            if (row != null) copyChatText(row.getText().toString());
+        }
+    }
+
+    /** 命中某条在屏弹幕（用其当前窗口矩形，随滚动实时更新；弹幕宿主弹窗与 Activity 窗同原点）。 */
+    private TextView hitTestDanmaku(float x, float y) {
+        int[] loc = new int[2];
+        for (TextView tv : danmakuViews) {
+            if (tv.getWidth() <= 0 || tv.getHeight() <= 0) continue;
+            tv.getLocationInWindow(loc);
+            if (x >= loc[0] && x <= loc[0] + tv.getWidth()
+                    && y >= loc[1] && y <= loc[1] + tv.getHeight()) {
+                return tv;
+            }
+        }
+        return null;
+    }
+
+    /** 复制聊天文本到剪贴板并 Toast 提示（长按聊天行/弹幕触发）。 */
+    private void copyChatText(String text) {
+        if (text == null || text.isEmpty()) return;
+        ClipboardManager cm = (ClipboardManager)
+                ctl.activity.getSystemService(Context.CLIPBOARD_SERVICE);
+        if (cm == null) return;
+        cm.setPrimaryClip(ClipData.newPlainText("chat", text));
+        Toast.makeText(ctl.activity, "已复制聊天内容", Toast.LENGTH_SHORT).show();
+    }
+
+    /** 懒初始化长按时长与移动取消阈值（系统设定，含无障碍加长时）。 */
+    private void initTouchConfig() {
+        if (touchConfigReady) return;
+        touchConfigReady = true;
+        longPressTimeoutMs = ViewConfiguration.getLongPressTimeout();
+        touchSlopPx = ViewConfiguration.get(ctl.activity).getScaledTouchSlop();
     }
 
     /** 本组一条弹幕完全滑入屏幕：计数减到 0 表示整组已进完，放行下一组「上中下」弹幕入场 */

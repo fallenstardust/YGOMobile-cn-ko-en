@@ -596,6 +596,15 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         chat.exitLobbyChatMode();
     }
 
+    /**
+     * 全局触摸转发给聊天协作类，用于决斗内「长按聊天行/弹幕复制、按住弹幕减速」的命中观察。
+     * 聊天行/弹幕宿主为事件穿透的透明弹窗（setTouchable(false)），收不到触摸，故由 Activity
+     * 的 dispatchTouchEvent 非消费式转发（不影响普通点按继续穿透到决斗场）。由 YGOProActivity 调用。
+     */
+    public void onFieldTouchForChat(android.view.MotionEvent ev) {
+        if (chat != null) chat.onFieldTouch(ev);
+    }
+
     // === 阶段按钮转发（FieldPhaseBar） ===
 
     public void setEpButtonAllowed(boolean allowed) {

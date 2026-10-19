@@ -3,10 +3,12 @@ package cn.garymb.ygomobile.render;
 import android.app.Activity;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.FrameLayout;
@@ -26,8 +28,11 @@ import ocgcore.StringManager;
  * 特殊召唤放大、计数器数字、召唤翻面、猜拳手势、阶段/胜负文字等动态动画。
  *
  * 图层约定（对齐 RPSDialog）：GameFieldView 是 setZOrderOnTop(true) 的 GLSurfaceView，
- * GL 曲面合成在 Activity 窗口之上，普通 View 会被场地遮挡，故本层使用全屏透明、
- * 不拦截触摸的 PopupWindow 承载 Canvas 绘制视图（SpecEffectView），稳定显示在 GL 曲面之上。
+ * GL 曲面合成在 Activity 窗口之上，普通 View 会被场地遮挡，故本层用不拦截触摸的透明
+ * PopupWindow 承载 Canvas 绘制视图（SpecEffectView），稳定显示在 GL 曲面之上。窗口原点恒
+ * 固定于 (0,0)、绘制坐标一律用绝对窗口坐标（动画位置与整屏实现逐像素一致），仅把窗口高度
+ * 按当前可见内容的底边收放（见 updateWindowFootprint），避免常驻整屏透明悬浮窗被 ColorOS
+ * 判为「正在当前页面悬浮显示、可能造成操作无响应」而反复弹窗提示（误点会中断决斗、有被判强退风险）。
  *
  * 动画驱动：SpecEffectView 内 Choreographer 逐帧回调，按 dt*60*speed 推进 showcarddif/showcardp。
  */
@@ -90,6 +95,12 @@ public class SpecEffectOverlay {
     private final ArrayDeque<EffectRequest> queue = new ArrayDeque<>();
     /** 特效队列排空（无动画播放）回调：供 GameEngine 重开消息闸门 */
     private OnIdleListener idleListener;
+
+    // ── 覆盖层窗口按「内容底边」收高（规避 ColorOS 整屏悬浮窗遮挡提醒，且不改动任何绘制坐标）──
+    // 窗口原点恒为 (0,0)，view.setRegion 与各子层 margin 全部沿用绝对窗口坐标（与原整屏实现逐像素一致），
+    // 只是把窗口高度从整屏收到「当前可见内容的最低底边」：特效在播时覆盖到 layout_game_right 下沿，
+    // 仅弹幕/聊天在屏时收到顶部横带，全空闲时 dismiss。原点不动 → 动画位置/样式完全不变。
+    private boolean footprintPending;                        // 合并同一帧内多次内容变化为一次重排
 
     public SpecEffectOverlay(Activity activity) {
         this.activity = activity;
@@ -243,9 +254,9 @@ public class SpecEffectOverlay {
         EffectRequest req = queue.poll();
         if (req == null) {
             // 先通知引擎队列已排空（引擎可能立即派发下一条消息并入队新动画），
-            // 通知后若仍无任何动画/活跃弹幕在屏才关闭覆盖层，避免「关闭→立即重开」闪烁
+            // 再按当前弹幕/聊天是否仍在屏收放窗口：全空闲则关闭，仍有内容则收到内容底边（不再常驻整屏）
             if (idleListener != null) idleListener.onIdle();
-            dismissWindowIfIdle();
+            updateWindowFootprint();
             return;
         }
         updateRegion();
@@ -255,17 +266,75 @@ public class SpecEffectOverlay {
         }
         view.startCard(req.type, req.code, req.param, req.holdFrames,
                 req.text, req.subText, req.difInit);
+        // 卡片/特效动画即将在 layout_game_right 区域绘制：先把窗口高度扩展到覆盖该区域下沿
+        updateWindowFootprint();
     }
 
-    /** 全空闲（队列空、画布动画未播、动作文本不在屏、无活跃弹幕且无在屏聊天行）时关闭覆盖层 */
+    /**
+     * 全空闲（队列空、动画未播、动作文本不在屏、无在屏弹幕/聊天行）时关闭覆盖层，
+     * 否则把窗口高度收到当前内容底边——统一交由 updateWindowFootprint 处理。
+     */
     private void dismissWindowIfIdle() {
-        if (view == null) return;
-        if (queue.isEmpty() && !view.running && !actionTextActive
-                && (danmakuLayer == null || danmakuLayer.getChildCount() == 0)
-                && (selfChatLayer == null || selfChatLayer.getChildCount() == 0)
-                && (oppChatLayer == null || oppChatLayer.getChildCount() == 0)) {
-            dismissWindow();
+        updateWindowFootprint();
+    }
+
+    /** 合并同一帧内多次内容变化为一次收放，post 到 Activity decor（子层刚 addView 量得尺寸后重算） */
+    private void scheduleFootprint() {
+        if (footprintPending || window == null || activity.isFinishing()) return;
+        footprintPending = true;
+        View decor = activity.getWindow().getDecorView();
+        if (decor == null) {
+            footprintPending = false;
+            return;
         }
+        decor.post(() -> {
+            footprintPending = false;
+            updateWindowFootprint();
+        });
+    }
+
+    /**
+     * 依当前可见内容（特效动画覆盖 layout_game_right 下沿 / 弹幕带底边 / 两侧聊天行底边）计算
+     * 窗口高度并应用：底部无内容则 dismiss。窗口原点与宽度处理保持绝对坐标语义——x 恒 0、宽度取
+     * 屏宽（弹幕横带本就全屏宽），只纵向收到内容底边，故 view.setRegion 与子层 margin 的绘制位置
+     * 与整屏实现完全一致，动画样式与位置不变。
+     */
+    private void updateWindowFootprint() {
+        if (window == null || activity.isFinishing()) return;
+        boolean effectActive = (view != null && view.running) || actionTextActive || !queue.isEmpty();
+        int bottom = 0;
+        if (effectActive && regionH > 0) bottom = regionTop + regionH;
+        bottom = Math.max(bottom, layerBottom(danmakuLayer));
+        bottom = Math.max(bottom, layerBottom(selfChatLayer));
+        bottom = Math.max(bottom, layerBottom(oppChatLayer));
+        if (bottom <= 0) {
+            dismissWindow();
+            return;
+        }
+        if (!window.isShowing()) {
+            showWindow();   // 显示后再由后续布局回调收到内容高，避免对未显示窗口 update
+            return;
+        }
+        DisplayMetrics dm = activity.getResources().getDisplayMetrics();
+        int h = Math.min(bottom + (int) (2 * dm.density), dm.heightPixels);
+        try {
+            window.update(0, 0, dm.widthPixels, h);
+        } catch (Exception ignored) {
+        }
+    }
+
+    /** 某弹幕/聊天子层当前占用的绝对底边（未显示/无内容返回 0）；优先用实测高，退回布局参数高 */
+    private int layerBottom(View layer) {
+        if (layer == null || layer.getVisibility() != View.VISIBLE) return 0;
+        if (!(layer instanceof ViewGroup) || ((ViewGroup) layer).getChildCount() == 0) return 0;
+        ViewGroup.LayoutParams raw = layer.getLayoutParams();
+        int top = 0, h = 0;
+        if (raw instanceof FrameLayout.LayoutParams) {
+            top = ((FrameLayout.LayoutParams) raw).topMargin;
+            h = ((FrameLayout.LayoutParams) raw).height;
+        }
+        int measured = layer.getHeight() > 0 ? layer.getHeight() : (h > 0 ? h : 0);
+        return top + measured;
     }
 
     // ==================== PopupWindow 承载 ====================
@@ -317,6 +386,15 @@ public class SpecEffectOverlay {
             window.setFocusable(false);
             window.setOutsideTouchable(false);
             window.setTouchable(false);
+            // 不随输入法 resize/pan：本层以绝对窗口坐标定位聊天行/弹幕，主 Activity 为 adjustResize，
+            // 默认透明弹窗会跟随键盘整体顶高，导致决斗中聊天位置被抬高（用户规格：保持原位不动）
+            window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
+            // 弹幕/聊天子层内容增减改变其尺寸时，合并到下一帧按新的内容底边收放窗口高度
+            View.OnLayoutChangeListener contentWatcher =
+                    (v, l, t, r, b, ol, ot, obl, obr) -> scheduleFootprint();
+            danmakuLayer.addOnLayoutChangeListener(contentWatcher);
+            selfChatLayer.addOnLayoutChangeListener(contentWatcher);
+            oppChatLayer.addOnLayoutChangeListener(contentWatcher);
         }
         showWindow();
         return view;
@@ -377,6 +455,8 @@ public class SpecEffectOverlay {
         hostLp.height = regionH;
         actionTextHost.setLayoutParams(hostLp);
         actionTextHost.setVisibility(View.VISIBLE);
+        // 动作文本覆盖 layout_game_right 区域：确保窗口高度覆盖到该区域下沿（原点/坐标不变）
+        updateWindowFootprint();
         float sp = Math.max(0.25f, speed);
         long total = Math.max(1L, Math.round(req.holdFrames * 17L / sp)); // 40 帧 ≈ 680ms
         long animDur = Math.min(Math.max(1L, Math.round(200L / sp)), total / 3);
@@ -478,6 +558,32 @@ public class SpecEffectOverlay {
         if (selfChatLayer != null) selfChatLayer.removeAllViews();
         if (oppChatLayer != null) oppChatLayer.removeAllViews();
         dismissWindowIfIdle();
+    }
+
+    /**
+     * 命中测试：返回窗口坐标 (winX, winY) 落在某条血条下方聊天行 TextView 内的实例，无则 null。
+     * 供决斗内「长按聊天行复制该行文本」的全局触摸观察器使用——聊天行宿主 PopupWindow 事件
+     * 穿透（setTouchable(false)），触摸由 Activity 派发后据窗口坐标经此命中（弹窗与 Activity 窗口
+     * 同原点 (0,0)，故 dispatchTouchEvent 的 getX/getY 与 getLocationInWindow 同基准可直接比较）。
+     */
+    public TextView hitTestChatRow(float winX, float winY) {
+        TextView hit = hitTestRowIn(selfChatLayer, winX, winY);
+        return hit != null ? hit : hitTestRowIn(oppChatLayer, winX, winY);
+    }
+
+    private static TextView hitTestRowIn(LinearLayout layer, float winX, float winY) {
+        if (layer == null || layer.getVisibility() != View.VISIBLE) return null;
+        int[] loc = new int[2];
+        for (int i = 0; i < layer.getChildCount(); i++) {
+            View child = layer.getChildAt(i);
+            if (child.getWidth() <= 0 || child.getHeight() <= 0) continue;
+            child.getLocationInWindow(loc);
+            if (winX >= loc[0] && winX <= loc[0] + child.getWidth()
+                    && winY >= loc[1] && winY <= loc[1] + child.getHeight()) {
+                if (child instanceof TextView) return (TextView) child;
+            }
+        }
+        return null;
     }
 
     private static int clamp(int v, int lo, int hi) {

@@ -15,6 +15,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.OrientationEventListener;
 import android.view.View;
 import android.view.WindowManager;
@@ -805,6 +806,17 @@ public class YGOProActivity extends AppCompatActivity {
 
     public GameFieldController getFieldCtl() {
         return fieldCtl;
+    }
+
+    /**
+     * 决斗内聊天行/弹幕长按观察：事件穿透的透明覆盖窗（SpecEffectOverlay）自身不接收触摸，
+     * 故在 Activity 派发点非消费式转发给聊天协作类——仅据此命中顶部文字做长按复制/减速，
+     * 普通点按继续原样穿透到下层决斗场（return super 不改派发链，不影响卡片选择等正常操作）。
+     */
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        if (fieldCtl != null) fieldCtl.onFieldTouchForChat(ev);
+        return super.dispatchTouchEvent(ev);
     }
 
     /**
