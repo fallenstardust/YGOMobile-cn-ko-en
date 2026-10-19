@@ -962,9 +962,11 @@ public class CardDetailPanel {
         // btnChat 同 enterDeckEditorMode：由集中核算按退出后的实际场景重定显隐
     }
 
-    /** 副卡组替换模式下隐藏卡组编辑控制栏（洗牌/排序/清空/删除/退出按钮区） */
+    /** 副卡组替换模式下暂时收起卡组编辑控制栏（退出编辑/打乱/排序/清空/删除按钮区）：
+     *  仅换副卡组阶段调用（enterSideMode）。用 INVISIBLE 而非 GONE（用户规格）——
+     *  控制栏所在卡详面板为 weight 布局，GONE 会让其余区域尺寸跳变，INVISIBLE 保持占位稳定 */
     public void hideDeckControl() {
-        if (layoutDeckControl != null) layoutDeckControl.setVisibility(View.GONE);
+        if (layoutDeckControl != null) layoutDeckControl.setVisibility(View.INVISIBLE);
     }
 
     /** 退出副卡组替换模式后恢复卡组编辑控制栏 */

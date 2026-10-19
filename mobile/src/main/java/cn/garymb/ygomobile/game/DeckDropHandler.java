@@ -5,7 +5,6 @@ import android.view.ViewConfiguration;
 
 import java.util.List;
 
-import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.DeckInfo;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.widget.CardGroupView;
@@ -104,11 +103,11 @@ class DeckDropHandler {
         if (type == DeckInfo.Type.Main && Card.isExtraCard(card.Type)) return false;
         if (type == DeckInfo.Type.Extra && !Card.isExtraCard(card.Type)) return false;
         if (type == DeckInfo.Type.Main && !owner.isPackMode
-                && owner.currentDeck.getMainCount() >= Constants.DECK_MAIN_MAX) return false;
+                && owner.currentDeck.getMainCount() >= owner.getMaxMainCount()) return false;
         if (type == DeckInfo.Type.Extra
-                && owner.currentDeck.getExtraCount() >= Constants.DECK_EXTRA_MAX) return false;
+                && owner.currentDeck.getExtraCount() >= owner.getMaxExtraCount()) return false;
         if (type == DeckInfo.Type.Side
-                && owner.currentDeck.getSideCount() >= Constants.DECK_SIDE_MAX) return false;
+                && owner.currentDeck.getSideCount() >= owner.getMaxSideCount()) return false;
         List<Card> list = getDeckList(type);
         int insert = Math.max(0, Math.min(seq, list.size()));
         list.add(insert, card);

@@ -61,6 +61,13 @@ import ocgcore.enums.LimitType;
 public class DeckEditorManager implements CardDragHelper.DropHandler {
     private static final String TAG = "DeckEditorManager";
 
+    /**
+     * 比赛模式局间换副卡组（isSiding）时临时放宽主/额外/副卡组最大上限的张数：
+     * 对齐 C++ deck_con.cpp push_main/extra/side 的 "is_siding ? MAX + n : MAX"，
+     * n 按需求取 15，使换侧过程中可临时超限存放待调换的卡，完成时由 sideFinish 校验张数还原。
+     */
+    private static final int DECK_SIDE_SWAP_EXTRA = 15;
+
     public interface DeckEditorListener {
         void onDeckModified();
 
@@ -147,13 +154,14 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         this.cardDetailPanel = cardDetailPanel;
         this.cardLoader = new CardLoader();
         this.currentDeck = new DeckInfo();
-        this.dragHelper = new CardDragHelper(activity, this);
+        // 获取 SoundManager（对齐 C++ deck_con.cpp 中的音效调用）：须先于 dragHelper 赋值，
+        // 供拖拽拾起/放置音效（CARD_PICK/CARD_DROP）使用
+        this.soundManager = ((cn.garymb.ygomobile.YGOProActivity) activity).getSoundManager();
+        this.dragHelper = new CardDragHelper(activity, this, soundManager);
         this.cardSearcherManager = new CardSearcherManager(activity);
         this.gridLayout = new DeckGridLayoutApplier(this);
         this.statsPanel = new DeckStatsPanel(this);
         this.dropHandler = new DeckDropHandler(this);
-        // 获取 SoundManager（对齐 C++ deck_con.cpp 中的音效调用）
-        this.soundManager = ((cn.garymb.ygomobile.YGOProActivity) activity).getSoundManager();
     }
 
     public CardSearcherManager getCardSearcherManager() {
@@ -195,10 +203,12 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         // 搜索结果列表：setupSearchRecyclerView 新建了空适配器，把旧列表回填
         cardSearcherManager.rebindResultsToNewAdapter();
         refreshReadonly();
-        // 副卡组替换（side）模式：把筛选面板隐藏/侧栏控制行显隐按现态重挂到新树
+        // 副卡组替换（side）模式：旋转经 setContentView 重 inflate activity_ygo_game（layout_deck_editor
+        // 为其 include），卡组信息面板/右侧搜索结果面板在新树里回到 XML 默认 VISIBLE，会把换侧态下
+        // 应隐藏的布局漏显；须按现态整体重挂（信息/筛选面板隐藏、侧栏控制行显示、结果面板按方向隐藏、
+        // 卡详卡组控制按钮收起），故与 enterSideMode 共用 applySidingScreenState。
         if (isSiding) {
-            if (layoutFilterPanel != null) layoutFilterPanel.setVisibility(View.GONE);
-            if (llSideController != null) llSideController.setVisibility(View.VISIBLE);
+            applySidingScreenState();
         }
         statsPanel.updateCounts();
         // 注意：不重置 isModified、不重载卡组，保持编辑态与当前卡组/卡包不变
@@ -598,9 +608,23 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
     }
 
     // === 对应 deck_con.cpp: push_main ===
+    // 副卡组替换（isSiding）期间按 +DECK_SIDE_SWAP_EXTRA 临时放宽上限，其余场景用常规上限。
+    // 包级私有：同包协作类 DeckDropHandler 跨网格移动校验亦复用此口径。
+    int getMaxMainCount() {
+        return isSiding ? Constants.DECK_MAIN_MAX + DECK_SIDE_SWAP_EXTRA : Constants.DECK_MAIN_MAX;
+    }
+
+    int getMaxExtraCount() {
+        return isSiding ? Constants.DECK_EXTRA_MAX + DECK_SIDE_SWAP_EXTRA : Constants.DECK_EXTRA_MAX;
+    }
+
+    int getMaxSideCount() {
+        return isSiding ? Constants.DECK_SIDE_MAX + DECK_SIDE_SWAP_EXTRA : Constants.DECK_SIDE_MAX;
+    }
+
     public boolean pushMain(Card card, int seq) {
         if (card == null || Card.isExtraCard(card.Type)) return false;
-        if (!isPackMode && currentDeck.getMainCount() >= Constants.DECK_MAIN_MAX) return false;
+        if (!isPackMode && currentDeck.getMainCount() >= getMaxMainCount()) return false;
         if (!checkLimit(card)) return false;
         boolean result = (seq >= 0 && seq <= currentDeck.mainCards.size())
                 ? currentDeck.addMainCards(seq, card, isPackMode) : currentDeck.addMainCards(card);
@@ -613,7 +637,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
 
     public boolean pushExtra(Card card, int seq) {
         if (card == null || !Card.isExtraCard(card.Type)) return false;
-        if (currentDeck.getExtraCount() >= Constants.DECK_EXTRA_MAX) return false;
+        if (currentDeck.getExtraCount() >= getMaxExtraCount()) return false;
         if (!checkLimit(card)) return false;
         boolean result = (seq >= 0 && seq <= currentDeck.extraCards.size())
                 ? currentDeck.addExtraCards(seq, card) : currentDeck.addExtraCards(card);
@@ -626,7 +650,7 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
 
     public boolean pushSide(Card card, int seq) {
         if (card == null) return false;
-        if (currentDeck.getSideCount() >= Constants.DECK_SIDE_MAX) return false;
+        if (currentDeck.getSideCount() >= getMaxSideCount()) return false;
         if (!checkLimit(card)) return false;
         boolean result = (seq >= 0 && seq <= currentDeck.sideCards.size())
                 ? currentDeck.addSideCards(seq, card) : currentDeck.addSideCards(card);
@@ -695,14 +719,30 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
         preExtraCount = currentDeck.extraCards.size();
         preSideCount = currentDeck.sideCards.size();
         refreshReadonly();
-        //对齐C++：副卡组模式下隐藏卡组信息面板与筛选面板，只保留副卡组操作按钮
+        applySidingScreenState();
+    }
+
+    /**
+     * 副卡组替换态统一施加界面显隐（enterSideMode 与旋转重绑 rebindAfterRotation 共用，
+     * 保证切换方向后仍符合换侧态）：
+     * - 隐藏卡组信息面板与筛选面板、显示副卡组控制行（完成/打乱/排序/重置）；
+     * - 右侧搜索结果面板（搜索结果标题+排序 + 搜索结果列表）仅竖屏以 GONE 隐藏，
+     *   让副卡组网格扩展占满；横屏保持 INVISIBLE 占位；
+     * - 卡详面板的卡组控制按钮（退出编辑/打乱/排序/清空/删除）以 INVISIBLE 暂时收起。
+     */
+    private void applySidingScreenState() {
         if (layoutDeckInfoPanel != null) layoutDeckInfoPanel.setVisibility(View.GONE);
         if (layoutFilterPanel != null) layoutFilterPanel.setVisibility(View.GONE);
-        //显示副卡组控制器（完成/打乱/排序/重置），隐藏右侧搜索结果面板
         if (llSideController != null) llSideController.setVisibility(View.VISIBLE);
-        if (layoutDeckRightPanel != null) layoutDeckRightPanel.setVisibility(View.INVISIBLE);
-        //隐藏卡片详情面板中的卡组编辑控制栏
+        if (layoutDeckRightPanel != null)
+            layoutDeckRightPanel.setVisibility(isPortrait() ? View.GONE : View.INVISIBLE);
         if (cardDetailPanel != null) cardDetailPanel.hideDeckControl();
+    }
+
+    /** 当前是否竖屏显示（供换侧态右侧搜索结果面板按方向决定 GONE / INVISIBLE） */
+    private boolean isPortrait() {
+        return activity.getResources().getConfiguration().orientation
+                == android.content.res.Configuration.ORIENTATION_PORTRAIT;
     }
 
     //副卡组替换完成/取消后退出副卡组模式

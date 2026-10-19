@@ -12,6 +12,7 @@ import android.widget.ImageView;
 import java.util.ArrayList;
 import java.util.List;
 
+import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.bean.DeckInfo;
 import ocgcore.data.Card;
 
@@ -29,6 +30,8 @@ public class CardDragHelper {
 
     private final Activity activity;
     private final DropHandler dropHandler;
+    /** 拖拽音效源（对齐 C++ deck_con.cpp：拾起卡 CARD_PICK，放下卡 CARD_DROP），可为 null */
+    private final SoundManager soundManager;
     private final List<View> dropTargets = new ArrayList<>();
 
     private ViewGroup content;
@@ -42,9 +45,10 @@ public class CardDragHelper {
     private float grabDX, grabDY;
     private View highlightTarget;
 
-    public CardDragHelper(Activity activity, DropHandler dropHandler) {
+    public CardDragHelper(Activity activity, DropHandler dropHandler, SoundManager soundManager) {
         this.activity = activity;
         this.dropHandler = dropHandler;
+        this.soundManager = soundManager;
     }
 
     public void addDropTarget(View view) {
@@ -86,6 +90,8 @@ public class CardDragHelper {
         grabDX = trigger.getRawX() - loc[0];
         grabDY = trigger.getRawY() - loc[1];
         moveLayer(trigger.getRawX(), trigger.getRawY());
+        //对齐 C++ EMIE_MOUSE_MOVED 开始拖拽时 PlaySoundEffect(CARD_PICK)
+        if (soundManager != null) soundManager.playSoundEffect(SoundManager.SFX.CARD_PICK);
     }
 
     /**
@@ -157,6 +163,8 @@ public class CardDragHelper {
     }
 
     private void performDrop(float rawX, float rawY) {
+        //对齐 C++ EMIE_LMOUSE_LEFT_UP 拖拽结束放置时 PlaySoundEffect(CARD_DROP)
+        if (soundManager != null) soundManager.playSoundEffect(SoundManager.SFX.CARD_DROP);
         View target = findTarget(rawX, rawY);
         DeckInfo.Type source = dragSource;
         int index = dragIndex;
