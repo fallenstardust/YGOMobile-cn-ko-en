@@ -966,6 +966,34 @@ public class DraggablePopupHelper {
         }
 
         /**
+         * 输入法弹出/收起使本全窗口包装层高度变化（PopupWindow ADJUST_RESIZE 下窗口被 IME 压缩/还原）：
+         * 按当前几何重新解算区域定位——弹出时内容随可见区域上移、露出被键盘遮挡的输入框，收起时窗口
+         * 还原并重新贴回区域中心，杜绝「输入法把 dialog 顶起后不回位」。区域锚定与贴左缘各自的重算与
+         * {@link #relayoutForOrientation} 中的区域再解析同语义（弱引用失效时按 id 从当前视图树重取）。
+         * 仅处理高度变化（宽度变化交由旋转重排逻辑负责），且收缩态内容已隐藏时不动，避免误重置。
+         */
+        @Override
+        protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+            super.onSizeChanged(w, h, oldw, oldh);
+            if (h != oldh && !collapsed
+                    && centerRegionId != View.NO_ID && hostPopup != null && hostPopup.isShowing()) {
+                reanchorToRegion();
+            }
+        }
+
+        /** 按当前区域几何重新解算本弹窗内容定位（输入法升降、可见区域变化后回到应有位置） */
+        private void reanchorToRegion() {
+            View region = centerRegionRef != null ? centerRegionRef.get() : null;
+            if (region == null || !region.isAttachedToWindow()) {
+                Activity act = resolveActivity(getContext());
+                region = act != null ? act.findViewById(centerRegionId) : null;
+            }
+            if (region == null) return;
+            if (dockLeftInRegion) dockPopupInRegionLeft(hostPopup, region);
+            else centerPopupInRegion(hostPopup, region);
+        }
+
+        /**
          * 触点是否落在任一可见已布局子视图（对话框内容 / 收缩横条 / 收缩把手）内，
          * 隐藏中的不计；子视图尚未布局（宽高为 0）时视为不在内，避免误吞事件
          */

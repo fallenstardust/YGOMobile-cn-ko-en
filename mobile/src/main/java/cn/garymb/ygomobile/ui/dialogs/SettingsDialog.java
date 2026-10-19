@@ -403,6 +403,9 @@ public class SettingsDialog {
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setOutsideTouchable(false);
         popupWindow.setFocusable(false);
+        // 输入法弹出时让本弹窗窗口被压缩、内容随之上移露出输入框（ADJUST_NOTHING 会把键盘压在全屏弹窗
+        // 后面导致无法输入，用户反馈）；键盘收起后由 DragFrameLayout.onSizeChanged 按区域重新解算 topMargin
+        // 定位，使 dialog 回到原位，不再出现「顶起后冲出屏幕且不回位」。
         popupWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         popupWindow.setTouchInterceptor((v, event) -> {
             if (event.getAction() == MotionEvent.ACTION_OUTSIDE) {

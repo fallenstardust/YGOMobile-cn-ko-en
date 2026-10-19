@@ -124,6 +124,9 @@ public class KeywordCardListDialog {
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setOutsideTouchable(true);
         popupWindow.setFocusable(false);
+        // 输入法弹出时让本面板窗口被压缩、内容随之上移（ADJUST_NOTHING 会把键盘压在全屏面板后面）；
+        // 键盘收起后由 DragFrameLayout.onSizeChanged 按区域重新解算贴左缘定位，使面板回到原位。
+        popupWindow.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
 
         // 复用 DraggablePopupHelper：可拖拽移动并记忆位置、旋转按新区域重排重居中
         draggableHelper = new DraggablePopupHelper(context, DIALOG_ID);
