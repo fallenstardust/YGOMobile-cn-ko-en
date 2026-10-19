@@ -59,6 +59,26 @@ final class FieldHudRenderer {
      *  卡片中心的一侧偏移。 */
     private static final float SCALE_TOP_LIFT = 0.5f;
 
+    /** 横屏 HUD 数字放大（用户真机反馈：横屏决斗场放大后对方（远端）卡片投影偏小，其 ATK/DEF /
+     *  卡组数量统计等数字随之缩得很小难读）：把 clamp 后的字高向可读上限回拉——远端小数字增幅明显，
+     *  近端（我方，已接近上限）几乎不变。target 为回拉目标字高，pull∈0~1 越大越激进；竖屏不放大。 */
+    private static final float HUD_LANDSCAPE_TARGET_PX = 46f;
+    private static final float HUD_LANDSCAPE_PULL = 0.5f;
+    /** 每帧在 drawFieldNumbers / drawFieldCardTexts 入口刷新：true=横屏需放大 */
+    private boolean hudLandscapeBoost;
+
+    private boolean isLandscape() {
+        return view.getContext().getResources().getConfiguration().orientation
+                == android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+    }
+
+    /** 对 clamp 后的 HUD 字高应用横屏放大；竖屏（hudLandscapeBoost=false）原样返回 */
+    private float scaleHudText(float hpx) {
+        if (!hudLandscapeBoost) return hpx;
+        return Math.min(HUD_LANDSCAPE_TARGET_PX,
+                hpx + (HUD_LANDSCAPE_TARGET_PX - hpx) * HUD_LANDSCAPE_PULL);
+    }
+
     // 屏幕空间数字文字纹理键（区域计数 / 总攻击力数字共用，键含颜色；负值递减独立键域）
     private final HashMap<String, Long> numLabelKeys = new HashMap<>();
     private long numLabelKeySeq = -100000L;
@@ -77,6 +97,7 @@ final class FieldHudRenderer {
     void drawFieldNumbers(GameField f) {
         int w = view.viewW, h = view.viewH;
         if (w <= 1 || h <= 1 || f == null) return;
+        hudLandscapeBoost = isLandscape();
         Matrix.orthoM(view.mOrthoVP, 0, 0f, w, h, 0f, -1f, 1f);
         GLES30.glDisable(GLES30.GL_DEPTH_TEST);
         for (int p = 0; p < 2; p++) {
@@ -91,7 +112,7 @@ final class FieldHudRenderer {
                 float[] bot = view.projectWorldPoint(FieldGeometry.mirrorX(r[0]), farY, 0.02f);
                 if (top == null || bot == null) continue;
                 float pilePx = Math.abs(top[1] - bot[1]);
-                float hpx = Math.max(10f, Math.min(40f, pilePx * 0.30f));
+                float hpx = scaleHudText(Math.max(10f, Math.min(40f, pilePx * 0.30f)));
                 // 锚点从近端外侧 0.14 改为贴进本堆近端内侧 0.05：数字紧跟自己的堆叠，
                 // 不再压向场地中心方向相邻堆的上缘造成视觉误判
                 float[] anchor = view.projectWorldPoint(FieldGeometry.mirrorX(r[0]), nearY - 0.05f, 0.02f);
@@ -107,8 +128,8 @@ final class FieldHudRenderer {
             float[] a = view.projectWorldPoint(FieldGeometry.mirrorX(cxw), cyw, 0.012f);
             float[] b = view.projectWorldPoint(FieldGeometry.mirrorX(cxw), rc[3], 0.012f);
             float[] c2 = view.projectWorldPoint(FieldGeometry.mirrorX(cxw), rc[1], 0.012f);
-            float hpx = 14f;
-            if (b != null && c2 != null) hpx = Math.max(10f, Math.min(40f, Math.abs(b[1] - c2[1]) * 0.8f));
+            float hpx = scaleHudText(14f);
+            if (b != null && c2 != null) hpx = scaleHudText(Math.max(10f, Math.min(40f, Math.abs(b[1] - c2[1]) * 0.8f)));
             drawScreenNumber(a, String.valueOf(f.dInfo.totalAttack[p]), f.dInfo.totalAttackColor[p], hpx);
         }
         GLES30.glEnable(GLES30.GL_DEPTH_TEST);
@@ -169,6 +190,7 @@ final class FieldHudRenderer {
     void drawFieldCardTexts(GameField f) {
         int w = view.viewW, h = view.viewH;
         if (w <= 1 || h <= 1 || f == null) return;
+        hudLandscapeBoost = isLandscape();
         Matrix.orthoM(view.mOrthoVP, 0, 0f, w, h, 0f, -1f, 1f);
         GLES30.glDisable(GLES30.GL_DEPTH_TEST);
         boolean mr4 = f.dInfo.duelRule >= 4;
@@ -207,7 +229,7 @@ final class FieldHudRenderer {
         float[] hBot = view.projectWorldPoint(FieldGeometry.mirrorX(cx), cy + FieldGeometry.CARD_H * 0.5f, 0.02f);
         if (hTop == null || hBot == null) return;
         float cardHpx = Math.abs(hBot[1] - hTop[1]);
-        float hpx = Math.max(10f, Math.min(40f, cardHpx * 0.30f)) * STAT_SIZE_SCALE;
+        float hpx = scaleHudText(Math.max(10f, Math.min(40f, cardHpx * 0.30f)) * STAT_SIZE_SCALE);
         boolean ours = (p == 0);
 
         // ATK/DEF（连接值为 ATK/L-n）居中压在攻击表示卡片的底边线上（视角相对，
@@ -283,7 +305,7 @@ final class FieldHudRenderer {
         float[] hBot = view.projectWorldPoint(FieldGeometry.mirrorX(cx), cy + FieldGeometry.CARD_H * 0.5f, 0.02f);
         if (hTop == null || hBot == null) return;
         float cardHpx = Math.abs(hBot[1] - hTop[1]);
-        float hpx = Math.max(10f, Math.min(40f, cardHpx * 0.30f));
+        float hpx = scaleHudText(Math.max(10f, Math.min(40f, cardHpx * 0.30f)));
         // 屏幕侧：格子中心 mirrorX 后 > 中轴 = 屏幕左（我方 seq0/5、对方 seq6/7 带），
         // < 中轴 = 屏幕右（我方 seq6/7 带、对方 seq0/5）；左侧卡贴左上角顶点左对齐、
         // 右侧卡贴右上角顶点右对齐；再把文字上移 hpx×SCALE_TOP_LIFT，使其底边坐在顶角顶点上（抬高到顶点）

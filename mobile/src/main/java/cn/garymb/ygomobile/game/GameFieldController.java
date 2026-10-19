@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.game;
 
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.os.Handler;
 import android.text.Spannable;
@@ -29,6 +30,7 @@ import cn.garymb.ygomobile.render.CardDetailPanel;
 import cn.garymb.ygomobile.render.CardStatusTipHelper;
 import cn.garymb.ygomobile.render.GameFieldView;
 import cn.garymb.ygomobile.render.GameFieldViewController;
+import cn.garymb.ygomobile.render.SpecEffectOverlay;
 import cn.garymb.ygomobile.render.TextureLoader;
 import cn.garymb.ygomobile.ui.dialogs.CardSelectDialog;
 import cn.garymb.ygomobile.ui.dialogs.CmdMenuDialog;
@@ -63,6 +65,9 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     private CmdMenuDialog cmdMenuDialog;
 
     private TextView tvHintMessage;
+    /** 当前投递到覆盖层提示带的文本与在屏标志：旋转/布局变化后按新 HUD 底边重定位用 */
+    private String shownHintText;
+    private boolean hintShown;
     FrameLayout layoutChatMessages;
     TextView tvChatMessage1, tvChatMessage2;
     FrameLayout layoutDanmaku;
@@ -127,6 +132,8 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         phaseBar.setupPhaseButtons();
         setupOverlayAnchoring();
         chat.retainAcrossRotation();
+        // 旋转后覆盖层为新实例：若存续选择/等待类提示（stHintMsg）则重投到新层并按新 HUD 底边定位
+        if (pendingDuelHint != null && !pendingDuelHint.isEmpty()) pushHintToOverlay(pendingDuelHint);
         if (engine != null && imageLoaderRef != null) {
             viewController.init(engine.getField(), imageLoaderRef, this);
         }
@@ -151,6 +158,10 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
 
     private void bindChatViews() {
         tvHintMessage = activity.findViewById(R.id.tv_hint_message);
+        // 提示栏已迁至 SpecEffectOverlay 覆盖层（不被输入法顶高，且与对方手卡重叠时浮于其上）：
+        // 布局内旧 tv_hint_message 恒 GONE，使 layout_chat_messages 塌缩为 0 高——相机上锚线不再
+        // 为其预留顶部提示带，决斗场整体放大（横竖屏对称，用户规格）
+        if (tvHintMessage != null) tvHintMessage.setVisibility(View.GONE);
         layoutChatMessages = activity.findViewById(R.id.layout_chat_messages);
         tvChatMessage1 = activity.findViewById(R.id.tv_chat_message_1);
         tvChatMessage2 = activity.findViewById(R.id.tv_chat_message_2);
@@ -177,15 +188,11 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         final View.OnLayoutChangeListener insetListener = (v, l, t, r, b, ol, ot, or, ob) -> {
             updateCameraTopInset();
             updateCameraBottomInset();
+            // 血条/HUD 重布局（旋转、折叠屏）后，覆盖层提示带按新的 HUD 底边重定位
+            if (hintShown) pushHintToOverlay(shownHintText);
         };
         if (layoutTopInfo != null) layoutTopInfo.addOnLayoutChangeListener(insetListener);
-        // 聊天/提示行（tv_hint_message 宿主）：上锚线必须包含整行（否则卡片绘在其上），
-        // 故本行布局变化也要重算内缩；行高恒定（提示栏恒占位 + 固定高）⇒ 重算结果不变，
-        // 只在血条面板本身尺寸变化（旋转/折叠屏/HUD 缩放）时才真正改动取景
-        if (layoutChatMessages != null) layoutChatMessages.addOnLayoutChangeListener(insetListener);
-        // 竖屏顶部流容器 layout_top_stack（gameTopInfo 血条行→聊天/提示行）：内容撑高时
-        // 靠 stack 布局变更重算（顶部 1/3 面板在 layout_game_right 之外，其显隐直接改变
-        // 决斗场区域尺寸并由 onSurfaceChanged 重解相机，无需内缩补偿）
+        // 提示栏已迁至覆盖层，layout_chat_messages 塌缩为 0 高不再参与上锚线，无需监听其布局变化
         View stack = activity.findViewById(R.id.layout_top_stack);
         if (stack != null) stack.addOnLayoutChangeListener(insetListener);
         if (etChatInput != null) etChatInput.addOnLayoutChangeListener(insetListener);
@@ -205,9 +212,9 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         int[] b = new int[2];
         field.getLocationInWindow(b);
         int hgt = visualBottomInField(layoutTopInfo, b[1]);
-        // 竖屏 HUD 整体包在 layout_hud_top（血条行 + 聊天/提示行）内，直接取其实测底边
+        // 竖屏 HUD 整体包在 layout_hud_top（血条行）内，直接取其实测底边；
+        // 提示栏已迁至覆盖层，layout_chat_messages 塌缩为 0 高，不再计入上锚线（决斗场因此放大）
         hgt = Math.max(hgt, visualBottomInField(layoutHudTop, b[1]));
-        hgt = Math.max(hgt, visualBottomInField(layoutChatMessages, b[1]));
         if (hgt > 0) viewController.setTopInsetPx(hgt);
     }
 
@@ -223,16 +230,17 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         return (p[1] - fieldTopInWindow) - (int) v.getTranslationY() + v.getHeight();
     }
 
-    /** 相机底部内缩 = 决斗场视图底边→聊天输入框顶边的距离（再加 4dp 间隙，使我方手卡底缘
-     *  只比输入框高一点）：横竖屏均作为纵向下锚线使决斗场整体下移。与上锚线同一原则：
-     *  只有真正退出布局的 GONE 才取消保留，停用聊天用的 INVISIBLE 仍占位（竖屏底部行为
-     *  weight 布局），否则聊天开关一变就会重解取景而晃动；输入框不存在时内缩归零 */
+    /** 相机底部内缩（纵向下锚线）：= 决斗场视图底边→聊天输入框顶边的距离，使决斗场整体下移到
+     *  输入框上方而不遮挡输入框。横屏（用户规格）留 0 间隙使我方手卡底缘紧贴输入框上边缘（不再下探
+     *  遮住输入框）；竖屏保持不变仍留 4dp 使手卡略高于输入框。与上锚线同一原则：
+     *  只有真正退出布局的 GONE 才取消保留；输入框/场视图不存在时内缩归零 */
     private void updateCameraBottomInset() {
         if (viewController == null) return;
         View field = activity.findViewById(R.id.game_field_view);
-        if (etChatInput == null || field == null
+        if (field == null || field.getHeight() <= 0
+                || etChatInput == null
                 || etChatInput.getVisibility() == View.GONE
-                || etChatInput.getHeight() <= 0 || field.getHeight() <= 0) {
+                || etChatInput.getHeight() <= 0) {
             viewController.setBottomInsetPx(0f);
             return;
         }
@@ -245,7 +253,12 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
             viewController.setBottomInsetPx(0f);
             return;
         }
-        float gap = 4f * activity.getResources().getDisplayMetrics().density;
+        boolean landscape = activity.getResources().getConfiguration().orientation
+                == Configuration.ORIENTATION_LANDSCAPE;
+        // 横屏：gap=0 → inset 恰为输入框顶边到场底的距离，手卡底缘紧贴输入框上边缘且不遮挡；
+        // 竖屏：保持原有 4dp 间隙不变
+        float gap = landscape ? 0f
+                : 4f * activity.getResources().getDisplayMetrics().density;
         viewController.setBottomInsetPx(inset + gap);
     }
 
@@ -343,6 +356,8 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         if (layoutChatMessages != null) layoutChatMessages.setVisibility(View.GONE);
         if (cmdMenuDialog != null) cmdMenuDialog.dismiss();
         if (select.isCardSelecting) select.endCardSelect();
+        // 离场：取消未触发的临时提示到时隐藏，收起覆盖层提示带（hideDuelHint 会 pullHintFromOverlay）
+        if (hideHintRunnable != null) mainHandler.removeCallbacks(hideHintRunnable);
         hideDuelHint();
         // 清场时清空双方聊天记录/弹幕/大厅聊天/表情气泡（FieldChatBoard）
         chat.resetOnHide();
@@ -443,7 +458,7 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
      */
     public void showHint(String msg, int durationMs) {
         View gameRight = activity.findViewById(R.id.layout_game_right);
-        if (tvHintMessage == null || gameRight == null || !gameRight.isShown()) {
+        if (gameRight == null || !gameRight.isShown()) {
             android.widget.Toast.makeText(activity, msg,
                     durationMs > 2000 ? android.widget.Toast.LENGTH_LONG : android.widget.Toast.LENGTH_SHORT)
                     .show();
@@ -452,40 +467,80 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         if (hideHintRunnable == null) {
             hideHintRunnable = () -> {
                 // 临时知会到期：若仍有存续的选择/等待类提示（stHintMsg）则恢复其文本，否则隐藏
-                //（一律 INVISIBLE，见 hideDuelHint）
-                if (pendingDuelHint != null) {
-                    tvHintMessage.setText(pendingDuelHint);
+                if (pendingDuelHint != null && !pendingDuelHint.isEmpty()) {
+                    pushHintToOverlay(pendingDuelHint);
                 } else {
-                    tvHintMessage.setVisibility(View.INVISIBLE);
+                    pullHintFromOverlay();
                 }
             };
         }
         mainHandler.removeCallbacks(hideHintRunnable);
-        ensureHintContainerVisible();
-        tvHintMessage.setText(msg);
-        tvHintMessage.setVisibility(View.VISIBLE);
+        pushHintToOverlay(msg);
         mainHandler.postDelayed(hideHintRunnable, Math.max(durationMs, 500));
     }
 
-    /**
-     * 通讯提示（对齐 gframe stHintMsg）：显示后持续，由下一条通讯消息或显式隐藏
-     * （调用方 GameEngine.onGameMsg / onWaiting / onSelectXxx，见 stHintMsg 调用点）
-     */
     public void showDuelHint(String text) {
-        if (tvHintMessage == null) return;
-        ensureHintContainerVisible();
         pendingDuelHint = text;
-        tvHintMessage.setText(text);
-        tvHintMessage.setVisibility(View.VISIBLE);
+        if (text == null || text.isEmpty()) {
+            pullHintFromOverlay();
+        } else {
+            pushHintToOverlay(text);
+        }
     }
 
-    /** 隐藏通讯提示（对齐 duelclient.cpp ClientAnalyze 开头 stHintMsg->setVisible(false)）：
-     *  用 INVISIBLE 而非 GONE（用户规格）——提示栏必须恒占住 gameTopInfo 下方那条布局空间，
-     *  相机上锚线（HUD 视觉底边）才能是恒定量；若用 GONE，行高在提示显/隐时变化，取景随之
-     *  重解（决斗场一时缩小/下移、一时弹回），即用户反馈的「界面经常晃动」 */
     public void hideDuelHint() {
         pendingDuelHint = null;
-        if (tvHintMessage != null) tvHintMessage.setVisibility(View.INVISIBLE);
+        pullHintFromOverlay();
+    }
+
+    /**
+     * 把提示文本投递到 SpecEffectOverlay 提示带（显示在 GL 曲面之上，随窗口 SOFT_INPUT_ADJUST_NOTHING
+     * 不被输入法顶高）：顶边取当前顶部 HUD 底边（＝原 tv_hint_message 所在带，保持“相同位置”），
+     * 字号随横竖屏切换（10sp / 12sp）。空文本等价于隐藏。
+     */
+    private void pushHintToOverlay(String text) {
+        if (text == null || text.isEmpty()) {
+            pullHintFromOverlay();
+            return;
+        }
+        SpecEffectOverlay overlay = activity.obtainSpecOverlay();
+        if (overlay == null) return;
+        boolean landscape = activity.getResources().getConfiguration().orientation
+                == Configuration.ORIENTATION_LANDSCAPE;
+        int[] band = hintBandRectInWindow();
+        overlay.showHint(text, band[0], band[1], band[2], landscape ? 10f : 12f);
+        shownHintText = text;
+        hintShown = true;
+    }
+
+    /** 收起覆盖层提示带 */
+    private void pullHintFromOverlay() {
+        SpecEffectOverlay overlay = activity.getSpecOverlay();
+        if (overlay != null) overlay.hideHint();
+        shownHintText = null;
+        hintShown = false;
+    }
+
+    /**
+     * 提示带在窗口坐标的矩形 int[]{left, top(=底边), width}：取 layout_top_info（与内层决斗场 FrameLayout
+     * 同宽，横屏不跨左侧六按钮列）的左/底边/宽，使覆盖层提示与原布局 tv_hint_message 逐像素对齐
+     * （居中基准=场地区而非全屏）；未布局时回退双方血条矩形并集。
+     */
+    private int[] hintBandRectInWindow() {
+        if (layoutTopInfo != null && layoutTopInfo.getWidth() > 0 && layoutTopInfo.getHeight() > 0) {
+            int[] p = new int[2];
+            layoutTopInfo.getLocationInWindow(p);
+            return new int[]{p[0], p[1] + layoutTopInfo.getHeight(), layoutTopInfo.getWidth()};
+        }
+        int[] me = topInfoManager != null ? topInfoManager.getLpBarRectInWindow(0) : null;
+        int[] op = topInfoManager != null ? topInfoManager.getLpBarRectInWindow(1) : null;
+        if (me != null && op != null && me[2] > 0 && op[2] > 0) {
+            int left = Math.min(me[0], op[0]);
+            int right = Math.max(me[0] + me[2], op[0] + op[2]);
+            int top = Math.max(me[1] + me[3], op[1] + op[3]);
+            return new int[]{left, top, right - left};
+        }
+        return new int[]{0, 0, 0};
     }
 
     // === 卡片命令菜单 ===

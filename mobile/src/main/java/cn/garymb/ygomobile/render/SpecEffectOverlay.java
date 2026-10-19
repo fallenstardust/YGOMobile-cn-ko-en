@@ -82,6 +82,11 @@ public class SpecEffectOverlay {
     /** 我方/对方聊天行容器：各自 LP 血条正下方纵向 LinearLayout，自上而下追加 */
     private LinearLayout selfChatLayer;
     private LinearLayout oppChatLayer;
+    /** 提示带容器 + 单行提示文本（对齐 gframe stHintMsg / 原布局 tv_hint_message）：迁至本 PopupWindow
+     *  层后显示在 GL 曲面之上、血条下方全屏宽居中，随窗口 SOFT_INPUT_ADJUST_NOTHING 不被输入法顶高；
+     *  决斗场不再为其在相机上锚线预留带位（对方手卡可与提示重叠，提示浮于其上，用户规格） */
+    private FrameLayout hintHost;
+    private TextView hintText;
     /** 居中动作消息文本区域容器（对齐 layout_game_right 窗口矩形），内部 TextView 随文字自适应居中 */
     private FrameLayout actionTextHost;
     private TextView actionText;
@@ -235,6 +240,8 @@ public class SpecEffectOverlay {
         danmakuLayer = null;
         selfChatLayer = null;
         oppChatLayer = null;
+        hintHost = null;
+        hintText = null;
         actionTextHost = null;
         actionText = null;
     }
@@ -307,6 +314,7 @@ public class SpecEffectOverlay {
         bottom = Math.max(bottom, layerBottom(danmakuLayer));
         bottom = Math.max(bottom, layerBottom(selfChatLayer));
         bottom = Math.max(bottom, layerBottom(oppChatLayer));
+        bottom = Math.max(bottom, layerBottom(hintHost));
         if (bottom <= 0) {
             dismissWindow();
             return;
@@ -379,6 +387,26 @@ public class SpecEffectOverlay {
             oppChatLayer.setVisibility(View.GONE);
             rootLayer.addView(oppChatLayer, new FrameLayout.LayoutParams(0, 0,
                     Gravity.TOP | Gravity.START));
+            // 提示带：全屏宽横带，内部 TextView 自适应宽并水平居中（对齐原布局 tv_hint_message gravity=center），
+            // 单行尾部省略；顶边由 showHint 按血条底边（窗口坐标）运行时设定，与分侧聊天行同带区
+            hintHost = new FrameLayout(activity);
+            hintHost.setVisibility(View.GONE);
+            hintText = new TextView(activity);
+            hintText.setTextColor(Color.WHITE);
+            hintText.setGravity(Gravity.CENTER);
+            hintText.setSingleLine(true);
+            hintText.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            hintText.setShadowLayer(1f, 1f, 1f, Color.BLACK);
+            hintText.setBackgroundResource(R.drawable.btn_sci_fi_bg);
+            int hp = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2,
+                    activity.getResources().getDisplayMetrics());
+            hintText.setPadding(hp, hp, hp, hp);
+            hintHost.addView(hintText, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                    Gravity.CENTER));
+            rootLayer.addView(hintHost, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                    Gravity.TOP | Gravity.START));
             window = new PopupWindow(rootLayer,
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
             window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
@@ -395,6 +423,7 @@ public class SpecEffectOverlay {
             danmakuLayer.addOnLayoutChangeListener(contentWatcher);
             selfChatLayer.addOnLayoutChangeListener(contentWatcher);
             oppChatLayer.addOnLayoutChangeListener(contentWatcher);
+            hintHost.addOnLayoutChangeListener(contentWatcher);
         }
         showWindow();
         return view;
@@ -557,6 +586,39 @@ public class SpecEffectOverlay {
     public void clearChatRowLayers() {
         if (selfChatLayer != null) selfChatLayer.removeAllViews();
         if (oppChatLayer != null) oppChatLayer.removeAllViews();
+        dismissWindowIfIdle();
+    }
+
+    // ==================== 提示带（stHintMsg，血条下方全屏宽居中） ====================
+
+    /**
+     * 在覆盖层显示单行操作/通讯提示（对齐 gframe stHintMsg / 原布局 tv_hint_message）：
+     * 横带取窗口坐标 leftPx/topPx/widthPx（一般为顶部 HUD 的左/底边/宽＝原提示栏所在区，保持
+     * “相同位置且居中”），内部 TextView 自适应宽并水平居中；widthPx<=0 时回退全屏宽。textSizeSp
+     * 由调用方按横竖屏给定。显示在 GL 曲面之上，随窗口 SOFT_INPUT_ADJUST_NOTHING 不被输入法顶高；
+     * 与对方手卡重叠时提示浮于其上（用户接受遮挡关系反转）。
+     */
+    public void showHint(String text, int leftPx, int topPx, int widthPx, float textSizeSp) {
+        if (activity.isFinishing() || text == null || text.isEmpty()) {
+            hideHint();
+            return;
+        }
+        obtainView();
+        FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) hintHost.getLayoutParams();
+        lp.leftMargin = Math.max(0, leftPx);
+        lp.topMargin = Math.max(0, topPx);
+        lp.width = widthPx > 0 ? widthPx : ViewGroup.LayoutParams.MATCH_PARENT;
+        lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+        hintHost.setLayoutParams(lp);
+        hintText.setTextSize(TypedValue.COMPLEX_UNIT_SP, textSizeSp);
+        hintText.setText(text);
+        hintHost.setVisibility(View.VISIBLE);
+        updateWindowFootprint();
+    }
+
+    /** 隐藏提示带（原布局以 INVISIBLE 恒占位防抖，本层无布局占位概念：直接 GONE 并不影响相机锚线） */
+    public void hideHint() {
+        if (hintHost != null) hintHost.setVisibility(View.GONE);
         dismissWindowIfIdle();
     }
 
