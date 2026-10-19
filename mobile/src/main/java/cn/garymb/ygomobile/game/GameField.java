@@ -754,6 +754,18 @@ public class GameField {
         extraPCount[0] = 0;
         extraPCount[1] = 0;
         eventString = "";
+        // LP 增减动画状态机必须随场一并复位：旧实现漏清，lpPending/lpcstring 等残留到下一局，
+        // lpBarTicker 心跳继续驱动 updateLpAnimation/refreshLpFloatText，导致 match 局间
+        // （换 side、等待换备卡）重新显示决斗场时「再次播放上一局最后一次伤害的浮字/扣血动画」。
+        // 复位后 lpcstring 为空 → GameTopInfoManager.refreshLpFloatText 自动隐藏浮字并关闭浮窗层。
+        lpPending = false;
+        lpDelay = 0;
+        lpframe = 0;
+        lpplayer = 0;
+        lpd = 0;
+        lpFinal = 0;
+        lpccolor = 0;
+        lpcstring = "";
     }
 
     /**

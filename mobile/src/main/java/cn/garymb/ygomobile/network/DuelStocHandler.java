@@ -192,10 +192,14 @@ public class DuelStocHandler implements DuelClient.ClientListener {
         Log.i(TAG, "Hand result: " + res1 + " vs " + res2);
         // 对齐 duelclient.cpp L528：STOC_HAND_RESULT 公布猜拳结果时隐藏提示
         engine.hintManager.postDuelHintHide();
-        // STOC_HAND_RESULT 按服务器视角下发 player0/player1 手势，转换为本方视角
-        int self = engine.client.selfType;
-        final int myHand = (self == 1) ? res2 : res1;
-        final int oppHand = (self == 1) ? res1 : res2;
+        // STOC_HAND_RESULT 已是「接收方视角」：服务器对每个玩家各下发一份，res1 恒为该接收方自己的手势、
+        // res2 为对方手势（本地服务端 single_duel.cpp L369-376：players[0] 收 res1=hand_result[0]、
+        // players[1] 收 res1=hand_result[1]；Java LAN 端 GameRoom.handResult 同构）。
+        // C++ 客户端 drawing.cpp L1424-1425 亦无任何 player_type 交换：res1（低 16 位）画在场地下方、
+        // res2（高 16 位）画在上方。故此处绝不能再按 selfType 交换——旧实现 (self==1)?res2:res1 会让
+        // 处于玩家2位置的本方把自己的手势错误地当成对手手势，导致本方手势跑到屏幕上半部下降。
+        final int myHand = res1;
+        final int oppHand = res2;
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onHandResult(myHand, oppHand);
         });
@@ -207,6 +211,13 @@ public class DuelStocHandler implements DuelClient.ClientListener {
         engine.inDuel = false;
         engine.siding = true;
         engine.duelStage = YGOProtocol.DUEL_STAGE_SIDING;
+        // 对齐 duelclient.cpp STOC_CHANGE_SIDE L543：进入换 side 前 dField.Clear()。
+        // match 局间上一局的场上卡片、LP 增减动画必须在此彻底清除，否则换完备卡回到
+        // 决斗场时仍会残留上一局的卡片与最后一次伤害动画。clear() 已复位 LP 动画状态机。
+        engine.field.clear();
+        engine.mainHandler.post(() -> {
+            if (engine.listener != null) engine.listener.onFieldChanged();
+        });
         // Solo 连续换 side：上一份 side 提交后编辑器已隐藏但引擎状态仍停留在 SIDING，
         // 服务端随即下发第二条 CHANGE_SIDE。setEngineState 因状态未变会去重、不回调，
         // 导致下一席位换 side 界面无法重新载入（表现为编辑器消失后不再出现）。
@@ -222,6 +233,12 @@ public class DuelStocHandler implements DuelClient.ClientListener {
     public void onWaitingSide() {
         engine.inDuel = false;
         Log.i(TAG, "Waiting for side change");
+        // 对齐 duelclient.cpp STOC_WAITING_SIDE L578：等待对方换备卡时 dField.Clear()，
+        // 清除本局换 side 前可能残留的场上卡片与 LP 动画，保证下一局开场是干净空场
+        engine.field.clear();
+        engine.mainHandler.post(() -> {
+            if (engine.listener != null) engine.listener.onFieldChanged();
+        });
         // 对齐 duelclient.cpp L575-580：STOC_WAITING_SIDE 显示"等待换备卡"
         engine.hintManager.stopWaitHint();
         engine.hintManager.postDuelHint(engine.hintManager.sysString(1409, "等待对方换备卡..."));
