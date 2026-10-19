@@ -133,7 +133,9 @@ public abstract class HomeActivity extends BaseActivity implements BottomNavigat
         // 初始化用户唯一码
         SharedPreferenceUtil.initUserUniqueId();
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {//TODO 需要适配Api35
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM//TODO 需要适配Api35
+                && !AppsSettings.get().isNativeGameMode()//开启原生UI时不自动开启沉浸式
+                && !AppsSettings.get().isImmerSiveMode()) {//已经开启沉浸式时不重复开启
             SharedPreferenceUtil.setImmersiveMode(true);
         }
     }
