@@ -720,8 +720,11 @@ public class GameMessageParser {
             // 0x1<<(seq+8)（自身所在列的 SZONE 位；发动失败/被无效/手卡发动均不发，
             // 故天然满足「仅效果正常处理后才标注」）。桌面端只做 40 帧瞬时高亮
             //（selectable_field），本工程把掩码按 LocalPlayer 交换两半（L1531-1532）后
-            // 展开为同纵列两张魔陷格存入 hintZoneMask，渲染层以玫红呼吸标注，
-            // 直至下一个 MSG_NEW_TURN（同类无效效果均携 RESET_PHASE+PHASE_END 于回合结束失效）。
+            // 仅将 SZONE 位展开为同纵列两张魔陷格存入 hintZoneMask，渲染层以玫红呼吸
+            // 标注，直至下一个 MSG_NEW_TURN（同类无效效果均携 RESET_PHASE+PHASE_END 于
+            // 回合结束失效）；MZ 位为封锁格子类效果（伴随 MSG_FIELD_DISABLED 白 X）的
+            // 怪兽纵列宣告，在 applyHintZone 内跳过，不产生玫红标注（用户规格：白 X
+            // 同纵列魔陷格不得误显泡影提示）。
             // case 0 为兼容分支：服务端 script/constant.lua 旧版无 HINT_ZONE 定义时，
             // Duel.Hint(HINT_ZONE=undefined→nil, ...) 经 lua_tointeger 降级为 type=0 下发，
             // 掩码数据不变（各版 core 的 HINT 类型 0 均未定义用途，不会误判）

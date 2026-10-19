@@ -575,9 +575,14 @@ public class GameField {
     /**
      * HINT_ZONE 通讯（duelclient.cpp L1529-1572）展开出的被标注魔陷格集，位布局与
      * disabledField 同构（本地视角：seat0 MZ bits0-6 / SZ bits8-15，seat1 高 16 位）。
-     * 无限泡影类脚本效果处理成功时 Duel.Hint(HINT_ZONE, tp, 0x1<<(seq+8)) 宣告自身
-     * 所在列，本端把每个来位标到同列两张魔陷格——同侧 SZONE 格（同 seq）与对侧
-     * 镜像 SZONE 格（4-seq，aux.GetColumn 同式）；仅主列 seq 0-4（额外怪兽列无魔陷对应格）。
+     * 仅接受无效类效果的 SZ 位来位——无限泡影类脚本效果处理成功时
+     * Duel.Hint(HINT_ZONE, tp, 0x1<<(seq+8)) 宣告自身所在列的 SZONE 位，本端把它标到
+     * 同列两张魔陷格——同侧 SZONE 格（同 seq）与对侧镜像 SZONE 格（4-seq，aux.GetColumn
+     * 同式）；仅主列 seq 0-4（额外怪兽列无魔陷对应格）。
+     * MZ 位（bit0-6/16-22）为封锁格子类卡片（封锁龙/黄金国亡灵 等，效果伴随
+     * MSG_FIELD_DISABLED 白 X）的怪兽纵列宣告，桌面端只对掩码位瞬时高亮 40 帧、从不
+     * 扩张魔陷格；本端若同样展开会出现「白 X 同纵列魔陷格错误显示泡影标注」的误报，
+     * 故不产生持久标注。
      * 效果携 RESET_PHASE+PHASE_END，故下一个 MSG_NEW_TURN 清除。
      */
     public int hintZoneMask;
@@ -770,13 +775,17 @@ public class GameField {
 
     /**
      * 接收 HINT_ZONE 掩码（已换算为本地视角）并展开为魔陷格标注集存入 hintZoneMask：
-     * 每个来位（不论源自 MZ bit0-6 还是 SZ bit8-15，高 16 位为对侧）只标注同纵列的
-     * 两张魔法陷阱格：同侧 SZONE 格（同 seq）与对侧镜像 SZONE 格（4-seq）；
-     * 仅主列 seq 0-4（额外灵摆/共用连接格 5/6 无魔陷对应列）
+     * 只处理 SZONE 位（bit8-15/24-31，无限泡影类宣告）→ 标注同纵列两张魔陷格
+     * （同侧 seq 与对侧镜像 4-seq）；MZ 位（bit0-6/16-22）为封区类效果（伴随
+     * MSG_FIELD_DISABLED 白 X）的怪兽纵列宣告，不做持久标注；来位在 disabledField
+     * 同位已被封锁（该魔陷格带白 X）时亦跳过，标注不与交叉线重叠。
+     * 仅主列 seq 0-4（额外灵摆/共用连接格 5/6/7 无魔陷对应列）
      */
     public void applyHintZone(int zones) {
         for (int bit = 0; bit < 32; bit++) {
             if ((zones & (1 << bit)) == 0) continue;
+            if ((bit & 8) == 0) continue;                       // MZ 位（0-6/16-22）：封区宣告，跳过
+            if ((disabledField & (1L << bit)) != 0) continue;   // 该格已带白 X：不叠加标注
             markSpellColumn(bit >= 16 ? 1 : 0, (bit & 7));
         }
     }
