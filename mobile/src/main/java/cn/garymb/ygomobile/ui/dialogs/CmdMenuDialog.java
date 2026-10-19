@@ -543,7 +543,9 @@ public class CmdMenuDialog {
                         if (c == null) continue;
                         // 回放态里侧移动实况卡码可为 0：用前卡码 chain_code 兜底；实况不兜底保持原行为
                         int code = c.code != 0 ? c.code : (eng.replayMode ? c.chain_code : 0);
-                        items.add(new CardDisplayDialog.CardItem(code, card.controler, card.location, c.sequence, 0));
+                        // 除外区里侧表示的卡携带半部呼吸卡背标记（见 CardDisplayDialog.markFacedown）
+                        items.add(new CardDisplayDialog.CardItem(code, card.controler, card.location, c.sequence, 0,
+                                card.location == 0x20 && !c.isFaceUp()));
                     }
                 }
             }
@@ -580,7 +582,9 @@ public class CmdMenuDialog {
                         for (GameField.ClientCard c : list) {
                             if (c == null) continue;
                             int code = c.code != 0 ? c.code : (eng.replayMode ? c.chain_code : 0);
-                            fresh.add(new CardDisplayDialog.CardItem(code, obsCtrl, obsLoc, c.sequence, 0));
+                            // 与初始 items 同源：除外区里侧卡实时刷新时保持呼吸卡背标记
+                            fresh.add(new CardDisplayDialog.CardItem(code, obsCtrl, obsLoc, c.sequence, 0,
+                                    obsLoc == 0x20 && !c.isFaceUp()));
                         }
                     }
                 }

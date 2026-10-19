@@ -631,6 +631,23 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
             GameField.ClientCard picked = engine.getField().getCard(player, location, sequence);
             if (picked != null) {
                 scheduleFieldStatusTip(fieldView, picked, player, location, sequence, tapX, tapY);
+                // 效果发动各步骤（支付cost/是否连锁/选择连锁卡等）期间的点击查看：无论该卡
+                // 是否为本次候选，都即时刷新详情面板（对齐 gframe ClickCard 后无条件 ShowCardInfo）；
+                // 与非选卡分支同样延后一帧，避免抢占 UI 线程拖慢选中反馈
+                if (fieldView != null) {
+                    final GameField.ClientCard detailCard = picked;
+                    fieldView.post(() -> activity.showCardInfoPanel(detailCard));
+                } else {
+                    activity.showCardInfoPanel(picked);
+                }
+                // 期间点击堆叠区（卡组/额外/墓地/除外）或持素材超量怪兽：该卡不是本次候选时
+                // 弹出带「查看列表」的位置菜单（候选卡点击由会话直接切换选中，不弹菜单打断连点）
+                boolean pileOrXyz = location == 0x01 || location == 0x40
+                        || location == 0x10 || location == 0x20
+                        || (location == 0x04 && !picked.overlayed.isEmpty());
+                if (pileOrXyz && !picked.is_selectable) {
+                    showCardCommandMenu(picked, tapX, tapY, true);
+                }
             }
             return;
         }

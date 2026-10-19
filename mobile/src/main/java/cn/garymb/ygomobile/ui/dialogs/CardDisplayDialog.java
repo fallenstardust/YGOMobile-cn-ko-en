@@ -1,9 +1,18 @@
 package cn.garymb.ygomobile.ui.dialogs;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.LinearGradient;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
+import android.graphics.Shader;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Handler;
 import android.os.Looper;
@@ -68,13 +77,21 @@ public class CardDisplayDialog {
         public final int location;
         public final int sequence;
         public final int subSeq;
+        /** 里侧表示除外标记：由调用方以「除外区且 !isFaceUp()」判定，查看列表下半部呼吸卡背用 */
+        public final boolean facedownRemoved;
 
         public CardItem(int code, int controler, int location, int sequence, int subSeq) {
+            this(code, controler, location, sequence, subSeq, false);
+        }
+
+        public CardItem(int code, int controler, int location, int sequence, int subSeq,
+                boolean facedownRemoved) {
             this.code = code;
             this.controler = controler;
             this.location = location;
             this.sequence = sequence;
             this.subSeq = subSeq;
+            this.facedownRemoved = facedownRemoved;
         }
     }
 
@@ -156,6 +173,11 @@ public class CardDisplayDialog {
     // 卡背缓存：对齐 image_manager.cpp tButtonFacedown[0/1]（我方 cover.jpg / 对方 cover2.jpg）
     private static Bitmap coverSelf;
     private static Bitmap coverOpponent;
+    // 里侧除外标记位图缓存（下半部1/4竖向渐变卡背，见 makeFacedownMark）：按玩家侧区分
+    private static Bitmap markSelf;
+    private static Bitmap markOpponent;
+    /** 每槽位里侧除外呼吸动画句柄：换卡/关窗时取消并清理 foreground */
+    private final ValueAnimator[] facedownAnims = new ValueAnimator[SLOT_COUNT];
 
     public CardDisplayDialog(Context context, ImageLoader imageLoader) {
         this.context = context;
@@ -283,6 +305,8 @@ public class CardDisplayDialog {
             if (context instanceof YGOProActivity) {
                 ((YGOProActivity) context).notifyGameDialogHidden(this);
             }
+            // 关窗先停掉里侧除外呼吸动画并清理 foreground，防动画持有已脱离的视图
+            cancelAllFacedownMarks();
             LIVE_DIALOGS.remove(this);
             if (dismissListener != null) dismissListener.onDismiss();
         });
@@ -492,6 +516,83 @@ public class CardDisplayDialog {
         return null;
     }
 
+    /** 该卡项相对本地玩家是否处于对方侧（对齐 SetCardListLabel 的控侧判据） */
+    private boolean isOpponentSide(CardItem item) {
+        return localPlayer >= 0 && item.controler != localPlayer;
+    }
+
+    /**
+     * 里侧除外标记位图：整张 177×254 透明底，下半部 1/4 区域绘制的是对应玩家卡背自身
+     * 底部 1/4 的裁切内容（源矩形裁剪而非整张卡背压低高度，对齐用户「显示卡背底部1/4部分」），
+     * 再以 DST_IN + 竖向 LinearGradient（顶全透明→底全不透明）擦出「从上往下渐变显现」，
+     * 前景叠在卡图上时与卡面 bounds 精确贴合（iv 宽高已烘焙为 177:254，fitCenter 填满）
+     */
+    private static Bitmap makeFacedownMark(Bitmap cover) {
+        int w = 177;
+        int h = 254;
+        int top = h * 3 / 4;
+        Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        Canvas cv = new Canvas(bmp);
+        cv.save();
+        cv.clipRect(0, top, w, h);
+        // 源矩形取卡背图自身底部 1/4，目标矩形铺满标记下半部 1/4（宽高比一致，等比不拉伸）
+        cv.drawBitmap(cover,
+                new Rect(0, cover.getHeight() * 3 / 4, cover.getWidth(), cover.getHeight()),
+                new Rect(0, top, w, h), null);
+        cv.restore();
+        Paint p = new Paint(Paint.FILTER_BITMAP_FLAG);
+        p.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_IN));
+        p.setShader(new LinearGradient(0, top, 0, h, 0x00FFFFFF, 0xFFFFFFFF, Shader.TileMode.CLAMP));
+        cv.drawRect(0, top, w, h, p);
+        return bmp;
+    }
+
+    /**
+     * 给槽位卡图设置/清除里侧除外标记：foreground 叠渐变卡背位图，
+     * alpha 以 90↔230 呼吸往返（REVERSE 无限循环）表达「从上往下渐变显示卡背」的视觉提示
+     */
+    private void markFacedown(int slot, CardItem item) {
+        cancelFacedownMark(slot);
+        if (item == null || item.location != 0x20 || !item.facedownRemoved) return;
+        boolean opponent = isOpponentSide(item);
+        Bitmap cover = getCoverBitmap(opponent);
+        if (cover == null) return;
+        if (opponent) {
+            if (markOpponent == null || markOpponent.isRecycled()) {
+                markOpponent = makeFacedownMark(cover);
+            }
+        } else {
+            if (markSelf == null || markSelf.isRecycled()) {
+                markSelf = makeFacedownMark(cover);
+            }
+        }
+        Bitmap mark = opponent ? markOpponent : markSelf;
+        if (mark == null) return;
+        // 每槽独立 BitmapDrawable：呼吸 alpha 互不干扰
+        final BitmapDrawable fg = new BitmapDrawable(context.getResources(), mark);
+        ImageView iv = ivCards[slot];
+        iv.setForeground(fg);
+        ValueAnimator anim = ValueAnimator.ofInt(90, 230);
+        anim.setDuration(1100);
+        anim.setRepeatMode(ValueAnimator.REVERSE);
+        anim.setRepeatCount(ValueAnimator.INFINITE);
+        anim.addUpdateListener(a -> fg.setAlpha((int) a.getAnimatedValue()));
+        anim.start();
+        facedownAnims[slot] = anim;
+    }
+
+    private void cancelFacedownMark(int slot) {
+        if (facedownAnims[slot] != null) {
+            facedownAnims[slot].cancel();
+            facedownAnims[slot] = null;
+        }
+        if (ivCards[slot] != null) ivCards[slot].setForeground(null);
+    }
+
+    private void cancelAllFacedownMarks() {
+        for (int i = 0; i < SLOT_COUNT; i++) cancelFacedownMark(i);
+    }
+
     private void refreshSlots() {
         if (tipHelper != null) tipHelper.hide();
         if (cards.size() > SLOT_COUNT) {
@@ -520,15 +621,17 @@ public class CardDisplayDialog {
                     imageLoader.bindImage(ivCards[i], code, ImageLoader.Type.small);
                 } else {
                     // client_field.cpp ShowLocationCard：code==0 显示按控制者区分的卡背
-                    boolean opponent = localPlayer >= 0 && item.controler != localPlayer;
-                    Bitmap cover = getCoverBitmap(opponent);
+                    Bitmap cover = getCoverBitmap(isOpponentSide(item));
                     if (cover != null) {
                         ivCards[i].setImageBitmap(cover);
                     } else {
                         ivCards[i].setImageResource(R.drawable.unknown);
                     }
                 }
+                // 里侧表示除外的卡：卡面下半部1/4叠加呼吸渐变的对应玩家卡背标记
+                markFacedown(i, item);
             } else {
+                cancelFacedownMark(i);
                 slotViews[i].setVisibility(View.GONE);
             }
         }
