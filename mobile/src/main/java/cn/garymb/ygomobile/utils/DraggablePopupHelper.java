@@ -1494,8 +1494,9 @@ public class DraggablePopupHelper {
      * 「按指定区域宽高居中」（如 layout_game_right）：
      * 包装层（DragFrameLayout）铺满窗口，内部对话框以 Gravity.CENTER 居中，
      * 通过非对称 margin 把内容中心平移「区域中心 - 窗口中心」的偏移量即可。
-     * 若区域尚未布局完成（宽高为 0），通过 OnGlobalLayoutListener 等待布局后再应用，
-     * 避免退化为按整个窗口居中。
+     * 区域/窗口此刻未解算出有效几何（旋转重建瞬间视图树尚未布局、popup 自身窗口 resize
+     * 滞后）时挂布局监听逐帧重试，直到几何就绪应用成功后才摘除——旧写法「先摘监听再
+     * 应用、几何无效直接放弃」会让询问/宣言弹窗旋转后偶发地永不回区域中心（用户反馈）。
      */
     public static void centerPopupInRegion(PopupWindow popupWindow, View region) {
         if (popupWindow == null || region == null) return;
@@ -1503,45 +1504,9 @@ public class DraggablePopupHelper {
         if (popupWindow.getContentView() instanceof DragFrameLayout) {
             ((DragFrameLayout) popupWindow.getContentView()).setCenterRegion(region);
         }
-        if (region.getWidth() <= 0 || region.getHeight() <= 0) {
-            region.getViewTreeObserver().addOnGlobalLayoutListener(
-                    new ViewTreeObserver.OnGlobalLayoutListener() {
-                        @Override
-                        public void onGlobalLayout() {
-                            region.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                            centerPopupInRegion(popupWindow, region);
-                        }
-                    });
-            return;
+        if (!applyRegionAnchor(popupWindow, region, ANCHOR_CENTER)) {
+            addRegionAnchorRetryListener(popupWindow, region, ANCHOR_CENTER);
         }
-        View wrapper = popupWindow.getContentView();
-        if (!(wrapper instanceof ViewGroup)) return;
-        ViewGroup wrapperGroup = (ViewGroup) wrapper;
-        if (wrapperGroup.getChildCount() == 0) return;
-        // 区域锚定与贴左缘同义：“每次绝对贴区域中心”，归零上次拖拽对整层施加的平移；
-        // 不归零时残留平移与本处 margin 叠加，旋转/重显后内容与把手被整体推出可视区
-        //（表现为标题缺顶、转屏后「▼」消失、再转一次弹窗彻底不可见且无法取消）
-        wrapper.setTranslationX(0f);
-        wrapper.setTranslationY(0f);
-        View content = wrapperGroup.getChildAt(0);
-        ViewGroup.LayoutParams raw = content.getLayoutParams();
-        if (!(raw instanceof FrameLayout.LayoutParams)) return;
-        FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) raw;
-
-        View window = region.getRootView();
-        int winW = window.getWidth();
-        int winH = window.getHeight();
-        if (winW <= 0 || winH <= 0) return;
-        int[] regionLoc = new int[2];
-        region.getLocationInWindow(regionLoc);
-        int[] winLoc = new int[2];
-        window.getLocationInWindow(winLoc);
-        // CENTER gravity 下 leftMargin/topMargin 将内容整体平移该偏移量
-        lp.leftMargin = (regionLoc[0] + region.getWidth() / 2) - (winLoc[0] + winW / 2);
-        lp.rightMargin = 0;
-        lp.topMargin = (regionLoc[1] + region.getHeight() / 2) - (winLoc[1] + winH / 2);
-        lp.bottomMargin = 0;
-        content.setLayoutParams(lp);
     }
 
     /**
@@ -1550,53 +1515,122 @@ public class DraggablePopupHelper {
      * 包装层内对话框内容以 Gravity.CENTER 布局，左缘基准 = 窗口左 +（窗口宽 - 内容宽）/2，
      * 据此反推 leftMargin 使内容左缘 = 区域左缘；topMargin 与居中同式使内容垂直居中于区域。
      * 同时把区域与 dockLeft 模式记入包装层，旋转重建后由 {@link DragFrameLayout#relayoutForOrientation}
-     * 按同 id 新实例重新贴回左缘。区域尚未布局（宽高为 0）时注册一次性布局监听待完成后应用。
+     * 按同 id 新实例重新贴回左缘。区域/窗口尚未布局时挂布局监听重试至应用成功（同 {@link #centerPopupInRegion}）。
      */
     public static void dockPopupInRegionLeft(PopupWindow popupWindow, View region) {
         if (popupWindow == null || region == null) return;
         if (popupWindow.getContentView() instanceof DragFrameLayout) {
             ((DragFrameLayout) popupWindow.getContentView()).setCenterRegion(region, true);
         }
-        if (region.getWidth() <= 0 || region.getHeight() <= 0) {
-            region.getViewTreeObserver().addOnGlobalLayoutListener(
-                    new ViewTreeObserver.OnGlobalLayoutListener() {
-                        @Override
-                        public void onGlobalLayout() {
-                            region.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                            dockPopupInRegionLeft(popupWindow, region);
-                        }
-                    });
-            return;
+        if (!applyRegionAnchor(popupWindow, region, ANCHOR_DOCK_LEFT)) {
+            addRegionAnchorRetryListener(popupWindow, region, ANCHOR_DOCK_LEFT);
         }
+    }
+
+    /**
+     * 将经 {@link #setupDraggablePopup} 包装为全窗口的 popup 内容贴到指定区域（如 layout_game_right）
+     * 的**右上角**（区别于 {@link #centerPopupInRegion} 居中、{@link #dockPopupInRegionLeft} 贴左缘）：
+     * 包装层（DragFrameLayout）铺满整屏，内容以 Gravity.TOP|END 布局，通过 rightMargin 把内容右缘
+     * 从窗口右缘向左平移「窗口右 - 区域右」的距离，topMargin 把内容顶缘对齐到区域顶缘。
+     * 区域/窗口尚未布局时挂布局监听重试至应用成功（同 {@link #centerPopupInRegion}）。供决斗记录这类
+     * 固定在右上角、需铺满整屏参与跨窗口触摸转发与点击置顶的浮层使用。
+     */
+    public static void anchorPopupInRegionTopRight(PopupWindow popupWindow, View region) {
+        if (popupWindow == null || region == null) return;
+        if (!applyRegionAnchor(popupWindow, region, ANCHOR_TOP_RIGHT)) {
+            addRegionAnchorRetryListener(popupWindow, region, ANCHOR_TOP_RIGHT);
+        }
+    }
+
+    /** 区域锚定三种模式：内容居中于区域 / 贴区域左缘垂直居中 / 贴区域右上角 */
+    private static final int ANCHOR_CENTER = 0;
+    private static final int ANCHOR_DOCK_LEFT = 1;
+    private static final int ANCHOR_TOP_RIGHT = 2;
+
+    /**
+     * 按模式解算并应用区域锚定 margin（三种锚定的统一几何实现）：区域与窗口坐标一律
+     * 实时测量，贴区域中心/左缘/右上角的公式与原各专用实现一致。返回 true 表示已应用
+     * 或参数/视图结构异常（重试也无意义，终止）；返回 false 表示区域或承载窗口此刻
+     * 尚未完成布局、几何暂不可解——交由调用方挂布局监听重试。旧写法在窗口 resize
+     * 滞后于区域布局的中间态（旋转重建瞬间、IME 升降、决斗记录等铺屏转发层参与重排时
+     * 更易命中）下直接 return 且不重试，弹窗 margin 永久停留旧值，表现为「旋转后询问/
+     * 宣言弹窗不回 layout_game_right 中央」（用户反馈）。
+     */
+    private static boolean applyRegionAnchor(PopupWindow popupWindow, View region, int mode) {
+        if (popupWindow == null || region == null) return true;
+        if (region.getWidth() <= 0 || region.getHeight() <= 0) return false;
         View wrapper = popupWindow.getContentView();
-        if (!(wrapper instanceof ViewGroup)) return;
+        if (!(wrapper instanceof ViewGroup)) return true;
         ViewGroup wrapperGroup = (ViewGroup) wrapper;
-        if (wrapperGroup.getChildCount() == 0) return;
-        // 归零拖拽期间对整层施加的平移：本模式语义是“每次停靠绝对贴区域左缘”，
-        // 避免上次拖拽的 translation 叠加 margin 使内容偏离左缘（旋转载荷时同属此路）
+        if (wrapperGroup.getChildCount() == 0) return true;
+        // 三种锚定同语义「每次绝对贴区域」：归零上次拖拽/重排对整层施加的平移，
+        // 残留平移叠加 margin 会把内容推出可视区（标题缺顶、「▼」消失、弹窗无法取消）
         wrapper.setTranslationX(0f);
         wrapper.setTranslationY(0f);
         View content = wrapperGroup.getChildAt(0);
         ViewGroup.LayoutParams raw = content.getLayoutParams();
-        if (!(raw instanceof FrameLayout.LayoutParams)) return;
+        if (!(raw instanceof FrameLayout.LayoutParams)) return true;
         FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) raw;
 
         View window = region.getRootView();
         int winW = window.getWidth();
         int winH = window.getHeight();
-        if (winW <= 0 || winH <= 0) return;
+        if (winW <= 0 || winH <= 0) return false;
         int[] regionLoc = new int[2];
         region.getLocationInWindow(regionLoc);
         int[] winLoc = new int[2];
         window.getLocationInWindow(winLoc);
-        // 内容宽：优先用已解算的布局宽（旋转重排前已置为 fitted 宽），未布局时退回实测宽
-        int contentW = lp.width > 0 ? lp.width : content.getWidth();
-        // CENTER 下左缘 = winLeft + (winW - contentW)/2，叠加 leftMargin 后贴区域左缘
-        lp.leftMargin = regionLoc[0] - (winLoc[0] + (winW - contentW) / 2);
-        lp.rightMargin = 0;
-        lp.topMargin = (regionLoc[1] + region.getHeight() / 2) - (winLoc[1] + winH / 2);
-        lp.bottomMargin = 0;
+        switch (mode) {
+            case ANCHOR_DOCK_LEFT: {
+                // 内容宽：优先用已解算的布局宽（旋转重排前已置为 fitted 宽），未布局时退回实测宽
+                int contentW = lp.width > 0 ? lp.width : content.getWidth();
+                // CENTER 下左缘 = winLeft + (winW - contentW)/2，叠加 leftMargin 后贴区域左缘
+                lp.leftMargin = regionLoc[0] - (winLoc[0] + (winW - contentW) / 2);
+                lp.rightMargin = 0;
+                lp.topMargin = (regionLoc[1] + region.getHeight() / 2) - (winLoc[1] + winH / 2);
+                lp.bottomMargin = 0;
+                break;
+            }
+            case ANCHOR_TOP_RIGHT: {
+                int regionRight = regionLoc[0] + region.getWidth() - winLoc[0];
+                // TOP|END：right 边 = 窗口右 - rightMargin，令其贴区域右缘；top 贴区域顶缘
+                lp.gravity = Gravity.TOP | Gravity.END;
+                lp.leftMargin = 0;
+                lp.rightMargin = Math.max(0, winW - regionRight);
+                lp.topMargin = regionLoc[1] - winLoc[1];
+                lp.bottomMargin = 0;
+                break;
+            }
+            default: {
+                // CENTER gravity 下 leftMargin/topMargin 将内容整体平移该偏移量
+                lp.leftMargin = (regionLoc[0] + region.getWidth() / 2) - (winLoc[0] + winW / 2);
+                lp.rightMargin = 0;
+                lp.topMargin = (regionLoc[1] + region.getHeight() / 2) - (winLoc[1] + winH / 2);
+                lp.bottomMargin = 0;
+                break;
+            }
+        }
         content.setLayoutParams(lp);
+        return true;
+    }
+
+    /**
+     * 区域/窗口尚未布局时挂布局监听逐帧重试锚定：applyRegionAnchor 应用成功才摘除，
+     * 中间不一致态（旋转重建首帧、popup 窗口 resize 滞后、IME 升降中）保留监听等待下次
+     * 布局完成再试，保证询问/宣言等区域锚定弹窗最终贴回区域中心。region 若随下一次旋转
+     * 重建脱离视图树，其监听随视图销毁自然失效（新弹窗实例重新注册），不会泄漏叠加。
+     */
+    private static void addRegionAnchorRetryListener(
+            final PopupWindow popupWindow, final View region, final int mode) {
+        region.getViewTreeObserver().addOnGlobalLayoutListener(
+                new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        if (applyRegionAnchor(popupWindow, region, mode)) {
+                            region.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                        }
+                    }
+                });
     }
 
     public void showPopup(PopupWindow popupWindow, View anchorView, int gravity, int xOffset, int yOffset) {

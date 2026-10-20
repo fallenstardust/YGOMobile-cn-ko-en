@@ -7,7 +7,6 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ListView;
@@ -23,6 +22,7 @@ import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.DialogScale;
+import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.YGOUtil;
 
 import ocgcore.DataManager;
@@ -157,6 +157,7 @@ public class DuelLogDialog {
     private final YGOProActivity activity;
     private final LogAdapter adapter;
     private PopupWindow popupWindow;
+    private DraggablePopupHelper draggableHelper;
     private ListView lvLog;
 
     public DuelLogDialog(YGOProActivity activity) {
@@ -198,13 +199,36 @@ public class DuelLogDialog {
             dismiss();
         });
 
-        // 宽度为默认 280dp 的 2/3；初始位置锚定 layout_game_right 右上角（见 show()）
-        popupWindow = new PopupWindow(root, dp(187), dp(300), true);
+        // 铺满整屏的转发层（对齐 YesOrNoDialog 等决斗内弹窗的 ACTIVE_LAYERS 触摸转发/点击置顶）：
+        // 使决斗记录与连锁询问等模态弹窗可同时交互——点记录仍命中记录，点被记录遮挡的弹窗会把
+        // 该弹窗提到最前。非获焦 + 窗外不拦截 + 不处理返回键 + 消费 ACTION_OUTSIDE：外部点击与
+        // 返回键都不会关闭它，仅「确定」按钮 dismiss（用户规格）。内容尺寸 187x300，位置贴右上角。
+        int designW = dp(187);
+        int designH = dp(300);
+        popupWindow = new PopupWindow(DialogScale.wrap(activity));
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        popupWindow.setFocusable(true);
-        popupWindow.setOutsideTouchable(true);
+        popupWindow.setFocusable(false);
+        popupWindow.setOutsideTouchable(false);
         popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
+        popupWindow.setTouchInterceptor((v, event) ->
+                event.getAction() == android.view.MotionEvent.ACTION_OUTSIDE);
         popupWindow.setOnDismissListener(() -> showingInstance = null);
+
+        draggableHelper = new DraggablePopupHelper(DialogScale.wrap(activity), "game_dialog_duel_log");
+        // root 此时无父视图 → 走全窗口包装：popup 尺寸置 MATCH_PARENT 铺满整屏，root 作为内容子视图
+        draggableHelper.setupDraggablePopup(popupWindow, root, designW, designH);
+        draggableHelper.setDragEnabled(popupWindow, false); // 固定右上角，不可拖动
+        // 旋转后按新视图树重新贴 layout_game_right 右上角（区域按 id 解析，交由自定义重排全权处理）
+        draggableHelper.registerOrientationRelayout(popupWindow, this::anchorTopRightInGameRight);
+    }
+
+    /** 把铺满整屏的记录浮层内容贴到 layout_game_right 右上角；区域未就绪由锚定方法内部延后处理 */
+    private void anchorTopRightInGameRight() {
+        if (popupWindow == null || activity.isFinishing() || activity.isDestroyed()) return;
+        View gameRight = activity.findViewById(R.id.layout_game_right);
+        if (gameRight != null) {
+            DraggablePopupHelper.anchorPopupInRegionTopRight(popupWindow, gameRight);
+        }
     }
 
     /** 对齐 imgLog 开关：已显示则隐藏，否则显示 */
@@ -223,34 +247,14 @@ public class DuelLogDialog {
         if (decor.getWindowToken() == null) return;
         showingInstance = this;
         refresh();
-        View gameRight = activity.findViewById(R.id.layout_game_right);
-        if (gameRight != null && gameRight.getWidth() > 0 && gameRight.getHeight() > 0) {
-            showAtGameRightTopRight(gameRight);
-        } else if (gameRight != null) {
-            // 决斗 UI 刚切为可见的同帧宽度尚为 0，等布局完成后再显示
-            gameRight.getViewTreeObserver().addOnGlobalLayoutListener(
-                    new ViewTreeObserver.OnGlobalLayoutListener() {
-                        @Override
-                        public void onGlobalLayout() {
-                            gameRight.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                            if (showingInstance != DuelLogDialog.this) return; // 等待期间已被取消
-                            showAtGameRightTopRight(gameRight);
-                        }
-                    });
+        // 铺满整屏的转发层窗口直接贴在 Activity decor 上（popup 尺寸已为 MATCH_PARENT），
+        // 位置由内容的 margin 锚定到 layout_game_right 右上角，区域未布局时锚定内部延后处理
+        if (draggableHelper != null) {
+            draggableHelper.showPopup(popupWindow, decor);
         } else {
-            // 极端兜底：找不到锚点时屏幕居中
-            popupWindow.showAtLocation(decor, Gravity.CENTER, 0, 0);
+            popupWindow.showAtLocation(decor, Gravity.NO_GRAVITY, 0, 0);
         }
-    }
-
-    /** 对齐 OptionDialog 定位惯例：弹窗右上角与 layout_game_right 右上角重合 */
-    private void showAtGameRightTopRight(View gameRight) {
-        int[] loc = new int[2];
-        gameRight.getLocationInWindow(loc);
-        int x = loc[0] + gameRight.getWidth() - popupWindow.getWidth();
-        if (x < loc[0]) x = loc[0]; // 弹窗宽于区域时钳制回区域内
-        int y = loc[1];
-        popupWindow.showAtLocation(gameRight, Gravity.NO_GRAVITY, x, y);
+        anchorTopRightInGameRight();
     }
 
     public void dismiss() {
