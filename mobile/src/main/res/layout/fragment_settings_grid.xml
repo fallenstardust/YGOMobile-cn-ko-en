@@ -237,9 +237,10 @@
                     android:orientation="horizontal">
 
                     <LinearLayout
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_margin="4dp"
+                        android:layout_weight="1"
                         android:background="@drawable/selected_light"
                         android:gravity="center"
                         android:orientation="vertical"
@@ -247,7 +248,7 @@
 
                         <ImageView
                             android:id="@+id/img_avatar_me"
-                            android:layout_width="64dp"
+                            android:layout_width="match_parent"
                             android:layout_height="64dp"
                             android:clickable="true"
                             android:foreground="?android:attr/selectableItemBackground"
@@ -262,9 +263,10 @@
                     </LinearLayout>
 
                     <LinearLayout
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_margin="4dp"
+                        android:layout_weight="1"
                         android:background="@drawable/selected_light"
                         android:gravity="center"
                         android:orientation="vertical"
@@ -272,7 +274,7 @@
 
                         <ImageView
                             android:id="@+id/img_avatar_opponent"
-                            android:layout_width="64dp"
+                            android:layout_width="match_parent"
                             android:layout_height="64dp"
                             android:clickable="true"
                             android:foreground="?android:attr/selectableItemBackground"
@@ -314,9 +316,10 @@
                     android:orientation="horizontal">
 
                     <LinearLayout
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_margin="4dp"
+                        android:layout_weight="1"
                         android:background="@drawable/selected_light"
                         android:gravity="center"
                         android:orientation="vertical"
@@ -324,7 +327,7 @@
 
                         <ImageView
                             android:id="@+id/img_cover1"
-                            android:layout_width="44dp"
+                            android:layout_width="match_parent"
                             android:layout_height="64dp"
                             android:clickable="true"
                             android:foreground="?android:attr/selectableItemBackground"
@@ -339,9 +342,10 @@
                     </LinearLayout>
 
                     <LinearLayout
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_margin="4dp"
+                        android:layout_weight="1"
                         android:background="@drawable/selected_light"
                         android:gravity="center"
                         android:orientation="vertical"
@@ -349,7 +353,7 @@
 
                         <ImageView
                             android:id="@+id/img_cover2"
-                            android:layout_width="44dp"
+                            android:layout_width="match_parent"
                             android:layout_height="64dp"
                             android:clickable="true"
                             android:foreground="?android:attr/selectableItemBackground"
@@ -391,9 +395,10 @@
                 android:orientation="horizontal">
 
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_margin="4dp"
+                    android:layout_weight="1"
                     android:background="@drawable/selected_light"
                     android:gravity="center"
                     android:orientation="vertical"
@@ -401,7 +406,7 @@
 
                     <ImageView
                         android:id="@+id/img_bg_game"
-                        android:layout_width="96dp"
+                        android:layout_width="match_parent"
                         android:layout_height="64dp"
                         android:clickable="true"
                         android:foreground="?android:attr/selectableItemBackground"
@@ -416,9 +421,10 @@
                 </LinearLayout>
 
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_margin="4dp"
+                    android:layout_weight="1"
                     android:background="@drawable/selected_light"
                     android:gravity="center"
                     android:orientation="vertical"
@@ -426,7 +432,7 @@
 
                     <ImageView
                         android:id="@+id/img_bg_menu"
-                        android:layout_width="96dp"
+                        android:layout_width="match_parent"
                         android:layout_height="64dp"
                         android:clickable="true"
                         android:foreground="?android:attr/selectableItemBackground"
@@ -441,9 +447,10 @@
                 </LinearLayout>
 
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_margin="4dp"
+                    android:layout_weight="1"
                     android:background="@drawable/selected_light"
                     android:gravity="center"
                     android:orientation="vertical"
@@ -451,7 +458,7 @@
 
                     <ImageView
                         android:id="@+id/img_bg_deck"
-                        android:layout_width="96dp"
+                        android:layout_width="match_parent"
                         android:layout_height="64dp"
                         android:clickable="true"
                         android:foreground="?android:attr/selectableItemBackground"
