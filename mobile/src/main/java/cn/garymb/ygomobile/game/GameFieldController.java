@@ -793,7 +793,20 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     @Override
     public void onFieldLongPress(int player, int location, int sequence, float x, float y) {
         Log.d(TAG, "Long press: p=" + player + " loc=" + location + " seq=" + sequence);
-        // 长按不再显示卡片详情和状态标签，均由点击事件触发
+        // 黄色虚线（蚂蚁线）动画中的候选卡增加「按住查看详情」：选卡会话期间点击候选卡
+        // 会直接切换选中/应答（gframe ClickCard 语义，只选 1 张的会话点击即自动确认），
+        // 无法单纯查看卡片；长按只刷新详情面板、完全不参与应答。GestureDetector 已识别
+        // 为长按的手势不会再派发 onSingleTapUp，故不会连带触发选中。非候选卡维持旧规格
+        // （详情与状态标签均由点击触发，长按不响应）
+        if (engine == null || !select.isCardSelecting) return;
+        GameField.ClientCard card = engine.getField().getCard(player, location, sequence);
+        if (card == null || !card.is_selectable) return;
+        GameFieldView fieldView = viewController != null ? viewController.getView() : null;
+        if (fieldView != null) {
+            fieldView.post(() -> activity.showCardInfoPanel(card));
+        } else {
+            activity.showCardInfoPanel(card);
+        }
     }
 
     @Override

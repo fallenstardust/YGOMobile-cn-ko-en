@@ -144,6 +144,26 @@ public class DraggablePopupHelper {
             popupWindow.setWidth(ViewGroup.LayoutParams.MATCH_PARENT);
             popupWindow.setHeight(ViewGroup.LayoutParams.MATCH_PARENT);
         }
+        // 用户规格：聊天输入框与输入法显示在所有弹窗前面——统一应用 Android 12+ 键盘分层修复
+        applyImeLayeringFix(popupWindow);
+    }
+
+    /**
+     * Android 12+ 键盘分层统一修复（用户规格：聊天输入框/输入法不得被任何弹窗压在下面）：
+     * S 起系统把软键盘改为相对「IME 目标窗口」分层，普通弹窗窗口反而垫在键盘之上，
+     * 键盘与其间被输入法抬高的聊天输入框都被弹窗遮挡、按键落空。PlayerWaitingDialog
+     * 已按本方案验证生效，现推广到全部走 {@link #setupDraggablePopup} 包装的弹窗与命令菜单：
+     * INPUT_METHOD_NEEDED 使 computeFlags() 为本窗口加 FLAG_ALT_FOCUSABLE_IM，官方语义为
+     * 「按输入法目标对待、分层在输入法窗口之下」，键盘显示在 dialog 上方且按键直达 IME；
+     * Android 11 及以下键盘恒在所有应用窗口之上，同组合语义相反（自动补全压键盘），
+     * 故整块按版本门控；调用方已显式自定义输入法模式的（如自带输入框的弹窗）不覆盖。
+     */
+    public static void applyImeLayeringFix(PopupWindow popupWindow) {
+        if (popupWindow == null) return;
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S) return;
+        if (popupWindow.getInputMethodMode() == PopupWindow.INPUT_METHOD_FROM_FOCUSABLE) {
+            popupWindow.setInputMethodMode(PopupWindow.INPUT_METHOD_NEEDED);
+        }
     }
 
     /**
@@ -458,6 +478,8 @@ public class DraggablePopupHelper {
             }
             return false;
         });
+        // 同 5 参重载：把手式弹窗也统一应用 Android 12+ 键盘分层修复
+        applyImeLayeringFix(popupWindow);
     }
 
     /**

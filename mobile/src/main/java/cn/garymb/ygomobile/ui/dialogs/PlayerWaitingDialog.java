@@ -209,8 +209,11 @@ public class PlayerWaitingDialog {
         // 按键直达 IME 窗口；窗口焦点仍留给 Activity，et_chat_input 获焦与输入链路不受影响
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
             popupWindow.setInputMethodMode(PopupWindow.INPUT_METHOD_NEEDED);
-            // 弹窗自身不接管输入，不得因键盘触发的窗口 resize 重排内容（整体上移）；键盘只盖在最外层
-            popupWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
+            // 用户新规格：输入法抬高聊天输入框时，输入框与输入法都显示在弹窗前面——
+            // 弹窗随键盘 resize：全屏包装层可视区收缩、居中内容整体上移到键盘之上，
+            // 腾出贴着键盘上沿的输入框条带，不再被弹窗内容压住（旧 ADJUST_NOTHING 仅保
+            // 证键盘可见，输入框仍可能被弹窗遮挡，已废弃）
+            popupWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         }
 
         draggableHelper = new DraggablePopupHelper(context, DIALOG_ID);

@@ -97,6 +97,10 @@ public class CmdMenuDialog {
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setFocusable(true);
         popupWindow.setOutsideTouchable(true);
+        // 命令菜单不走 DraggablePopupHelper 全屏包装，单独应用同一 Android 12+ 键盘分层
+        // 修复（用户规格：聊天输入框与输入法显示在所有弹窗前面）：菜单窗口压到键盘之下，
+        // 菜单弹出期间点底部聊天输入框时键盘仍可盖在菜单之上并正常敲击
+        cn.garymb.ygomobile.utils.DraggablePopupHelper.applyImeLayeringFix(popupWindow);
         // 菜单隐藏后恢复决斗场阶段按钮；非菜单项触发的关闭同时收起卡片状态标签
         popupWindow.setOnDismissListener(() -> {
             activity.notifyGameDialogHidden(this);

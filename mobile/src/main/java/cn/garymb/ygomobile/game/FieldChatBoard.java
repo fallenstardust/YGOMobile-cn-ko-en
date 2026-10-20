@@ -742,6 +742,17 @@ class FieldChatBoard {
         float density = ctl.activity.getResources().getDisplayMetrics().density;
         int hPadding = (int) (3 * density);
         tv.setPadding(hPadding, 0, hPadding, 0);
+        // 等待界面（PlayerWaitingDialog 显示中）聊天/系统消息长按复制：大厅聊天行挂在
+        // Activity 树的 layout_danmaku 上（排在 GameFieldView 之后，逆序派发优先命中），
+        // 而等待弹窗对内容区以外的触摸经 DragFrameLayout 透传回 decorView 时不走
+        // Activity.dispatchTouchEvent，决斗内的全局长按观察者收不到事件；改用视图自身的
+        // 系统长按判定（透传手势同样投递到 decorView 子树），命中即复制该行并 Toast
+        // 提示，与决斗内聊天行/弹幕长按复制同规格
+        tv.setLongClickable(true);
+        tv.setOnLongClickListener(v -> {
+            copyChatText(((TextView) v).getText().toString());
+            return true;
+        });
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         lp.bottomMargin = (int) (2 * density);          // 每条之间留间隙，黑底不连成整块
