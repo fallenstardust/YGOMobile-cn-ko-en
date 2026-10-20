@@ -362,10 +362,17 @@ public class DeckHandMotionManager {
     }
 
     /** 洗切换面写码：回放遮蔽保护态、或入手揭示持闸窗口内的对方手卡，洗后码为遮蔽零时
-     *  不用零码盖掉已揭示的真实卡码（实况遮蔽语义不变，窗口结束自动恢复） */
+     *  不用零码盖掉已揭示的真实卡码（实况遮蔽语义不变，窗口结束自动恢复）。
+     *  <p>真正写入遮蔽零码时（走到 setCode(0)）连同 chain_code 一并清零：setCode(0) 会把此前
+     *  MSG_CONFIRM_CARDS 揭示过的真实卡码备份进 chain_code，使 {@code displayCode()} 在洗切遮蔽后
+     *  仍返回该码——点击背面手卡因此能看到详情与 tip。gframe 手卡直接取 code（duelclient.cpp
+     *  MSG_SHUFFLE_HAND L2690 SetCode + L2691 desc_hints.clear），遮蔽即 code=0、无任何身份信息，
+     *  chain_code 从不参与手卡展示；故此处遗忘揭示身份，直到该卡被正面放到场上才重新亮码。
+     *  早退分支（遮蔽保护 / 持闸窗口）不动，保持已揭示卡面不受影响。 */
     private static void setHandCode(GameField.ClientCard c, int newCode) {
         if (newCode == 0 && (GameField.preserveMaskedHandCode || c.revealHeld) && c.code != 0) return;
         c.setCode(newCode);
+        if (newCode == 0) c.chain_code = 0;
     }
 
     /**

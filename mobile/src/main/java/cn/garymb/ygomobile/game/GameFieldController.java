@@ -690,26 +690,32 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         if (engine == null) return;
         GameFieldView fieldView = viewController != null ? viewController.getView() : null;
         if (select.isCardSelecting) {
+            // 先于会话应答捕获被点击卡与点击瞬间的「可选」状态：只选 1 张的会话（超量叠放、
+            // 单对象选取等）本次点击即自动确认，endCardSelect 的 clearSelect 会把候选的
+            // is_selectable 洗回 false——若拿会话后的状态判断是否弹菜单，点击候选超量怪兽会被
+            // 误判为「非候选且持素材」而误弹命令菜单（gframe MSG_SELECT_CARD 的 ClickCard
+            // L1459-1492：候选卡点击只切换选中/应答，从不 ShowMenu）
+            GameField.ClientCard picked = engine.getField().getCard(player, location, sequence);
+            final boolean wasSelectable = picked != null && picked.is_selectable;
             select.handleCardSelection(player, location, sequence);
             // 场上直接选卡的点击同样展示状态气泡（与旧长按可见性持平）
-            GameField.ClientCard picked = engine.getField().getCard(player, location, sequence);
             if (picked != null) {
                 scheduleFieldStatusTip(fieldView, picked, player, location, sequence, tapX, tapY);
                 // 效果发动各步骤（支付cost/是否连锁/选择连锁卡等）期间的点击查看：无论该卡
                 // 是否为本次候选，都即时刷新详情面板（对齐 gframe ClickCard 后无条件 ShowCardInfo）；
+                // 用会话前捕获的卡片引用，自动应答结束会话、场区列表随之变化后依旧取得到被点卡；
                 // 与非选卡分支同样延后一帧，避免抢占 UI 线程拖慢选中反馈
                 if (fieldView != null) {
-                    final GameField.ClientCard detailCard = picked;
-                    fieldView.post(() -> activity.showCardInfoPanel(detailCard));
+                    fieldView.post(() -> activity.showCardInfoPanel(picked));
                 } else {
                     activity.showCardInfoPanel(picked);
                 }
-                // 期间点击堆叠区（卡组/额外/墓地/除外）或持素材超量怪兽：该卡不是本次候选时
-                // 弹出带「查看列表」的位置菜单（候选卡点击由会话直接切换选中，不弹菜单打断连点）
+                // 期间点击堆叠区（卡组/额外/墓地/除外）或持素材超量怪兽：该卡在点击时不是本次
+                // 候选才弹出带「查看列表」的位置菜单（候选卡点击由会话直接切换选中，不弹菜单打断连点）
                 boolean pileOrXyz = location == 0x01 || location == 0x40
                         || location == 0x10 || location == 0x20
                         || (location == 0x04 && !picked.overlayed.isEmpty());
-                if (pileOrXyz && !picked.is_selectable) {
+                if (pileOrXyz && !wasSelectable) {
                     showCardCommandMenu(picked, tapX, tapY, true);
                 }
             }

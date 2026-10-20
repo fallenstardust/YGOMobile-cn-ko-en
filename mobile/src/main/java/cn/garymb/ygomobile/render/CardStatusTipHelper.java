@@ -234,8 +234,12 @@ public class CardStatusTipHelper {
         handler.removeCallbacks(holdTask);
         boolean held = holdFired;
         holdFired = false;
-        holdingSlot = -1;
-        hide();
+        // 保留 holdingSlot 供 showTip 取锚点：与场上点击卡片一致，卡片确认（CardDisplayDialog）
+        // 与选卡（CardSelectDialog）两类弹窗内「点击」或「长按」都显示通讯状态标签（
+        // ClientField::ShowCardInfoInList 等价物），且抬手后持续保留到下一次按下/翻页/关闭；
+        // 旧逻辑抬手即 hide，标签只在按住满 0.3s 期间一闪而过，点击则完全不显示
+        holdingSlot = slot;
+        showTip();
         if (!held && clickListener != null) clickListener.onSlotClick(slot);
     }
 
