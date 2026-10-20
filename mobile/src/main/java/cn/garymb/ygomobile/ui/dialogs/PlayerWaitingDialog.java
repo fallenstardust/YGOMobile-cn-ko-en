@@ -869,21 +869,27 @@ public class PlayerWaitingDialog {
         currentDeckName = settings.getLastDeckName();
         currentDeckPath = settings.getLastDeckPath();
 
-        // 进入等待界面时，若最后选择的分类是"卡包展示"（其卡组不可用于对战），
-        // 默认改为选中"未分类卡组"的第一个卡组，并保存为最后选择的分类与最后选择的卡组。
+        // 进入等待界面时，需要保证选中的是一个可用于对战的卡组。以下情形视为“无有效最后卡组”，
+        // 需默认选中一个可用卡组：
+        //   1) 最后分类是“卡包展示”（其卡组不可用于对战）；
+        //   2) 首次安装/无 last category & last deck：分类仍是默认值、或按路径拼出的卡组文件不存在。
+        // 默认选取顺序：未分类卡组第一个 → 未分类无卡组则人机卡组第一个 → 均无则清空回退“请选择卡组”。
+        // 选中后写回 setLastDeckPath，使随后展开的 DeckSelectorDialog 默认停在该分类并加载其卡组。
         // 此逻辑仅在 PlayerWaitingDialog 生效，不影响其他入口的卡组选择。
-        if (TextUtils.equals(context.getString(R.string.category_pack), currentDeckCategory)) {
-            List<DeckFile> uncatDecks = DeckUtil.getDeckList(settings.getDeckDir());
-            if (uncatDecks != null && !uncatDecks.isEmpty()) {
-                DeckFile first = uncatDecks.get(0);
-                currentDeckPath = first.getPath();
-                currentDeckName = first.getName();
-                currentDeckCategory = first.getTypeName();
+        boolean packCategory = TextUtils.equals(context.getString(R.string.category_pack), currentDeckCategory);
+        boolean invalidDeck = currentDeckPath == null || currentDeckPath.isEmpty()
+                || !new File(currentDeckPath).exists();
+        if (packCategory || invalidDeck) {
+            DeckFile defaultDeck = pickDefaultDeck(settings);
+            if (defaultDeck != null) {
+                currentDeckPath = defaultDeck.getPath();
+                currentDeckName = defaultDeck.getName();
+                currentDeckCategory = defaultDeck.getTypeName();
                 // setLastDeckPath 依据卡组路径重新写入最后分类与最后卡组名，
-                // 使随后展开的 DeckSelectorDialog 默认选中该未分类卡组
+                // 使随后展开的 DeckSelectorDialog 默认选中该分类并加载其卡组
                 settings.setLastDeckPath(currentDeckPath);
             } else {
-                // 未分类下无卡组：清空选择，等待界面回退到"请选择卡组"
+                // 未分类与人机卡组均无卡组：清空选择，等待界面回退到"请选择卡组"
                 currentDeckPath = "";
                 currentDeckName = "";
                 currentDeckCategory = "";
@@ -891,6 +897,19 @@ public class PlayerWaitingDialog {
         }
 
         updateDeckButtonText();
+    }
+
+    /** 默认卡组选取：未分类卡组第一个优先，未分类无卡组时回退人机卡组第一个；均无返回 null。 */
+    private DeckFile pickDefaultDeck(AppsSettings settings) {
+        List<DeckFile> uncatDecks = DeckUtil.getDeckList(settings.getDeckDir());
+        if (uncatDecks != null && !uncatDecks.isEmpty()) {
+            return uncatDecks.get(0);
+        }
+        List<DeckFile> aiDecks = DeckUtil.getDeckList(settings.getAiDeckDir());
+        if (aiDecks != null && !aiDecks.isEmpty()) {
+            return aiDecks.get(0);
+        }
+        return null;
     }
 
     private void updateDeckButtonText() {

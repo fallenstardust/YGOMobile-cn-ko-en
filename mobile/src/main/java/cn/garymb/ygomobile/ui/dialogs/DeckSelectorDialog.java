@@ -483,6 +483,25 @@ public class DeckSelectorDialog {
             final int deckIdx = selectedDeckPos[0] >= 0 ? selectedDeckPos[0] : 0;
             lvCategories.post(() -> lvCategories.setSelection(catIdx));
             lvDecks.post(() -> lvDecks.setSelection(deckIdx));
+        } else {
+            // 最后分类无法匹配任何显示分类（首次安装/默认值 newcate/分类已被删）：
+            // 默认停在未分类卡组并加载该分类的卡组，避免打开时列表为空、需手动切分类才出现。
+            // 仅高亮展示，不触发 onDeckItemClicked，避免影响卡组编辑器等其他入口的即时加载副作用。
+            String uncatName = context.getString(R.string.category_Uncategorized);
+            int uncatIndex = -1;
+            for (int i = 0; i < displayCategoryNames.size(); i++) {
+                if (displayCategoryNames.get(i).equals(uncatName)) {
+                    uncatIndex = i;
+                    break;
+                }
+            }
+            if (uncatIndex >= 0) {
+                selectedCategoryPos[0] = uncatIndex;
+                categoryAdapter.setSelectedPosition(uncatIndex);
+                updateDeckList();
+                final int catIdx = uncatIndex;
+                lvCategories.post(() -> lvCategories.setSelection(catIdx));
+            }
         }
         updateButtonStates();
     }
