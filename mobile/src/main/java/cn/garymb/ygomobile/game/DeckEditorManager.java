@@ -68,6 +68,18 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
      */
     private static final int DECK_SIDE_SWAP_EXTRA = 15;
 
+    /**
+     * 换副卡组（isSiding）时主/额外/副网格需能容纳显示的最大列数（每行列数上限）：
+     * 对齐 C++ drawing.cpp DrawDeckBd 的动态列数算法——主卡组超过 40 张时增列
+     * (lx=(mainsize-41)/4+11) 保持 4 行不变，额外/副卡组单行按 dx=436/(size-1) 压缩铺满。
+     * CardGroupView 容量 = lines × line_max_count 必须 ≥ 换侧放宽后的上限
+     * (DECK_*_MAX + DECK_SIDE_SWAP_EXTRA)，否则第 61 张 / 第 16 张会被 getMaxCardCount
+     * 截断而不显示。主卡组 4 行需 19 列(4×19=76≥75)，额外/副卡组单行需 30 列(1×30=30≥30)。
+     * 供同包 DeckGridLayoutApplier 在按实测尺寸重设主网格 line limit 时复用。
+     */
+    static final int SIDE_DISPLAY_MAIN_COLS = (Constants.DECK_MAIN_MAX + DECK_SIDE_SWAP_EXTRA + 3) / 4; // ceil(75/4)=19
+    static final int SIDE_DISPLAY_EXTRA_COLS = Constants.DECK_EXTRA_MAX + DECK_SIDE_SWAP_EXTRA; // 30
+
     public interface DeckEditorListener {
         void onDeckModified();
 
@@ -388,11 +400,13 @@ public class DeckEditorManager implements CardDragHelper.DropHandler {
             setBitmapIfNotNull(ivSideTrapType, mCardTypeImage.trap);
         }
         cgvMain.setImageLoader(imageLoader);
-        cgvMain.setLineLimit(4, 10, 15);
+        // line_max_count 取换侧可容纳上限（见 SIDE_DISPLAY_MAIN_COLS/EXTRA_COLS 注释），
+        // 否则 isSiding 临时超限时第 61 张 / 第 16 张因 getMaxCardCount 截断不显示
+        cgvMain.setLineLimit(4, 10, SIDE_DISPLAY_MAIN_COLS);
         cgvExtra.setImageLoader(imageLoader);
-        cgvExtra.setLineLimit(1, 10, 15);
+        cgvExtra.setLineLimit(1, 10, SIDE_DISPLAY_EXTRA_COLS);
         cgvSide.setImageLoader(imageLoader);
-        cgvSide.setLineLimit(1, 10, 15);
+        cgvSide.setLineLimit(1, 10, SIDE_DISPLAY_EXTRA_COLS);
         gridLayout.requestUpdate();
         cardSearcherManager.setLimitList(mLimitList);
     }

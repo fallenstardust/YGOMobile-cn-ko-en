@@ -80,7 +80,9 @@ class DeckGridLayoutApplier {
         owner.savedNormalCardWidth = cardWidth;
         owner.savedNormalCardHeight = cardHeight;
         applyCardSizeToAll(cardWidth, cardHeight);
-        owner.cgvMain.setLineLimit(4, 10, 15);
+        // line_max_count 复用换侧可容纳上限（DeckEditorManager.SIDE_DISPLAY_MAIN_COLS），
+        // 与 setupRecyclerViews 保持一致，否则此处重设会把主网格容量压回 60 截断第 61 张
+        owner.cgvMain.setLineLimit(4, 10, DeckEditorManager.SIDE_DISPLAY_MAIN_COLS);
         applyGroupExactHeight(owner.cgvMain, cardHeight * 4);
         applyGroupExactHeight(owner.cgvExtra, cardHeight);
         applyGroupExactHeight(owner.cgvSide, cardHeight);
