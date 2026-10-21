@@ -233,185 +233,230 @@
             android:layout_marginEnd="5dp"
             android:visibility="visible">
 
-            <!-- 行1：禁限卡表 + 规则 -->
+            <!-- 行1：禁限卡表 / 规则（文本在上、控件在下） -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_marginBottom="5dp"
                 android:layout_weight="1"
-                android:gravity="center_vertical"
                 android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/solo_tv_banlist_label"
+                <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:gravity="left|center"
-                    android:text="禁限卡表："
-                    android:textColor="@color/white"
-                    android:textSize="10sp" />
+                    android:orientation="vertical">
 
-                <Spinner
-                    android:id="@+id/solo_spinner_banlist"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="3"
-                    android:background="@drawable/ygopro_spinner" />
+                    <TextView
+                        android:id="@+id/solo_tv_banlist_label"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="left|center_vertical"
+                        android:text="禁限卡表："
+                        android:textColor="@color/white"
+                        android:textSize="10sp" />
 
-                <TextView
-                    android:id="@+id/solo_tv_rule_label"
+                    <Spinner
+                        android:id="@+id/solo_spinner_banlist"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginTop="2dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/ygopro_spinner" />
+                </LinearLayout>
+
+                <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_marginStart="10dp"
                     android:layout_weight="1"
-                    android:gravity="left|center"
-                    android:text="规则："
-                    android:textColor="@color/white"
-                    android:textSize="10sp" />
+                    android:orientation="vertical">
 
-                <Spinner
-                    android:id="@+id/solo_spinner_rule"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="3"
-                    android:background="@drawable/ygopro_spinner" />
+                    <TextView
+                        android:id="@+id/solo_tv_rule_label"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="left|center_vertical"
+                        android:text="规则："
+                        android:textColor="@color/white"
+                        android:textSize="10sp" />
+
+                    <Spinner
+                        android:id="@+id/solo_spinner_rule"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginTop="2dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/ygopro_spinner" />
+                </LinearLayout>
             </LinearLayout>
 
-            <!-- 行2：卡片允许 + 初始基本分 -->
+            <!-- 行2：卡片允许 / 初始基本分（文本在上、控件在下） -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_marginBottom="5dp"
                 android:layout_weight="1"
-                android:gravity="center_vertical"
                 android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/solo_tv_card_allowed_label"
+                <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:gravity="left|center"
-                    android:text="卡片允许："
-                    android:textColor="@color/white"
-                    android:textSize="10sp" />
+                    android:orientation="vertical">
 
-                <Spinner
-                    android:id="@+id/solo_spinner_card_allowed"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="3"
-                    android:background="@drawable/ygopro_spinner" />
+                    <TextView
+                        android:id="@+id/solo_tv_card_allowed_label"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="left|center_vertical"
+                        android:text="卡片允许："
+                        android:textColor="@color/white"
+                        android:textSize="10sp" />
 
-                <TextView
-                    android:id="@+id/solo_tv_start_lp_label"
+                    <Spinner
+                        android:id="@+id/solo_spinner_card_allowed"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginTop="2dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/ygopro_spinner" />
+                </LinearLayout>
+
+                <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_marginStart="10dp"
                     android:layout_weight="1"
-                    android:gravity="left|center"
-                    android:text="初始基本分："
-                    android:textColor="@color/white"
-                    android:textSize="10sp" />
+                    android:orientation="vertical">
 
-                <EditText
-                    android:id="@+id/solo_et_start_lp"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="3"
-                    android:background="@drawable/ygopro_base_background"
-                    android:gravity="center"
-                    android:inputType="number"
-                    android:text="8000"
-                    android:textColor="#FFFFFF" />
+                    <TextView
+                        android:id="@+id/solo_tv_start_lp_label"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="left|center_vertical"
+                        android:text="初始基本分："
+                        android:textColor="@color/white"
+                        android:textSize="10sp" />
+
+                    <EditText
+                        android:id="@+id/solo_et_start_lp"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginTop="2dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/ygopro_base_background"
+                        android:gravity="center"
+                        android:inputType="number"
+                        android:text="8000"
+                        android:textColor="#FFFFFF" />
+                </LinearLayout>
             </LinearLayout>
 
-            <!-- 行3：决斗模式 + 初始手卡数 -->
+            <!-- 行3：决斗模式 / 初始手卡数（文本在上、控件在下） -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_marginBottom="5dp"
                 android:layout_weight="1"
-                android:gravity="center_vertical"
                 android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/solo_tv_duel_mode_label"
+                <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:gravity="left|center"
-                    android:text="决斗模式："
-                    android:textColor="@color/white"
-                    android:textSize="10sp" />
+                    android:orientation="vertical">
 
-                <Spinner
-                    android:id="@+id/solo_spinner_duel_mode"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="3"
-                    android:background="@drawable/ygopro_spinner" />
+                    <TextView
+                        android:id="@+id/solo_tv_duel_mode_label"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="left|center_vertical"
+                        android:text="决斗模式："
+                        android:textColor="@color/white"
+                        android:textSize="10sp" />
 
-                <TextView
-                    android:id="@+id/solo_tv_start_hand_label"
+                    <Spinner
+                        android:id="@+id/solo_spinner_duel_mode"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginTop="2dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/ygopro_spinner" />
+                </LinearLayout>
+
+                <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_marginStart="10dp"
                     android:layout_weight="1"
-                    android:gravity="left|center"
-                    android:text="初始手卡数："
-                    android:textColor="@color/white"
-                    android:textSize="10sp" />
+                    android:orientation="vertical">
 
-                <EditText
-                    android:id="@+id/solo_et_start_hand"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="3"
-                    android:background="@drawable/ygopro_base_background"
-                    android:gravity="center"
-                    android:inputType="number"
-                    android:text="5"
-                    android:textColor="#FFFFFF" />
+                    <TextView
+                        android:id="@+id/solo_tv_start_hand_label"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="left|center_vertical"
+                        android:text="初始手卡数："
+                        android:textColor="@color/white"
+                        android:textSize="10sp" />
+
+                    <EditText
+                        android:id="@+id/solo_et_start_hand"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginTop="2dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/ygopro_base_background"
+                        android:gravity="center"
+                        android:inputType="number"
+                        android:text="5"
+                        android:textColor="#FFFFFF" />
+                </LinearLayout>
             </LinearLayout>
 
-            <!-- 行4：每回合时间（纯单人模式不需要选择回合时间，默认无限，占位保留布局平衡） + 每回合抽卡 -->
+            <!-- 行4：每回合时间（纯单人不需要，留空占位） / 每回合抽卡（文本在上、控件在下） -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_marginBottom="4dp"
                 android:layout_weight="1"
-                android:gravity="center_vertical"
                 android:orientation="horizontal">
 
-                <!-- 纯单人模式无回合时间选择（固定无限），以等权重占位保留原抽卡项的布局位置 -->
+                <!-- 纯单人模式无回合时间选择（固定无限），左半留空占位，保留抽卡项在右半的布局位置 -->
                 <View
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="4" />
+                    android:layout_weight="1" />
 
-                <TextView
-                    android:id="@+id/solo_tv_draw_count_label"
+                <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_marginStart="10dp"
                     android:layout_weight="1"
-                    android:gravity="left|center"
-                    android:text="每回合抽卡："
-                    android:textColor="@color/white"
-                    android:textSize="10sp" />
+                    android:orientation="vertical">
 
-                <EditText
-                    android:id="@+id/solo_et_draw_count"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="3"
-                    android:background="@drawable/ygopro_base_background"
-                    android:gravity="center"
-                    android:inputType="number"
-                    android:text="1"
-                    android:textColor="#FFFFFF" />
+                    <TextView
+                        android:id="@+id/solo_tv_draw_count_label"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="left|center_vertical"
+                        android:text="每回合抽卡："
+                        android:textColor="@color/white"
+                        android:textSize="10sp" />
+
+                    <EditText
+                        android:id="@+id/solo_et_draw_count"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginTop="2dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/ygopro_base_background"
+                        android:gravity="center"
+                        android:inputType="number"
+                        android:text="1"
+                        android:textColor="#FFFFFF" />
+                </LinearLayout>
             </LinearLayout>
 
             <!-- 行5：不检查卡组 + 不洗切卡组（去掉纯单人模式复选框） -->
