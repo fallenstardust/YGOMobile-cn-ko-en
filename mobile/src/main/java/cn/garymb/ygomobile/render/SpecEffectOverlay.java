@@ -98,6 +98,13 @@ public class SpecEffectOverlay {
     private float speed = 1f;
     /** 特效请求队列：保证动画串行播放——上一段完全结束后再播下一段 */
     private final ArrayDeque<EffectRequest> queue = new ArrayDeque<>();
+    /**
+     * 重排/快进抑制标志（回放「上一步」渲染冻结屏障的特效侧组成）：置位期间
+     * {@link #enqueue} 一律丢弃，任何派发线程/时序遗漏都无法绕过本层入队大图与文字；
+     * 置位瞬间同步停止当前动画并清空队列（覆盖层是独立窗口，不受 GL 曲面 renderHold 影响）。
+     * volatile：投喂线程经主线程 post 设置，与派发链同线程但防 JIT 提升旧读
+     */
+    private volatile boolean suppressed;
     /** 特效队列排空（无动画播放）回调：供 GameEngine 重开消息闸门 */
     private OnIdleListener idleListener;
 
@@ -217,6 +224,21 @@ public class SpecEffectOverlay {
     }
 
     /**
+     * 重排抑制开关（由 EngineCallbackDelegate 在 onReplayRenderHold 中随 GL 渲染冻结同批切换）：
+     * {@code true} 停止当前动画、清空待播队列并拒绝一切新入队；{@code false} 恢复正常接收。
+     * 弹幕/聊天行不走 enqueue，不受影响。
+     */
+    public void setSuppressed(boolean value) {
+        suppressed = value;
+        if (value) {
+            queue.clear();
+            cancelActionText();
+            if (view != null) view.stop();
+            dismissWindowIfIdle();
+        }
+    }
+
+    /**
      * 立即结束并清空当前特效与待播队列。不无条件 dismiss——弹幕/聊天行仍在屏时保留
      * PopupWindow（弹幕与特效共用同一窗口），仅在全空闲时收口关闭；聊天行由
      * clearChatRowLayers/对局结束流程清理。
@@ -248,8 +270,9 @@ public class SpecEffectOverlay {
 
     // ==================== 队列驱动：动画串行播放 ====================
 
-    /** 入队一个特效请求：当前空闲则立即播放，否则排队等待前一段动画结束后再播 */
+    /** 入队一个特效请求：当前空闲则立即播放，否则排队等待前一段动画结束后再播；抑制期一律丢弃 */
     private void enqueue(EffectRequest req) {
+        if (suppressed) return;
         queue.offer(req);
         obtainView();     // 确保 PopupWindow/View 就绪并显示
         pumpQueue();

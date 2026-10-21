@@ -126,6 +126,11 @@ public class GameEngine {
 
         /** 可撤回状态变更（STOC_UNDO_STATE）：据此控制顶部撤回图标闪动 */
         default void onUndoStateChanged(boolean available) {}
+
+        /** 回放重排（上一步/从头重放）渲染冻结屏障：hold=true 同时冻结 GL 渲染（重算权威态
+         *  期间保留当前帧不上屏）并抑制/清空 SpecEffectOverlay 居中特效；hold=false 落点后
+         *  统一解除（驱动逆向补间与恢复正常特效接收）；默认空实现 */
+        default void onReplayRenderHold(boolean hold) {}
     }
 
     // 核心状态与基础设施（协作类经 engine. 引用访问：同包类用包级私有，
@@ -944,7 +949,9 @@ public class GameEngine {
     public int soloSideSession = 0;
     /** 回放快进重排中（undo/restart/跳回合）：drawspec 覆盖层与长动画派发丢弃，配合
      *  GameField.instantPlace 即时落位与音效静默，令闸门不阻塞、队列单帧排空 */
-    public boolean replaySkip = false;
+    // 泛化动画屏障判定与大图丢弃检查均发生在主线程派发链，而置位/复位在投喂线程：
+    // volatile 保证跨线程立即可见，防 JIT 提升旧值使 replaySkip 抑制形同虚设
+    public volatile boolean replaySkip = false;
 
     public boolean isStarted() { return duelStarted; }
     public boolean isInDuel() { return inDuel; }

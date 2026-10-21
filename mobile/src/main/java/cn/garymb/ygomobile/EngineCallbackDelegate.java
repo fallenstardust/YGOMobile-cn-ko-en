@@ -286,6 +286,24 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
         activity.runOnUiThread(() -> activity.fieldCtl.clearChatMessages());
     }
 
+    /**
+     * 回放重排（上一步/从头重放）渲染冻结屏障：hold=true 冻结 GL 渲染（从 MSG_START 重算
+     * 落点权威态期间保留当前帧不上屏，避免中间态闪烁）并同步抑制居中特效覆盖层——覆盖层
+     * 是独立 PopupWindow 不受 GL 冻结影响，置位即停当前大图/文字、清待播队列并拒新入队
+     *（弹幕/聊天行不受影响）；hold=false 解除冻结恢复逐帧驱动，并通知引擎特效已空闲，
+     * 避免统一动画屏障继续等待被掐掉的动画而拖住落点排空。转主线程透传到渲染视图与覆盖层。
+     */
+    @Override
+    public void onReplayRenderHold(boolean hold) {
+        activity.runOnUiThread(() -> {
+            if (activity.fieldCtl != null) activity.fieldCtl.setRenderHold(hold);
+            if (specEffectOverlay != null) {
+                specEffectOverlay.setSuppressed(hold);
+                if (!hold && activity.engine != null) activity.engine.notifySpecEffectIdle();
+            }
+        });
+    }
+
     /** 观战/录像切换视角：与 gametopinfo 昵称左右对调同步，把双方聊天内容也左右对调 */
     @Override
     public void onViewpointSwapped() {

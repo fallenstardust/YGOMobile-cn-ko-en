@@ -381,6 +381,15 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
             viewController.getView().setAnimationSpeed(multiplier);
     }
 
+    /**
+     * 回放「上一步」逆向倒放渲染冻结（对齐 {@code GameEngine.EngineListener.onReplayRenderHold}）：
+     * hold=true 冻结 GL 渲染（重算 N-1 权威态期间保留当前帧不上屏），hold=false 恢复逐帧驱动逆向补间。
+     */
+    public void setRenderHold(boolean hold) {
+        if (viewController != null && viewController.getView() != null)
+            viewController.getView().setRenderHold(hold);
+    }
+
     public void selectCardWithAutoClear(int controler, int location, int sequence, int durationMs) {
         viewController.selectCardWithAutoClear(controler, location, sequence, durationMs);
     }

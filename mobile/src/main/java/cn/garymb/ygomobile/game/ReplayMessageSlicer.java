@@ -93,6 +93,25 @@ public final class ReplayMessageSlicer {
     }
 
     /**
+     * 「上一步」可逆向倒放的步：仅纯卡片位移步（单卡/双卡在区域间移动或改变表示），
+     * 其卡片对象在两相邻可见步间恒存在、仅 zone/姿态变化，可把发生位移的卡从上一步之后的
+     * 显示位置逆向补间回上一步位置；{@code MSG_DRAW} 尽力而为（目标为卡组顶常 code==0 匹配
+     * 不到时该卡退化为直接落位，不影响其余卡与状态正确）。连锁/攻击/召唤/回合阶段等复杂步
+     * 返回 false，「上一步」对其维持瞬间跳变（不重播大图与动画）。
+     */
+    public static boolean isReverseAnimatable(int msgType) {
+        switch (msgType) {
+            case MSG_MOVE:
+            case MSG_SWAP:
+            case MSG_POS_CHANGE:
+            case MSG_DRAW:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /**
      * 按长度表推进游标切出一条消息体：调用后 buf 游标即消息体末尾。
      *
      * @return false 表示消息体不完整或消息号未知（游标已不可靠，调用方应终止回放）

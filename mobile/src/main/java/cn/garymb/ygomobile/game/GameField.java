@@ -546,8 +546,9 @@ public class GameField {
     public int turnCount;
     public boolean isTag;
     /** 回放快进重排期间的即时落位模式：移动/淡入淡出/LP/洗牌动画全部直接到位，
-     *  不产生 aniFrame——动画闸门天然不阻塞，快进队列可单帧排空（GameEngine.drainReplayQueueNow） */
-    public boolean instantPlace = false;
+     *  不产生 aniFrame——动画闸门天然不阻塞，快进队列可单帧排空（GameEngine.drainReplayQueueNow）。
+     *  投喂线程置位/复位、主线程派发链读取，volatile 防 JIT 提升旧值使落位门控失效 */
+    public volatile boolean instantPlace = false;
     /** 回放态遮蔽保护（用户规格：不引擎重跑也要对方手卡正面）：合并的客户端视角录像里，
      *  对方手卡的 UPDATE_DATA/UPDATE_CARD 块被服务器中继遮蔽（整块清零或 code=0），
      *  而同一张卡的真实卡码已由流内 MSG_DRAW/MSG_MOVE 未遮蔽中继写入卡对象；若再让
@@ -1046,6 +1047,22 @@ public class GameField {
 
     public void refreshAllCards() {
         motion.refreshAllCards();
+    }
+
+    /**
+     * 回放「上一步」逆向倒放：重算前抓取当前各显示卡的渲染位置快照（步骤 N 显示态），
+     * 供投喂线程记录后于落点交主线程 {@link #applyReverseAnimation} 逆向补间。委托 {@code motion}。
+     */
+    public java.util.List<ReplayPosSnap> collectDisplayPositions() {
+        return motion.collectDisplayPositions();
+    }
+
+    /**
+     * 回放「上一步」逆向倒放：重算落定后把发生位移的卡从步骤 N 显示位逆向补间回 N-1 落定位
+     * （仅改渲染层 cur*，不动模型字段）。须在主线程调用。委托 {@code motion}。
+     */
+    public void applyReverseAnimation(java.util.List<ReplayPosSnap> snapN) {
+        motion.applyReverseAnimation(snapN);
     }
 
     void setCardPos(ClientCard pcard) {

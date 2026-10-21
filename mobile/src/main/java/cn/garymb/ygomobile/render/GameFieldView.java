@@ -422,6 +422,43 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     }
 
     /**
+     * 逆向倒放渲染冻结标志：{@code true} 期间丢弃一切 {@link #requestRender()}（含经 {@code invalidate()}
+     * 与各 setter 触发的渲染请求）并在 {@link #onDrawFrame} 入口早退，使画面真正停留在步骤 N 的最后一帧。
+     * 仅靠 {@code RENDERMODE_WHEN_DIRTY} 不足以冻结——该模式只关闭自动逐帧渲染，不拦截显式 requestRender，
+     * 而重算 N-1 权威态途中派发的阶段/LP/卡数消息会经实况回调触发 setPhaseDisplay 等 → requestRender →
+     * 把逼近 N-1 的中间态画上屏（用户所见的「从头重播」），随后落点的逆向补间被淹没。由主线程经
+     * {@code GameFieldController.setRenderHold} 设置，GL 线程读取，故 volatile。
+     */
+    private volatile boolean renderHold;
+
+    /**
+     * 回放「上一步」逆向倒放的渲染冻结：{@code hold=true} 置冻结标志并切 RENDERMODE_WHEN_DIRTY（GL 不再
+     * 主动刷新，且所有显式 requestRender 被丢弃，从 MSG_START 重算 N-1 权威态期间画面冻结在步骤 N，
+     * 无中间态闪烁）；{@code hold=false} 清标志并恢复 RENDERMODE_CONTINUOUSLY + requestRender（逐帧驱动
+     * 逆向补间）。setRenderMode 线程安全；由主线程 {@code GameFieldController.setRenderHold} 转发调用。
+     */
+    public void setRenderHold(boolean hold) {
+        if (hold) {
+            renderHold = true;
+            setRenderMode(RENDERMODE_WHEN_DIRTY);
+        } else {
+            renderHold = false;
+            setRenderMode(RENDERMODE_CONTINUOUSLY);
+            requestRender();
+        }
+    }
+
+    /**
+     * 冻结期丢弃渲染请求：GLSurfaceView 默认 requestRender 会调度一帧 onDrawFrame，逆向倒放重算期间
+     * 若放行则中间态上屏。renderHold=true 时直接空转（super.requestRender 不调度），画面保持步骤 N。
+     */
+    @Override
+    public void requestRender() {
+        if (renderHold) return;
+        super.requestRender();
+    }
+
+    /**
      * 视角参数：俯仰角（度，35~75），越大越接近正俯视；持久化到设置并即时生效
      */
     public void setCameraElevation(float degrees) {
@@ -592,6 +629,9 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
 
     @Override
     public void onDrawFrame(GL10 gl) {
+        // 冻结兜底：即便渲染请求被错误调度（CONTINUOUSLY 切换竞态），也不推进动画、不清屏重绘，
+        // 让双缓冲上一帧（步骤 N）继续显示；须在更新 lastFrameNs/animationSpeed 之前早退
+        if (renderHold) return;
         long now = System.nanoTime();
         float dt = lastFrameNs == 0 ? 1f / 60f : (now - lastFrameNs) / 1e9f;
         lastFrameNs = now;

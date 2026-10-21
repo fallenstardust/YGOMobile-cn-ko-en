@@ -124,6 +124,24 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
      */
     private volatile long sessionGen;
 
+    /**
+     * 当前（最近一个可见步）的消息类型：供「上一步」判定该步是否为可逆向倒放的纯位移步。
+     * 正常播放每推进一个可见步即同步；快进重算途中消耗可见步也同步，使落点后类型正确。
+     * -1=会话尚未播过任何可见步。
+     */
+    private volatile int lastVisibleMsgType = -1;
+    /**
+     * 本次「上一步」落点后是否施加逆向补间：{@link #undo()} 按 {@code lastVisibleMsgType} 判定置位，
+     * {@link #performRestart()} 据此冻结渲染并抓取步骤 N 显示态快照，{@link #landInstantSkip()} 落点后
+     * 消费并复位。{@link #restart()}（从头重放）与普通快进恒为 false。
+     */
+    private volatile boolean pendingReverse = false;
+    /**
+     * 步骤 N（「上一步」前的当前显示态）各显示卡的渲染位置快照：投喂线程在重算前抓取、
+     * 落点时投递主线程消费；仅服务紧邻的一次倒放，不落全量历史栈。
+     */
+    private final List<ReplayPosSnap> displaySnapN = new ArrayList<>();
+
     public ReplayPlayer(GameEngine engine) {
         this.engine = engine;
         this.soundManager = engine.soundManager;
@@ -206,9 +224,16 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         }
     }
 
-    /** 上一步：回到上一个可见步（重放到该步后暂停） */
+    /** 上一步：回到上一个可见步（重放到该步后暂停）。
+     *  若离开的那一步（{@code lastVisibleMsgType}）为可倒放位移步，则置 {@code pendingReverse}：
+     *  重算 N-1 权威态期间冻结渲染，落点后对位移卡做逆向补间；复杂步维持瞬间跳变。 */
     public void undo() {
         if (skipStep > 0 || currentStep == 0 || !isRunning) return;
+        pendingReverse = lastVisibleMsgType != -1
+                && ReplayMessageSlicer.isReverseAnimatable(lastVisibleMsgType);
+        Log.i(TAG, "replay undo: step=" + currentStep
+                + " lastVisibleType=" + lastVisibleMsgType
+                + " reverse=" + pendingReverse);
         restartTargetStep = currentStep - 1;
         isRestarting = true;
         resume();
@@ -217,6 +242,7 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
     /** 从头重放 */
     public void restart() {
         if (!isRunning) return;
+        pendingReverse = false;
         restartTargetStep = 0;
         isRestarting = true;
         resume();
@@ -270,6 +296,9 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         skippedRetryCount = 0;
         playbackCompleted = false;
         earlyEndNote = null;
+        lastVisibleMsgType = -1;
+        pendingReverse = false;
+        displaySnapN.clear();
         ReplayCodeMapper.beginSession();
         loadThread = new Thread(() -> load(replayPath, startTurn, gen), "ReplayLoad");
         loadThread.setDaemon(true);
@@ -613,7 +642,10 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         boolean visible = ReplayMessageSlicer.isVisibleStep(msgType);
         if (isSkipping && skipStep == 0 && !landAtStart) {
             // 跳回合快进：可见步照常计步（步号与正常播放一致），但不等动画、不停顿
-            if (visible) currentStep++;
+            if (visible) {
+                currentStep++;
+                lastVisibleMsgType = msgType;
+            }
             if (msgType == MSG_NEW_TURN && skipTurn > 0 && --skipTurn == 0) {
                 endInstantSkip();
                 isSkipping = false;
@@ -622,9 +654,14 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
             return pumpGuard(fedSincePump);
         }
         if (isSkipping) {
-            // undo/restart 快进重排：不计数，到达目标可见步（或初始场落点）即停下还原
+            // undo/restart 快进重排：不计数，到达目标可见步（或初始场落点）即停下还原；
+            // 途中每消耗一条可见步同步 lastVisibleMsgType，落点时其值即为落点步（N-1）类型，
+            // 保证连续 undo 与 undo 后再 forward 的分类正确
             if (skipStep > 0) {
-                if (visible && --skipStep == 0) landInstantSkip();
+                if (visible) {
+                    lastVisibleMsgType = msgType;
+                    if (--skipStep == 0) landInstantSkip();
+                }
             } else if (landAtStart && msgType == MSG_START) {
                 landInstantSkip();      // 重投 MSG_START 重建初始场后即停（回到 0 步）
             }
@@ -632,6 +669,7 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         }
         if (!visible) return fedSincePump;   // 非可见步瞬流过（无卡片移动的消息不再停顿）
         currentStep++;
+        lastVisibleMsgType = msgType;
         if (stepsRemaining > 0) {
             stepsRemaining--;
             if (stepsRemaining == 0) {
@@ -692,6 +730,25 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
     private void performRestart() {
         isRestarting = false;
         isSkipping = true;
+        // 快进三标志前置：主队列里尚未派发完的步骤 N 消息在首次 drainAndSettle 时即瞬时落位
+        //（instantPlace 无动画落位、replaySkip 丢弃大图/特效/音效），点击「上一步」不再
+        // 等待残留动画、也不再弹出召唤/连锁/无效大图（统一闸门语义见 drainPendingMsgs）
+        beginInstantSkip();
+        // 重排全程冻结屏障（对任意步类型统一生效）：从点击瞬间起冻结 GL 渲染并抑制/清空
+        // 居中特效覆盖层，重算期间用户看到的始终是步骤 N 静帧；落点时（deliverPendingReverse
+        // AtLanding）统一解除——复杂步不再可见“从 MSG_START 重播到当前”的中间态。
+        // 主线程 FIFO：本 post 早于随后 drainAndSettle 投队的任何派发消息执行
+        engine.mainHandler.post(() -> {
+            if (engine.listener != null) engine.listener.onReplayRenderHold(true);
+        });
+        if (pendingReverse) {
+            // 逆向倒放：在投喂线程抓取当前（N）各显示卡的渲染位置快照，
+            // 落点后交主线程从 N 位逆向补间回 N-1 位
+            displaySnapN.clear();
+            displaySnapN.addAll(field.collectDisplayPositions());
+        } else {
+            displaySnapN.clear();
+        }
         drainAndSettle();
         source.rewind();
         // 聊天/弹幕帧随消息流回卷重新流入：先清空现有显示，防重复行/重复弹幕
@@ -714,13 +771,14 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
             landAtStart = false;
         }
         if (engineDriven && skipStep == 0) {
-            // 回到 0 步：初始场即落点，无需快进
+            // 回到 0 步：初始场即落点，无需快进（标志已在开头前置，此处直接还原）
             endInstantSkip();
             isSkipping = false;
+            deliverPendingReverseAtLanding();
             pause();
             return;
         }
-        beginInstantSkip();
+        // 快进标志已在方法开头前置（残余消息也走瞬时落位），此处无需再 begin
     }
 
     private void performSwapField() {
@@ -815,6 +873,13 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         skipTurn = 0;
         landAtStart = false;
         stepsRemaining = 0;
+        // 逆向倒放安全解锁：若会话在重算/补间途中被停止/作废，此前 post 的渲染冻结须释放，
+        // 否则画面永久冻结；pendingReverse/displaySnapN 一并复位，post(false) 幂等无副作用
+        pendingReverse = false;
+        displaySnapN.clear();
+        engine.mainHandler.post(() -> {
+            if (engine.listener != null) engine.listener.onReplayRenderHold(false);
+        });
     }
 
     /** 快进三标志开启：实况侧抑制动画/特效/音效，消息处理即时落位 */
@@ -839,7 +904,31 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         isSkipping = false;
         currentStep = restartFromStep;
         zoneCounter.applyReplayDeckCodes();
+        deliverPendingReverseAtLanding();
         pause();
+    }
+
+    /**
+     * 「上一步」重排落点统一解冻：无条件解除渲染冻结屏障（hold 与 performRestart
+     * 开头的 hold(true) 配对，任意步类型都释放）；若为可倒放位移步（pendingReverse），
+     * 先在主线程对位移卡把步骤 N 显示态快照逆向补间回 N-1 落定位，再解冻即能看到倒放动画；
+     * 复杂步/restart 无快照则直接解冻（落点 N-1 权威态瞬时呈现，视觉为静帧→一步之差的跳变）。
+     * 快照在本（投喂）线程拷贝，避免与后续重算竞态。
+     */
+    private void deliverPendingReverseAtLanding() {
+        final List<ReplayPosSnap> snap = pendingReverse ? new ArrayList<>(displaySnapN) : null;
+        pendingReverse = false;
+        displaySnapN.clear();
+        engine.mainHandler.post(() -> {
+            // 落点帧先全场落定（主线程/冻结期内）：每张卡吸附 N-1 权威几何并退出
+            // 移动/抖动/聚拢/揭示/淡入淡出/冻结待码/翻面中途态——实况管线的残留
+            // 延迟回调（如遮蔽入手 350ms 兜底）落在解冻窗口时也不再拽动手牌，
+            // 消除「上一步后卡片倾斜残留手卡/手牌从卡组坐标重新飞入」的误导动画；
+            // 再对位移卡从 N 快照位逆向补间（animTo=刚落定的权威位），最后统一解冻
+            field.refreshAllCards();
+            if (snap != null) field.applyReverseAnimation(snap);
+            if (engine.listener != null) engine.listener.onReplayRenderHold(false);
+        });
     }
 
     /** 投喂线程调用：强制排空实况队列并等待消化完毕（落点/终止前保证已投喂消息全部渲染） */
