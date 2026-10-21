@@ -10,6 +10,8 @@ import java.nio.ByteOrder;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.engine.LuaScriptEngine;
@@ -865,6 +867,49 @@ public class GameEngine {
                 dispatchingMsg = false;
             }
         });
+    }
+
+    /**
+     * 回放快进落点专用同步屏障：与 {@link #drainReplayQueueNow} 同体（排空动画闸门 + 一次性
+     * 忽略动画地跑完 pendingMsgs），但额外阻塞投喂线程直到该排空 Runnable **真正在主线程执行完**
+     * 才返回。关键：投喂侧每条 feedMessage 都是 post 到本 mainHandler FIFO 队列的 Runnable，主线程
+     * 处理进度可能远落后于投喂线程的 post 进度；仅轮询 {@code hasPendingMsgs()} 会在「feedMessage
+     * Runnable 尚在队列、pendingMsgs 瞬时为空」时提前返回，使调用方在其后 endInstantSkip 复位
+     * instantPlace 之前未能派发完全部快进消息——起手 MSG_DRAW 遂在 instantPlace=false 时走动画分支，
+     * 解冻后呈现为错误的「回放起手抽卡动画」。本屏障借助 FIFO：post 的排空 Runnable 必然晚于此前
+     * post 的全部 feedMessage 执行，等到它执行完即保证快进期每条消息都在 instantPlace=true 下瞬时落位。
+     *
+     * @param timeoutMs 兜底超时，防主线程异常时投喂线程永久阻塞
+     * @return true=屏障已执行完（派发追平）；false=超时/中断，调用方按尽力排空处理
+     */
+    public boolean drainReplayQueueSync(long timeoutMs) {
+        final CountDownLatch done = new CountDownLatch(1);
+        mainHandler.post(() -> {
+            try {
+                animGateClosed = false;
+                animHoldUntilMs = 0;
+                dialogGateHeld = false; // 快进重排不受确认卡片对话框持闸影响
+                mainHandler.removeCallbacks(animGatePoller);
+                mainHandler.removeCallbacks(animGateFailsafe);
+                dispatchingMsg = true;
+                try {
+                    Runnable r;
+                    while ((r = pendingMsgs.poll()) != null) {
+                        r.run();
+                    }
+                } finally {
+                    dispatchingMsg = false;
+                }
+            } finally {
+                done.countDown();
+            }
+        });
+        try {
+            return done.await(timeoutMs, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
     }
 
     /** 特效队列排空回调（SpecEffectOverlay idle）：重开闸门快路径，仍需 isAnyAnimationBusy() 复核 */

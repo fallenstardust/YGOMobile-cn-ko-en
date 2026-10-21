@@ -931,9 +931,12 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         });
     }
 
-    /** 投喂线程调用：强制排空实况队列并等待消化完毕（落点/终止前保证已投喂消息全部渲染） */
+    /** 投喂线程调用：强制排空实况队列并等待消化完毕（落点/终止前保证已投喂消息全部渲染）。
+     *  用同步屏障 drainReplayQueueSync：阻塞投喂线程直到主线程把此前 post 的全部 feedMessage
+     *  派发完（而非仅等 pendingMsgs 瞬时为空），使快进落点在复位 instantPlace 前每条消息都已瞬时
+     *  落位——杜绝起手 MSG_DRAW 逃逸到动画分支造成「上一步重播抽卡动画」。 */
     private void drainAndSettle() {
-        engine.drainReplayQueueNow();
+        engine.drainReplayQueueSync(3000L);
         waitForPendingDrain();
     }
 
