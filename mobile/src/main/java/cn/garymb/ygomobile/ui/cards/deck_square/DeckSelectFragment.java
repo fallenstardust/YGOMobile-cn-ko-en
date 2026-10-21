@@ -566,6 +566,21 @@ public class DeckSelectFragment extends Fragment {
     }
 
     /**
+     * 对话框被隐藏复用后重新打开时，依据当前实际加载的卡组刷新本地列表的选中高亮。
+     * 当当前加载的是卡组广场/我的在线等在线卡组时，本地列表中没有匹配项，
+     * findCurDeckPosition()返回-1，从而取消此前残留的本地卡组高亮，
+     * 使该本地卡组重新可被点击后在卡组编辑页加载显示（避免点击命中已选中项而无响应）。
+     * 视图尚未创建时无需处理，onCreateView会以最新数据构建正确的选中态。
+     */
+    public void refreshCurrentDeckSelection() {
+        if (deckAdp == null) {
+            return;
+        }
+        deckAdp.setSelectPosition(findCurDeckPosition());
+        deckAdp.notifyDataSetChanged();
+    }
+
+    /**
      * 在当前卡组列表deckList中定位当前加载的卡组（依据最后使用的卡组路径）
      *
      * @return 找到返回其索引，否则返回-1

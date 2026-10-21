@@ -72,6 +72,25 @@ public class DeckManageDialog extends DialogFragment implements YGODeckDialogUti
         if (viewPager != null && tabPosition > 0 && tabPosition < 3) {
             viewPager.setCurrentItem(tabPosition, false);
         }
+        //对话框为隐藏复用，重新打开时同步本地页签的选中高亮，
+        //避免残留此前加载的本地卡组高亮（当前可能已切换到在线卡组）导致其无法被点击重新加载
+        refreshLocalDeckSelection();
+    }
+
+    /**
+     * 通知“本地卡组”页签根据当前实际加载的卡组重新刷新选中高亮，不重建分类列表。
+     * 若对话框尚未创建或页签视图未构建，则由其onCreateView用最新数据构建，此处无需处理。
+     */
+    public void refreshLocalDeckSelection() {
+        if (getChildFragmentManager() == null) {
+            return;
+        }
+        for (Fragment fragment : getChildFragmentManager().getFragments()) {
+            if (fragment instanceof DeckSelectFragment) {
+                ((DeckSelectFragment) fragment).refreshCurrentDeckSelection();
+                break;
+            }
+        }
     }
 
     public void onDismiss() {
