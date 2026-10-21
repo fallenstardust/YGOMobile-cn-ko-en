@@ -143,8 +143,10 @@ public class CmdMenuDialog {
 
     /**
      * 弹出命令菜单。传入 {@code card} 时按该卡在 GameFieldView 上的实际绘制位置动态定位：
-     * 垂直上菜单底边落在卡片上半部中横线（向上展开，按钮列出现在卡片上半部）；水平按屏幕朝向分流——
-     * 横屏以卡片视觉中心居中使菜单覆盖卡片，竖屏则左下角贴卡片竖向中轴线向右展开。
+     * 横屏场上/手卡，以及双方卡组/额外/墓地/除外（不随朝向改变）——菜单底边落在卡片上半部中横线
+     * （向上展开），水平以卡片视觉中心 {@code anchorCX} 居中（{@code left = anchorCX - widthPx/2}），
+     * 靠屏幕左右边时拉回屏内；竖屏场上/手卡——显示后按上屏真实布局回校，使「最下面的按钮」的左下角
+     * 精确对齐卡片矩形中心（屏幕坐标），从卡片中央往右上出现，与横屏观感一致（用户规格）。
      * {@code card} 为空时回退到以触点为菜单左下角的旧行为。
      *
      * @param anchorView 接收点击的场地 View（GameFieldView，用于投影卡片包围盒 / 换算屏幕坐标）
@@ -197,26 +199,57 @@ public class CmdMenuDialog {
 
         int left;
         int top;
+        // 竖屏场上/手卡的对齐走「显示后按真实布局回校」：记录卡片矩形中心（屏幕坐标）作为基准，
+        // 待 PopupWindow 真正上屏布局完成后，用最后一个按钮的实际屏幕左下角反推位移，消除
+        // 测量高度与实显高度之差、窗口坐标基准与屏幕坐标基准之差、按钮背景内缩等一切误差。
+        boolean realignButtonCorner = false;
+        int alignCenterX = 0;
+        int alignCenterY = 0;
         if (useCardBounds) {
-            // Java GameField 实际几何：垂直统一——菜单底边落在卡片上半部中横线 cardTopY + cardH/4
-            // （cardH = 底边 - 顶边），菜单从该线向上展开，使按钮列出现在卡片上半部。
-            // 水平按屏幕朝向分流（两种朝向卡片/菜单比例不同，同一公式观感不一致）：
-            //  • 横屏：以卡片视觉中心 anchorCX 居中（left = anchorCX - widthPx/2），宽 120dp 的菜单
-            //    完整覆盖在卡片上；靠屏幕左右边时再拉回屏内保证可见。
-            //  • 竖屏：沿用上一次的口径——菜单左下角贴卡片竖向中轴线 anchorCX 向右展开，不做水平 clamp。
+            // Java GameField 实际几何，按朝向与卡片类型分流：
+            //  • 横屏场上/手卡，以及双方卡组/额外/墓地/除外（用户规格：四类堆叠区不随朝向改变）——
+            //    菜单底边落在卡片上半部中横线 cardTopY + cardH/4（cardH = 底边 - 顶边），向上展开，
+            //    按钮列出现在卡片上半部；水平以卡片视觉中心 anchorCX 居中（left = anchorCX - widthPx/2），
+            //    靠屏幕左右边时拉回屏内保证可见。
+            //  • 竖屏场上/手卡——先按内边距估算，显示后再按上屏真实布局回校，使最下面的按钮的左下角
+            //    精确落在卡片矩形中心（anchorCX / cardCenterY），菜单从卡片中央往右上出现，与横屏观感一致。
             int cardH = cardBottomY - cardTopY;
-            int anchorY = cardTopY + cardH / 4;
             boolean portrait = activity.getResources().getConfiguration().orientation
                     == android.content.res.Configuration.ORIENTATION_PORTRAIT;
-            if (portrait) {
-                left = anchorCX;
+            boolean pileZone = card != null && isPileLocation(card.location);
+            if (portrait && !pileZone) {
+                int cardCenterY = cardTopY + cardH / 2;
+                // 先按根布局内边距/按钮下边距估算一个尽量接近的初始位置（随后仍以上屏真实布局回校为准），
+                // 减小回校时的位移量与可能的视觉跳动。
+                int leftInset = contentView instanceof ViewGroup
+                        ? ((ViewGroup) contentView).getPaddingLeft() : 0;
+                int bottomInset = contentView instanceof ViewGroup
+                        ? ((ViewGroup) contentView).getPaddingBottom() : 0;
+                if (layoutItems.getChildCount() > 0) {
+                    View last = layoutItems.getChildAt(layoutItems.getChildCount() - 1);
+                    ViewGroup.LayoutParams p = last.getLayoutParams();
+                    if (p instanceof ViewGroup.MarginLayoutParams) {
+                        bottomInset += ((ViewGroup.MarginLayoutParams) p).bottomMargin;
+                    }
+                }
+                left = anchorCX - leftInset;
+                if (left + widthPx > screenW) left = screenW - widthPx;
+                if (left < 0) left = 0;
+                top = (cardCenterY + bottomInset) - menuHeight;
+                if (top < 0) top = 0;
+                if (top + menuHeight > screenH) top = screenH - menuHeight;
+                // 记录基准点（屏幕坐标），显示后据最后一个按钮的真实屏幕位置精确对齐到卡片矩形中心
+                realignButtonCorner = true;
+                alignCenterX = anchorCX;
+                alignCenterY = cardCenterY;
             } else {
+                int anchorY = cardTopY + cardH / 4;
                 left = anchorCX - widthPx / 2;
                 if (left < 0) left = 0;
                 if (left + widthPx > screenW) left = screenW - widthPx;
+                top = anchorY - menuHeight;
+                if (top < 0) top = 0;
             }
-            top = anchorY - menuHeight;
-            if (top < 0) top = 0;
         } else {
             // 回退：无卡片包围盒（如中央 conti_act 堆叠菜单），保留旧行为：以触点为菜单左下角，
             // 上方不够则翻到触点下方，并保留屏幕边缘 clamp。
@@ -234,6 +267,38 @@ public class CmdMenuDialog {
         dismissedByAction = false;
         // 菜单显示期间禁用决斗场阶段按钮
         activity.notifyGameDialogShown(this);
+
+        // 竖屏场上/手卡：待 PopupWindow 完成上屏布局后，读取「最后一个按钮」的真实屏幕左下角，
+        // 反推位移把该角精确对齐到卡片矩形中心（屏幕坐标）。位移以真实位置差计算，自动抵消
+        // 测量/实显高度差、窗口/屏幕坐标基准差、按钮背景内缩等误差；仅在结果仍位于屏内时校正。
+        if (realignButtonCorner && layoutItems.getChildCount() > 0) {
+            final View lastBtn = layoutItems.getChildAt(layoutItems.getChildCount() - 1);
+            final int fLeft = left;
+            final int fTop = top;
+            final int fMenuH = menuHeight;
+            final int fWidth = widthPx;
+            final int fScreenW = screenW;
+            final int fScreenH = screenH;
+            final int fAlignX = alignCenterX;
+            final int fAlignY = alignCenterY;
+            lastBtn.post(() -> {
+                if (!popupWindow.isShowing()) return;
+                int[] b = new int[2];
+                lastBtn.getLocationOnScreen(b);
+                int dx = fAlignX - b[0];
+                int dy = fAlignY - (b[1] + lastBtn.getHeight());
+                if (dx == 0 && dy == 0) return;
+                int nl = fLeft + dx;
+                int nt = fTop + dy;
+                if (nl < 0) nl = 0;
+                if (nl + fWidth > fScreenW) nl = fScreenW - fWidth;
+                if (nt < 0) nt = 0;
+                if (nt + fMenuH > fScreenH) nt = fScreenH - fMenuH;
+                if (nl != fLeft || nt != fTop) {
+                    popupWindow.update(nl, nt, -1, -1);
+                }
+            });
+        }
     }
 
     public boolean isShowing() {
