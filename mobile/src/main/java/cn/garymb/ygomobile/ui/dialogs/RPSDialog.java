@@ -105,22 +105,22 @@ public class RPSDialog {
         });
         popupWindow.setOnDismissListener(() -> showing = false);
         Activity activity = (Activity) context;
-        View game_field_view = activity.findViewById(R.id.game_field_view);
-        if (game_field_view != null && game_field_view.getWidth() > 0) {
+        View gameRight = activity.findViewById(R.id.layout_game_right);
+        if (gameRight != null && gameRight.getWidth() > 0) {
             // 已布局完成：直接按 layout_game_right 实际宽度定位
-            showAlignedToField(game_field_view);
+            showAlignedToField(gameRight);
             showing = true;
-        } else if (game_field_view != null) {
+        } else if (gameRight != null) {
             // 决斗 UI 刚切为可见（enterDuelingUI 同帧），此时宽度为 0，
             // 必须等布局完成后再显示，否则会退化为按整个窗口居中
             showing = true;
-            game_field_view.getViewTreeObserver().addOnGlobalLayoutListener(
+            gameRight.getViewTreeObserver().addOnGlobalLayoutListener(
                     new ViewTreeObserver.OnGlobalLayoutListener() {
                         @Override
                         public void onGlobalLayout() {
-                            game_field_view.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                            gameRight.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                             if (!showing) return; // 等待期间已被 dismiss 取消
-                            showAlignedToField(game_field_view);
+                            showAlignedToField(gameRight);
                         }
                     });
         } else {
@@ -141,7 +141,7 @@ public class RPSDialog {
 
     /**
      * 解算弹窗在窗口坐标系下的左上角 (x, y)：
-     * 水平在 gameRight（game_field_view）实际宽度内居中，
+     * 水平在 layout_game_right 实际宽度内居中，
      * 垂直底边停在聊天输入框上沿之上（输入框不可用时退化为与 layout_game_right 底边齐平）。
      * 供首次显示与屏幕旋转后重定位复用，保证旋转后仍按新方向的 layout_game_right 宽度重新居中。
      *
@@ -181,7 +181,7 @@ public class RPSDialog {
 
     /**
      * 屏幕旋转后重新定位：RPSDialog 以绝对坐标 showAtLocation 定位，不经 DraggablePopupHelper 包装，
-     * 故 relayoutActivePopupsForOrientation 不会重排它；旋转后 layout_game_right/game_field_view 的宽度
+     * 故 relayoutActivePopupsForOrientation 不会重排它；旋转后 layout_game_right 的宽度
      * 与新窗口位置都变了，若沿用旧绝对 x 会偏到左下角。本方法按重建后的新视图重新解算居中坐标并 update。
      * 由 YGOProActivity 旋转重建末尾经 ShowDialogUtil 调用；新视图树此刻可能尚未完成布局（宽度为 0），
      * 则注册一次性布局监听待完成后再重定位。
@@ -190,7 +190,7 @@ public class RPSDialog {
         if (!showing || popupWindow == null || !popupWindow.isShowing()) return;
         if (!(context instanceof Activity)) return;
         final Activity activity = (Activity) context;
-        final View anchor = activity.findViewById(R.id.game_field_view);
+        final View anchor = activity.findViewById(R.id.layout_game_right);
         if (anchor == null) return;
         if (anchor.getWidth() > 0) {
             doReposition(anchor);
@@ -208,7 +208,7 @@ public class RPSDialog {
         }
     }
 
-    /** 按当前 gameRight（game_field_view）重新解算居中坐标并更新已显示弹窗位置（保持原尺寸） */
+    /** 按当前 layout_game_right 重新解算居中坐标并更新已显示弹窗位置（保持原尺寸） */
     private void doReposition(View gameRight) {
         int[] pos = computePosition(gameRight);
         popupWindow.update(pos[0], pos[1], -1, -1);

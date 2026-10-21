@@ -146,7 +146,7 @@
             android:layout_marginStart="4dp"
             android:layout_marginEnd="4dp"
             android:orientation="horizontal"
-            android:weightSum="6"
+            android:weightSum="5"
             android:visibility="visible">
 
             <Button
@@ -216,38 +216,41 @@
                 android:textSize="9sp"
                 android:visibility="invisible" />
 
-            <Button
-                android:id="@+id/btn_shuffle_hand"
+            <FrameLayout
                 android:layout_width="0dp"
                 android:layout_height="28dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="2dp"
-                android:minWidth="0dp"
-                android:background="@drawable/button3_bg"
-                android:paddingStart="2dp"
-                android:paddingEnd="2dp"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:text="洗切手卡"
-                android:textColor="@color/white"
-                android:textSize="9sp"
-                android:visibility="invisible" />
+                android:layout_weight="1">
 
-            <Button
-                android:id="@+id/btn_cancel_or_finish"
-                android:layout_width="0dp"
-                android:layout_height="28dp"
-                android:layout_weight="1"
-                android:minWidth="0dp"
-                android:background="@drawable/button3_bg"
-                android:paddingStart="2dp"
-                android:paddingEnd="2dp"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:text="完成选择"
-                android:textColor="@color/white"
-                android:textSize="9sp"
-                android:visibility="gone" />
+                <Button
+                    android:id="@+id/btn_shuffle_hand"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:minWidth="0dp"
+                    android:background="@drawable/button3_bg"
+                    android:paddingStart="2dp"
+                    android:paddingEnd="2dp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:text="洗切手卡"
+                    android:textColor="@color/white"
+                    android:textSize="9sp"
+                    android:visibility="invisible" />
+
+                <Button
+                    android:id="@+id/btn_cancel_or_finish"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:minWidth="0dp"
+                    android:background="@drawable/button3_bg"
+                    android:paddingStart="2dp"
+                    android:paddingEnd="2dp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:text="完成选择"
+                    android:textColor="@color/white"
+                    android:textSize="9sp"
+                    android:visibility="gone" />
+            </FrameLayout>
         </LinearLayout>
 
         <!-- 录像控制按钮 -->
@@ -294,22 +297,6 @@
                 android:textSize="9sp" />
 
             <Button
-                android:id="@+id/btn_replay_next"
-                android:layout_width="0dp"
-                android:layout_height="28dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="2dp"
-                android:minWidth="0dp"
-                android:background="@drawable/button3_bg"
-                android:paddingStart="2dp"
-                android:paddingEnd="2dp"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:text="下一步"
-                android:textColor="@color/white"
-                android:textSize="9sp" />
-
-            <Button
                 android:id="@+id/btn_replay_last"
                 android:layout_width="0dp"
                 android:layout_height="28dp"
@@ -322,6 +309,22 @@
                 android:maxLines="1"
                 android:ellipsize="end"
                 android:text="上一步"
+                android:textColor="@color/white"
+                android:textSize="9sp" />
+
+            <Button
+                android:id="@+id/btn_replay_next"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="2dp"
+                android:minWidth="0dp"
+                android:background="@drawable/button3_bg"
+                android:paddingStart="2dp"
+                android:paddingEnd="2dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="下一步"
                 android:textColor="@color/white"
                 android:textSize="9sp" />
 

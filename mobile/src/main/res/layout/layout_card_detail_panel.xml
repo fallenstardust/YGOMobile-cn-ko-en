@@ -93,32 +93,36 @@
                     android:textSize="10sp"
                     android:visibility="invisible" />
 
-                <Button
-                    android:id="@+id/btn_shuffle_hand"
+                <FrameLayout
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
                     android:layout_weight="1"
-                    android:layout_marginBottom="5dp"
-                    android:maxHeight="30dp"
-                    android:minHeight="0dp"
-                    android:background="@drawable/button3_bg"
-                    android:text="洗切手卡"
-                    android:textColor="@color/white"
-                    android:textSize="10sp"
-                    android:visibility="invisible" />
+                    android:layout_marginBottom="5dp">
 
-                <Button
-                    android:id="@+id/btn_cancel_or_finish"
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:maxHeight="30dp"
-                    android:minHeight="0dp"
-                    android:background="@drawable/button3_bg"
-                    android:text="完成选择"
-                    android:textColor="@color/white"
-                    android:textSize="10sp"
-                    android:visibility="gone" />
+                    <Button
+                        android:id="@+id/btn_shuffle_hand"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:maxHeight="30dp"
+                        android:minHeight="0dp"
+                        android:background="@drawable/button3_bg"
+                        android:text="洗切手卡"
+                        android:textColor="@color/white"
+                        android:textSize="10sp"
+                        android:visibility="invisible" />
+
+                    <Button
+                        android:id="@+id/btn_cancel_or_finish"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:maxHeight="30dp"
+                        android:minHeight="0dp"
+                        android:background="@drawable/button3_bg"
+                        android:text="完成选择"
+                        android:textColor="@color/white"
+                        android:textSize="10sp"
+                        android:visibility="gone" />
+                </FrameLayout>
 
             </LinearLayout>
             <!-- 录像控制按钮 -->
@@ -158,19 +162,6 @@
                     android:textSize="10sp" />
 
                 <Button
-                    android:id="@+id/btn_replay_next"
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:layout_marginBottom="5dp"
-                    android:maxHeight="30dp"
-                    android:minHeight="0dp"
-                    android:background="@drawable/button3_bg"
-                    android:text="下一步"
-                    android:textColor="@color/white"
-                    android:textSize="10sp" />
-
-                <Button
                     android:id="@+id/btn_replay_last"
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
@@ -180,6 +171,19 @@
                     android:minHeight="0dp"
                     android:background="@drawable/button3_bg"
                     android:text="上一步"
+                    android:textColor="@color/white"
+                    android:textSize="10sp" />
+
+                <Button
+                    android:id="@+id/btn_replay_next"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:layout_marginBottom="5dp"
+                    android:maxHeight="30dp"
+                    android:minHeight="0dp"
+                    android:background="@drawable/button3_bg"
+                    android:text="下一步"
                     android:textColor="@color/white"
                     android:textSize="10sp" />
 
