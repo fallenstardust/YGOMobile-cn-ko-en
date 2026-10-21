@@ -50,6 +50,15 @@ public class RPSDialog {
     private boolean showing;
     /** 猜拳结果动画专用覆盖层（PopupWindow 层位于 GameFieldView 的 GL Surface 之上） */
     private PopupWindow animWindow;
+    /**
+     * 当前正在监听尺寸变化的锚视图与对应监听器：横屏初始时 enterLobbyChatUI 将 layout_card_detail_panel
+     * 设为 GONE 使 layout_game_right 撑满整屏，enterDuelingUI 恢复后可到下次布局才收缩到 0.7W；
+     * 若 RPSDialog.show 在中间同帧被调用，会拿到过渡宽度使 xOff 偏大、弹窗跑到右侧。
+     * 弹窗展示期间监听锚视图尺寸变化，一发现宽度/高度变了就用新宽度重算 xOff/yOff 并 update，
+     * 确保弹窗始终居中于 layout_game_right。dismiss 时摘除监听器。
+     */
+    private View anchorWatching;
+    private View.OnLayoutChangeListener anchorSizeWatcher;
 
     public RPSDialog(Context context) {
         this.context = context;
@@ -132,57 +141,62 @@ public class RPSDialog {
 
     /**
      * 水平：在 layout_game_right 实际宽度内居中；
-     * 垂直：弹窗底边停在聊天输入框（et_chat_input）上沿之上，避免遮挡输入框
+     * 垂直：弹窗底边停在聊天输入框（et_chat_input）上沿之上，避免遮挡输入框。
+     * 使用 showAsDropDown 以 layout_game_right 为锚，并监听锚视图尺寸变化自动重算偏移，
+     * 修复横屏初始时过渡宽度导致的居偏。
      */
     private void showAlignedToField(View gameRight) {
-        int[] pos = computePosition(gameRight);
-        popupWindow.showAtLocation(gameRight, Gravity.NO_GRAVITY, pos[0], pos[1]);
+        int[] offsets = computeDropDownOffsets(gameRight);
+        popupWindow.showAsDropDown(gameRight, offsets[0], offsets[1]);
+        attachAnchorSizeWatcher(gameRight);
     }
 
     /**
-     * 解算弹窗在窗口坐标系下的左上角 (x, y)：
-     * 水平在 layout_game_right 实际宽度内居中，
-     * 垂直底边停在聊天输入框上沿之上（输入框不可用时退化为与 layout_game_right 底边齐平）。
-     * 供首次显示与屏幕旋转后重定位复用，保证旋转后仍按新方向的 layout_game_right 宽度重新居中。
+     * 解算 showAsDropDown 所需的相对偏移 (xOff, yOff)：
+     * 以 layout_game_right 左下角为基准点，xOff 为水平居中偏移，
+     * yOff 为垂直偏移（负值向上），使弹窗底边停在 et_chat_input 上沿之上
+     * 或与 layout_game_right 底边齐平。
      *
-     * @return int[]{x, y}
+     * @return int[]{xOff, yOff}
      */
-    private int[] computePosition(View gameRight) {
+    private int[] computeDropDownOffsets(View gameRight) {
         contentView.measure(
                 View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
                 View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
         int popupW = contentView.getMeasuredWidth();
         int popupH = contentView.getMeasuredHeight();
+        int gameW = gameRight.getWidth();
+        int gameH = gameRight.getHeight();
 
-        int[] grLoc = new int[2];
-        gameRight.getLocationInWindow(grLoc);
-        int x = grLoc[0] + (gameRight.getWidth() - popupW) / 2;
+        // 水平居中：xOff = (layout_game_right 宽度 - 弹窗宽度) / 2
+        int xOff = (gameW - popupW) / 2;
 
+        // 垂直：popup_top = anchor.bottom + yOff，popup_bottom = anchor.bottom + yOff + popupH
+        // 目标 popup_bottom = anchor.bottom - targetGap → yOff = -(targetGap + popupH)
         Activity activity = (Activity) context;
-        // 垂直：优先锚定聊天输入框上沿，弹窗整体上移，不再遮挡 et_chat_input
+        int yOff;
         View chatInput = activity.findViewById(R.id.et_chat_input);
-        int y;
         if (chatInput != null && chatInput.getVisibility() == View.VISIBLE && chatInput.getHeight() > 0) {
+            // 聊天输入框可见：弹窗底边停在输入框上沿之上
+            int[] grLoc = new int[2];
             int[] ciLoc = new int[2];
+            gameRight.getLocationInWindow(grLoc);
             chatInput.getLocationInWindow(ciLoc);
-            y = ciLoc[1] - popupH - dp2px(CHAT_INPUT_GAP_DP);
+            // gapFromBottom = 输入框顶边距 layout_game_right 底边的距离
+            int gapFromBottom = (grLoc[1] + gameH) - ciLoc[1];
+            int targetGap = gapFromBottom + dp2px(CHAT_INPUT_GAP_DP);
+            yOff = -(targetGap + popupH);
         } else {
-            // 兜底：输入框不可用时，弹窗底边与 layout_game_right 底边齐平（原行为）
-            View fieldView = activity.findViewById(R.id.layout_game_right);
-            View bottomRef = (fieldView != null && fieldView.getHeight() > 0) ? fieldView : gameRight;
-            int[] brLoc = new int[2];
-            bottomRef.getLocationInWindow(brLoc);
-            y = brLoc[1] + bottomRef.getHeight() - popupH;
+            // 输入框不可见：弹窗底边与 layout_game_right 底边齐平
+            yOff = -popupH;
         }
-        if (x < 0) x = 0;
-        if (y < 0) y = 0;
-        return new int[]{x, y};
+        return new int[]{xOff, yOff};
     }
 
     /**
-     * 屏幕旋转后重新定位：RPSDialog 以绝对坐标 showAtLocation 定位，不经 DraggablePopupHelper 包装，
-     * 故 relayoutActivePopupsForOrientation 不会重排它；旋转后 layout_game_right 的宽度
-     * 与新窗口位置都变了，若沿用旧绝对 x 会偏到左下角。本方法按重建后的新视图重新解算居中坐标并 update。
+     * 屏幕旋转后重新定位：RPSDialog 以 showAsDropDown 相对于 layout_game_right 定位，
+     * 不经 DraggablePopupHelper 包装，故 relayoutActivePopupsForOrientation 不会重排它；
+     * 旋转后 layout_game_right 的宽度与新窗口位置都变了，需按重建后的新视图重新解算偏移并 update。
      * 由 YGOProActivity 旋转重建末尾经 ShowDialogUtil 调用；新视图树此刻可能尚未完成布局（宽度为 0），
      * 则注册一次性布局监听待完成后再重定位。
      */
@@ -208,14 +222,50 @@ public class RPSDialog {
         }
     }
 
-    /** 按当前 layout_game_right 重新解算居中坐标并更新已显示弹窗位置（保持原尺寸） */
+    /** 按当前 layout_game_right 重新解算 showAsDropDown 偏移并更新已显示弹窗位置 */
     private void doReposition(View gameRight) {
-        int[] pos = computePosition(gameRight);
-        popupWindow.update(pos[0], pos[1], -1, -1);
+        int[] offsets = computeDropDownOffsets(gameRight);
+        // PopupWindow.update 对 dropDown 模式：x,y 仍是相对于 anchor 的偏移
+        popupWindow.update(gameRight, offsets[0], offsets[1], -1, -1);
+        // 旋转重建后锚视图为新实例，将尺寸监听器迁移到新视图
+        attachAnchorSizeWatcher(gameRight);
+    }
+
+    /**
+     * 在锚视图上挂一个尺寸变化监听：任何原因导致 layout_game_right 的宽高变化（包括
+     * 横屏初始时 card_detail_panel 从 GONE 恢复后的重布），都会重新解算 xOff/yOff，
+     * 保证弹窗在 layout_game_right 中始终居中。同一锚视图重复调用不会叠加监听。
+     */
+    private void attachAnchorSizeWatcher(View gameRight) {
+        if (anchorWatching == gameRight) return;
+        detachAnchorSizeWatcher();
+        if (gameRight == null) return;
+        anchorSizeWatcher = (v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+            int newW = right - left;
+            int oldW = oldRight - oldLeft;
+            int newH = bottom - top;
+            int oldH = oldBottom - oldTop;
+            if ((newW != oldW || newH != oldH)
+                    && popupWindow != null && popupWindow.isShowing()) {
+                int[] offsets = computeDropDownOffsets(v);
+                popupWindow.update(v, offsets[0], offsets[1], -1, -1);
+            }
+        };
+        gameRight.addOnLayoutChangeListener(anchorSizeWatcher);
+        anchorWatching = gameRight;
+    }
+
+    private void detachAnchorSizeWatcher() {
+        if (anchorWatching != null && anchorSizeWatcher != null) {
+            anchorWatching.removeOnLayoutChangeListener(anchorSizeWatcher);
+        }
+        anchorWatching = null;
+        anchorSizeWatcher = null;
     }
 
     public void dismiss() {
         dismissAnimWindow();
+        detachAnchorSizeWatcher();
         try {
             if (popupWindow != null && popupWindow.isShowing()) popupWindow.dismiss();
         } catch (Exception ignored) {

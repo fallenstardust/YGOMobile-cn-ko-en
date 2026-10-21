@@ -166,7 +166,8 @@ public class ShowDialogUtil {
 
     /**
      * 屏幕旋转后重新定位猜拳弹窗（由 YGOProActivity.rebuildUiForOrientation 末尾调用）：
-     * RPSDialog 以绝对坐标定位、不经 DraggablePopupHelper 包装，故需在旋转重建后按其转发重定位，
+     * RPSDialog 以 showAsDropDown 相对 layout_game_right 定位、不经 DraggablePopupHelper 包装，
+     * 故需在旋转重建后按其转发重定位，
      * 保证竖屏转横屏时弹窗仍在 layout_game_right 底部居中而非停留在左下角。
      */
     public void repositionHandSelectDialog() {
