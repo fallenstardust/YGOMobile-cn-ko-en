@@ -27,6 +27,27 @@ public class ChatInputUI {
     private int baseInputHeight = -2;
     /** 当前 HUD 等比缩放系数（与 gameTopInfo 同源，见 GameTopInfoManager.applyTopInfoSize） */
     private float hudScaleFactor = 1f;
+
+    /**
+     * 大厅等待界面输入法显隐监听：PlayerWaitingDialog 是被铺成全屏的 PopupWindow 覆盖层，
+     * Android 12+ 的 FLAG_ALT_FOCUSABLE_IM 分层在实机无效（键盘仍压在弹窗下、按键落空）。
+     * 改由本监听在输入法抬起时通知外部让位（隐藏等待弹窗覆盖层），收起时恢复——
+     * 输入框与键盘此时不再被任何弹窗窗口遮挡，跨版本可靠。
+     */
+    public interface LobbyImeVisibilityListener {
+        void onLobbyImeShown();
+
+        void onLobbyImeHidden();
+    }
+
+    @Nullable
+    private LobbyImeVisibilityListener imeVisibilityListener;
+    /** 是否处于大厅等待聊天模式：仅该模式下启用输入法显隐看门狗 */
+    private boolean lobbyChatActive = false;
+    /** 上一次判定的输入法可见态，去抖避免逐帧回调重复触发 */
+    private boolean lastImeVisible = false;
+    @Nullable
+    private android.view.ViewTreeObserver.OnGlobalLayoutListener imeLayoutListener;
     
     /**
      * 监听器接口：用于处理发送消息事件
@@ -55,6 +76,8 @@ public class ChatInputUI {
         }
         setupChatInput();
         applyChatInputScale(hudScaleFactor);
+        // 旋转重建后 etChatInput 换新实例，若仍处大厅模式需把输入法看门狗重挂到新视图根
+        if (lobbyChatActive) attachImeWatcher();
     }
 
     /**
@@ -103,6 +126,13 @@ public class ChatInputUI {
      */
     public void setOnChatMessageListener(@Nullable OnChatMessageListener listener) {
         this.chatMessageListener = listener;
+    }
+
+    /**
+     * 注册大厅输入法显隐监听（由 YGOProActivity 接线到当前 PlayerWaitingDialog）。
+     */
+    public void setLobbyImeVisibilityListener(@Nullable LobbyImeVisibilityListener listener) {
+        this.imeVisibilityListener = listener;
     }
     
     /**
@@ -188,6 +218,62 @@ public class ChatInputUI {
 
         // 进入大厅等待界面时不自动抢焦点、不自动弹出输入法：
         // 由玩家自行点击输入框触发下方 clickListener 唤起 IME
+
+        // 启用输入法显隐看门狗：点输入框抬起键盘时通知外部隐藏等待弹窗覆盖层
+        lobbyChatActive = true;
+        lastImeVisible = false;
+        attachImeWatcher();
+    }
+
+    /**
+     * 挂载逐帧布局监听，按可视区高度差判定输入法显隐（Activity 为 adjustResize，
+     * 键盘弹起时 getWindowVisibleDisplayFrame 底边上移）。仅在状态翻转时回调一次，去抖。
+     */
+    private void attachImeWatcher() {
+        if (etChatInput == null) return;
+        final View root = etChatInput.getRootView();
+        if (root == null) return;
+        if (imeLayoutListener != null) {
+            android.view.ViewTreeObserver vto = root.getViewTreeObserver();
+            if (vto.isAlive()) vto.removeOnGlobalLayoutListener(imeLayoutListener);
+        }
+        imeLayoutListener = () -> {
+            if (!lobbyChatActive) return;
+            boolean visible = isImeVisible();
+            if (visible != lastImeVisible) {
+                lastImeVisible = visible;
+                if (imeVisibilityListener != null) {
+                    if (visible) imeVisibilityListener.onLobbyImeShown();
+                    else imeVisibilityListener.onLobbyImeHidden();
+                }
+            }
+        };
+        root.getViewTreeObserver().addOnGlobalLayoutListener(imeLayoutListener);
+    }
+
+    /** 卸载输入法显隐看门狗（退出大厅时调用，避免泄漏与决斗态误触发） */
+    private void detachImeWatcher() {
+        if (etChatInput == null) return;
+        View root = etChatInput.getRootView();
+        if (root == null) return;
+        if (imeLayoutListener != null) {
+            android.view.ViewTreeObserver vto = root.getViewTreeObserver();
+            if (vto.isAlive()) vto.removeOnGlobalLayoutListener(imeLayoutListener);
+        }
+        imeLayoutListener = null;
+    }
+
+    /** 依据可视区高度差判定输入法是否可见：被键盘侵占高度超过屏高 15% 视为弹起 */
+    private boolean isImeVisible() {
+        if (etChatInput == null) return false;
+        View root = etChatInput.getRootView();
+        if (root == null) return false;
+        int total = root.getHeight();
+        if (total <= 0) return false;
+        android.graphics.Rect r = new android.graphics.Rect();
+        root.getWindowVisibleDisplayFrame(r);
+        int imeHeight = total - r.bottom;
+        return imeHeight > total * 0.15f;
     }
     
     /**
@@ -198,6 +284,14 @@ public class ChatInputUI {
         
         // 重新绑定 editor action listener（确保状态正确）
         setupChatInput();
+
+        // 退出大厅前若键盘仍弹起，补发一次“已隐藏”让外部恢复等待弹窗覆盖层
+        if (lobbyChatActive && lastImeVisible && imeVisibilityListener != null) {
+            imeVisibilityListener.onLobbyImeHidden();
+        }
+        lobbyChatActive = false;
+        lastImeVisible = false;
+        detachImeWatcher();
 
         // 清除大厅模式专用的点击唤起输入法监听，恢复决斗模式默认行为（禁止自动弹出输入法）
         etChatInput.setOnClickListener(null);
@@ -323,6 +417,8 @@ public class ChatInputUI {
      * 销毁资源
      */
     public void destroy() {
+        lobbyChatActive = false;
+        detachImeWatcher();
         etChatInput = null;
         chatMessageListener = null;
     }

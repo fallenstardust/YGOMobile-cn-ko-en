@@ -319,6 +319,21 @@ public class YGOProActivity extends AppCompatActivity {
             }
         });
 
+        // 大厅聊天：输入法抬起时把 PlayerWaitingDialog 收缩到聊天输入框上方（底边贴输入框上沿），
+        // 而非全屏铺满——全屏透明层会压在键盘上吞掉按键；收缩后键盘/输入框在窗口边界外、触摸直达 IME，
+        // 且弹窗保持可见。收起后恢复全屏居中。（修复 Android 12+ 点聊天框后键盘点不动/关不掉）
+        chatInputUI.setLobbyImeVisibilityListener(new ChatInputUI.LobbyImeVisibilityListener() {
+            @Override
+            public void onLobbyImeShown() {
+                if (playerWaitingDialog != null) playerWaitingDialog.repositionForIme();
+            }
+
+            @Override
+            public void onLobbyImeHidden() {
+                if (playerWaitingDialog != null) playerWaitingDialog.restoreFromIme();
+            }
+        });
+
         cardDetailPanel = new CardDetailPanel(this);
         // 横屏侧边六按钮列直接承载在视图树 layout_game_right 内（不再用浮层，见方法注释），
         // 把聊天输入框高度同步为 btn_chat 实测高使其与聊天开关同高、底部同线
@@ -451,6 +466,11 @@ public class YGOProActivity extends AppCompatActivity {
             }
         } else if (lobbyChat) {
             enterLobbyChatUI();
+            // 旋转前若聊天输入法已把 PlayerWaitingDialog 收缩到输入框上方：旋转后输入法已被系统
+            // 收起，须把弹窗还原为全屏居中（并清除待执行的收缩任务），否则 update() 收缩钉死的
+            // 窗口卡在旧尺寸，旋转重排无法撑回 MATCH_PARENT，弹窗偏离屏幕中央（用户反馈：抬高时
+            // 旋转不回中央、抬高收起后旋转偏移原位）
+            if (playerWaitingDialog != null) playerWaitingDialog.restoreFromIme();
         } else if (duelUiVisible) {
             if (layoutGameContent != null) layoutGameContent.setVisibility(View.VISIBLE);
             if (layoutGameRight != null) layoutGameRight.setVisibility(View.VISIBLE);

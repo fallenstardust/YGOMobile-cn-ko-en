@@ -11,9 +11,11 @@ import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.PopupWindow;
@@ -55,6 +57,20 @@ public class PlayerWaitingDialog {
     private final Context context;
     private PopupWindow popupWindow;
     private boolean suppressDismiss = false;
+    /** 输入法抬起期望态：true 表示键盘当前应处于弹起、弹窗应收缩到聊天输入框上方 */
+    private boolean imeUp = false;
+    /** 是否已完成收缩到聊天输入框上方（去抖，避免重复收缩/还原） */
+    private boolean imeRepositioned = false;
+    /** 收缩前弹窗内容的原始 FrameLayout 布局参数快照，供还原 */
+    private int savedContentGravity = Gravity.CENTER;
+    private int savedContentLeftMargin;
+    private int savedContentTopMargin;
+    private int savedContentRightMargin;
+    private int savedContentBottomMargin;
+    /** show() 时的锚定视图：输入法收缩后需 dismiss+重显还原全屏窗口，重显沿用此锚 */
+    private View popupAnchor;
+    /** 键盘抬升动画稳定后再解算收缩位的延迟任务 */
+    private final Runnable imeRepositionRunnable = this::repositionForImeNow;
     private PopupWindow.OnDismissListener externalDismissListener;
     private DraggablePopupHelper draggableHelper;
     private DeckSelectorDialog deckSelectorDialog;
@@ -147,6 +163,9 @@ public class PlayerWaitingDialog {
     }
 
     public void show(View anchorView) {
+        this.imeUp = false;
+        this.imeRepositioned = false;
+        this.popupAnchor = anchorView;
         View customView = LayoutInflater.from(context).inflate(R.layout.popup_window_player_waiting, null);
 
         initPlayerWaitingViews(customView);
@@ -1453,6 +1472,108 @@ public class PlayerWaitingDialog {
             suppressDismiss = true;
             popupWindow.dismiss();
         }
+    }
+
+    /**
+     * 输入法抬起时把弹窗收缩到聊天输入框上方：不再全屏铺满——全屏透明包装层会压在
+     * 软键盘之上吞掉按键触摸（Android 12+ FLAG_ALT_FOCUSABLE_IM 分层在实机无效）。改为把
+     * popup 窗口边界缩小为「屏幕顶 → 聊天输入框上沿」并让内容底对齐该边界：键盘与输入框
+     * 区域落在窗口边界之外，触摸直达 IME，弹窗仍完整可见。
+     */
+    public void repositionForIme() {
+        if (popupWindow == null || !popupWindow.isShowing()) return;
+        imeUp = true;
+        // adjustResize 抬升输入框伴随动画，延后一帧待其上沿稳定再解算
+        pwEmoteHandler.removeCallbacks(imeRepositionRunnable);
+        pwEmoteHandler.postDelayed(imeRepositionRunnable, 220L);
+    }
+
+    private void repositionForImeNow() {
+        if (!imeUp || imeRepositioned) return;
+        if (popupWindow == null || !popupWindow.isShowing()) return;
+        View chat = findLobbyChatInputView();
+        if (chat == null || chat.getRootView() == null) return;
+        int[] loc = new int[2];
+        chat.getLocationInWindow(loc);
+        int chatTop = loc[1];
+        int screenH = chat.getRootView().getHeight();
+        if (chatTop <= 0 || screenH <= 0 || chatTop >= screenH) return;
+        View wrapper = popupWindow.getContentView();
+        if (!(wrapper instanceof ViewGroup) || ((ViewGroup) wrapper).getChildCount() == 0) return;
+        View content = ((ViewGroup) wrapper).getChildAt(0);
+        ViewGroup.LayoutParams raw = content.getLayoutParams();
+        if (!(raw instanceof FrameLayout.LayoutParams)) return;
+        FrameLayout.LayoutParams flp = (FrameLayout.LayoutParams) raw;
+        savedContentGravity = flp.gravity;
+        savedContentLeftMargin = flp.leftMargin;
+        savedContentTopMargin = flp.topMargin;
+        savedContentRightMargin = flp.rightMargin;
+        savedContentBottomMargin = flp.bottomMargin;
+        // 内容贴窗口底（=聊天输入框上沿）并水平居中：清零区域 margin，改用 BOTTOM 重力
+        flp.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+        flp.leftMargin = 0;
+        flp.topMargin = 0;
+        flp.rightMargin = 0;
+        flp.bottomMargin = 0;
+        content.setLayoutParams(flp);
+        // 窗口缩小为 屏宽 × chatTop 并顶对齐：原以 Gravity.CENTER 显示，offsetY=(chatTop-screenH)/2
+        // 使窗口顶回到屏幕顶部、底恰落在聊天输入框上沿
+        popupWindow.update(0, (chatTop - screenH) / 2,
+                ViewGroup.LayoutParams.MATCH_PARENT, chatTop);
+        imeRepositioned = true;
+    }
+
+    /**
+     * 输入法收起后还原：恢复内容原始布局并把窗口重建回全屏。
+     * 关键：update() 收缩会把窗口 LayoutParams 钉成显式像素，之后屏幕旋转时
+     * DraggablePopupHelper.relayoutForOrientation 只重解内容子视图、不会把窗口重新
+     * 撑成 MATCH_PARENT→弹窗卡在旧尺寸/旧位置。无论用像素还是 MATCH_PARENT 调
+     * update() 都无法重建窗口尺寸；唯一可靠方式是按 setupDraggablePopup 设的
+     * mWidth/mHeight=MATCH_PARENT 重新 showAtLocation（仅它用原始尺寸重建窗口参数），
+     * 故此处 dismiss+重显：既回全屏居中，又使窗口重新可随旋转自适应。
+     */
+    public void restoreFromIme() {
+        imeUp = false;
+        pwEmoteHandler.removeCallbacks(imeRepositionRunnable);
+        if (!imeRepositioned) return;
+        imeRepositioned = false;
+        if (popupWindow == null || !popupWindow.isShowing()) return;
+        // 还原内容原始布局（gravity/margins 回到收缩前快照：CENTER + 解算尺寸）
+        View wrapper = popupWindow.getContentView();
+        if (wrapper instanceof ViewGroup && ((ViewGroup) wrapper).getChildCount() > 0) {
+            View content = ((ViewGroup) wrapper).getChildAt(0);
+            ViewGroup.LayoutParams raw = content.getLayoutParams();
+            if (raw instanceof FrameLayout.LayoutParams) {
+                FrameLayout.LayoutParams flp = (FrameLayout.LayoutParams) raw;
+                flp.gravity = savedContentGravity;
+                flp.leftMargin = savedContentLeftMargin;
+                flp.topMargin = savedContentTopMargin;
+                flp.rightMargin = savedContentRightMargin;
+                flp.bottomMargin = savedContentBottomMargin;
+                content.setLayoutParams(flp);
+            }
+        }
+        // 先把动画样式置 0（PopupWindow 文档：0 = 无动画）再 dismiss：带退场动画时 dismiss 后
+        // 视图延后到动画结束才真正摘除，isShowing 仍为 true → 立即重显会与新窗口抢同一内容视图
+        // 产生竞态。无动画使 dismiss 同步摘窗，之后按 MATCH_PARENT 重建窗口并重显，回到全屏居中
+        popupWindow.setAnimationStyle(0);
+        suppressDismiss = true;
+        popupWindow.dismiss();
+        popupWindow.setWidth(ViewGroup.LayoutParams.MATCH_PARENT);
+        popupWindow.setHeight(ViewGroup.LayoutParams.MATCH_PARENT);
+        if (draggableHelper != null) {
+            draggableHelper.showPopup(popupWindow, popupAnchor);
+        }
+        // 重显完成后恢复居中进出动画样式，不影响后续正常显示/关闭
+        popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
+    }
+
+    /** 取 Activity 视图树中的大厅聊天输入框（PlayerWaitingDialog 自身无输入框，输入框在 Activity） */
+    private View findLobbyChatInputView() {
+        if (context instanceof android.app.Activity) {
+            return ((android.app.Activity) context).findViewById(R.id.et_chat_input);
+        }
+        return null;
     }
 
     public void dismiss() {
