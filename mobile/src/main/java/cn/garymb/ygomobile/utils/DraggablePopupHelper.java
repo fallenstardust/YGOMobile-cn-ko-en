@@ -53,6 +53,9 @@ public class DraggablePopupHelper {
     private static final int FALLBACK_BAR_HEIGHT_DP = 40;
     /** 收缩横条最小高度（dp），保证可点击目标不小于舒适触控尺寸 */
     private static final int MIN_BAR_HEIGHT_DP = 28;
+    /** 收缩横条底边相对聊天输入框上沿预留的安全间隙（dp）：横条一律贴在输入框上方，
+     *  与 {@link ImePopupAdjuster} 抬升安全间隙同值，两种收缩来源（手动/输入法自动）定位统一 */
+    private static final int COLLAPSE_BAR_SAFETY_DP = 2;
 
     /**
      * 已显示的拖拽弹窗层，按窗口层级由下到上排列（末尾 = 最上层）。
@@ -248,8 +251,9 @@ public class DraggablePopupHelper {
 
     /**
      * 为经 {@link #setupDraggablePopup} 包装、内容布局带 btn_dialog_collapse 收缩按钮的
-     * dialog 启用收缩模式：点按钮把弹窗缩为贴屏幕底部、与聊天输入框同高同位、保持对话框
+     * dialog 启用收缩模式：点按钮把弹窗缩为紧贴聊天输入框上方、与其同高、保持对话框
      * 原宽与原背景贴图的横条（横条左侧「▲」箭头 + 标题，点击横条恢复原始尺寸），供临时确认场地。
+     * 用户规格：收缩一律贴输入框上方，不再与输入框同位而遮挡它（见 {@link #barMetrics}）。
      * 横条与把手作为包装层（DragFrameLayout）的额外子视图，靠显隐切换实现收缩，
      * 收缩态窗口仍铺满全屏：横条以外触摸照旧透传，旋转重排照常按新屏尺寸复位。
      */
@@ -280,14 +284,14 @@ public class DraggablePopupHelper {
     // ══════════════════════════════════════════════════════════════════════
     // 收缩到底部横条的视图与几何辅助（供 DragFrameLayout 的收缩模式使用）：
     // 各 dialog 布局 XML 声明的 btn_dialog_collapse 作收缩把手，横条与聊天输入框
-    // （et_chat_input）同高同位；几何解算一律按本文件 DragFrameLayout 的显隐切换方式。
+    // （et_chat_input）同高、底边贴其上沿；几何解算一律按本文件 DragFrameLayout 的显隐切换方式。
     // ══════════════════════════════════════════════════════════════════════
 
     /**
      * 收缩横条：圆角条，左侧「▲」向上箭头图标 + 标题文本，点击恢复原始尺寸。
      * 实际使用时由 {@link #styleBarWithDialogContent} 叠加对话框内容根的背景贴图
      * 与左右内边距，本方法的程序化圆角条仅作内容根无背景时的兜底。
-     * 高度与底部位置由调用方按 {@link #barMetrics} 结果设置（与聊天输入框同高同位）。
+     * 高度与底部位置由调用方按 {@link #barMetrics} 结果设置（与聊天输入框同高、贴其上方）。
      */
     private static LinearLayout createCollapseBar(Context context, String title) {
         LinearLayout bar = new LinearLayout(context);
@@ -433,7 +437,8 @@ public class DraggablePopupHelper {
 
     /**
      * 横条布局几何：{窗口宽, 窗口高, 横条高, 横条底边与窗口底边的间隙}（均为 px）。
-     * 聊天输入框（et_chat_input）可见时与其同高、底边对齐；不可见时兜底固定高度贴窗口底部。
+     * 聊天输入框（et_chat_input）可见时与其同高、横条底边贴其上沿（−安全间隙）；
+     * 不可见时取默认固定高度贴窗口底部。
      */
     private static int[] barMetrics(Context context) {
         Activity activity = resolveActivity(context);
@@ -449,7 +454,9 @@ public class DraggablePopupHelper {
             barH = Math.max(chat.getHeight(), dp(context, MIN_BAR_HEIGHT_DP));
             int[] loc = new int[2];
             chat.getLocationInWindow(loc);
-            gap = winH - (loc[1] + chat.getHeight());
+            // 统一贴聊天输入框上方（用户规格：不再与输入框同位遮挡输入框）：
+            // 横条底边 = 输入框上沿 − 安全间隙，手动收缩与输入法自动最小化共用同一锚定
+            gap = winH - loc[1] + dp(context, COLLAPSE_BAR_SAFETY_DP);
             if (gap < 0) gap = 0;
         }
         return new int[]{winW, winH, barH, gap};
@@ -751,7 +758,14 @@ public class DraggablePopupHelper {
                     barMetrics(getContext())[2],
                     Gravity.TOP | Gravity.START);
             collapseBar.setVisibility(GONE);
-            collapseBar.setOnClickListener(v -> setCollapsed(false));
+            // 点横条手动恢复：键盘抬起期间一律不响应（用户规格）——此刻展开会让铺满窗口
+            // 的弹窗重新盖住键盘区吞掉输入法触摸（真机结论），且键盘收起时还原序列本就会
+            // 自动展开输入法接管的收缩并复原窗口，抬起期间点击既失效又无必要；
+            // 输入法收起（ImePopupAdjuster.isImeUp()==false）后横条恢复可点
+            collapseBar.setOnClickListener(v -> {
+                if (ImePopupAdjuster.isImeUp()) return;
+                setCollapsed(false);
+            });
             addView(collapseBar, blp);
 
             // 收缩触发器：内容声明的 btn_dialog_collapse 作把手（点击即收缩），
@@ -811,9 +825,64 @@ public class DraggablePopupHelper {
             }
         }
 
+        // ── 输入法抬升联动：自动最小化/复原（供 ImePopupAdjuster 程序化驱动）──
+        /** 当前收缩态是否由输入法联动触发（区别于 dialog 自带把手的用户手动收缩）：
+         *  true 时横条底边不再对齐聊天输入框底边，而是由 {@link #anchorCollapseBarBottom}
+         *  按「键盘抬起后的输入框上沿」实时锚定 */
+        private boolean imeAutoCollapsed;
+
+        /**
+         * 为输入法抬升自动最小化：不可收缩的弹窗（决斗记录/录像保存等）动态补装横条与把手；
+         * 已是用户手动收缩态的不重复收缩、只接管横条重锚（imeAutoCollapsed 保持 false，
+         * 还原时不自动展开——用户规格：已最小化的 dialog 随键盘一并抬高、收起后保持收缩态
+         * 贴回降位的输入框上方）。横条底边贴到 {@code barBottomScreenY}（= 抬高后的聊天输入框
+         * 上沿 − 安全间隙），键盘动画期间可由调用方反复幂等调用。注意：弹窗窗口盖住键盘区域
+         * 会吞掉输入法触摸（真机结论，见类头注释），收缩后调用方
+         * （{@code ImePopupAdjuster.stepMinimize}）还须把窗口底边同步收缩到本目标线——
+         * 横条居于窗口内容底缘，窗口缩了横条依旧可见可点。
+         */
+        boolean collapseForIme(int barBottomScreenY) {
+            if (getChildCount() == 0) return false;
+            if (!collapsible) makeCollapsible(null, null);
+            if (!collapsible) return false;
+            if (!collapsed) {
+                imeAutoCollapsed = true;
+                setCollapsed(true);
+            }
+            anchorCollapseBarBottom(barBottomScreenY);
+            return true;
+        }
+
+        /** 横条底边锚定到指定屏幕 y（默认锚定即 barMetrics 的「聊天输入框上沿 − 安全间隙」，
+         *  抬升期按实测输入框上沿覆盖）：先按默认逻辑重解横条高/宽/横向居中，再以底部锚定
+         *  覆盖 bottomMargin——只改包装层子视图 margin，不触碰窗口矩形 */
+        private void anchorCollapseBarBottom(int bottomScreenY) {
+            if (collapseBar == null) return;
+            refreshCollapseAnchors();
+            FrameLayout.LayoutParams blp = (FrameLayout.LayoutParams) collapseBar.getLayoutParams();
+            int[] loc = new int[2];
+            getLocationOnScreen(loc);
+            int margin = loc[1] + getHeight() - bottomScreenY;
+            if (margin < 0) margin = 0;
+            if (blp.bottomMargin != margin) {
+                blp.bottomMargin = margin;
+                collapseBar.setLayoutParams(blp);
+            }
+        }
+
+        /** 输入法收起：撤销输入法接管的自动最小化，展开回原始尺寸（内容布局从未被改动，
+         *  一步展开）；用户手动收缩的（imeAutoCollapsed=false）不展开，保持收缩态由重锚贴回 */
+        boolean expandFromIme() {
+            if (!imeAutoCollapsed) return false;
+            imeAutoCollapsed = false;
+            if (collapsed) setCollapsed(false);
+            return true;
+        }
+
         /**
          * 横条与聊天输入框对齐并在 layout_game_right 区域内水平居中。垂直用包装层底部锚定
-         *（Gravity.BOTTOM + bottomMargin=gap，gap 为聊天输入框底边到窗口底边的距离），
+         *（Gravity.BOTTOM + bottomMargin=gap，gap 为「横条底边（= 输入框上沿 − 安全间隙）到
+         *  窗口底边的距离」），
          * 与真实窗口底边对齐而不依赖包装层当前测得高度：旋转重建瞬间（onConfigurationChanged
          * 内同步跑 relayoutForOrientation）包装层/区域/聊天输入框尚未完成布局，旧的按
          * decor+屏高反推 topMargin 的写法会以旧方向屏高为基准算出越界的 topMargin，把横条
@@ -859,8 +928,8 @@ public class DraggablePopupHelper {
             if (left + barW > m[0]) left = Math.max(0, m[0] - barW);
             blp.width = barW > 0 ? barW : ViewGroup.LayoutParams.MATCH_PARENT;
             blp.leftMargin = blp.width == ViewGroup.LayoutParams.MATCH_PARENT ? 0 : left;
-            // 垂直：底部锚定与聊天输入框底边对齐（bottomMargin=gap），不依赖包装层高度，
-            // 免疫旋转时窗口高度滞后导致的横条被顶出屏外
+            // 垂直：底部锚定贴聊天输入框上方（bottomMargin=gap，横条底边=输入框上沿−安全间隙），
+            // 不依赖包装层高度，免疫旋转时窗口高度滞后导致的横条被顶出屏外
             blp.gravity = Gravity.BOTTOM | Gravity.START;
             blp.topMargin = 0;
             blp.bottomMargin = m[3];
@@ -1782,6 +1851,45 @@ public class DraggablePopupHelper {
     }
 
     /**
+     * 该弹窗当前是否处于 {@link ImePopupAdjuster} 驱动的输入法自动最小化态：
+     * 供联动工具区分「自己收缩的」（需继续每帧重锚横条底边）与「dialog 自己手动收缩的」
+     * （交由其自身锚定逻辑，本工具不介入）。
+     */
+    public static boolean isPopupAutoCollapsed(PopupWindow popupWindow) {
+        if (popupWindow == null) return false;
+        View content = popupWindow.getContentView();
+        return content instanceof DragFrameLayout
+                && ((DragFrameLayout) content).imeAutoCollapsed
+                && ((DragFrameLayout) content).collapsed;
+    }
+
+    /**
+     * 程序化把弹窗自动最小化为底部横条，并把横条底边贴到 {@code barBottomScreenY}
+     * （屏幕坐标）。未启用收缩的弹窗会动态补装横条与把手；已是用户手动收缩态的只接管
+     * 横条重锚不重复收缩。返回 false 表示弹窗结构不可收缩（调用方应跳过该弹窗）。
+     */
+    public static boolean collapsePopupForIme(PopupWindow popupWindow, int barBottomScreenY) {
+        if (popupWindow == null) return false;
+        View content = popupWindow.getContentView();
+        return content instanceof DragFrameLayout
+                && ((DragFrameLayout) content).collapseForIme(barBottomScreenY);
+    }
+
+    /** 撤销输入法自动最小化，恢复原始尺寸（非本工具收缩的弹窗为无操作） */
+    public static boolean expandPopupFromIme(PopupWindow popupWindow) {
+        if (popupWindow == null) return false;
+        View content = popupWindow.getContentView();
+        return content instanceof DragFrameLayout && ((DragFrameLayout) content).expandFromIme();
+    }
+
+    /** 收缩态横条视图（未收缩/未包装返回 null）：供联动工具实测横条底边与目标线是否收敛 */
+    public static View getCollapseBarView(PopupWindow popupWindow) {
+        if (popupWindow == null) return null;
+        View content = popupWindow.getContentView();
+        return content instanceof DragFrameLayout ? ((DragFrameLayout) content).collapseBar : null;
+    }
+
+    /**
      * 弹窗参与输入法抬升联动的「内容根」：{@code setupDraggablePopup} 包装成全窗口的弹窗，
      * 其区域锚定 margin 与贴底重力都作用在包装层的第一个子 view（真正的对话框根布局）上，
      * 故抬升/还原必须改这个子 view 而不是包装层本身；未包装的自定位弹窗返回值即其内容视图。
@@ -1798,13 +1906,18 @@ public class DraggablePopupHelper {
     /**
      * 让弹窗按已登记的区域重新定位（未登记过区域的弹窗为无操作）：
      * 供 {@link ImePopupAdjuster} 在输入法收起、窗口恢复全尺寸后补做被推迟的区域锚定，
-     * 使弹窗回到 layout_game_right 中央（用户规格）。
+     * 使弹窗回到 layout_game_right 中央（用户规格）。收缩态改为逐轮重锚横条，使其跟随
+     * 降回原位的聊天输入框贴回其上方（用户规格：已最小化的 dialog 随输入法一起升降）。
      */
     public static void reanchorPopup(PopupWindow popupWindow) {
         if (popupWindow == null) return;
         View wrapper = popupWindow.getContentView();
-        if (wrapper instanceof DragFrameLayout) {
-            ((DragFrameLayout) wrapper).reanchorToRegion();
+        if (!(wrapper instanceof DragFrameLayout)) return;
+        DragFrameLayout layer = (DragFrameLayout) wrapper;
+        if (layer.collapsed) {
+            layer.refreshCollapseAnchors();
+        } else {
+            layer.reanchorToRegion();
         }
     }
 

@@ -88,7 +88,11 @@ class CardInfoBinder {
     private final List<String> spanStringList = new ArrayList<>();
     /** 当前卡已计算的关联卡列表：随卡详绑定刷新，点击按钮时直接复用避免再次全表扫描 */
     private List<Card> lastRelatedCards = Collections.emptyList();
-        
+
+    /** 卡详绑定代际：每次绑定/重置自增，后台任务完成时代际已变即丢弃结果——
+     *  连续快速点卡时旧任务不再把过期的高亮/关联卡状态覆盖到新卡上 */
+    private volatile int bindGen = 0;
+
     // 异步线程池用于关联卡片和高亮词存在性检查
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -432,26 +436,45 @@ class CardInfoBinder {
 
     private void bindCardDesc(Card cardData) {
         if (tvCardDesc == null) return;
-        // 记录当前展示的卡，供关键词 queryable 判定（唯一命中即当前卡自身时视为不可查）
+        // 记录当前展示的卡，供关键词 queryable 判定（唯一命中即当前卡自身则视为不可查）
         currentDisplayCard = cardData;
+        final int gen = ++bindGen;
         spanStringList.clear();
-        String desc = cardData.Desc;
-        if (desc == null || desc.isEmpty()) {
-            tvCardDesc.setText("");
-        } else {
-            setHighlightTextWithClickableSpans(desc);
-        }
-        // 描述关键词已解析完毕（spanStringList 就绪），据此计算当前卡关联卡并刷新关联按钮显隐
-        // 使用异步方式提高性能，避免阻塞主线程
-        checkRelatedCardsAsync(cardData);
+        lastRelatedCards = Collections.emptyList();
+        updateRelatedButtonVisibility();
+        final String desc = cardData.Desc == null ? "" : cardData.Desc;
+        // 纯文本立即显示（描述先可读，不等待任何扫描）
+        tvCardDesc.setText(desc);
+        // 关键词解析 + 高亮 spannable 构建 + queryable 判定（缓存未命中为全卡表扫描）+
+        // 关联卡片计算一律在后台线程执行：此前在主线程逐关键词做全表扫描，连续点卡时
+        // 主线程被反复阻塞（表现为点卡无响应“卡死”），且与后台线程并发读写普通 HashMap
+        // 缓存可能死循环。结果按代际回主线程：绑定过期的任务直接丢弃。
+        final Card card = cardData;
+        executorService.execute(() -> {
+            if (gen != bindGen) return;
+            List<String> keywords = new ArrayList<>();
+            CharSequence styled = buildStyledDesc(desc, card, keywords);
+            List<Card> related = relatedCards(card, keywords);
+            mainHandler.post(() -> {
+                if (gen != bindGen || tvCardDesc == null) return;
+                tvCardDesc.setText(styled);
+                tvCardDesc.setMovementMethod(LinkMovementMethod.getInstance());
+                spanStringList.clear();
+                spanStringList.addAll(keywords);
+                lastRelatedCards = related;
+                updateRelatedButtonVisibility();
+            });
+        });
     }
 
     /**
      * 将描述中「」与 "" 之间的文本渲染为高亮可点击文字（对齐 CardDetail.setHighlightTextWithClickableSpans）：
      * 命中卡集合可查（多于一个、或唯一命中非当前卡）→ holo_blue_bright 蓝色带下划线，点击在
      * layout_game_right 最左侧停靠弹出关键词卡片列表；不可查 → 白色带下划线，点击仅提示已到结尾。
+     * <p>本方法在后台线程执行（queryable 判定含全卡表扫描），只读写入参局部对象与线程安全
+     * 的关键词缓存，不触碰任何视图；解析出的关键词经 {@code outKeywords} 带回主线程。
      */
-    private void setHighlightTextWithClickableSpans(String text) {
+    private CharSequence buildStyledDesc(String text, Card card, List<String> outKeywords) {
         SpannableString spannableString = new SpannableString(text);
         QuoteType currentQuoteType = QuoteType.NONE;
         Stack<Integer> stack = new Stack<>();
@@ -479,9 +502,9 @@ class CardInfoBinder {
                         if (stack.isEmpty()) {
                             String quotedText = text.substring(start, i).trim();
                             applySpan(spannableString, start, i, quotedText,
-                                    KeywordCardListDialog.isQueryable(quotedText, currentDisplayCard)
+                                    KeywordCardListDialog.isQueryable(quotedText, card)
                                             ? YGOUtil.c(R.color.holo_blue_bright) : Color.WHITE);
-                            spanStringList.add(quotedText);
+                            outKeywords.add(quotedText);
                             currentQuoteType = QuoteType.NONE;
                         }
                     }
@@ -492,9 +515,9 @@ class CardInfoBinder {
                         if (stack.isEmpty()) {
                             String quotedText = text.substring(start, i).trim();
                             applySpan(spannableString, start, i, quotedText,
-                                    KeywordCardListDialog.isQueryable(quotedText, currentDisplayCard)
+                                    KeywordCardListDialog.isQueryable(quotedText, card)
                                             ? YGOUtil.c(R.color.holo_blue_bright) : Color.WHITE);
-                            spanStringList.add(quotedText);
+                            outKeywords.add(quotedText);
                             currentQuoteType = QuoteType.NONE;
                         } else {
                             stack.push(i);
@@ -503,8 +526,7 @@ class CardInfoBinder {
                     break;
             }
         }
-        tvCardDesc.setText(spannableString);
-        tvCardDesc.setMovementMethod(LinkMovementMethod.getInstance());
+        return spannableString;
     }
 
     /** 为一段引用文本着色并挂点击：蓝色→点击弹出关键词卡片列表，白色→点击提示已到结尾 */
@@ -554,23 +576,6 @@ class CardInfoBinder {
     }
 
     /**
-     * 异步检查关联卡片存在性并更新 UI
-     * 通过在子线程进行查询卡片是否有关联卡片和高亮词结果唯一性来提高 CardDetailPanel 显示速度
-     */
-    private void checkRelatedCardsAsync(Card cardData) {
-        executorService.execute(() -> {
-            // 在子线程中进行关联卡片查询
-            List<Card> relatedCards = relatedCards(cardData);
-            
-            // 在主线程中更新 UI
-            mainHandler.post(() -> {
-                lastRelatedCards = relatedCards;
-                updateRelatedButtonVisibility();
-            });
-        });
-    }
-
-    /**
      * 同步版本：用于不需要异步处理的场景（如旋转重建时）
      */
     private void checkRelatedCardsSync(Card cardData) {
@@ -582,6 +587,8 @@ class CardInfoBinder {
 
     /** 清理关联卡状态并隐藏关联卡片按钮（无当前卡/默认态/未知卡时） */
     private void resetRelatedState() {
+        // 代际自增：作废在途的后台高亮/关联卡任务，防止过期结果覆盖默认态
+        bindGen++;
         spanStringList.clear();
         lastRelatedCards = Collections.emptyList();
         updateRelatedButtonVisibility();
@@ -625,13 +632,22 @@ class CardInfoBinder {
      * 计算与给定卡片关联的卡片集合（对齐 {@code CardDetail.relatedCards}）：
      * 卡名/描述包含当前卡名、与当前卡同字段、与描述关键词完全一致（卡名或「」/""引文）的卡，
      * 排除与当前卡同名的自身，结果去重。
+     * <p>主线程兼容入口：对共享的 spanStringList 先做快照再扫描，避免与后台读并发。
      */
     private List<Card> relatedCards(Card cardInfo) {
+        return relatedCards(cardInfo, new ArrayList<>(spanStringList));
+    }
+
+    /**
+     * 关联卡计算（后台线程入口）：关键词列表以参数快照传入，不再跨线程读写共享的
+     * spanStringList（旧实现后台 new ArrayList<>(spanStringList) 与主线程 clear/add
+     * 并发，存在 ConcurrentModificationException 与读到半更新列表的问题）。
+     */
+    private List<Card> relatedCards(Card cardInfo, List<String> highlightedTexts) {
         if (cardInfo == null) return Collections.emptyList();
         SparseArray<Card> cards = DataManager.get().getCardManager().getAllCards();
         if (cards == null) return Collections.emptyList();
         Set<Card> matchingCards = new HashSet<>();
-        List<String> highlightedTexts = new ArrayList<>(spanStringList);
         Set<Long> cardInfoSetCodes = new HashSet<>();
         for (long setCode : cardInfo.getSetCode()) {
             if (setCode != 0) cardInfoSetCodes.add(setCode);

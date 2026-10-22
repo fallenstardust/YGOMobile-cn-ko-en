@@ -349,9 +349,9 @@ public class PlayerWaitingDialog {
         setupStartButton();
 
         draggableHelper.showPopup(popupWindow, anchorView);
-        // 输入法抬升联动（用户规格：与其他 dialog 同一条逻辑，实现统一收在工具类里）：
-        // 点聊天输入框抬高输入法时本弹窗底边贴输入框上沿，收起后回到屏幕中央
-        ImePopupAdjuster.attach(popupWindow);
+        // 输入法抬升联动（用户规格：本弹窗维持原本整个 dialog 被抬高的方式，不做自动最小化，
+        // 故 autoMinimize=false）：点聊天输入框抬高输入法时本弹窗底边贴输入框上沿，收起后回到屏幕中央
+        ImePopupAdjuster.attach(popupWindow, false);
 
         if (listener != null) listener.onPlayerWaitingShown();
     }

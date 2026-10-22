@@ -38,16 +38,24 @@ import java.util.List;
  * （上一版用户反馈的问题）。故 {@code baseSaved} 一旦采集便冻结，只有还原被实测确认收敛后
  * 才作废重采（重采用于吸收旋转后的新屏幕尺寸），修复尝试另有上限防止永远收敛不了时空转。
  * <p>
- * 两种抬升方式按弹窗结构自动选择：
+ * 抬升方式按弹窗结构与登记选项自动选择：
  * <ul>
- *   <li><b>收缩窗口 + 内容贴底</b>（{@link DraggablePopupHelper#setupDraggablePopup} 包装成
- *   铺满窗口的弹窗，绝大多数 dialog）：窗口顶保持原位、窗口底缩到「输入框上沿 − 安全间隙」，
- *   内容（包装层的第一个子 view，即区域锚定 margin 所在的那个 view）重力改为底部对齐并清零
- *   纵向 margin，于是内容底边正好落在输入框上沿之上。必须真的缩小窗口而不只是移动内容：
- *   全窗口铺满时弹窗窗口会盖住软键盘，键盘按键的触摸落在弹窗窗口上而到不了输入法。内容高
- *   装不进收缩后的窗口时上沿被窗口顶裁掉（与 PlayerWaitingDialog 原实现一致）。</li>
+ *   <li><b>自动最小化为底部收缩横条</b>（{@link DraggablePopupHelper#setupDraggablePopup} 包装成
+ *   铺满窗口的弹窗，绝大多数 dialog，用户规格）：键盘抬起时把 dialog 收缩成横条（无横条的
+ *   动态补装），横条底边贴「输入框上沿 − 安全间隙」，并把窗口底边同步收缩到同一目标线——
+ *   真机结论（原 PlayerWaitingDialog）：铺满全屏的弹窗窗口盖住键盘区域会吞掉输入法触摸，
+ *   键盘按键落不回 IME；收缩后抬高后的输入框与键盘全部位于弹窗窗口之外，触摸恢复；
+ *   高内容不再被裁剪（只剩横条可见），输入法收起后一步展开复原并由还原序列把窗口撑回基准。
+ *   已是用户手动收缩态的同样接管：横条随键盘逐轮重锚贴住抬高后的输入框、窗口底边同步
+ *   收缩，收起后保持收缩态随输入框降回原位仍紧贴其上方（用户规格），不自动展开；
+ *   键盘抬起期间横条一律不可点（展开会再次吞掉输入法触摸，用户规格），复原统一由
+ *   还原序列完成。仅聊天输入框持有焦点时介入：宣言卡等自带搜索框弹窗自身的输入路径不最小化。</li>
+ *   <li><b>收缩窗口 + 内容贴底（旧方式）</b>（{@link #attach(PopupWindow, boolean)} 传
+ *   autoMinimize=false，用户规格：玩家等待弹窗维持原本整个 dialog 被抬高、不加最小化）：
+ *   窗口顶保持原位、窗口底缩到「输入框上沿 − 安全间隙」，内容重力改底部对齐并清零纵向
+ *   margin，整个 dialog 视觉上被抬高贴住输入框。</li>
  *   <li><b>整窗上移</b>（先后攻/位置选择这类以 {@code showAtLocation} 绝对坐标定位、自带尺寸的
- *   弹窗）：尺寸不动，整窗上移「弹窗底边 − 输入框上沿」的差值，使底边贴输入框上沿，且不裁剪
+ *   小弹窗）：尺寸不动，整窗上移「弹窗底边 − 输入框上沿」的差值，使底边贴输入框上沿，且不裁剪
  *   内容；本就位于输入框上方则不抬升。本方式直接改写窗口 {@code x/y}，故只适用于绝对坐标定位
  *   的弹窗；以 {@code showAsDropDown} 锚定的弹窗（猜拳 RPSDialog）改 {@code x/y} 会破坏锚点偏移，
  *   它已按锚视图（layout_game_right）尺寸变化自行重算「底边贴输入框上沿」并回到底部中央，
@@ -131,8 +139,12 @@ public final class ImePopupAdjuster {
     /** 单个弹窗的登记项：抬升方式 + 干净状态下采集的基准矩形与内容布局快照 */
     private static class Entry {
         final WeakReference<PopupWindow> popupRef;
-        /** true = 自定位弹窗整窗上移（尺寸与内容布局都不改）；false = 铺满窗口的包装层收缩 */
+        /** true = 自定位弹窗整窗上移（尺寸与内容布局都不改）；false = 铺满窗口的包装层弹窗
+         *  （抬升走 {@link #stepMinimize} 自动最小化，或 noAutoMinimize 时走旧收缩+贴底） */
         final boolean liftMode;
+        /** true = 包装层弹窗不做自动最小化，维持旧的「收缩窗口 + 内容贴底」整 dialog 抬高
+         *  （{@link #attach(PopupWindow, boolean)} 传 autoMinimize=false，用户规格：玩家等待） */
+        final boolean noAutoMinimize;
         /** 参与抬升的内容根（包装层弹窗为包装层的第一个子 view） */
         final WeakReference<View> contentRef;
 
@@ -171,13 +183,29 @@ public final class ImePopupAdjuster {
          *  说明该 ROM 没有按请求改窗口尺寸，重复下发无意义 */
         int lastWantTop;
         int lastWantH;
+        /** 本弹窗是否已被输入法联动自动收缩成横条（横条底边贴抬高后的输入框上沿） */
+        boolean minimizedForIme;
+        /** 自动最小化期间用户点横条手动展开：本个抬升周期内尊重用户，不再强制收缩回去 */
+        boolean userExpandedFlag;
+        /** 自动最小化横条锚定的连续下发次数（复用抬升上限，收敛不了即停手） */
+        int barTries;
+        /** 本次还原周期内是否已重建过窗口：重建每做一次窗口就消失/重现一次，
+         *  每个周期至多一次；否则键盘动画期实测高度反复变化会被当成「撑不回」
+         *  连做多次重建，构成横屏还原时的快速显隐闪烁（用户反馈） */
+        boolean rebuiltOnce;
+        /** 抬升期间是否已把弹窗窗口 softInputMode 冻结为 ADJUST_NOTHING（阻止 WMS 对弹窗
+         *  二次 resize 构成第二定位控制器——闪动与钳顶的根源）；仅聊天输入框持有焦点时冻结，
+         *  宣言卡等自带搜索框依赖 ADJUST_RESIZE 的自身输入路径不受影响 */
+        boolean softFrozen;
+        int savedSoftInputMode;
         /** 内容视图上的注销监听（注销时摘除，避免 dialog 反复显示/关闭在同一视图上堆叠监听） */
         View.OnAttachStateChangeListener attachListener;
 
-        Entry(PopupWindow popup, boolean liftMode, View content) {
+        Entry(PopupWindow popup, boolean liftMode, View content, boolean noAutoMinimize) {
             this.popupRef = new WeakReference<>(popup);
             this.liftMode = liftMode;
             this.contentRef = new WeakReference<>(content);
+            this.noAutoMinimize = noAutoMinimize;
         }
 
         PopupWindow popup() {
@@ -196,6 +224,15 @@ public final class ImePopupAdjuster {
      * 销毁时自动注销并撤销抬升（内容视图会被 dialog 复用，必须还原其布局参数）。
      */
     public static void attach(PopupWindow popup) {
+        attach(popup, true);
+    }
+
+    /**
+     * @param autoMinimize 铺满窗口的包装层弹窗抬升时是否自动最小化为底部收缩横条（默认 true）；
+     *                     传 false 维持旧的「收缩窗口 + 内容贴底」整 dialog 抬高方式（用户规格：
+     *                     玩家等待弹窗不加最小化功能）；自定位弹窗的整窗上移不受此参数影响。
+     */
+    public static void attach(PopupWindow popup, boolean autoMinimize) {
         if (popup == null) return;
         prune();
         for (Entry e : ENTRIES) {
@@ -205,7 +242,7 @@ public final class ImePopupAdjuster {
         if (content == null) return;
         refreshLiftSafety(content);
         final Entry entry = new Entry(popup,
-                !DraggablePopupHelper.isWrappedFullscreenPopup(popup), content);
+                !DraggablePopupHelper.isWrappedFullscreenPopup(popup), content, !autoMinimize);
         entry.wantLift = sImeUp;
         ENTRIES.add(entry);
         entry.attachListener = new View.OnAttachStateChangeListener() {
@@ -238,6 +275,12 @@ public final class ImePopupAdjuster {
      */
     private static void unregister(Entry entry, PopupWindow live) {
         restoreContent(entry);
+        entry.minimizedForIme = false;
+        entry.userExpandedFlag = false;
+        entry.softFrozen = false;
+        if (live != null) {
+            DraggablePopupHelper.expandPopupFromIme(live);
+        }
         if (live != null && entry.baseSaved) {
             live.setWidth(entry.savedWidth);
             live.setHeight(entry.savedHeight);
@@ -315,6 +358,12 @@ public final class ImePopupAdjuster {
     private static void setWantLift(boolean lift) {
         for (Entry e : ENTRIES) {
             e.wantLift = lift;
+            if (lift) {
+                // 新一轮键盘抬起：重置「用户手动展开」豁免、横条锚定重试计数与重建限额
+                e.userExpandedFlag = false;
+                e.barTries = 0;
+                e.rebuiltOnce = false;
+            }
         }
     }
 
@@ -385,14 +434,92 @@ public final class ImePopupAdjuster {
             return false;
         }
 
-        // 收缩成底部横条的弹窗不参与：横条几何（贴区域底部、与聊天输入框同高同位）由 dialog
-        // 自身按布局变化解算并随窗口 resize 自动跟随抬升后的输入框，本工具介入反而会把它推离
-        boolean lift = entry.wantLift && chatTop > 0 && !isCollapsed(entry);
+        // dialog 自己（非本工具）手动收缩成横条的：包装层弹窗抬升时同样接管——横条随键盘
+        // 逐轮重锚、窗口底边同步收缩（收起后保持收缩态贴回输入框上方，用户规格）；
+        // 旧的整 dialog 抬升路径不介入收缩态，避免把隐藏中的内容重新撑大
+        boolean dialogCollapsed = DraggablePopupHelper.isPopupCollapsed(popup)
+                && !DraggablePopupHelper.isPopupAutoCollapsed(popup);
+        // 自动最小化期间用户点横条手动展开：尊重用户，标记豁免并解除窗口冻结
+        if (entry.minimizedForIme && !DraggablePopupHelper.isPopupAutoCollapsed(popup)
+                && !dialogCollapsed) {
+            entry.minimizedForIme = false;
+            entry.userExpandedFlag = true;
+            releaseImeMode(entry, window, p);
+        }
 
+        // 铺满窗口的包装层弹窗（绝大多数 dialog）：抬升自动最小化为底部横条（已手动收缩的
+        // 只接管横条重锚，collapseForIme 幂等），横条底边贴抬高后的输入框上沿，并把窗口
+        // 底边同步收缩到目标线——铺满全屏的弹窗盖住键盘区会吞掉输入法触摸（真机结论，
+        // 见类头注释）。仅聊天输入框持有焦点时介入：宣言卡等自带搜索框弹窗自己弹键盘时
+        // （chat 无焦点）不最小化也不收缩，避免打断其自身输入。
+        boolean chatFocused = sChatInput != null && sChatInput.get() != null
+                && sChatInput.get().hasFocus();
+        if (entry.wantLift && chatTop > 0 && !entry.liftMode && !entry.noAutoMinimize
+                && !entry.userExpandedFlag) {
+            return chatFocused
+                    ? stepMinimize(entry, popup, window, p, top, height, chatTop)
+                    : false;
+        }
+
+        boolean lift = entry.wantLift && chatTop > 0 && !dialogCollapsed
+                && !entry.userExpandedFlag;
         if (lift) {
             return stepLift(entry, popup, window, top, height, chatTop);
         }
         return stepIdle(entry, popup, window, p, top, height);
+    }
+
+    /**
+     * 自动最小化解算：目标线 = {@code 输入框上沿 − 安全间隙}。两件事同步下发：
+     * ①收缩 dialog 为底部横条并把横条底边贴目标线（只改包装层子视图 margin，幂等重发）；
+     * ②把弹窗窗口底边收缩到目标线（applyWindowRect，与旧收缩路径同一套幂等反推）——
+     * 窗口不缩会盖住键盘区吞掉输入法触摸（真机结论）。收敛判定同时核对横条底边与
+     * 窗口底边两条实测线，Z 字形键盘动画期间逐轮跟随。内容布局全程不动，还原时
+     * 只需一步展开 + 一次窗口撑回（撑不回再走重建 fallback）。
+     */
+    private static boolean stepMinimize(Entry entry, PopupWindow popup, View window,
+                                        WindowManager.LayoutParams p, int top, int height,
+                                        int chatTop) {
+        freezeImeMode(entry, window, p);
+        final int wantBottom = chatTop - sLiftSafetyPx;
+        int wantH = wantBottom - entry.baseTop;
+        if (wantH > entry.baseH) wantH = entry.baseH;
+        if (wantH < 1) wantH = 1;
+        View bar = DraggablePopupHelper.getCollapseBarView(popup);
+        boolean barOk = false;
+        if (bar != null && bar.isShown() && bar.getHeight() > 0) {
+            int[] bLoc = new int[2];
+            bar.getLocationOnScreen(bLoc);
+            barOk = Math.abs(bLoc[1] + bar.getHeight() - wantBottom) <= LIFT_GAP_TOL_PX;
+        }
+        boolean winOk = Math.abs(top + height - wantBottom) <= LIFT_GAP_TOL_PX;
+        if (barOk && winOk) {
+            entry.barTries = 0;
+            entry.lifted = true;
+            entry.liftedEver = true;
+            return false;
+        }
+        if (entry.barTries >= MAX_LIFT_TRIES) {
+            entry.lifted = true;
+            entry.liftedEver = true;
+            return false;
+        }
+        entry.barTries++;
+        if (!DraggablePopupHelper.collapsePopupForIme(popup, wantBottom)) {
+            // 弹窗结构无法装横条（理论不应发生）：退回旧的收缩窗口+内容贴底路径作为 fallback
+            entry.minimizedForIme = false;
+            return stepLift(entry, popup, window, top, height, chatTop);
+        }
+        entry.minimizedForIme = true;
+        if (!winOk && (entry.lastWantTop != entry.baseTop || entry.lastWantH != wantH)) {
+            // 目标与上一轮一致却仍未收敛：该 ROM 不认尺寸下发，不重复空转，继续只重锚横条
+            entry.lastWantTop = entry.baseTop;
+            entry.lastWantH = wantH;
+            applyWindowRect(entry, popup, entry.baseTop, wantH);
+        }
+        entry.lifted = true;
+        entry.liftedEver = true;
+        return true;
     }
 
     /**
@@ -479,6 +606,28 @@ public final class ImePopupAdjuster {
      */
     private static boolean stepIdle(Entry entry, PopupWindow popup, View window,
                                     WindowManager.LayoutParams p, int top, int height) {
+        // 自动最小化的还原：一步展开横条→内容回到原区域锚定位（内容布局收缩期间从未被改），
+        // 再把收缩过的窗口底边按基准矩形一次下发撑回；后续轮实测核对，撑不回时
+        // 自动进入下方「重建窗口 + 补锚」的旧 fallback 路径
+        if (entry.minimizedForIme || entry.userExpandedFlag) {
+            entry.minimizedForIme = false;
+            entry.userExpandedFlag = false;
+            entry.barTries = 0;
+            DraggablePopupHelper.expandPopupFromIme(popup);
+            // 还原期保持 ADJUST_NOTHING 冻结：此刻键盘尚未完全降回，若提前解回
+            // ADJUST_RESIZE，WMS 会按残留键盘高度再次压缩刚撑回的窗口，与撑回下发互相
+            // 拉扯（横屏还原快速显隐闪烁的根源之一）；冻结的解除移到实测收敛/修复收尾处
+            entry.lifted = false;
+            entry.liftTries = 0;
+            entry.lastWantTop = Integer.MIN_VALUE;
+            entry.lastWantH = Integer.MIN_VALUE;
+            if (Math.abs(height - entry.baseH) > VERIFY_TOL_PX
+                    || Math.abs(top - entry.baseTop) > VERIFY_TOL_PX) {
+                restoreToBase(entry, popup, window, p, top, height);
+                entry.reanchorPasses = Math.max(entry.reanchorPasses, RESTORE_REANCHOR_PASSES);
+            }
+            return true;
+        }
         if (entry.lifted) {
             restoreToBase(entry, popup, window, p, top, height);
             entry.lifted = false;
@@ -494,18 +643,23 @@ public final class ImePopupAdjuster {
                 && Math.abs(top - entry.baseTop) <= VERIFY_TOL_PX;
         boolean contentOk = !contentNeedsRestore(entry);
         if (winOk && contentOk && entry.reanchorPasses == 0) {
-            // 实测确认已回到基准：作废基准，下一轮按当前（可能已旋转过的）干净几何重采
+            // 实测确认已回到基准：此时键盘确已降回，解除抬升期的 IME 冻结（回到弹窗
+            // 自身的 softInputMode），作废基准，下一轮按当前（可能已旋转过的）干净几何重采
+            releaseImeMode(entry, window, p);
             entry.liftedEver = false;
             entry.repairTries = 0;
+            entry.rebuiltOnce = false;
             entry.baseSaved = false;
             return false;
         }
         if (entry.repairTries >= MAX_REPAIR_TRIES) {
-            // 修复到上限仍不收敛（该 ROM 拒绝把窗口撑回）：接受当前几何并停手，但<em>保留</em>
-            // 原基准——收缩态绝不能被当成基准，否则下一次抬升/还原都以偏矮的窗口为准
+            // 修复到上限仍不收敛（该 ROM 拒绝把窗口撑回）：接受当前几何并停手、解除 IME
+            // 冻结，但<em>保留</em>原基准——收缩态绝不能被当成基准，否则下一次抬升/还原都以偏矮的窗口为准
+            releaseImeMode(entry, window, p);
             entry.liftedEver = false;
             entry.repairTries = 0;
             entry.reanchorPasses = 0;
+            entry.rebuiltOnce = false;
             return false;
         }
         entry.repairTries++;
@@ -514,9 +668,12 @@ public final class ImePopupAdjuster {
             if (entry.repairTries == 1) {
                 // 先按登记的原始参数再下发一次「像素撑回 + 参数直写」（与收缩同一条路径）
                 restoreToBase(entry, popup, window, p, top, height);
-            } else {
+            } else if (!entry.rebuiltOnce) {
                 // 参数下发没能把窗口撑回：以原始参数重建窗口（不经 dismiss，不触发各 dialog
-                // 的应答语义），这是真机验证过的唯一能把窗口恢复成 MATCH_PARENT 的手段
+                // 的应答语义），这是真机验证过的唯一能把窗口恢复成 MATCH_PARENT 的手段。
+                // 重建每做一次窗口就消失/重现一次（用户反馈的横屏还原快速显隐闪烁），故每个
+                // 还原周期至多一次，此后只补锚等待收敛或走上限收尾
+                entry.rebuiltOnce = true;
                 rebuildWindow(entry, window, p);
             }
             entry.reanchorPasses = Math.max(entry.reanchorPasses, RESTORE_REANCHOR_PASSES);
@@ -636,6 +793,30 @@ public final class ImePopupAdjuster {
         } catch (Exception ignored) {
             // token 失效或窗口正在销毁时放弃重建，条目随视图销毁自动注销
         }
+    }
+
+    /**
+     * 抬升期间冻结弹窗窗口的 IME 自适应：ADJUST_RESIZE 下 WMS 会同步压缩铺满窗口的弹窗
+     * 窗口本身，与本工具的横条锚定构成两个定位控制器（弹窗随键盘动画反复重排、还原时
+     * 又多次闪动的来源）。只在聊天输入框持有焦点时冻结——宣言卡等弹窗自带搜索框依赖
+     * ADJUST_RESIZE 把键盘顶到自己上面，其自身输入路径绝不能冻结。
+     */
+    private static void freezeImeMode(Entry entry, View window, WindowManager.LayoutParams p) {
+        if (entry.softFrozen || p.softInputMode == WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING) {
+            return;
+        }
+        entry.savedSoftInputMode = p.softInputMode;
+        p.softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING;
+        entry.softFrozen = true;
+        updateViewLayout(window, p);
+    }
+
+    /** 解除抬升期的 IME 冻结，写回登记窗口自身的原 softInputMode */
+    private static void releaseImeMode(Entry entry, View window, WindowManager.LayoutParams p) {
+        if (!entry.softFrozen) return;
+        entry.softFrozen = false;
+        p.softInputMode = entry.savedSoftInputMode;
+        updateViewLayout(window, p);
     }
 
     // ══════════════════════════════════════════════════════════════════════

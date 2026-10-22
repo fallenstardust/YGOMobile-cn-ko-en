@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import cn.garymb.ygomobile.game.deck.DeckCardAdapter;
 import cn.garymb.ygomobile.lite.R;
@@ -295,8 +296,13 @@ public class KeywordCardListDialog {
      * 字段名在多张卡间反复出现），故按关键词缓存命中结果，避免每次卡详绑定都对全卡表重复
      * 扫描（原本会在点击卡片的同一 UI 线程消息里阻塞命令菜单弹出）。返回结果列表的拷贝，
      * 使调用方（如 openKeywordList 会排序）可自由修改而不污染缓存。
+     *
+     * <p>线程安全：本查询同时被主线程（openKeywordList/isQueryable）与卡详绑定后台线程
+     * 调用，缓存必须是 {@code ConcurrentHashMap}——普通 HashMap 在并发读写（resize）下
+     * 可能形成死循环，一个线程自旋吃满 CPU 即表现为「连续查看卡详后整个界面卡死」
+     * （用户反馈的 CardDetailPanel 卡死根因之一）。
      */
-    private static final Map<String, List<Card>> KEYWORD_QUERY_CACHE = new HashMap<>();
+    private static final Map<String, List<Card>> KEYWORD_QUERY_CACHE = new ConcurrentHashMap<>();
 
     public static List<Card> queryCardsByKeyword(String keyword) {
         if (keyword == null || keyword.isEmpty()) return new ArrayList<>();
