@@ -14,6 +14,7 @@ import static cn.garymb.ygomobile.Constants.PREF_GAME_FONT;
 import static cn.garymb.ygomobile.Constants.PREF_IMMERSIVE_MODE;
 import static cn.garymb.ygomobile.Constants.PREF_KEEP_SCALE;
 import static cn.garymb.ygomobile.Constants.PREF_LOCK_SCREEN;
+import static cn.garymb.ygomobile.Constants.PREF_NATIVE_GAME_MODE;
 import static cn.garymb.ygomobile.Constants.PREF_OPENGL_VERSION;
 import static cn.garymb.ygomobile.Constants.PREF_PENDULUM_SCALE;
 import static cn.garymb.ygomobile.Constants.PREF_READ_EX;
@@ -130,7 +131,8 @@ public class SettingFragment extends BaseFragemnt implements View.OnClickListene
     private boolean updatingUi = false;
 
     private View rootView;
-    private Switch swReadEx, swDuelAssistant, swImmersive, swLockScreen, swAntiAlias, swPendulum;
+    private View llYgoproJniSettings;
+    private Switch swReadEx, swDuelAssistant, swImmersive, swLockScreen, swAntiAlias, swPendulum, swNativeGame;
     private TextView tvVersionInfo, tvOpenGLValue, tvPaddingValue;
     private TextView btnQualityLow, btnQualityHigh;
     private final TextView[] langViews = new TextView[6];
@@ -217,12 +219,15 @@ public class SettingFragment extends BaseFragemnt implements View.OnClickListene
         swLockScreen = view.findViewById(R.id.switch_lock_screen);
         swAntiAlias = view.findViewById(R.id.switch_font_antialias);
         swPendulum = view.findViewById(R.id.switch_pendulum);
+        swNativeGame = view.findViewById(R.id.switch_native_game);
+        llYgoproJniSettings = view.findViewById(R.id.ll_ygopro_jni_settings);
         swReadEx.setOnCheckedChangeListener(this::onSwitchChanged);
         swDuelAssistant.setOnCheckedChangeListener(this::onSwitchChanged);
         swImmersive.setOnCheckedChangeListener(this::onSwitchChanged);
         swLockScreen.setOnCheckedChangeListener(this::onSwitchChanged);
         swAntiAlias.setOnCheckedChangeListener(this::onSwitchChanged);
         swPendulum.setOnCheckedChangeListener(this::onSwitchChanged);
+        swNativeGame.setOnCheckedChangeListener(this::onSwitchChanged);
 
         //游戏图片质量：高/低两个按钮切换
         btnQualityLow = view.findViewById(R.id.btn_quality_low);
@@ -255,7 +260,9 @@ public class SettingFragment extends BaseFragemnt implements View.OnClickListene
         setSwitch(swLockScreen, mSettings.isLockSreenOrientation());
         setSwitch(swAntiAlias, mSettings.isFontAntiAlias());
         setSwitch(swPendulum, mSettings.isPendulumScale());
-        //OpenGL与瀑布屏边距
+        setSwitch(swNativeGame, mSettings.isNativeGameMode());
+        updateJniSettingsVisibility();
+        //OpenGL 与瀑布屏边距
         String[] oglEntries = getResources().getStringArray(R.array.opengl_version);
         int ogl = Constants.PREF_DEF_OPENGL_VERSION;
         try {
@@ -313,7 +320,7 @@ public class SettingFragment extends BaseFragemnt implements View.OnClickListene
                     .loadUrl("file:///android_asset/changelog.html", Color.TRANSPARENT)
                     .show();
         } else if (id == R.id.cell_join_qq) {
-            String groupkey = "anEjPCDdhLgxtfLre-nT52G1Coye3LkK";
+            String groupkey = "7yPZyvF3VmNgZe3Lt6Ai9WlQOCFyhChS";
             joinQQGroup(groupkey);
         } else if (id == R.id.cell_bilibili) {
             Intent intent = new Intent(Intent.ACTION_VIEW);
@@ -417,6 +424,19 @@ public class SettingFragment extends BaseFragemnt implements View.OnClickListene
         } else if (id == R.id.switch_pendulum) {
             putPrefBool(PREF_PENDULUM_SCALE, checked);
             setPendlumScale(checked);
+        } else if (id == R.id.switch_native_game) {
+            putPrefBool(PREF_NATIVE_GAME_MODE, checked);
+            updateJniSettingsVisibility();
+        }
+    }
+
+    /**
+     * 根据原生 UI 游戏模式开关状态，显示/隐藏 JNI 设置项
+     */
+    private void updateJniSettingsVisibility() {
+        if (llYgoproJniSettings != null) {
+            boolean nativeGameMode = mSettings.isNativeGameMode();
+            llYgoproJniSettings.setVisibility(nativeGameMode ? View.GONE : View.VISIBLE);
         }
     }
 

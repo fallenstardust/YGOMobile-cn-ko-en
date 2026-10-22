@@ -1,6 +1,7 @@
 package cn.garymb.ygomobile.ui.widget;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -33,8 +34,10 @@ import java.util.zip.ZipFile;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.utils.BitmapUtil;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.data.Card;
 import ocgcore.enums.CardType;
@@ -60,11 +63,8 @@ public class DeckPieChartView extends View {
     private boolean showCardImages = true; // 默认显示卡图模式
 
     private static final float MIN_PERCENTAGE = 1.0f;
-    private static final int[] COLORS = {
-            0xFF4CAF50, 0xFF2196F3, 0xFFFF9800, 0xFFE91E63,
-            0xFFFFEB3B, 0xFF9C27B0, 0xFF00BCD4, 0xFFFF5722,
-            0xFF795548, 0xFF607D8B, 0xFF8BC34A, 0xFFCDDC39
-    };
+    /** 饼图系列色（集中到 colors.xml 的 deck_pie_series_colors 数组，init 时读取） */
+    private int[] pieColors;
 
     public interface OnPieChartClickListener {
         void onPieChartClick();
@@ -105,6 +105,12 @@ public class DeckPieChartView extends View {
     }
 
     private void init() {
+        TypedArray ta = getResources().obtainTypedArray(R.array.deck_pie_series_colors);
+        pieColors = new int[ta.length()];
+        for (int i = 0; i < ta.length(); i++) {
+            pieColors[i] = ta.getColor(i, Color.WHITE);
+        }
+        ta.recycle();
         imageLoader = new ImageLoader();
         pieSlices = new ArrayList<>();
         imageCache = new HashMap<>();
@@ -123,7 +129,7 @@ public class DeckPieChartView extends View {
         linePaint.setStyle(Paint.Style.STROKE);
 
         centerPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        centerPaint.setColor(Color.parseColor("#00000000"));
+        centerPaint.setColor(YGOUtil.c(R.color.transparent));
         centerPaint.setStyle(Paint.Style.FILL);
 
         imagePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -178,7 +184,7 @@ public class DeckPieChartView extends View {
                 slice.percentage = percentage;
                 slice.startAngle = currentAngle;
                 slice.sweepAngle = sweepAngle;
-                slice.color = COLORS[colorIndex % COLORS.length];
+                slice.color = pieColors[colorIndex % pieColors.length];
 
                 // 仅在显示卡图模式下加载卡片图片
                 if (showCardImages) {

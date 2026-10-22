@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.zip.ZipInputStream;
@@ -37,6 +38,12 @@ public class CardManager {
     private final String dbDir;
     private final String exDbPath;
     private static final String TAG = String.valueOf(CardManager.class);
+
+    /** texts 表脚本提示文字列（str1~str16），对齐 C++ data_manager.cpp SELECT_STMT；
+     * 供 MSG_SELECT_OPTION 按 卡号*16+n 解析卡片脚本提示文字 */
+    private static final String STR_COLUMNS =
+            ", str1, str2, str3, str4, str5, str6, str7, str8" +
+            ", str9, str10, str11, str12, str13, str14, str15, str16";
 
     /**
      * @see DataManager#getCardManager()
@@ -138,6 +145,11 @@ public class CardManager {
     /**
      * 清空cardDataHashMap，之后从cdb文件读取卡牌，到cardDataHashMap
      * 如果开启了先行卡，
+     *
+     * <p>读取顺序与引擎侧 {@link cn.garymb.ygomobile.AppsSettings#makeCdbList}、
+     * cdb 统一优先级一致（后读取覆盖同名卡，低→高）：主 cards.cdb → 卡包
+     * zip/ypk（按文件名升序，靠后名包覆盖靠前名包）→ 卡包物化 cdb
+     *（{@code expansions/cdb/}，与包内 cdb 同源）→ expansions 散 cdb（最高）。
      */
     @WorkerThread
     public void loadCards() {
@@ -155,12 +167,16 @@ public class CardManager {
                             return file.isFile() && ((name.endsWith(".cdb") || (name.endsWith(".zip") || name.endsWith(Constants.YPK_FILE_EX))));
                         }
                     });
-                    //读取全部卡片
                     if (files != null) {
+                        //按文件名升序，与 getExpansionFiles/makeCdbList 同一基准
+                        try {
+                            Arrays.sort(files, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+                        } catch (Exception e) {
+                            //
+                        }
+                        //1.先读卡包压缩包（升序=靠后名包后读覆盖靠前名包）
                         for (File file : files) {
-                            if (file.getName().endsWith(".cdb")) {
-                                count = readAllCards(file, cardDataHashMap);
-                            } else if (file.getName().endsWith(".zip") || file.getName().endsWith(Constants.YPK_FILE_EX)) {
+                            if (file.getName().endsWith(".zip") || file.getName().endsWith(Constants.YPK_FILE_EX)) {
                                 Log.e("CardManager", "读取压缩包");
                                 try {
                                     for (File file1 : readZipCdb(file.getAbsolutePath())) {
@@ -171,6 +187,24 @@ public class CardManager {
                                 }
                             }
                             Log.i(TAG, "load " + count + " cdb:" + file);
+                        }
+                        //2.再读卡包物化 cdb 目录（与包内同源，重复读无害；旧版未物化时为空）
+                        File packCdbDir = new File(dir, Constants.CORE_PACK_CDB_DIR);
+                        File[] packed = packCdbDir.listFiles(f -> f.isFile()
+                                && f.getName().toLowerCase().endsWith(".cdb"));
+                        if (packed != null) {
+                            Arrays.sort(packed, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+                            for (File file : packed) {
+                                count = readAllCards(file, cardDataHashMap);
+                                Log.i(TAG, "load " + count + " pack cdb:" + file);
+                            }
+                        }
+                        //3.最后读 expansions 散 cdb（最高优先级，覆盖全部同名卡）
+                        for (File file : files) {
+                            if (file.getName().endsWith(".cdb")) {
+                                count = readAllCards(file, cardDataHashMap);
+                                Log.i(TAG, "load " + count + " cdb:" + file);
+                            }
                         }
                     }
                 }
@@ -207,13 +241,25 @@ public class CardManager {
         int i = 0;
         Cursor reader = null;
         SQLiteDatabase db = null;
+        boolean hasStrs = false;
         try {
             db = openDatabase(file.getPath());
             try {
-                reader = db.rawQuery("select datas.id, ot, alias, setcode, type, level, race, attribute, atk, def,category,name,\"desc\" from datas,texts where datas.id = texts.id;", null);
+                reader = db.rawQuery("select datas.id, ot, alias, setcode, type, level, race, attribute, atk, def,category,name,\"desc\"" + STR_COLUMNS + " from datas,texts where datas.id = texts.id;", null);
+                hasStrs = true;
             } catch (Throwable e) {
-                //ignore
-                reader = db.rawQuery("select datas._id, ot, alias, setcode, type, level, race, attribute, atk, def,category,name,\"desc\" from datas,texts where datas._id = texts._id;", null);
+                try {
+                    reader = db.rawQuery("select datas._id, ot, alias, setcode, type, level, race, attribute, atk, def,category,name,\"desc\"" + STR_COLUMNS + " from datas,texts where datas._id = texts._id;", null);
+                    hasStrs = true;
+                } catch (Throwable e2) {
+                    //ignore
+                    // 旧版无 str1~str16 的 cdb：退化为原查询，不缓存脚本提示文字
+                    try {
+                        reader = db.rawQuery("select datas.id, ot, alias, setcode, type, level, race, attribute, atk, def,category,name,\"desc\" from datas,texts where datas.id = texts.id;", null);
+                    } catch (Throwable e3) {
+                        reader = db.rawQuery("select datas._id, ot, alias, setcode, type, level, race, attribute, atk, def,category,name,\"desc\" from datas,texts where datas._id = texts._id;", null);
+                    }
+                }
             }
             if (reader != null && reader.moveToFirst()) {
                 do {
@@ -234,6 +280,19 @@ public class CardManager {
                     cardData.Category = reader.getLong(10);
                     cardData.Name = reader.getString(11);
                     cardData.Desc = reader.getString(12);
+                    if (hasStrs) {
+                        String[] strs = new String[16];
+                        boolean any = false;
+                        for (int s = 0; s < 16; s++) {
+                            String str = reader.getString(13 + s);
+                            strs[s] = str;
+                            if (!TextUtils.isEmpty(str)) {
+                                any = true;
+                            }
+                        }
+                        // 仅在存在非空脚本提示文字时缓存，避免全空卡占用空数组内存
+                        cardData.Strs = any ? strs : null;
+                    }
                     //put
                     i++;
                     cardMap.put(cardData.Code, cardData);

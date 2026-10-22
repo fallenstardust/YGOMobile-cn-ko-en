@@ -952,7 +952,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                     .setLabel("homepageGuide")
                     .addGuidePage(
                             GuidePage.newInstance().setEverywhereCancelable(true)
-                                    .setBackgroundColor(0xbc000000)
+                                    .setBackgroundColor(YGOUtil.c(R.color.black_bc))
                                     .addHighLightWithOptions(layoutView.findViewById(R.id.cv_banner), HighLight.Shape.RECTANGLE, options)
                                     .setLayoutRes(R.layout.view_guide_home)
                                     .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
@@ -969,7 +969,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                     )
                     .addGuidePage(
                             GuidePage.newInstance().setEverywhereCancelable(true)
-                                    .setBackgroundColor(0xbc000000)
+                                    .setBackgroundColor(YGOUtil.c(R.color.black_bc))
                                     .addHighLightWithOptions(layoutView.findViewById(R.id.list_server), HighLight.Shape.ROUND_RECTANGLE, options2)
                                     .setLayoutRes(R.layout.view_guide_home)
                                     .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
@@ -984,7 +984,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                     )
                     .addGuidePage(
                             GuidePage.newInstance().setEverywhereCancelable(true)
-                                    .setBackgroundColor(0xbc000000)
+                                    .setBackgroundColor(YGOUtil.c(R.color.black_bc))
                                     .setLayoutRes(R.layout.view_guide_home)
                                     .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
 
@@ -998,7 +998,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                     )
                     .addGuidePage(
                             GuidePage.newInstance().setEverywhereCancelable(true)
-                                    .setBackgroundColor(0xbc000000)
+                                    .setBackgroundColor(YGOUtil.c(R.color.black_bc))
                                     .setLayoutRes(R.layout.view_guide_home)
                                     .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
 
@@ -1012,7 +1012,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                     )
                     .addGuidePage(
                             GuidePage.newInstance().setEverywhereCancelable(true)
-                                    .setBackgroundColor(0xbc000000)
+                                    .setBackgroundColor(YGOUtil.c(R.color.black_bc))
                                     .addHighLightWithOptions(layoutView.findViewById(R.id.action_help), HighLight.Shape.RECTANGLE, options)
                                     .setLayoutRes(R.layout.view_guide_home)
                                     .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
@@ -1027,7 +1027,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                     )
                     .addGuidePage(
                             GuidePage.newInstance().setEverywhereCancelable(true)
-                                    .setBackgroundColor(0xbc000000)
+                                    .setBackgroundColor(YGOUtil.c(R.color.black_bc))
                                     .addHighLightWithOptions(layoutView.findViewById(R.id.nav_webpage), HighLight.Shape.RECTANGLE, options)
                                     .setLayoutRes(R.layout.view_guide_home)
                                     .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
@@ -1047,7 +1047,7 @@ public class HomeFragment extends BaseFragemnt implements OnDuelAssistantListene
                     .setLabel("joinRoomGuide")
                     .addGuidePage(
                             GuidePage.newInstance().setEverywhereCancelable(true)
-                                    .setBackgroundColor(0xbc000000)
+                                    .setBackgroundColor(YGOUtil.c(R.color.black_bc))
                                     .setLayoutRes(R.layout.view_guide_home)
                                     .setOnLayoutInflatedListener(new OnLayoutInflatedListener() {
 

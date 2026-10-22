@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?><!-- 表情面板（对应桌面版 gframe wEmoticon）：4x4 宫格按钮直接在此声明，
+     排列顺序与 image_manager.cpp emoticonRects / emoticonCodes 一致；图片由 EmotionDialog 运行时绑定 -->
+<GridLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/grid_emoticons"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@color/colorNavy"
+    android:columnCount="4">
+
+    <!-- 第 1 行：大笑 / 滑稽 / 吐舌 / 勉强 -->
+    <ImageButton
+        android:id="@+id/btn_emoticon_0"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_margin="1dp"
+        android:background="@drawable/btn_sci_fi_bg"
+        android:contentDescription="@null"
+        android:padding="3dp"
+        android:scaleType="fitCenter" />
+
+    <ImageButton
+        android:id="@+id/btn_emoticon_1"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_margin="1dp"
+        android:background="@drawable/btn_sci_fi_bg"
+        android:contentDescription="@null"
+        android:padding="3dp"
+        android:scaleType="fitCenter" />
+
+    <ImageButton
+        android:id="@+id/btn_emoticon_2"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_margin="1dp"
+        android:background="@drawable/btn_sci_fi_bg"
+        android:contentDescription="@null"
+        android:padding="3dp"
+        android:scaleType="fitCenter" />
+
+    <ImageButton
+        android:id="@+id/btn_emoticon_3"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_margin="1dp"
+        android:background="@drawable/btn_sci_fi_bg"
+        android:contentDescription="@null"
+        android:padding="3dp"
+        android:scaleType="fitCenter" />
+
+    <!-- 第 2 行：流汗 / 疑问 / 惊讶 / 大哭 -->
+    <ImageButton
+        android:id="@+id/btn_emoticon_4"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_margin="1dp"
+        android:background="@drawable/btn_sci_fi_bg"
+        android:contentDescription="@null"
+        android:padding="3dp"
+        android:scaleType="fitCenter" />
+
+    <ImageButton
+        android:id="@+id/btn_emoticon_5"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_margin="1dp"
+        android:background="@drawable/btn_sci_fi_bg"
+        android:contentDescription="@null"
+        android:padding="3dp"
+        android:scaleType="fitCenter" />
+
+    <ImageButton
+        android:id="@+id/btn_emoticon_6"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_margin="1dp"
+        android:background="@drawable/btn_sci_fi_bg"
+        android:contentDescription="@null"
+        android:padding="3dp"
+        android:scaleType="fitCenter" />
+
+    <ImageButton
+        android:id="@+id/btn_emoticon_7"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_margin="1dp"
+        android:background="@drawable/btn_sci_fi_bg"
+        android:contentDescription="@null"
+        android:padding="3dp"
+        android:scaleType="fitCenter" />
+
+    <!-- 第 3 行：生气 / 发怒 / 阴险 / 喷水 -->
+    <ImageButton
+        android:id="@+id/btn_emoticon_8"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_margin="1dp"
+        android:background="@drawable/btn_sci_fi_bg"
+        android:contentDescription="@null"
+        android:padding="3dp"
+        android:scaleType="fitCenter" />
+
+    <ImageButton
+        android:id="@+id/btn_emoticon_9"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_margin="1dp"
+        android:background="@drawable/btn_sci_fi_bg"
+        android:contentDescription="@null"
+        android:padding="3dp"
+        android:scaleType="fitCenter" />
+
+    <ImageButton
+        android:id="@+id/btn_emoticon_10"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_margin="1dp"
+        android:background="@drawable/btn_sci_fi_bg"
+        android:contentDescription="@null"
+        android:padding="3dp"
+        android:scaleType="fitCenter" />
+
+    <ImageButton
+        android:id="@+id/btn_emoticon_11"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_margin="1dp"
+        android:background="@drawable/btn_sci_fi_bg"
+        android:contentDescription="@null"
+        android:padding="3dp"
+        android:scaleType="fitCenter" />
+
+    <!-- 第 4 行：点赞 / 酷 / 鄙视 / 害羞 -->
+    <ImageButton
+        android:id="@+id/btn_emoticon_12"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_margin="1dp"
+        android:background="@drawable/btn_sci_fi_bg"
+        android:contentDescription="@null"
+        android:padding="3dp"
+        android:scaleType="fitCenter" />
+
+    <ImageButton
+        android:id="@+id/btn_emoticon_13"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_margin="1dp"
+        android:background="@drawable/btn_sci_fi_bg"
+        android:contentDescription="@null"
+        android:padding="3dp"
+        android:scaleType="fitCenter" />
+
+    <ImageButton
+        android:id="@+id/btn_emoticon_14"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_margin="1dp"
+        android:background="@drawable/btn_sci_fi_bg"
+        android:contentDescription="@null"
+        android:padding="3dp"
+        android:scaleType="fitCenter" />
+
+    <ImageButton
+        android:id="@+id/btn_emoticon_15"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_margin="1dp"
+        android:background="@drawable/btn_sci_fi_bg"
+        android:contentDescription="@null"
+        android:padding="3dp"
+        android:scaleType="fitCenter" />
+</GridLayout>

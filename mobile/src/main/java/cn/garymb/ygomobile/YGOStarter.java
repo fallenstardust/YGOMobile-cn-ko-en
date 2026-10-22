@@ -91,7 +91,12 @@ public class YGOStarter {
         } else {
             GlideCompat.with(activity.getApplicationContext()).load(R.drawable.bg).into(activityShowInfo.mViewTarget);
         }
-        activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);//强制为横屏
+        // 仅当“游戏横屏锁定”启用时强制横屏（与 YGOProActivity 启动方向逻辑一致，
+        // SENSOR_LANDSCAPE 保留左右横屏对调旋转）；未启用则不强制，保持当前启动页方向，
+        // 使游戏按系统当前竖/横屏方向直接启动
+        if (AppsSettings.get().isLockSreenOrientation()) {
+            activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+        }
         setFullScreen(activity, activityShowInfo);
     }
 
@@ -177,7 +182,13 @@ public class YGOStarter {
             showLoadingBg(activity);
             Log.e(TAG, "设置背景后" + System.currentTimeMillis());
         }
-        Intent intent = new Intent(activity, YGOMobileActivity.class);
+        Class<?> targetActivity;
+        if (AppsSettings.get().isNativeGameMode()) {
+            targetActivity = YGOProActivity.class;
+        } else {
+            targetActivity = YGOMobileActivity.class;
+        }
+        Intent intent = new Intent(activity, targetActivity);
         if (options != null) {
             intent.putExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_KEY, options);
             intent.putExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_TIME, System.currentTimeMillis());

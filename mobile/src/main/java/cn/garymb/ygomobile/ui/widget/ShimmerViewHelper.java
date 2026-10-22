@@ -9,6 +9,7 @@ import android.util.AttributeSet;
 import android.view.View;
 
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.utils.YGOUtil;
 
 public class ShimmerViewHelper {
 
@@ -16,7 +17,7 @@ public class ShimmerViewHelper {
         void onSetupAnimation(View target);
     }
 
-    private static final int DEFAULT_REFLECTION_COLOR = 0xFFFFFFFF;
+    private static final int DEFAULT_REFLECTION_COLOR = YGOUtil.c(R.color.white);
 
     private final View view;
     private final Paint paint;

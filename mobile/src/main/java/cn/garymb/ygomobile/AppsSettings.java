@@ -250,8 +250,13 @@ public class AppsSettings {
     }
 
 
+    /**
+     * expansions/ 目录下的扩展卡包档案（zip/ypk），按文件名<b>升序</b>返回。
+     * 需要“靠后名包优先”的调用方（{@link #makeZipList} 倒序挂载、ImageLoader
+     * 倒序查包；NativeScriptBootstrap 升序覆写物化）统一以此为优先级基准。
+     */
     public File[] getExpansionFiles() {
-        return new File(getResourcePath(), Constants.CORE_EXPANSIONS)
+        File[] files = new File(getResourcePath(), Constants.CORE_EXPANSIONS)
                 .listFiles((file) -> {
                     if (!file.isFile()) {
                         return false;
@@ -259,31 +264,53 @@ public class AppsSettings {
                     String s_name = file.getName().toLowerCase();
                     return s_name.endsWith(".zip") || s_name.endsWith(Constants.YPK_FILE_EX);
                 });
+        if (files != null) {
+            try {
+                Arrays.sort(files, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+            } catch (Exception e) {
+                //
+            }
+        }
+        return files;
     }
 
+    /**
+     * 引擎卡片数据库列表，按<b>优先级从低到高</b>排列（后加载覆盖同名卡，对齐
+     * ygo_engine_jni.cpp::loadCdb 与 ocgcore ReadDB 的后写覆盖语义，净效果同
+     * game.cpp 先 LoadDB(mDbList) 后 LoadExpansions()：扩展覆盖主库）。
+     * <p>顺序：主 cards.cdb → 卡包物化 cdb（{@code <expansions>/cdb/}，由
+     * NativeScriptBootstrap 从包内 *.cdb 解出，升序=靠后包覆盖靠前包）→
+     * expansions 散 cdb（最高，对齐 data_manager.cpp 的 expansions 散文件优先）。
+     */
     private void makeCdbList(List<String> pathList) {
+        // 优先级最低：主库最先加载，被后面的扩展覆盖
+        pathList.add(getDatabaseFile().getAbsolutePath());
         if (isReadExpansions()) {
             File expansionsDir = getExpansionsPath();
             if (expansionsDir.exists()) {
-                File[] cdbs = expansionsDir.listFiles(file -> file.isFile() && file.getName().toLowerCase(Locale.US).endsWith(".cdb"));
-                if (cdbs != null) {
-                    try {
-                        Arrays.sort(cdbs, (file, t1) -> {
-                            return file.getName().compareTo(t1.getName());
-                        });
-                    } catch (Exception e) {
-                        //
-                    }
-                    for (File file : cdbs) {
-                        //if (CardManager.checkDataBase(file)) {
-                        //合法数据库才会加载
-                        pathList.add(file.getAbsolutePath());
-                        //}
-                    }
-                }
+                // 卡包物化 cdb（中等优先级）
+                addCdbDir(new File(expansionsDir, Constants.CORE_PACK_CDB_DIR), pathList);
+                // expansions 散 cdb（调试/覆写用，最高优先级，最后加载）
+                addCdbDir(expansionsDir, pathList);
             }
         }
-        pathList.add(getDatabaseFile().getAbsolutePath());
+    }
+
+    /** 把目录下全部 .cdb 按文件名升序加入列表（后加入者后加载、覆盖同名卡）。 */
+    private static void addCdbDir(File dir, List<String> pathList) {
+        File[] cdbs = dir.listFiles(file -> file.isFile()
+                && file.getName().toLowerCase(Locale.US).endsWith(".cdb"));
+        if (cdbs == null) {
+            return;
+        }
+        try {
+            Arrays.sort(cdbs, (file, t1) -> file.getName().compareTo(t1.getName()));
+        } catch (Exception e) {
+            //
+        }
+        for (File file : cdbs) {
+            pathList.add(file.getAbsolutePath());
+        }
     }
 
     /**
@@ -295,15 +322,20 @@ public class AppsSettings {
         return new File(getResourcePath(), CORE_EXPANSIONS);
     }
 
+    /**
+     * native 档案挂载列表：C++ 侧 CFileSystem::createAndOpenFile 对 FileArchives
+     * <b>正序遍历（最先挂载者优先）</b>，后接物理工作目录，故卡包按文件名字典序
+     * <b>倒序</b>加入（靠后的包最先挂载=优先），最后加入 pics.zip、scripts.zip
+     *（主资源优先级最低）——与 cdb/script/pics 统一优先级“expansions 散文件 ＞
+     * 卡包 zip/ypk（后名优先）＞ 主资源 ＞ 主散目录”一致（参考 game.cpp、
+     * data_manager.cpp、image_manager.cpp）。
+     */
     private void makeZipList(List<String> pathList) {
         if (isReadExpansions()) {
-            File expansionsDir = getExpansionsPath();
-            if (expansionsDir.exists()) {
-                File[] files = getExpansionFiles();
-                if (files != null) {
-                    for (File file : files) {
-                        pathList.add(file.getAbsolutePath());
-                    }
+            File[] files = getExpansionFiles();
+            if (files != null) {
+                for (int i = files.length - 1; i >= 0; i--) {
+                    pathList.add(files[i].getAbsolutePath());
                 }
             }
         }
@@ -632,6 +664,14 @@ public class AppsSettings {
 
     public void setImmerSiveMode(boolean immersive) {
         mSharedPreferences.putBoolean(PREF_IMMERSIVE_MODE, immersive);
+    }
+
+    public boolean isNativeGameMode() {
+        return mSharedPreferences.getBoolean(Constants.PREF_NATIVE_GAME_MODE, Constants.PREF_DEF_NATIVE_GAME_MODE);
+    }
+
+    public void setNativeGameMode(boolean enabled) {
+        mSharedPreferences.putBoolean(Constants.PREF_NATIVE_GAME_MODE, enabled);
     }
 
     public boolean isSensorRefresh() {

@@ -167,7 +167,6 @@
                                 android:layout_gravity="center"
                                 android:layout_marginStart="1dp"
                                 android:layout_marginEnd="1dp"
-
                                 android:background="@drawable/radius_background"
                                 android:gravity="center"
                                 android:text="计"
