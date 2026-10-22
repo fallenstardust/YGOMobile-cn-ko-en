@@ -36,6 +36,7 @@ import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.game.GameEngine;
 import cn.garymb.ygomobile.game.GameField;
+import cn.garymb.ygomobile.game.ClientCard;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.CardStatusTipHelper;
@@ -708,7 +709,7 @@ public class CardDisplayDialog {
     private void showDetailAtSlot(int slot) {
         CardItem item = itemAtSlot(slot);
         if (item == null || !(context instanceof YGOProActivity)) return;
-        GameField.ClientCard card = new GameField.ClientCard();
+        ClientCard card = new ClientCard();
         card.code = item.code & 0x7fffffff;
         card.controler = viewControler(item.controler);
         card.location = item.location & 0x7f;
@@ -722,10 +723,10 @@ public class CardDisplayDialog {
         if (item == null) return null;
         GameEngine eng = engine();
         GameField field = eng != null ? eng.getField() : null;
-        GameField.ClientCard card = CardStatusTipHelper.resolveLiveCard(field,
+        ClientCard card = CardStatusTipHelper.resolveLiveCard(field,
                 viewControler(item.controler), item.location, item.sequence, item.subSeq);
         if (card == null && (item.code & 0x7fffffff) != 0) {
-            card = new GameField.ClientCard();
+            card = new ClientCard();
             card.code = item.code & 0x7fffffff;
         }
         return CardStatusTipHelper.buildStatusText(field, card);

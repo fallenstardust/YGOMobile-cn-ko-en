@@ -1,6 +1,6 @@
 package cn.garymb.ygomobile.game;
 
-import cn.garymb.ygomobile.game.GameField.ClientCard;
+import cn.garymb.ygomobile.game.ClientCard;
 
 /**
  * GameField 的坐标几何协作类：忠实移植 ClientField::GetCardLocation（MR4，rule=1；坐标真值来自

@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import cn.garymb.ygomobile.game.GameField;
+import cn.garymb.ygomobile.game.ClientCard;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.YGOUtil;
 
@@ -159,10 +160,10 @@ final class FieldHudRenderer {
     /** 统计某区列表中表侧（正面朝上）卡片数，对齐 ClientCard.isFaceUp 的 position 位判定 */
     private static int countFaceUp(GameField f, int p, int loc) {
         try {
-            List<GameField.ClientCard> list = f.players[p].getLocationList(loc);
+            List<ClientCard> list = f.players[p].getLocationList(loc);
             if (list == null) return 0;
             int n = 0;
-            for (GameField.ClientCard c : list) {
+            for (ClientCard c : list) {
                 if (c != null && c.isFaceUp()) n++;
             }
             return n;
@@ -195,9 +196,9 @@ final class FieldHudRenderer {
         GLES30.glDisable(GLES30.GL_DEPTH_TEST);
         boolean mr4 = f.dInfo.duelRule >= 4;
         for (int p = 0; p < 2; p++) {
-            List<GameField.ClientCard> mz = f.players[p].monsterZone;
+            List<ClientCard> mz = f.players[p].monsterZone;
             for (int seq = 0; seq < mz.size(); seq++) {
-                GameField.ClientCard c;
+                ClientCard c;
                 try { c = mz.get(seq); } catch (Throwable e) { continue; }
                 if (c == null || !c.isFaceUp() || c.is_moving) continue;
                 drawMonsterStatTexts(p, seq, c);
@@ -208,7 +209,7 @@ final class FieldHudRenderer {
         GLES30.glEnable(GLES30.GL_DEPTH_TEST);
     }
 
-    private void drawMonsterStatTexts(int p, int seq, GameField.ClientCard c) {
+    private void drawMonsterStatTexts(int p, int seq, ClientCard c) {
         float[] r = GameField.getZoneRect(p, 0x04, seq);
         if (r == null) return;
         float cx = r[0], cy = r[1];
@@ -280,7 +281,7 @@ final class FieldHudRenderer {
      *  屏幕侧按格子中心 mirrorX 后与场地中轴比较；守备表示卡片足迹 hx/hy 对调；
      *  字号与攻守文字同源（CARD_H 竖向投影，不受守备旋转影响） */
     private void drawPendulumScaleText(GameField f, int p, int seq, boolean leftScale) {
-        GameField.ClientCard c;
+        ClientCard c;
         try { c = f.players[p].spellZone.get(seq); } catch (Throwable e) { return; }
         if (c == null || !c.isFaceUp() || c.is_moving) return;
         if ((c.type & 0x1000000) == 0) return;                // CardType.Pendulum

@@ -11,6 +11,7 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.game.GameField;
+import cn.garymb.ygomobile.game.ClientCard;
 import cn.garymb.ygomobile.game.GameFieldController;
 import cn.garymb.ygomobile.game.ReplayPlayer;
 import cn.garymb.ygomobile.game.ShowDialogUtil;
@@ -457,7 +458,7 @@ public class CardDetailPanel {
 
     // === 卡片详情面板（实现已平移至 CardInfoBinder，以下为签名不变的薄委托） ===
 
-    public void showCardInfo(GameField.ClientCard card) {
+    public void showCardInfo(ClientCard card) {
         binder.showCardInfo(card);
     }
 
@@ -465,7 +466,7 @@ public class CardDetailPanel {
         binder.showDefault();
     }
 
-    public void showCard(GameField.ClientCard clientCard) {
+    public void showCard(ClientCard clientCard) {
         binder.showCard(clientCard);
     }
 

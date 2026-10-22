@@ -28,11 +28,11 @@ public class CommandDataParser {
      * 固定槽位列表（怪兽区/魔法区）空位也有len=4 条目；动态列表只发实际卡。
      */
     public void parseUpdateData(int player, int location, ByteBuffer data) {
-        List<GameField.ClientCard> list = engine.field.players[player].getLocationList(location);
+        List<ClientCard> list = engine.field.players[player].getLocationList(location);
         if (list == null) return;
         boolean fixedSlots = (location == 0x04 || location == 0x08);
         for (int i = 0; i < list.size(); i++) {
-            GameField.ClientCard card = list.get(i);
+            ClientCard card = list.get(i);
             if (card == null && !fixedSlots) continue;
             if (data.remaining() < 4) break;
             int len = data.getInt();
@@ -55,9 +55,9 @@ public class CommandDataParser {
         if (data.remaining() < 4) return;
         int len = data.getInt();
         if (len <= 8) return;
-        GameField.ClientCard card = engine.field.getCard(player, location, sequence);
+        ClientCard card = engine.field.getCard(player, location, sequence);
         if (card == null) {
-            card = new GameField.ClientCard();
+            card = new ClientCard();
             card.controler = player;
             card.location = location;
             card.sequence = sequence;
@@ -85,7 +85,7 @@ public class CommandDataParser {
                 code &= 0x7fffffff;
             }
             int lpl = engine.localPlayer(con & 1);
-            GameField.ClientCard card = engine.field.getCard(lpl, loc, seq);
+            ClientCard card = engine.field.getCard(lpl, loc, seq);
             if (card != null) {
                 // 对齐 duelclient.cpp L1704-1716：EDESC_OPERATION → conti_act（回合结束待结算），
                 // 否则 COMMAND_ACTIVATE 并按所在区域置墓地/除外/额外发动提示
@@ -113,7 +113,7 @@ public class CommandDataParser {
             int loc = data.get() & 0xFF;
             int seq = data.get() & 0xFF;
             int diratt = data.get() & 0xFF;
-            GameField.ClientCard card = engine.field.getCard(engine.localPlayer(con & 1), loc, seq);
+            ClientCard card = engine.field.getCard(engine.localPlayer(con & 1), loc, seq);
             if (card != null) {
                 card.cmdFlag |= GameEngine.COMMAND_ATTACK;
                 engine.attackableCards.add(new GameEngine.CmdCardInfo(card, code, 0, 0, i));
@@ -139,7 +139,7 @@ public class CommandDataParser {
             int con = data.get() & 0xFF;
             int loc = data.get() & 0xFF;
             int seq = data.get() & 0xFF;
-            GameField.ClientCard card = engine.field.getCard(engine.localPlayer(con & 1), loc, seq);
+            ClientCard card = engine.field.getCard(engine.localPlayer(con & 1), loc, seq);
             if (card != null) {
                 card.cmdFlag |= GameEngine.COMMAND_SUMMON;
                 engine.summonableCards.add(new GameEngine.CmdCardInfo(card, code, 0, 0, i));
@@ -155,7 +155,7 @@ public class CommandDataParser {
             int loc = data.get() & 0xFF;
             int seq = data.get() & 0xFF;
             int lpl = engine.localPlayer(con & 1);
-            GameField.ClientCard card = engine.field.getCard(lpl, loc, seq);
+            ClientCard card = engine.field.getCard(lpl, loc, seq);
             if (card != null) {
                 card.cmdFlag |= GameEngine.COMMAND_SPSUMMON;
                 if (card.location == CardLocation.Deck.value()) {
@@ -185,7 +185,7 @@ public class CommandDataParser {
             int con = data.get() & 0xFF;
             int loc = data.get() & 0xFF;
             int seq = data.get() & 0xFF;
-            GameField.ClientCard card = engine.field.getCard(engine.localPlayer(con & 1), loc, seq);
+            ClientCard card = engine.field.getCard(engine.localPlayer(con & 1), loc, seq);
             if (card != null) {
                 card.cmdFlag |= GameEngine.COMMAND_REPOS;
                 engine.reposableCards.add(new GameEngine.CmdCardInfo(card, code, 0, 0, i));
@@ -198,7 +198,7 @@ public class CommandDataParser {
             int con = data.get() & 0xFF;
             int loc = data.get() & 0xFF;
             int seq = data.get() & 0xFF;
-            GameField.ClientCard card = engine.field.getCard(engine.localPlayer(con & 1), loc, seq);
+            ClientCard card = engine.field.getCard(engine.localPlayer(con & 1), loc, seq);
             if (card != null) {
                 card.cmdFlag |= GameEngine.COMMAND_MSET;
                 engine.msetableCards.add(new GameEngine.CmdCardInfo(card, code, 0, 0, i));
@@ -211,7 +211,7 @@ public class CommandDataParser {
             int con = data.get() & 0xFF;
             int loc = data.get() & 0xFF;
             int seq = data.get() & 0xFF;
-            GameField.ClientCard card = engine.field.getCard(engine.localPlayer(con & 1), loc, seq);
+            ClientCard card = engine.field.getCard(engine.localPlayer(con & 1), loc, seq);
             if (card != null) {
                 card.cmdFlag |= GameEngine.COMMAND_SSET;
                 engine.ssetableCards.add(new GameEngine.CmdCardInfo(card, code, 0, 0, i));
@@ -231,7 +231,7 @@ public class CommandDataParser {
                 code &= 0x7fffffff;
             }
             int lpl = engine.localPlayer(con & 1);
-            GameField.ClientCard card = engine.field.getCard(lpl, loc, seq);
+            ClientCard card = engine.field.getCard(lpl, loc, seq);
             if (card != null) {
                 // 对齐 duelclient.cpp L1837-1849：EDESC_OPERATION → conti_act，否则按区域置提示
                 if (flag != 0) {

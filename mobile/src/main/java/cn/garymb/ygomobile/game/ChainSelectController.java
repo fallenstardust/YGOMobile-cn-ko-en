@@ -88,7 +88,7 @@ class ChainSelectController {
             // 动画且点击无效」：待处理卡的唯一发动入口是场地中央的堆叠。
             if (field != null && e != null) {
                 int localCtrl = e.localPlayer(ctrl & 1);
-                GameField.ClientCard card = field.getCard(localCtrl, loc, seq, subSeq);
+                ClientCard card = field.getCard(localCtrl, loc, seq, subSeq);
                 if (card != null) {
                     card.is_selected = false;
                     int pureLoc = loc & 0x7f;

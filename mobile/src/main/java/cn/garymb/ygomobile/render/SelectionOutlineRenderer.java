@@ -7,6 +7,7 @@ import android.opengl.Matrix;
 import java.util.List;
 
 import cn.garymb.ygomobile.game.GameField;
+import cn.garymb.ygomobile.game.ClientCard;
 
 /**
  * 可选格子高亮虚线 / 卡片选择轮廓蚂蚁线（GameFieldView「可选格子高亮」「卡片选择轮廓」分栏）。
@@ -173,10 +174,10 @@ final class SelectionOutlineRenderer {
         drawRevealOutlineList(f.revealHighlightCards, phase);
     }
 
-    private void drawRevealOutlineList(List<GameField.ClientCard> list, float phase) {
+    private void drawRevealOutlineList(List<ClientCard> list, float phase) {
         if (list == null) return;
         for (int i = 0, n = list.size(); i < n; i++) {
-            GameField.ClientCard c;
+            ClientCard c;
             try {
                 c = list.get(i);
             } catch (Throwable e) {
@@ -190,11 +191,11 @@ final class SelectionOutlineRenderer {
         }
     }
 
-    private void drawSelectOutlineList(List<GameField.ClientCard> list, float phase,
-                                       List<GameField.ClientCard> skip) {
+    private void drawSelectOutlineList(List<ClientCard> list, float phase,
+                                       List<ClientCard> skip) {
         if (list == null) return;
         for (int i = 0, n = list.size(); i < n; i++) {
-            GameField.ClientCard c;
+            ClientCard c;
             try {
                 c = list.get(i);
             } catch (Throwable e) {
@@ -215,7 +216,7 @@ final class SelectionOutlineRenderer {
      * 沿周长走像素；亮段在卡片局部空间构建细矩形经卡片矩阵变换绘制（兼容手卡 billboard/守备旋转）。
      * 线宽按局部 x/y 轴的世界缩放换算，保证屏幕像素宽度恒定
      */
-    private void drawCardMarchingOutline(GameField.ClientCard c, boolean solid, float phase) {
+    private void drawCardMarchingOutline(ClientCard c, boolean solid, float phase) {
         view.card.buildCardModel(c, mOutlineModel);
         float sx = (float) Math.sqrt(mOutlineModel[0] * mOutlineModel[0]
                 + mOutlineModel[1] * mOutlineModel[1] + mOutlineModel[2] * mOutlineModel[2]);
@@ -301,7 +302,7 @@ final class SelectionOutlineRenderer {
         // 本方法先于 drawFieldCards 调用，后绘卡片自然覆盖其上
         GLES30.glDisable(GLES30.GL_DEPTH_TEST);
         try {
-            GameField.ClientCard pc = null;
+            ClientCard pc = null;
             try {
                 pc = f.getCard(player, loc, seq);
             } catch (Throwable ignored) {
@@ -324,7 +325,7 @@ final class SelectionOutlineRenderer {
      * 额外格（seq>=5）按 swap 指向前场两侧及对方前场（双方场上所连接区域）。
      * reverse=控制者为对手（player==1），与 C++ 一致对所有箭头沿用同一 reverse。
      */
-    private void drawLinkedZones(GameField f, GameField.ClientCard pc) {
+    private void drawLinkedZones(GameField f, ClientCard pc) {
         int mark = pc.link_marker;
         if (mark == 0) return;
         final int player = pc.controler & 1;

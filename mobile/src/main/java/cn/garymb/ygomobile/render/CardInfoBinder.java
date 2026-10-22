@@ -31,6 +31,7 @@ import java.util.concurrent.Executors;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.game.CardSearcherManager;
 import cn.garymb.ygomobile.game.GameField;
+import cn.garymb.ygomobile.game.ClientCard;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.dialogs.KeywordCardListDialog;
@@ -156,7 +157,7 @@ class CardInfoBinder {
         resetRelatedState();
     }
 
-    void showCardInfo(GameField.ClientCard card) {
+    void showCardInfo(ClientCard card) {
         // 移除 code<=0 检查：对于 CardSelectDialog 中的已知 code 的暗卡（里侧怪兽、卡组表侧等），
         // 只要能读取到卡片图案就应该显示详细信息，而不是当作未知卡处理
         if (card == null) return;
@@ -199,7 +200,7 @@ class CardInfoBinder {
         }
     }
 
-    void showCard(GameField.ClientCard clientCard) {
+    void showCard(ClientCard clientCard) {
         // 卡码经 displayCode 取：场上里侧卡一旦被公开（POS_REVEAL 解遮蔽 / 泡影类 POS_CHANGE 携码），
         // 后续遮蔽零码查询即便洗回 code 也留有 chain_code 备份，仍按公开码显示详情
         //（对齐 event_handler.cpp L1673 hover 只判 mcard->code 即 ShowCardInfo 的语义）

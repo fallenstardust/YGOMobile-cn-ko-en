@@ -27,7 +27,7 @@ class CardSelectController {
     }
 
     /** 弹窗弹出期间被标记 is_selectable 的场上卡（蚂蚁线高亮同步来源），dismiss 时精确还原 */
-    private final List<GameField.ClientCard> dialogMarkedCards = new ArrayList<>();
+    private final List<ClientCard> dialogMarkedCards = new ArrayList<>();
 
     /**
      * 选择类 CardSelectDialog 弹出时同步高亮场上/手卡候选：弹窗是本端的选择 UI，
@@ -40,7 +40,7 @@ class CardSelectController {
         GameField f = (eng != null) ? eng.getField() : null;
         if (f == null || items == null) return;
         for (CardSelectDialog.CardItem it : items) {
-            GameField.ClientCard card = f.getCard(eng.localPlayer(it.controler),
+            ClientCard card = f.getCard(eng.localPlayer(it.controler),
                     it.location, it.sequence, it.subSeq);
             if (card == null || card.is_selectable) continue;
             card.is_selectable = true;
@@ -55,7 +55,7 @@ class CardSelectController {
         if (dialogMarkedCards.isEmpty()) return;
         GameEngine eng = util.engine();
         GameField f = (eng != null) ? eng.getField() : null;
-        for (GameField.ClientCard c : dialogMarkedCards) {
+        for (ClientCard c : dialogMarkedCards) {
             if (c != null) {
                 c.is_selectable = false;
                 if (f != null) f.selectableCards.remove(c);
@@ -244,7 +244,7 @@ class CardSelectController {
         GameEngine eng = util.engine();
         GameField f = (eng != null) ? eng.getField() : null;
         if (f != null) {
-            GameField.ClientCard pcard = f.getCard(eng.localPlayer(ctrl), loc, seq, subSeq);
+            ClientCard pcard = f.getCard(eng.localPlayer(ctrl), loc, seq, subSeq);
             if (pcard != null) return pcard.code;
         }
         return msgCode;
@@ -704,7 +704,7 @@ class CardSelectController {
     }
 
     public void showCardInfoFromItem(CardDisplayDialog.CardItem item) {
-        GameField.ClientCard card = new GameField.ClientCard();
+        ClientCard card = new ClientCard();
         // code 可能带 0x80000000 翻面标志位，掩码后再使用（对齐 duelclient.cpp code & 0x7fffffff）
         card.code = item.code & 0x7fffffff;
         card.controler = (item.controler == util.engine().localPlayer(0)) ? 0 : 1;

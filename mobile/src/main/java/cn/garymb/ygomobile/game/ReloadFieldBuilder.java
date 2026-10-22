@@ -49,14 +49,14 @@ class ReloadFieldBuilder {
                 int present = data.get() & 0xFF;
                 if (present == 0) continue;
                 if (data.remaining() < 2) return;
-                GameField.ClientCard card = new GameField.ClientCard();
+                ClientCard card = new ClientCard();
                 field.addCard(p, CardLocation.MonsterZone.value(), seq, card);
                 card.position = data.get() & 0xFF;
                 int ovc = data.get() & 0xFF;
                 for (int xyz = 0; xyz < ovc; xyz++) {
                     // C++ L4316-4328：素材仅作占位（reload 载荷不携卡码），sequence 为 overlayed 内索引；
                     // 卡码由紧随其后的 refreshMzone（服务端携 QUERY_OVERLAY_CARD）填入同一占位对象
-                    GameField.ClientCard x = new GameField.ClientCard();
+                    ClientCard x = new ClientCard();
                     card.overlayed.add(x);
                     field.overlayCards.add(x);
                     x.overlayTarget = card;
@@ -77,7 +77,7 @@ class ReloadFieldBuilder {
                 int present = data.get() & 0xFF;
                 if (present == 0) continue;
                 if (data.remaining() < 1) return;
-                GameField.ClientCard card = new GameField.ClientCard();
+                ClientCard card = new ClientCard();
                 field.addCard(p, CardLocation.SpellZone.value(), seq, card);
                 card.position = data.get() & 0xFF;
             }
@@ -88,7 +88,7 @@ class ReloadFieldBuilder {
                 if (data.remaining() < 1) return;
                 int cnt = data.get() & 0xFF;
                 for (int seq = 0; seq < cnt; seq++) {
-                    GameField.ClientCard card = new GameField.ClientCard();
+                    ClientCard card = new ClientCard();
                     card.owner = p;
                     card.controler = p;
                     field.addCard(p, zoneLocs[zone], seq, card);

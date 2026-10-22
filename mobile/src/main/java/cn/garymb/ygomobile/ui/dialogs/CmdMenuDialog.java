@@ -17,6 +17,7 @@ import java.util.List;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.game.GameEngine;
 import cn.garymb.ygomobile.game.GameField;
+import cn.garymb.ygomobile.game.ClientCard;
 import cn.garymb.ygomobile.game.GameFieldController;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
@@ -154,7 +155,7 @@ public class CmdMenuDialog {
      * @param tapX       相对 anchorView 的点击 X（无卡片包围盒时的回退锚点）
      * @param tapY       相对 anchorView 的点击 Y（无卡片包围盒时的回退锚点）
      */
-    public void show(View anchorView, GameField.ClientCard card, float tapX, float tapY) {
+    public void show(View anchorView, ClientCard card, float tapX, float tapY) {
         if (anchorView == null || anchorView.getWindowToken() == null) return;
         if (popupWindow.isShowing()) {
             popupWindow.dismiss();
@@ -324,7 +325,7 @@ public class CmdMenuDialog {
      * @param tapX        相对 anchorView 的点击 X
      * @param tapY        相对 anchorView 的点击 Y
      */
-    public void showCardCommandMenu(GameField.ClientCard card, GameEngine engine, int cmdContext,
+    public void showCardCommandMenu(ClientCard card, GameEngine engine, int cmdContext,
                                     View anchorView, float tapX, float tapY) {
         showCardCommandMenu(card, engine, cmdContext, anchorView, tapX, tapY, false);
     }
@@ -333,7 +334,7 @@ public class CmdMenuDialog {
      * @param viewButton 为 true 时（点击持有超量素材的怪兽 / 卡组 / 额外 / 墓地 / 除外），
      *                   菜单始终提供「查看」入口且不因无命令而自动关闭。
      */
-    public void showCardCommandMenu(GameField.ClientCard card, GameEngine engine, int cmdContext,
+    public void showCardCommandMenu(ClientCard card, GameEngine engine, int cmdContext,
                                     View anchorView, float tapX, float tapY, boolean viewButton) {
         if (card == null || engine == null) return;
 
@@ -357,7 +358,7 @@ public class CmdMenuDialog {
     }
 
     /** 单卡命令菜单（非堆叠/超量入口）：按 card.cmdFlag 逐条构建可执行命令 */
-    private void buildCardCommandMenu(GameField.ClientCard card, GameEngine engine, int cmdContext,
+    private void buildCardCommandMenu(ClientCard card, GameEngine engine, int cmdContext,
                                       List<String> options, List<Runnable> actions) {
         int flag = card.cmdFlag;
         boolean idlePhase = (cmdContext == CMD_CONTEXT_IDLE);
@@ -409,7 +410,7 @@ public class CmdMenuDialog {
                 // 服务端下发 MSG_ATTACK」这段时间窗口，让 CardOverlayRenderer 立刻抑制该卡上的
                 // attack.png 浮动箭头（对齐用户反馈：绿色攻击弧动画出现时 attack 箭头须同步隐藏）。
                 // MSG_ATTACK 到达后由 DuelEventHandler.onAttack 无缝接续，转入 arcAttacker 后清零。
-                final GameField.ClientCard atkCard = card;
+                final ClientCard atkCard = card;
                 actions.add(() -> {
                     engine.field.selectAttacking = atkCard;
                     activity.sendResponseInt((attackIdx << 16) + 1);
@@ -479,7 +480,7 @@ public class CmdMenuDialog {
      * 发动 / 特殊召唤 → 列出该位置对应可操作卡片，单击即向通讯发送对应响应进入下一步；
      * 「查看列表」统一排列在发动/特殊召唤下方，列出该位置全部卡片。
      */
-    private void buildPositionMenu(GameField.ClientCard card, GameEngine engine, int cmdContext,
+    private void buildPositionMenu(ClientCard card, GameEngine engine, int cmdContext,
                                    List<String> options, List<Runnable> actions) {
         final List<GameEngine.CmdCardInfo> actList = matchCmdCards(engine.activatableCards, card);
         if (!actList.isEmpty()) {
@@ -528,7 +529,7 @@ public class CmdMenuDialog {
                 // 与 buildCardCommandMenu 中「攻击宣言」一致：应答瞬间先置位 selectAttacking，
                 // 让攻击者卡上的 attack.png 在选择攻击对象窗口期就已隐藏，MSG_ATTACK 到达后
                 // 由 arcAttacker 接续抑制。
-                final GameField.ClientCard atkCard = card;
+                final ClientCard atkCard = card;
                 actions.add(() -> {
                     engine.field.selectAttacking = atkCard;
                     activity.sendResponseInt((attackIdx << 16) + 1);
@@ -543,7 +544,7 @@ public class CmdMenuDialog {
     /** 是否列表中全部命令项都属于同一张卡（多则同卡多效果，少则堆叠区不同卡） */
     private static boolean allSameCard(List<GameEngine.CmdCardInfo> infos) {
         if (infos.size() <= 1) return true;
-        GameField.ClientCard c0 = infos.get(0).card;
+        ClientCard c0 = infos.get(0).card;
         for (GameEngine.CmdCardInfo info : infos) {
             if (info.card != c0) return false;
         }
@@ -563,12 +564,12 @@ public class CmdMenuDialog {
 
     /** 过滤出与被点位置匹配的命令卡：超量怪兽按格序列匹配，堆叠区匹配整堆（controler+location） */
     private static List<GameEngine.CmdCardInfo> matchCmdCards(List<GameEngine.CmdCardInfo> src,
-                                                              GameField.ClientCard card) {
+                                                              ClientCard card) {
         List<GameEngine.CmdCardInfo> out = new ArrayList<>();
         if (src == null) return out;
         boolean mzone = (card.location == LOC_MZONE);
         for (GameEngine.CmdCardInfo info : src) {
-            GameField.ClientCard c = info.card;
+            ClientCard c = info.card;
             if (c == null) continue;
             if (c.controler != card.controler || c.location != card.location) continue;
             if (mzone && c.sequence != card.sequence) continue;
@@ -581,7 +582,7 @@ public class CmdMenuDialog {
      *  回放态卡组/额外直接从录像头部（ReplayReader 解出的双方全部卡片 code）构造列表，
      *  不依赖实况 ClientCard 是否已回填；墓地/除外等动态区实况卡码为 0（里侧移动）时用
      *  前卡码 chain_code 兜底。实时决斗/观战不受影响（getReplayZoneCodes 非回放态返回 null）。 */
-    private void showViewList(GameField.ClientCard card, GameEngine engine) {
+    private void showViewList(ClientCard card, GameEngine engine) {
         GameField field = engine.getField();
         List<CardDisplayDialog.CardItem> items = new ArrayList<>();
         String title;
@@ -592,7 +593,7 @@ public class CmdMenuDialog {
         final int obsHostSeq = obsIsXyz ? card.sequence : -1;
         if (obsIsXyz) {
             for (int i = 0; i < card.overlayed.size(); i++) {
-                GameField.ClientCard m = card.overlayed.get(i);
+                ClientCard m = card.overlayed.get(i);
                 if (m == null) continue;
                 items.add(new CardDisplayDialog.CardItem(m.code, card.controler, LOC_OVERLAY, card.sequence, i));
             }
@@ -606,9 +607,9 @@ public class CmdMenuDialog {
                             obsCtrl, obsLoc, i, 0));
                 }
             } else {
-                List<GameField.ClientCard> list = field.players[card.controler].getLocationList(card.location);
+                List<ClientCard> list = field.players[card.controler].getLocationList(card.location);
                 if (list != null) {
-                    for (GameField.ClientCard c : list) {
+                    for (ClientCard c : list) {
                         if (c == null) continue;
                         // 回放态里侧移动实况卡码可为 0：用前卡码 chain_code 兜底；实况不兜底保持原行为
                         int code = c.code != 0 ? c.code : (eng.replayMode ? c.chain_code : 0);
@@ -628,10 +629,10 @@ public class CmdMenuDialog {
             supplier = () -> {
                 List<CardDisplayDialog.CardItem> fresh = new ArrayList<>();
                 if (obsIsXyz) {
-                    GameField.ClientCard host = liveField.getCard(obsCtrl & 1, LOC_MZONE, obsHostSeq);
+                    ClientCard host = liveField.getCard(obsCtrl & 1, LOC_MZONE, obsHostSeq);
                     if (host != null) {
                         for (int i = 0; i < host.overlayed.size(); i++) {
-                            GameField.ClientCard m = host.overlayed.get(i);
+                            ClientCard m = host.overlayed.get(i);
                             if (m == null) continue;
                             fresh.add(new CardDisplayDialog.CardItem(m.code, obsCtrl, LOC_OVERLAY, obsHostSeq, i));
                         }
@@ -646,9 +647,9 @@ public class CmdMenuDialog {
                         }
                         return fresh;
                     }
-                    List<GameField.ClientCard> list = liveField.players[obsCtrl & 1].getLocationList(obsLoc);
+                    List<ClientCard> list = liveField.players[obsCtrl & 1].getLocationList(obsLoc);
                     if (list != null) {
-                        for (GameField.ClientCard c : list) {
+                        for (ClientCard c : list) {
                             if (c == null) continue;
                             int code = c.code != 0 ? c.code : (eng.replayMode ? c.chain_code : 0);
                             // 与初始 items 同源：除外区里侧卡实时刷新时保持呼吸卡背标记
@@ -665,7 +666,7 @@ public class CmdMenuDialog {
 
     /** 回放态点击堆叠区：不经命令菜单，直接弹该区卡片正面列表（含实时刷新），
      *  与菜单内「查看」共用实现（card.controler / card.location 均为视角侧口径） */
-    public void showPileViewList(GameField.ClientCard card, GameEngine engine) {
+    public void showPileViewList(ClientCard card, GameEngine engine) {
         showViewList(card, engine);
     }
 
@@ -675,10 +676,10 @@ public class CmdMenuDialog {
     }
 
     /** 发动 / 特殊召唤列表：单击对应卡片即向通讯发送响应 */
-    private void showCmdList(GameField.ClientCard card, GameEngine engine, int cmdContext,
+    private void showCmdList(ClientCard card, GameEngine engine, int cmdContext,
                              List<GameEngine.CmdCardInfo> infos, int mode) {
         // 按卡去重保序：gframe sort+unique 语义，同一卡多条命令只展示一次
-        java.util.Map<GameField.ClientCard, List<GameEngine.CmdCardInfo>> byCard =
+        java.util.Map<ClientCard, List<GameEngine.CmdCardInfo>> byCard =
                 new java.util.LinkedHashMap<>();
         for (GameEngine.CmdCardInfo info : infos) {
             if (info.card == null) continue;
@@ -691,8 +692,8 @@ public class CmdMenuDialog {
         }
         List<CardDisplayDialog.CardItem> items = new ArrayList<>();
         final List<List<GameEngine.CmdCardInfo>> cardIndices = new ArrayList<>();
-        for (java.util.Map.Entry<GameField.ClientCard, List<GameEngine.CmdCardInfo>> e : byCard.entrySet()) {
-            GameField.ClientCard c = e.getKey();
+        for (java.util.Map.Entry<ClientCard, List<GameEngine.CmdCardInfo>> e : byCard.entrySet()) {
+            ClientCard c = e.getKey();
             int code = c.code;
             // 优先使用第一条记录的 code（如从额外卡组特殊召唤时由引擎指定码值）
             for (GameEngine.CmdCardInfo info : e.getValue()) {
@@ -716,9 +717,9 @@ public class CmdMenuDialog {
      * 对齐 gframe event_handler.cpp BUTTON_CMD_ACTIVATE 的 list_command 分支
      *（ShowSelectCard 列卡 → BUTTON_CARD_* 选卡 → 单效果 SetResponseI / 多效果 ShowSelectOption）。
      */
-    private void showPileActivateList(GameField.ClientCard card, int cmdContext,
+    private void showPileActivateList(ClientCard card, int cmdContext,
                                        List<GameEngine.CmdCardInfo> infos) {
-        java.util.Map<GameField.ClientCard, List<GameEngine.CmdCardInfo>> byCard =
+        java.util.Map<ClientCard, List<GameEngine.CmdCardInfo>> byCard =
                 new java.util.LinkedHashMap<>();
         for (GameEngine.CmdCardInfo info : infos) {
             if (info.card == null) continue;
@@ -731,8 +732,8 @@ public class CmdMenuDialog {
         }
         List<CardDisplayDialog.CardItem> items = new ArrayList<>();
         final List<List<GameEngine.CmdCardInfo>> cardEffects = new ArrayList<>();
-        for (java.util.Map.Entry<GameField.ClientCard, List<GameEngine.CmdCardInfo>> e : byCard.entrySet()) {
-            GameField.ClientCard c = e.getKey();
+        for (java.util.Map.Entry<ClientCard, List<GameEngine.CmdCardInfo>> e : byCard.entrySet()) {
+            ClientCard c = e.getKey();
             int code = c.code;
             for (GameEngine.CmdCardInfo info : e.getValue()) {
                 if (info.code != 0) { code = info.code; break; }
@@ -798,12 +799,12 @@ public class CmdMenuDialog {
         GameField field = engine.getField();
         if (field == null) return;
         // 去重保序（gframe sort+unique：同一卡的多个待处理效果在列表中只占一张卡位）
-        List<GameField.ClientCard> uniq = new ArrayList<>();
-        for (GameField.ClientCard c : field.contiCards) {
+        List<ClientCard> uniq = new ArrayList<>();
+        for (ClientCard c : field.contiCards) {
             if (c != null && !uniq.contains(c)) uniq.add(c);
         }
         List<CardDisplayDialog.CardItem> items = new ArrayList<>();
-        for (GameField.ClientCard c : uniq) {
+        for (ClientCard c : uniq) {
             int code = c.code != 0 ? c.code : c.chain_code;
             items.add(new CardDisplayDialog.CardItem(code, c.controler, c.location, c.sequence, 0));
         }
@@ -820,7 +821,7 @@ public class CmdMenuDialog {
                     int pos = items.indexOf(item);
                     dialog.dismiss();
                     if (pos < 0 || pos >= uniq.size()) return;
-                    GameField.ClientCard card = uniq.get(pos);
+                    ClientCard card = uniq.get(pos);
                     List<GameEngine.CmdCardInfo> ops = new ArrayList<>();
                     for (GameEngine.CmdCardInfo info : engine.activatableCards) {
                         if (info.card == card && (info.flag & EDESC_OPERATION) != 0) ops.add(info);
@@ -971,8 +972,8 @@ public class CmdMenuDialog {
         }
     }
 
-    private GameField.ClientCard clientCardFromItem(CardDisplayDialog.CardItem item) {
-        GameField.ClientCard c = new GameField.ClientCard();
+    private ClientCard clientCardFromItem(CardDisplayDialog.CardItem item) {
+        ClientCard c = new ClientCard();
         c.code = item.code & 0x7fffffff;
         c.controler = item.controler;
         c.location = item.location;
@@ -997,7 +998,7 @@ public class CmdMenuDialog {
         }
     }
 
-    private static int findCmdIndex(List<GameEngine.CmdCardInfo> list, GameField.ClientCard card) {
+    private static int findCmdIndex(List<GameEngine.CmdCardInfo> list, ClientCard card) {
         for (GameEngine.CmdCardInfo info : list) {
             if (info.card == card) return info.index;
         }

@@ -26,8 +26,8 @@ class MoveEventApplier {
 
         if (newOverlay && !oldOverlay) {
             // 作为超量素材叠放到超量怪兽下方（duelclient.cpp L3055-3095）
-            GameField.ClientCard card = engine.field.getCard(oldCtrl, oldLoc & 0x7f, oldSeq);
-            if (card == null) card = new GameField.ClientCard();
+            ClientCard card = engine.field.getCard(oldCtrl, oldLoc & 0x7f, oldSeq);
+            if (card == null) card = new ClientCard();
             if (code != 0) card.code = code;
             // 对齐 duelclient.cpp MSG_MOVE 素材入 overlay 分支（L3055-3095）：C++ 此分支绝不改写
             // pcard->position，素材保留其在场上的表侧表示，叠放后正面朝上。旧实现用协议 cp 覆盖 position
@@ -38,7 +38,7 @@ class MoveEventApplier {
             // 宿主按消息 cl 字节动态定位（L3069 GetCard(cc, cl & 0x7f, cs)）：脚本可在怪兽尚处
             // 额外卡组时执行 Overlay，此时 cs 是 EXTRA 序号；仅当宿主已在怪兽区时播堆叠动画
             //（L3086 if (olcard->location == LOCATION_MZONE)），否则由 flushPendingOverlays 待怪兽入格补挂
-            GameField.ClientCard olcard = engine.field.attachOverlayMaterial(card, oldCtrl, oldLoc & 0x7f, oldSeq,
+            ClientCard olcard = engine.field.attachOverlayMaterial(card, oldCtrl, oldLoc & 0x7f, oldSeq,
                     newCtrl, newLoc & 0x7f, newSeq);
             if (olcard != null && olcard.location == CardLocation.MonsterZone.value()) {
                 engine.field.moveCardAnimated(card, 10);
@@ -47,7 +47,7 @@ class MoveEventApplier {
             // 超量素材离场（duelclient.cpp L3096-3124）：oldSeq=超量怪兽格、oldPos=素材序号；
             // 宿主按消息 pl 字节动态定位（GetCard(pc, pl & 0x7f, ps)）——怪兽自身 MSG_MOVE
             // 先到时宿主可能已在墓地等区域，硬编码怪兽区查找会导致素材无离场动画
-            GameField.ClientCard card = engine.field.detachOverlayMaterial(
+            ClientCard card = engine.field.detachOverlayMaterial(
                     oldCtrl, oldLoc & 0x7f, oldSeq, oldPos, newCtrl, newLoc & 0x7f, newSeq, position);
             if (card != null) {
                 if (code != 0) card.code = code;
@@ -56,12 +56,12 @@ class MoveEventApplier {
         } else if (oldOverlay) {
             // 素材在两只超量怪兽间转移（duelclient.cpp L3125-3153）：两侧宿主同样按消息 loc 字节
             // 动态定位（GetCard(pc, pl & 0x7f, ps) / GetCard(cc, cl & 0x7f, cs)）
-            GameField.ClientCard src = engine.field.getCard(oldCtrl, oldLoc & 0x7f, oldSeq);
-            GameField.ClientCard dst = engine.field.getCard(newCtrl, newLoc & 0x7f, newSeq);
+            ClientCard src = engine.field.getCard(oldCtrl, oldLoc & 0x7f, oldSeq);
+            ClientCard dst = engine.field.getCard(newCtrl, newLoc & 0x7f, newSeq);
             if (src != null && dst != null && oldPos >= 0 && oldPos < src.overlayed.size()) {
-                GameField.ClientCard m = src.overlayed.remove(oldPos);
+                ClientCard m = src.overlayed.remove(oldPos);
                 for (int i = 0; i < src.overlayed.size(); i++) {
-                    GameField.ClientCard s = src.overlayed.get(i);
+                    ClientCard s = src.overlayed.get(i);
                     if (s == null) continue;
                     s.sequence = i;
                     engine.field.moveCardAnimated(s, 2);
@@ -84,7 +84,7 @@ class MoveEventApplier {
             // 离场消失（cl==0，duelclient.cpp MSG_MOVE L2973-2990）：先从区域移除，
             // 清效果对象链接后淡出到 alpha 5（APPEAR_FRAME 帧），播完由 GameFieldMotion  purge；
             // 旧实现直接丢弃卡片，场上/墓地卡片消失没有任何淡出过程
-            GameField.ClientCard card = engine.field.removeCard(oldCtrl, oldLoc, oldSeq);
+            ClientCard card = engine.field.removeCard(oldCtrl, oldLoc, oldSeq);
             if (card != null) {
                 if (code != 0 && card.code != code)
                     card.code = code;
@@ -97,7 +97,7 @@ class MoveEventApplier {
             // 登场出现（pl==0，duelclient.cpp MSG_MOVE L2959-2972）：新建卡片入区后先定位到
             // 目标格，再从 alpha 5 淡入到 255（C++ GetCardLocation 置 curPos + FadeCard(255, appear)）；
             // 旧实现虽新建但无淡入，卡片从全透明区直接以实色闪现
-            GameField.ClientCard card = new GameField.ClientCard();
+            ClientCard card = new ClientCard();
             card.owner = newCtrl;
             card.code = code;
             card.position = position;
@@ -106,8 +106,8 @@ class MoveEventApplier {
             card.curAlpha = 5;
             engine.field.fadeCard(card, 255, GameField.APPEAR_FRAME);
         } else {
-            GameField.ClientCard card = engine.field.getCard(oldCtrl, oldLoc, oldSeq);
-            if (card == null) card = new GameField.ClientCard();
+            ClientCard card = engine.field.getCard(oldCtrl, oldLoc, oldSeq);
+            if (card == null) card = new ClientCard();
             // 对齐 duelclient.cpp MSG_MOVE L2994：仅 code!=0 或回额外卡组(cl==0x40，服务端里侧回插
             // 时 code=0)才 SetCode；SetCode(0) 会把原卡码存入 chain_code（飞行中仍按原卡面绘制），
             // 旧实现无条件覆写 code 使其它隐藏信息移动误清卡码
@@ -175,13 +175,13 @@ class MoveEventApplier {
             if (newLocBase == CardLocation.Hand.value() && oldLocBase != CardLocation.Hand.value()) {
                 // 只对本次入手的那张卡揭示：对方卡从卡背翻到正面供对手确认、我方卡本就正面
                 // 不翻给对方看，两者均施加行进蚂蚁线高亮，展示结束后由引擎的洗切接管
-                GameField.ClientCard arriving = engine.field.getCard(newCtrl, newLocBase, newSeq);
+                ClientCard arriving = engine.field.getCard(newCtrl, newLocBase, newSeq);
                 if (arriving != null && arriving.pendingFaceupAdd) {
                     // 冻结待码中：揭示窗口交给写入卡码的 MSG_CONFIRM_CARDS 触发（见
                     // applyMoveToHandReveal 释放分支）；部分服务器不发确认时 350ms 超时兜底，
                     // 释放冻结照旧背面入位，卡不致卡在卡组顶
                     arriving.revealHeld = true;
-                    final GameField.ClientCard frozen = arriving;
+                    final ClientCard frozen = arriving;
                     final int viewSeat = newCtrl;
                     engine.mainHandler.postDelayed(() -> {
                         if (!frozen.pendingFaceupAdd) return;
@@ -217,7 +217,7 @@ class MoveEventApplier {
 
     void applyPosChange(int code, int ctrl, int loc, int seq, int oldPos, int newPos) {
         ctrl = engine.localPlayer(ctrl);
-        GameField.ClientCard card = engine.field.getCard(ctrl, loc, seq);
+        ClientCard card = engine.field.getCard(ctrl, loc, seq);
         if (card != null) {
             // 对齐 duelclient.cpp MSG_POS_CHANGE L3165-3168：正面→里侧时清除指示物与效果对象链接
             if ((oldPos & GameField.POS_FACEUP) != 0 && (newPos & GameField.POS_FACEDOWN) != 0) {
@@ -245,7 +245,7 @@ class MoveEventApplier {
         // 卡片已由先到的 MSG_MOVE(onMove) 放入并定位到格子；旧实现在此 new 了一张 cur*=0 的卡，
         // 而 addCard 对 MZONE/SZONE 只做 list.set 不调 setCardPos，新卡落在世界原点、与底板共面被
         // 深度吞掉，于是里侧守备怪兽 / 盖放魔陷卡都看不到卡背矩形。
-        GameField.ClientCard card = engine.field.getCard(ctrl, loc, seq);
+        ClientCard card = engine.field.getCard(ctrl, loc, seq);
         if (card != null && card.curX == 0f && card.curY == 0f && card.curZ == 0f) {
             // 兜底：极少数回放/重载路径卡已在列表却从未定位，补一次定位（不覆盖 code/position）
             engine.field.moveCardAnimated(card, 1);
@@ -260,8 +260,8 @@ class MoveEventApplier {
     void applySwap(int c1ctrl, int c1loc, int c1seq, int c2ctrl, int c2loc, int c2seq) {
         c1ctrl = engine.localPlayer(c1ctrl);
         c2ctrl = engine.localPlayer(c2ctrl);
-        GameField.ClientCard c1 = engine.field.getCard(c1ctrl, c1loc, c1seq);
-        GameField.ClientCard c2 = engine.field.getCard(c2ctrl, c2loc, c2seq);
+        ClientCard c1 = engine.field.getCard(c1ctrl, c1loc, c1seq);
+        ClientCard c2 = engine.field.getCard(c2ctrl, c2loc, c2seq);
         engine.field.addCard(c1ctrl, c1loc, c1seq, c2);
         engine.field.addCard(c2ctrl, c2loc, c2seq, c1);
         // 对齐 duelclient.cpp MSG_SWAP L3210-3215：互换后两本体及各自超量素材全部同帧

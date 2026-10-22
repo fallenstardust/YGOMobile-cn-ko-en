@@ -7,7 +7,7 @@ import java.util.Random;
 import ocgcore.enums.CardPosition;
 
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.game.GameField.ClientCard;
+import cn.garymb.ygomobile.game.ClientCard;
 import cn.garymb.ygomobile.utils.YGOUtil;
 
 /**

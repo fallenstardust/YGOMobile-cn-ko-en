@@ -7,7 +7,7 @@ import java.util.List;
 import ocgcore.enums.CardLocation;
 
 import cn.garymb.ygomobile.game.GameField.ChainInfo;
-import cn.garymb.ygomobile.game.GameField.ClientCard;
+import cn.garymb.ygomobile.game.ClientCard;
 import cn.garymb.ygomobile.game.GameField.PendingOverlay;
 import cn.garymb.ygomobile.game.GameField.PlayerField;
 

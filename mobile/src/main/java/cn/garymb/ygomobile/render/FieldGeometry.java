@@ -1,6 +1,7 @@
 package cn.garymb.ygomobile.render;
 
 import cn.garymb.ygomobile.game.GameField;
+import cn.garymb.ygomobile.game.ClientCard;
 
 /**
  * 场地几何与坐标常量（与 GameField/旧版 getZoneRectLocalF 一致）。
@@ -73,14 +74,14 @@ final class FieldGeometry {
         return -1;
     }
 
-    static int pendulumMode(GameField.ClientCard c) {
+    static int pendulumMode(ClientCard c) {
         if (c.location == 0x08 && (c.sequence == 6 || c.sequence == 7) && c.isFaceUp() && c.code != 0) {
             return c.sequence == 6 ? 1 : 2;
         }
         return 0;
     }
 
-    static int pendulumScale(GameField.ClientCard c) {
+    static int pendulumScale(ClientCard c) {
         return Math.max(0, Math.min(13, c.sequence == 6 ? c.lScale : c.rScale));
     }
 

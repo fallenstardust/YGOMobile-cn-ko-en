@@ -85,7 +85,7 @@ public class SummonAnimationManager {
         // 旧实现直接用协议原始 ctrl 查找，本方非先攻（或观战/换边）时 pcard 取空 → 整个翻转分支被跳过，
         // 卡片既不翻开也不改变矩形（背面横向 → 正面纵向）。
         int localCtrl = engine.localPlayer(ctrl & 1);
-        GameField.ClientCard pcard = engine.field.getCard(localCtrl, loc & 0x7f, seq);
+        ClientCard pcard = engine.field.getCard(localCtrl, loc & 0x7f, seq);
         if (pcard != null) {
             pcard.setCode(code);
             pcard.position = position;  // 设置新位置（POS_FACEUP_ATTACK/DEFENSE 等）

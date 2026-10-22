@@ -14,30 +14,14 @@ import cn.garymb.ygomobile.utils.YGOUtil;
 
 import java.util.HashMap;
 
-/**
- * 阶段按钮布局 / 绘制 / 点击命中（GameFieldView「阶段按钮」分栏）。
- * <p>
- * 三个按钮（当前阶段 / 下一阶段 / EP）在屏幕像素正交空间绘制 9-patch 底板与标签纹理（平行屏幕），
- * 锚定于 左额外怪兽区外侧 / 场地中轴 / 右额外怪兽区外侧。尺寸以「同排怪兽格的实测屏幕宽」为基准
- * 等比缩放，故随 GameFieldView 实际宽高与相机取景同步放大缩小，而不再受 density 单一因素支配。
- * 绘制（GL 线程）与点击命中（主线程）共用同一确定性
- * {@link #phaseRects} 布局，保证所见即所点。
- * 复用屏幕绘制原语 {@link GLQuadBatch#drawScreenQuadColor}/{@link GLQuadBatch#drawScreenQuadTex}
- * （经门面 {@code view.quad} 调用）与 {@link FieldTextureManager} 纹理缓存；独占派生纹理键序列（标签 {@code phaseLabelKeys}、
- * 底板 {@code phaseBgKeys}），上下文重建时由门面 {@link #clearLabelKeys()} 全部清理。
- */
+/** 阶段按钮布局 / 绘制 / 点击命中（GameFieldView「阶段按钮」分栏）：三个按钮（当前阶段 / 下一阶段 / EP）在屏幕像素正交空间绘制 9-patch 底板与标签纹理（平行屏幕），锚定于左额外怪兽区外侧 / 场地中轴 / 右额外怪兽区外侧，尺寸以同排怪兽格的实测屏幕宽为基准等比缩放（随 GameFieldView 实际宽高与相机取景同步放大缩小，不再受 density 单一因素支配）；绘制（GL 线程）与点击命中（主线程）共用同一确定性 phaseRects 布局保证所见即所点，复用屏幕绘制原语 GLQuadBatch#drawScreenQuadColor/drawScreenQuadTex（经门面 view.quad）与 FieldTextureManager 纹理缓存，并独占派生纹理键序列（标签 phaseLabelKeys、底板 phaseBgKeys），上下文重建时由 clearLabelKeys() 全部清理。 */
 final class PhaseButtonRenderer {
 
     private final GameFieldView view;
 
     // 按钮宽高比例沿用原 37:21 视觉比例（旧实现高度写死 21dp×density，宽度写死 37dp×density）
     private static final float PHASE_BTN_RATIO = 37f / 21f;
-    /**
-     * 宽度基准 = 同排怪兽格实测屏幕宽的比例。旧实现取 37dp × density，而 density 与
-     * GameFieldView 的实际宽高无关，故高分辨率／大屏上场地被相机放大取景、格子变大时按钮
-     * 仍是固定像素（用户反馈「没有随着 gamefieldview 实际宽高放大」的根因）；改为按投影像素
-     * 解算，手机上取值与原 37dp 等效，屏幕越大按钮越大。
-     */
+    /** 宽度基准 = 同排怪兽格实测屏幕宽的比例：旧实现取 37dp × density，而 density 与 GameFieldView 实际宽高无关，高分辨率／大屏上格子被相机放大而按钮仍固定像素（用户反馈「没有随着 gamefieldview 实际宽高放大」的根因），改为按投影像素解算，手机上与原 37dp 等效、屏幕越大按钮越大 */
     private static final float PHASE_BTN_W_ZONE = 0.86f;
     /** 最左（当前阶段）与最右（EP）按钮相对额外怪兽区外缘再向外平移的距离（世界单位，原值） */
     private static final float PHASE_BTN_MARGIN = 0.24f;
@@ -66,18 +50,10 @@ final class PhaseButtonRenderer {
         phaseBgKeys.clear();
     }
 
-    /**
-     * 阶段按钮布局（锚点与历史实现一致）：当前阶段按钮 → 左侧额外怪兽区左缘外侧；
-     * 下一阶段按钮 → 两个额外怪兽区正中（场地中轴）；结束阶段按钮 → 右侧额外怪兽区右缘外侧。
-     * 尺寸仍以同排怪兽格的实测屏幕宽为基准（{@link #PHASE_BTN_W_ZONE}），宽度封顶于两额外区内侧
-     * 间隙减 10px，高度按 37:21 由宽度反推：手机上与原 37×21dp 等效，而 GameFieldView 实际宽高变大
-     * （场地/格子随之放大）时按钮同比变大，不再受 density 单一因素支配。
-     * 绘制（GL 线程）与点击命中（主线程）共用同一确定性布局，保证所见即所点
-     */
+    /** 阶段按钮布局（锚点与历史实现一致）：当前阶段→左侧额外怪兽区左缘外侧、下一阶段→两额外怪兽区正中（场地中轴）、结束阶段→右额外怪兽区右缘外侧；尺寸仍以同排怪兽格实测屏幕宽为基准（PHASE_BTN_W_ZONE），宽度封顶于两额外区内侧间隙减 10px，高度按 37:21 由宽度反推——手机上与原 37×21dp 等效而 GameFieldView 变大时同比变大；绘制与命中共用同一确定性布局保证所见即所点 */
     private float[][] phaseRects(boolean curVisible, boolean nextVisible, boolean epVisible) {
         float[][] out = new float[3][];
-        // 两个额外怪兽区（怪兽区 seq5/6，绘制空间已镜像：seq5 呈现在屏幕左、seq6 在屏幕右），
-        // 与阶段按钮同处 Y=0 一行（GameFieldGeometry.mzoneCY 对 s>=5 固定 0）
+        // 两个额外怪兽区（怪兽区 seq5/6，绘制空间已镜像：seq5 呈现在屏幕左、seq6 在屏幕右），与阶段按钮同处 Y=0 一行（GameFieldGeometry.mzoneCY 对 s>=5 固定 0）
         float emzL = FieldGeometry.mirrorX(FieldGeometry.zoneCenter(0, 0x04, 5)[0]);
         float emzR = FieldGeometry.mirrorX(FieldGeometry.zoneCenter(0, 0x04, 6)[0]);
         float halfZoneW = FieldGeometry.ZONE_W / 2f;
@@ -112,10 +88,7 @@ final class PhaseButtonRenderer {
             if (s != null) out[PHASE_CURRENT] = new float[]{s[0], s[1], bw, bh};
         }
         if (nextVisible) {
-            // 严格居中于两额外怪兽区内侧缘的屏幕像素中点：场地世界对称中心 FIELD_CENTER_X(3.95)
-            // 与两额外区内侧 (emzL+halfZoneW / emzR-halfZoneW) 的屏幕中点在相机透视投影下并不
-            // 完全重合（一侧略偏），沿用世界中心投影会表现为 BP 按钮偏离间隙正中（用户反馈BP偏右）；
-            // 改用实测两内侧像素中点作锚，与上方 gapPx 计算同源，保证视觉精确居中
+            // 严格居中于两额外怪兽区内侧缘的屏幕像素中点：场地世界对称中心 FIELD_CENTER_X(3.95) 与两额外区内侧的屏幕中点在透视投影下并不完全重合（一侧略偏），沿用世界中心投影会表现为 BP 按钮偏离间隙正中（用户反馈 BP 偏右），改用实测两内侧像素中点作锚、与上方 gapPx 同源，保证视觉精确居中
             if (lIn != null && rIn != null) {
                 float cx = (lIn[0] + rIn[0]) / 2f;
                 float cy = (lIn[1] + rIn[1]) / 2f;
@@ -135,9 +108,7 @@ final class PhaseButtonRenderer {
         return out;
     }
 
-    /**
-     * 阶段按钮点击命中（优先于卡片/区域拾取）：当前阶段按钮无回调但吞掉点击，避免误触场地
-     */
+    /** 阶段按钮点击命中（优先于卡片/区域拾取）：当前阶段按钮无回调但吞掉点击，避免误触场地 */
     boolean handlePhaseButtonTap(float x, float y) {
         int idx = phaseIndexAt(x, y);
         if (idx < 0) return false;
@@ -149,10 +120,7 @@ final class PhaseButtonRenderer {
         return true;
     }
 
-    /**
-     * ACTION_DOWN：命中哪个阶段按钮就让它进入按下态（底板换 9-patch 按下图），
-     * 与 {@link #handlePhaseButtonTap} 走同一 {@link #phaseIndexAt} 判定，按下反馈与点击结果一致
-     */
+    /** ACTION_DOWN：命中哪个阶段按钮就让它进入按下态（底板换 9-patch 按下图），与 handlePhaseButtonTap 走同一 phaseIndexAt 判定，按下反馈与点击结果一致 */
     boolean handlePhaseButtonPress(float x, float y) {
         pressedIdx = phaseIndexAt(x, y);
         return pressedIdx >= 0;
@@ -182,11 +150,7 @@ final class PhaseButtonRenderer {
         return Math.abs(x - rect[0]) <= rect[2] / 2f && Math.abs(y - rect[1]) <= rect[3] / 2f;
     }
 
-    /**
-     * 阶段按钮绘制：三个按钮分别锚定 左额外怪兽区外侧 / 场地中轴 / 右额外怪兽区外侧，
-     * 在屏幕像素正交空间内绘制 9-patch 底板与文字纹理（平行屏幕、尺寸随屏幕缩放），
-     * 置于全部场地内容之上（关闭深度测试）
-     */
+    /** 阶段按钮绘制：三个按钮分别锚定左额外怪兽区外侧 / 场地中轴 / 右额外怪兽区外侧，在屏幕像素正交空间内绘制 9-patch 底板与文字纹理（平行屏幕、尺寸随屏幕缩放），置于全部场地内容之上（关闭深度测试） */
     void drawPhaseButtons() {
         int w = view.viewW, h = view.viewH;
         if (w <= 1 || h <= 1) return;
@@ -207,11 +171,7 @@ final class PhaseButtonRenderer {
         GLES30.glEnable(GLES30.GL_DEPTH_TEST);
     }
 
-    /**
-     * 单个阶段按钮：9-patch 底板 + 标签文字。底板最左（当前阶段）恒用按下图 sbutton_p，
-     * 中/右按 button3_bg 的 selector 语义取图（手指按下 sbutton_p，否则 sbutton）；
-     * 纹理尚未上传时退回描边 + 纯色底板，按钮不出现空帧
-     */
+    /** 单个阶段按钮：9-patch 底板 + 标签文字；底板最左（当前阶段）恒用按下图 sbutton_p，中/右按 button3_bg 的 selector 语义取图（手指按下 sbutton_p，否则 sbutton），纹理尚未上传时退回描边 + 纯色底板，按钮不出现空帧 */
     private void drawPhaseButton(float[] rect, String label, int idx) {
         if (rect == null || label == null || label.isEmpty()) return;
         boolean enabled = view.phaseButtonsEnabled;
@@ -239,11 +199,7 @@ final class PhaseButtonRenderer {
         }
     }
 
-    /**
-     * 9-patch 按钮底板纹理（仅 GL 线程调用）：按宽度量化档位缓存，首次出现时把 Drawable
-     * 绘制到同尺寸 ARGB_8888 位图入队上传（.9 拉伸块保证边角不随缩放变形），
-     * 上传未完成前返回 -1，由 {@link #drawPhaseButton} 兜底纯色底板
-     */
+    /** 9-patch 按钮底板纹理（仅 GL 线程调用）：按宽度量化档位缓存，首次出现时把 Drawable 绘制到同尺寸 ARGB_8888 位图入队上传（.9 拉伸块保证边角不随缩放变形），上传未完成前返回 -1 由 drawPhaseButton 兜底纯色底板 */
     private int obtainPhaseBgTexture(int resId, float bwPx) {
         float d = view.getResources().getDisplayMetrics().density;
         int bucket = Math.max(1, Math.round(bwPx / (PHASE_BG_STEP_DP * d)));
@@ -279,10 +235,7 @@ final class PhaseButtonRenderer {
         return bmp;
     }
 
-    /**
-     * 阶段标签文字纹理（仅 GL 线程调用）：首次出现时 Canvas 生成位图入队，
-     * 下一帧 drainUploads 上传；上传完成前仅绘制底板兜底
-     */
+    /** 阶段标签文字纹理（仅 GL 线程调用）：首次出现时 Canvas 生成位图入队、下一帧 drainUploads 上传，上传完成前仅绘制底板兜底 */
     private int obtainPhaseLabelTexture(String text) {
         Long key = phaseLabelKeys.get(text);
         if (key == null) {

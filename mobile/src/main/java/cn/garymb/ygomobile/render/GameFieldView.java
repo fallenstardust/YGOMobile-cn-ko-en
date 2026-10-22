@@ -18,6 +18,7 @@ import javax.microedition.khronos.opengles.GL10;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.game.GameField;
+import cn.garymb.ygomobile.game.ClientCard;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.utils.YGOUtil;
@@ -308,16 +309,16 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     }
 
     /** 当前选中（移动端语义=点击，对位桌面悬停 hovered_card）并联动展示关联图标的卡片 */
-    volatile GameField.ClientCard markedCard;
+    volatile ClientCard markedCard;
 
     /**
      * event_handler.cpp 悬停触发 SetShowMark 的点击版：先对上一张解除装备/对象/连锁对象
      * 图标标记，再对新点击卡置位；由 FieldTouchPicker 在卡片命中处调用
      */
-    void applyShowMarks(GameField.ClientCard card) {
+    void applyShowMarks(ClientCard card) {
         GameField f = field;
         if (f == null) return;
-        GameField.ClientCard old = markedCard;
+        ClientCard old = markedCard;
         if (old == card) return;
         if (old != null) {
             try {
@@ -739,7 +740,7 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     // ==================== 卡片绘制核心：已平移至 FieldCardRenderer（下列为协作类依赖的薄委托）====================
     
     /** 构建卡片模型矩阵：委托 {@link FieldCardRenderer#buildCardModel}（选择轮廓/可发动绿点与拾取共用姿态） */
-    void buildCardModel(GameField.ClientCard c, float[] out) {
+    void buildCardModel(ClientCard c, float[] out) {
         card.buildCardModel(c, out);
     }
     
@@ -749,17 +750,17 @@ public class GameFieldView extends GLSurfaceView implements GLSurfaceView.Render
     }
     
     /** 我方手卡后移量：委托 {@link FieldCardRenderer#handY}（拾取与绘制同源） */
-    float handY(GameField.ClientCard c) {
+    float handY(ClientCard c) {
         return card.handY(c);
     }
     
     /** 选中手卡抬升量：委托 {@link FieldCardRenderer#handLift} */
-    float handLift(GameField.ClientCard c) {
+    float handLift(ClientCard c) {
         return card.handLift(c);
     }
     
     /** 选中手卡抬升的 Z 分量：委托 {@link FieldCardRenderer#handLiftZ} */
-    float handLiftZ(GameField.ClientCard c) {
+    float handLiftZ(ClientCard c) {
         return card.handLiftZ(c);
     }
     

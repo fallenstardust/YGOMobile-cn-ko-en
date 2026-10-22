@@ -19,6 +19,7 @@ import android.widget.TextView;
 import java.util.Map;
 
 import cn.garymb.ygomobile.game.GameField;
+import cn.garymb.ygomobile.game.ClientCard;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
@@ -318,14 +319,14 @@ public class CardStatusTipHelper {
      * 列表项 → 场上实时卡片。location 含 LOCATION_OVERLAY 时按「超量怪兽格 + 素材序号」解析
      * （协议与 CmdMenuDialog 两种写法都覆盖：0x84 之类带基址的标志，以及单独的 0x80）。
      */
-    public static GameField.ClientCard resolveLiveCard(GameField field, int viewControler,
+    public static ClientCard resolveLiveCard(GameField field, int viewControler,
                                                        int location, int sequence, int subSeq) {
         if (field == null) return null;
         int overlayBit = CardLocation.Overlay.value();
         if ((location & overlayBit) != 0) {
             int base = location & 0x7f;
             if (base == 0) base = CardLocation.MonsterZone.value();
-            GameField.ClientCard xyz = field.getCard(viewControler, base, sequence);
+            ClientCard xyz = field.getCard(viewControler, base, sequence);
             if (xyz != null && subSeq >= 0 && subSeq < xyz.overlayed.size()) {
                 return xyz.overlayed.get(subSeq);
             }
@@ -339,7 +340,7 @@ public class CardStatusTipHelper {
      * 卡名 → 225 叠放素材 → 224 正规特殊召唤 → *desc_hints → 216 在连锁%d发动 → 217 被连锁选择为对象。
      * 卡组内的卡只保留卡名（C++ location != LOCATION_DECK 才继续）。
      */
-    public static String buildStatusText(GameField field, GameField.ClientCard card) {
+    public static String buildStatusText(GameField field, ClientCard card) {
         if (card == null) return null;
         DataManager dm = DataManager.get();
         StringBuilder sb = new StringBuilder();
@@ -399,7 +400,7 @@ public class CardStatusTipHelper {
      * 显示在卡图上；纯文本无法着色，以「当前(原X)↑/↓」标注）
      */
     private static void appendStatDiffLines(StringBuilder sb, DataManager dm,
-                                            GameField.ClientCard card) {
+                                            ClientCard card) {
         // type==0 表示未收到该卡 query（暗卡等），无可比对
         int cardCode = card.displayCode();
         if (cardCode == 0 || card.type == 0) return;

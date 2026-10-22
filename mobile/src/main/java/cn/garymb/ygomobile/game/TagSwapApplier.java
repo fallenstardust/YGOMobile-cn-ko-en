@@ -72,9 +72,9 @@ class TagSwapApplier {
         resizeTagPile(field, p, CardLocation.Hand.value(), handCodes.length, handCodes);
         resizeTagPile(field, p, CardLocation.Extra.value(), extraCodes.length, extraCodes);
         field.extraPCount[p] = pcount;
-        List<GameField.ClientCard> deck = field.players[p].deck;
+        List<ClientCard> deck = field.players[p].deck;
         if (!deck.isEmpty() && topcode != 0) {
-            GameField.ClientCard top = deck.get(deck.size() - 1);
+            ClientCard top = deck.get(deck.size() - 1);
             // C++ L4266-4267 直接赋值 code（不走 SetCode）：卡组顶卡码仅供堆叠区查看，
             // 无旧卡码进 chain_code 的飞行展示需求
             if (top != null) top.code = topcode;
@@ -86,13 +86,13 @@ class TagSwapApplier {
     }
 
     private void resizeTagPile(GameField field, int p, int loc, int count, int[] codes) {
-        List<GameField.ClientCard> list = field.players[p].getLocationList(loc);
+        List<ClientCard> list = field.players[p].getLocationList(loc);
         if (list == null) return;
         // Java 堆区列表为 null 填充定长（removeCard 置尾 null 不缩表），C++ 为 vector
         // pop_back/push_back：先压实尾部空位，再以实际长度语义增删
         while (!list.isEmpty() && list.get(list.size() - 1) == null) list.remove(list.size() - 1);
         while (list.size() > count) {
-            GameField.ClientCard c = list.remove(list.size() - 1);
+            ClientCard c = list.remove(list.size() - 1);
             if (c == null) continue;
             if (loc == CardLocation.Extra.value() && c.isFaceUp()) field.extraPCount[p]--;
             c.location = 0;
@@ -103,7 +103,7 @@ class TagSwapApplier {
             field.fadingCards.add(c);
         }
         while (list.size() < count) {
-            GameField.ClientCard c = new GameField.ClientCard();
+            ClientCard c = new ClientCard();
             c.owner = p;
             c.controler = p;
             c.location = loc;
@@ -111,7 +111,7 @@ class TagSwapApplier {
             list.add(c);
         }
         for (int i = 0; i < list.size(); i++) {
-            GameField.ClientCard c = list.get(i);
+            ClientCard c = list.get(i);
             if (c == null) continue;
             // C++ L4270/L4278 直接赋值（不走 SetCode）：整堆卡码全部按新行动选手回填
             if (codes != null && i < codes.length) c.code = codes[i];

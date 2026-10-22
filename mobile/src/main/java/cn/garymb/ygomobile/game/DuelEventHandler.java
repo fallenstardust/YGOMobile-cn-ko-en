@@ -323,7 +323,7 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
         engine.field.currentChain.chainCard = engine.field.getCard(engine.localPlayer(pcc & 1), pcl, pcs, subs);
         // 对齐 duelclient.cpp MSG_CHAINING L3346-3349：发动卡卡码变化（手卡/场上里侧卡翻开揭示）
         // 时 SetCode + MoveCard(pcard, 10)，由 code 0→真实卡码驱动 curRotY 插值，播放反面到正面的转动动画。
-        GameField.ClientCard chainCard = engine.field.currentChain.chainCard;
+        ClientCard chainCard = engine.field.currentChain.chainCard;
         if (chainCard != null && chainCard.code != code) {
             chainCard.setCode(code);
             engine.field.moveCardAnimated(chainCard, 10);
@@ -392,7 +392,7 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
                 cur.iconPosCaptured = true;
             } else {
                 // 无锚点（overlay 等）：此刻卡片尚未因结算离开原位，图标固定在此处直到连锁消失
-                GameField.ClientCard cc = cur.chainCard;
+                ClientCard cc = cur.chainCard;
                 if (cc != null) {
                     cur.iconX = cc.curX;
                     cur.iconY = cc.curY;
@@ -419,7 +419,7 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
         // 对齐 duelclient.cpp MSG_CHAIN_END L3436-3442：逐链清除对象卡与发动卡的
         // is_showchaintarget 后再 chains.clear()
         for (GameField.ChainInfo ch : engine.field.chains) {
-            for (GameField.ClientCard t : ch.targets) t.is_showchaintarget = false;
+            for (ClientCard t : ch.targets) t.is_showchaintarget = false;
             if (ch.chainCard != null) ch.chainCard.is_showchaintarget = false;
         }
         chainCodes.clear();
@@ -451,7 +451,7 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
         // 1) 给被抽的卡组顶设卡码（对齐 L3529-3534：deck_reversed 且 code=0 时不揭码）
         int top = engine.field.getCardCount(p, deckLoc) - 1;
         for (int i = 0; i < count; i++) {
-            GameField.ClientCard pcard = engine.field.getCard(p, deckLoc, top - i);
+            ClientCard pcard = engine.field.getCard(p, deckLoc, top - i);
             if (pcard != null && (!engine.field.deckReversed || codes[i] != 0)) {
                 pcard.setCode(codes[i] & 0x7fffffff);
             }
@@ -490,9 +490,9 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
     private void drawOneCard(int p, int deckLoc, int handLoc, int[] codes, int idx) {
         int t = engine.field.getCardCount(p, deckLoc) - 1;
         if (t < 0) return;
-        GameField.ClientCard pcard = engine.field.removeCard(p, deckLoc, t);
+        ClientCard pcard = engine.field.removeCard(p, deckLoc, t);
         if (pcard == null) {
-            pcard = new GameField.ClientCard();
+            pcard = new ClientCard();
             pcard.owner = p;
             pcard.controler = p;
             if (idx < codes.length) pcard.setCode(codes[idx] & 0x7fffffff);
@@ -504,7 +504,7 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
         // 画卡背不会误露。仅对 p==0（我方视角）生效，对方抽卡维持遮蔽背面语义不变
         if (p == 0) pcard.handFlipT = 1f;
         engine.field.addCard(p, handLoc, 0, pcard);
-        for (GameField.ClientCard hc : engine.field.players[p].hand) {
+        for (ClientCard hc : engine.field.players[p].hand) {
             // 冻结待码的入手卡不参与让位重排，避免被提前拽离卡组顶坐标
             if (hc != null && !hc.pendingFaceupAdd) engine.field.moveCardAnimated(hc, 10);
         }
@@ -547,8 +547,8 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
                         int tCtrl, int tLoc, int tSeq) {
         // duelclient.cpp MSG_EQUIP L3619-3652：旧装备关系解除（equipped 集合摘除、
         // 集合空时清 is_showequip），再登记新关系 pc1->equipTarget=pc2、pc2->equipped.add(pc1)
-        GameField.ClientCard pc1 = engine.field.getCard(engine.localPlayer(eqCtrl & 1), eqLoc, eqSeq);
-        GameField.ClientCard pc2 = engine.field.getCard(engine.localPlayer(tCtrl & 1), tLoc, tSeq);
+        ClientCard pc1 = engine.field.getCard(engine.localPlayer(eqCtrl & 1), eqLoc, eqSeq);
+        ClientCard pc2 = engine.field.getCard(engine.localPlayer(tCtrl & 1), tLoc, tSeq);
         if (pc1 != null && pc2 != null) {
             if (pc1.equipTarget != null) {
                 pc1.is_showequip = false;
@@ -578,7 +578,7 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
     @Override
     public void onUnequip(int ctrl, int loc, int seq) {
         // duelclient.cpp MSG_UNEQUIP L3671-3691：从被装备卡 equipped 集合摘除，集合空时清 is_showequip
-        GameField.ClientCard card = engine.field.getCard(engine.localPlayer(ctrl & 1), loc, seq);
+        ClientCard card = engine.field.getCard(engine.localPlayer(ctrl & 1), loc, seq);
         if (card != null) {
             if (card.equipTarget != null) {
                 card.equipTarget.equipped.remove(card);
@@ -596,8 +596,8 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
     @Override
     public void onCardTarget(int c1ctrl, int c1loc, int c1seq, int c2ctrl, int c2loc, int c2seq) {
         // duelclient.cpp MSG_CARD_TARGET L3692-3717：c1->cardTarget.insert(c2); c2->ownerTarget.insert(c1)
-        GameField.ClientCard c1 = engine.field.getCard(engine.localPlayer(c1ctrl & 1), c1loc, c1seq);
-        GameField.ClientCard c2 = engine.field.getCard(engine.localPlayer(c2ctrl & 1), c2loc, c2seq);
+        ClientCard c1 = engine.field.getCard(engine.localPlayer(c1ctrl & 1), c1loc, c1seq);
+        ClientCard c2 = engine.field.getCard(engine.localPlayer(c2ctrl & 1), c2loc, c2seq);
         if (c1 != null && c2 != null) {
             if (!c1.targetCards.contains(c2)) c1.targetCards.add(c2);
             if (!c2.ownerTarget.contains(c1)) c2.ownerTarget.add(c1);
@@ -610,8 +610,8 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
     @Override
     public void onCancelTarget(int c1ctrl, int c1loc, int c1seq, int c2ctrl, int c2loc, int c2seq) {
         // duelclient.cpp MSG_CANCEL_TARGET L3718-3743：双向摘除，并对位清理悬停态图标标记
-        GameField.ClientCard c1 = engine.field.getCard(engine.localPlayer(c1ctrl & 1), c1loc, c1seq);
-        GameField.ClientCard c2 = engine.field.getCard(engine.localPlayer(c2ctrl & 1), c2loc, c2seq);
+        ClientCard c1 = engine.field.getCard(engine.localPlayer(c1ctrl & 1), c1loc, c1seq);
+        ClientCard c2 = engine.field.getCard(engine.localPlayer(c2ctrl & 1), c2loc, c2seq);
         if (c1 != null && c2 != null) {
             c1.targetCards.remove(c2);
             c2.ownerTarget.remove(c1);
@@ -639,7 +639,7 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
 
     @Override
     public void onAddCounter(int type, int ctrl, int loc, int seq, int count) {
-        GameField.ClientCard card = engine.field.getCard(ctrl, loc, seq);
+        ClientCard card = engine.field.getCard(ctrl, loc, seq);
         if (card != null) {
             card.counters.put(type, count);
         }
@@ -651,7 +651,7 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
 
     @Override
     public void onRemoveCounter(int type, int ctrl, int loc, int seq, int count) {
-        GameField.ClientCard card = engine.field.getCard(ctrl, loc, seq);
+        ClientCard card = engine.field.getCard(ctrl, loc, seq);
         if (card != null) {
             card.counters.remove(type);
         }
@@ -664,7 +664,7 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
     @Override
     public void onAttack(int aCtrl, int aLoc, int aSeq, int dCtrl, int dLoc, int dSeq) {
         // 对齐 duelclient.cpp MSG_ATTACK L3830-3860：有目标攻怪音效 ATTACK，直接攻击音效 DIRECT_ATTACK
-        GameField.ClientCard atkCard = engine.field.getCard(engine.localPlayer(aCtrl & 1), aLoc & 0x7f, aSeq);
+        ClientCard atkCard = engine.field.getCard(engine.localPlayer(aCtrl & 1), aLoc & 0x7f, aSeq);
         if (atkCard == null) {
             // Fallback: try raw controler (in case localPlayer mapping edge case)
             atkCard = engine.field.getCard(aCtrl & 1, aLoc & 0x7f, aSeq);
@@ -679,7 +679,7 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
         engine.field.selectAttacking = atkCard;
         if (dLoc != 0) {
             engine.soundManager.playSoundEffect(SoundManager.SFX.ATTACK);
-            GameField.ClientCard defCard = engine.field.getCard(engine.localPlayer(dCtrl & 1), dLoc & 0x7f, dSeq);
+            ClientCard defCard = engine.field.getCard(engine.localPlayer(dCtrl & 1), dLoc & 0x7f, dSeq);
             String defName = defCard != null ? DataManager.get().getName(defCard.code) : "";
             engine.hintManager.setEventString(1619, "[%s]攻击[%s]", atkName, defName);
             // 记录绿色攻击弧端点（攻击者→目标），GameFieldView 在约 0.9s 内绘制流动弧
@@ -833,7 +833,7 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
             // 对象时卡片同样不移动、核心只发本消息，故滑出动画必须挂在这里（与 onChaining 同源，上一版误挂
             // onMove 永不触发）。场上目标（L & 0xc）C++ 做 FadeCard 闪烁，已由蚂蚁线高亮承担，此处只补堆叠区
             // 滑出；±0.15/帧两阶段轨迹、方向随控制方（同 C++ 的 c==1 取 +0.15）。
-            GameField.ClientCard tcard = engine.field.getCard(localCtrl, loc, seq);
+            ClientCard tcard = engine.field.getCard(localCtrl, loc, seq);
             if (tcard != null && (tcard.location & 0x30) != 0) {
                 float shift = (localCtrl == 1) ? 0.15f : -0.15f;
                 engine.field.moveCardAnimated(tcard, 10, 0, shift);

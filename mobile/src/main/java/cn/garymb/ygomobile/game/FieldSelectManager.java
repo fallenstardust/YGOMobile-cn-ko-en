@@ -80,8 +80,8 @@ class FieldSelectManager {
         GameField.PlayerField pf = field.players[summonLocal];
         if (pf == null) return false;
         // 本移植版灵摆区固定 spellZone[6]=左刻度、spellZone[7]=右刻度（见 tryAutoPlaceSelect 注释）
-        GameField.ClientCard left = asActivePendulumScale(pf, 6);
-        GameField.ClientCard right = asActivePendulumScale(pf, 7);
+        ClientCard left = asActivePendulumScale(pf, 6);
+        ClientCard right = asActivePendulumScale(pf, 7);
         if (left == null || right == null) return false; // 灵摆召唤需两侧刻度都立着
         // 放置掩码须含主怪兽区（0-4 我方 / 16-20 对方），排除魔陷/灵摆区放置
         int mask = engine.selectFieldMask;
@@ -114,9 +114,9 @@ class FieldSelectManager {
     }
 
     /** 取灵摆区指定序号上已揭示的灵摆怪（非空、code!=0、TYPE_PENDULUM），否则 null */
-    private static GameField.ClientCard asActivePendulumScale(GameField.PlayerField pf, int seq) {
+    private static ClientCard asActivePendulumScale(GameField.PlayerField pf, int seq) {
         if (pf.spellZone.size() <= seq) return null;
-        GameField.ClientCard c = pf.spellZone.get(seq);
+        ClientCard c = pf.spellZone.get(seq);
         if (c == null || c.code == 0) return null;
         // ClientCard.type may remain 0: C++ ClientCard::SetCode queries local DB for type,
         // but this Java port's setCode only writes code. Fallback to DB lookup to align.
@@ -268,7 +268,7 @@ class FieldSelectManager {
             handlePlaceSelection(player, location, sequence);
             return;
         }
-        GameField.ClientCard card = field.getCard(player, location, sequence);
+        ClientCard card = field.getCard(player, location, sequence);
         if (card != null && card.cmdFlag != 0) {
             ctl.showCardCommandMenu(card, tapX, tapY);
             return;
@@ -300,10 +300,10 @@ class FieldSelectManager {
      *  卡组/额外整区无已知卡码时仍问录像头部权威卡码（ReplayPlayer.getReplayZoneCodes）：
      *  头部有数据即弹窗展开全部，不再回落「无卡可看」（修复回填时序竞争导致的时灵时不灵） */
     private boolean showReplayPileView(GameField field, int player, int location) {
-        List<GameField.ClientCard> list = field.players[player].getLocationList(location);
+        List<ClientCard> list = field.players[player].getLocationList(location);
         if (list == null || list.isEmpty()) return false;
-        GameField.ClientCard sample = null;
-        for (GameField.ClientCard c : list) {
+        ClientCard sample = null;
+        for (ClientCard c : list) {
             if (c == null) continue;
             if (sample == null) sample = c;
             if (c.code > 0 || c.chain_code > 0) {
@@ -403,7 +403,7 @@ class FieldSelectManager {
         for (CardSelectDialog.CardItem it : items) {
             // 消息里的 ctrl 是协议索引，getCard 需本地索引（localPlayer 为对合映射）
             int lp = ctl.engine.localPlayer(it.controler);
-            GameField.ClientCard card = field.getCard(lp, it.location & 0x7f, it.sequence);
+            ClientCard card = field.getCard(lp, it.location & 0x7f, it.sequence);
             if (card == null) continue;
             card.is_selectable = true;
             card.is_selected = false;
@@ -440,7 +440,7 @@ class FieldSelectManager {
         cardSelectCancelable = finishable || cancelable;
         for (int i = 0; i < items.size(); i++) {
             CardSelectDialog.CardItem it = items.get(i);
-            GameField.ClientCard card = field.getCard(ctl.engine.localPlayer(it.controler),
+            ClientCard card = field.getCard(ctl.engine.localPlayer(it.controler),
                     it.location & 0x7f, it.sequence);
             if (card == null) continue;
             card.is_selectable = true;
@@ -460,7 +460,7 @@ class FieldSelectManager {
     void handleCardSelection(int player, int location, int sequence) {
         if (ctl.engine == null) return;
         GameField field = ctl.engine.getField();
-        GameField.ClientCard card = field.getCard(player, location, sequence);
+        ClientCard card = field.getCard(player, location, sequence);
         // 合计选择（SUM）模式：交给专用点击-重校验循环（event_handler.cpp L1557-1566）
         if (isSumSelecting) {
             handleSumSelectionClick(card);
@@ -618,7 +618,7 @@ class FieldSelectManager {
                 : DataManager.get().getStringManager().getSystemString(560, "选择卡片");
         if (mustItems != null) {
             for (CardSelectDialog.CardItem it : mustItems) {
-                GameField.ClientCard card = field.getCard(ctl.engine.localPlayer(it.controler), it.location & 0x7f, it.sequence);
+                ClientCard card = field.getCard(ctl.engine.localPlayer(it.controler), it.location & 0x7f, it.sequence);
                 if (card == null) continue;
                 card.opParam = it.opParam;
                 card.select_seq = 0;
@@ -626,7 +626,7 @@ class FieldSelectManager {
             }
         }
         for (CardSelectDialog.CardItem it : optItems) {
-            GameField.ClientCard card = field.getCard(ctl.engine.localPlayer(it.controler), it.location & 0x7f, it.sequence);
+            ClientCard card = field.getCard(ctl.engine.localPlayer(it.controler), it.location & 0x7f, it.sequence);
             if (card == null) continue;
             card.opParam = it.opParam;
             card.select_seq = it.selectSeq;
@@ -662,7 +662,7 @@ class FieldSelectManager {
     }
 
     /** SUM 模式场上点击（event_handler.cpp L1557-1566）：切换选中后重新进入 ShowSelectSum 校验循环 */
-    private void handleSumSelectionClick(GameField.ClientCard card) {
+    private void handleSumSelectionClick(ClientCard card) {
         if (card == null || !card.is_selectable) {
             // must 卡（is_selectable=false）与不在当前可行解集合内的卡不可点（C++ 静默忽略）
             return;
@@ -702,15 +702,15 @@ class FieldSelectManager {
      *  重算已选累计区间、动态过滤当前可点的卡（点击后仍在某个合法完整解内），返回是否已凑成 */
     private boolean checkSelectSum() {
         GameField f = ctl.engine.getField();
-        for (GameField.ClientCard sc : f.selectsumAll) {
+        for (ClientCard sc : f.selectsumAll) {
             sc.is_selectable = false;
             sc.is_selected = false;
         }
-        List<GameField.ClientCard> selable = new ArrayList<>(f.selectsumAll);
+        List<ClientCard> selable = new ArrayList<>(f.selectsumAll);
         f.selectCurvalL = 0;
         f.selectCurvalH = 0;
         for (int i = 0; i < f.selectedCards.size(); i++) {
-            GameField.ClientCard c = f.selectedCards.get(i);
+            ClientCard c = f.selectedCards.get(i);
             c.is_selectable = i >= f.mustSelectCount;
             c.is_selected = true;
             selable.remove(c);
@@ -730,11 +730,11 @@ class FieldSelectManager {
             ret = checkSelSumGreater(selable);
         }
         f.selectableCards.clear();
-        for (GameField.ClientCard sc : f.selectsumCards) {
+        for (ClientCard sc : f.selectsumCards) {
             sc.is_selectable = true;
             f.selectableCards.add(sc);
         }
-        for (GameField.ClientCard sc : f.selectedCards) {
+        for (ClientCard sc : f.selectedCards) {
             f.selectableCards.add(sc);
         }
         return ret;
@@ -752,7 +752,7 @@ class FieldSelectManager {
     }
 
     /** check_sel_sum_s（L1267-1285）：对已选卡（含 must）枚举 op1/op2 取法逼近目标值 */
-    private boolean checkSelSumS(List<GameField.ClientCard> left, int index, int acc) {
+    private boolean checkSelSumS(List<ClientCard> left, int index, int acc) {
         if (acc < 0) return false;
         GameField f = ctl.engine.getField();
         if (index == f.selectedCards.size()) {
@@ -770,12 +770,12 @@ class FieldSelectManager {
     }
 
     /** check_sel_sum_t（L1286-1300）：未凑成时找出「加入后存在完整解」的候选卡 */
-    private void checkSelSumT(List<GameField.ClientCard> left, int acc) {
+    private void checkSelSumT(List<ClientCard> left, int acc) {
         GameField f = ctl.engine.getField();
         int count = f.selectedCards.size() + 1 - f.mustSelectCount;
-        for (GameField.ClientCard sit : new ArrayList<>(left)) {
+        for (ClientCard sit : new ArrayList<>(left)) {
             if (f.selectsumCards.contains(sit)) continue;
-            List<GameField.ClientCard> test = new ArrayList<>(left);
+            List<ClientCard> test = new ArrayList<>(left);
             test.remove(sit);
             int[] p = sumParams(sit.opParam);
             if (checkSum(test, 0, acc - p[0], count)
@@ -786,7 +786,7 @@ class FieldSelectManager {
     }
 
     /** check_sum（L1301-1314）：在剩余卡中是否存在子集凑出 acc（张数落在 [min,max]） */
-    private boolean checkSum(List<GameField.ClientCard> list, int index, int acc, int count) {
+    private boolean checkSum(List<ClientCard> list, int index, int acc, int count) {
         GameField f = ctl.engine.getField();
         if (acc == 0) return count >= f.selectMin && count <= f.selectMax;
         if (acc < 0 || index == list.size()) return false;
@@ -802,10 +802,10 @@ class FieldSelectManager {
 
     /** CheckSelectSum mode1（sum≥，L1160-1224）：已选最小累计达标即就绪；
      *  候选卡按 op1/op2 分别判定「加入后可能恰好越线」 */
-    private boolean checkSelSumGreater(List<GameField.ClientCard> selable) {
+    private boolean checkSelSumGreater(List<ClientCard> selable) {
         GameField f = ctl.engine.getField();
         int mm = -1, mx = -1, max = 0, sumc = 0;
-        for (GameField.ClientCard sc : f.selectedCards) {
+        for (ClientCard sc : f.selectedCards) {
             int[] p = sumParams(sc.opParam);
             int opmin = (p[1] > 0 && p[0] > p[1]) ? p[1] : p[0];
             int opmax = Math.max(p[0], p[1]);
@@ -816,7 +816,7 @@ class FieldSelectManager {
         }
         if (f.selectSumval <= sumc) return true;
         boolean ret = f.selectSumval <= max && f.selectSumval > max - mx;
-        for (GameField.ClientCard sc : selable) {
+        for (ClientCard sc : selable) {
             int[] p = sumParams(sc.opParam);
             if (sumGreaterCandidate(selable, sc, p[0], sumc, mm)) {
                 f.selectsumCards.add(sc);
@@ -828,7 +828,7 @@ class FieldSelectManager {
     }
 
     /** mode1 单候选判定（L1182-1213）：按值 m 加入后，要么直接越线且回撤不破线，要么余量可由剩余卡补齐 */
-    private boolean sumGreaterCandidate(List<GameField.ClientCard> selable, GameField.ClientCard sc,
+    private boolean sumGreaterCandidate(List<ClientCard> selable, ClientCard sc,
                                         int m, int sumc, int mm) {
         GameField f = ctl.engine.getField();
         int sums = sumc + m;
@@ -836,13 +836,13 @@ class FieldSelectManager {
         if (sums >= f.selectSumval) {
             return sums - ms < f.selectSumval;
         }
-        List<GameField.ClientCard> left = new ArrayList<>(selable);
+        List<ClientCard> left = new ArrayList<>(selable);
         left.remove(sc);
         return checkMin(left, 0, f.selectSumval - sums, f.selectSumval - sums + ms - 1);
     }
 
     /** check_min（L1255-1266）：left 中存在某卡（单张或组合）的最小值落入 [min,max] */
-    private boolean checkMin(List<GameField.ClientCard> left, int index, int min, int max) {
+    private boolean checkMin(List<ClientCard> left, int index, int min, int max) {
         if (index == left.size()) return false;
         int[] p = sumParams(left.get(index).opParam);
         int m = (p[1] > 0 && p[0] > p[1]) ? p[1] : p[0];

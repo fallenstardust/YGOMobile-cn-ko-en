@@ -6,6 +6,7 @@ import android.opengl.Matrix;
 import java.util.List;
 
 import cn.garymb.ygomobile.game.GameField;
+import cn.garymb.ygomobile.game.ClientCard;
 
 /**
  * 场地底板 / 区域槽 / 总攻击力 bar / 区域发动提示 / conti 隐形格子绘制（GameFieldView「绘制」分栏前半）。
@@ -67,9 +68,9 @@ final class FieldBoardRenderer {
      */
     private static int fieldSpellCode(GameField f, int player) {
         try {
-            List<GameField.ClientCard> sz = f.players[player].spellZone;
+            List<ClientCard> sz = f.players[player].spellZone;
             if (sz.size() > 5) {
-                GameField.ClientCard c = sz.get(5);
+                ClientCard c = sz.get(5);
                 if (c != null && c.isFaceUp() && c.code != 0) return c.code;
             }
         } catch (Throwable ignored) {
@@ -376,7 +377,7 @@ final class FieldBoardRenderer {
      */
     void drawContiGrid(GameField f) {
         if (f == null || !f.contiAct) return;
-        List<GameField.ClientCard> cards = f.contiCards;
+        List<ClientCard> cards = f.contiCards;
         if (cards == null || cards.isEmpty()) return;
         float cx = FieldGeometry.FIELD_CENTER_X;
         float cy = 0f;
@@ -384,7 +385,7 @@ final class FieldBoardRenderer {
         float cardH = 0.9f * 254f / 177f;
         int n = 0;
         for (int i = 0, s = cards.size(); i < s && n < MAX_CONTI_LAYERS; i++) {
-            GameField.ClientCard c;
+            ClientCard c;
             try {
                 c = cards.get(i);
             } catch (Throwable e) {

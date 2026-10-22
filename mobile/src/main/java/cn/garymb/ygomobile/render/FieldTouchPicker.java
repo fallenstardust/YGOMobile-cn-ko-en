@@ -5,6 +5,7 @@ import android.opengl.Matrix;
 import java.util.List;
 
 import cn.garymb.ygomobile.game.GameField;
+import cn.garymb.ygomobile.game.ClientCard;
 
 /**
  * 触摸拾取（射线反投影，GameFieldView「触摸拾取」分栏）。
@@ -134,7 +135,7 @@ final class FieldTouchPicker {
     float[] getCardScreenBounds(int player, int location, int sequence) {
         GameField f = view.field;
         if (f == null) return null;
-        GameField.ClientCard c;
+        ClientCard c;
         try {
             c = f.getCard(player, location, sequence);
         } catch (Throwable e) {
@@ -166,7 +167,7 @@ final class FieldTouchPicker {
      * buildCardModel 的 UI 线程安全副本：不复用 GL 线程 scratch（mModelTmp），
      * 并在 camLock 下取 mCamRot 快照，供 getCardScreenBounds 复现卡片绘制姿态。
      */
-    private void buildCardModelForPicking(GameField.ClientCard c, float[] out) {
+    private void buildCardModelForPicking(ClientCard c, float[] out) {
         Matrix.setIdentityM(out, 0);
         if (c.location == 0x02) {
             float[] cam = new float[16];
@@ -247,9 +248,9 @@ final class FieldTouchPicker {
                 // 在竖屏 90° 正俯视下手卡平面趋于水平，任意屏幕纵深的射线都穿过该平面，
                 // 命中区与视觉卡框严重错位（点不中卡、误中邻卡）——改为精确平面求交后
                 // 命中区与绘制四边形（buildCardModel：同中心/同轴向/同 CARD_W×CARD_H）逐像素一致
-                List<GameField.ClientCard> hand = f.players[p].hand;
+                List<ClientCard> hand = f.players[p].hand;
                 for (int i = hand.size() - 1; i >= 0; i--) {
-                    GameField.ClientCard c;
+                    ClientCard c;
                     try {
                         c = hand.get(i);
                     } catch (Throwable e) {

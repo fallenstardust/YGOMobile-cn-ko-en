@@ -58,11 +58,11 @@ public class DeckHandMotionManager {
         // 本端以 getCardCount-1-i 取顶卡）。旧实现只读码记日志、不 SetCode、无任何翻面动画，
         // 故「翻开卡组顶部卡片」只见日志不见卡面。
         final int top = engine.field.getCardCount(p, deckLoc) - 1;
-        final GameField.ClientCard[] revealed = new GameField.ClientCard[count];
+        final ClientCard[] revealed = new ClientCard[count];
         for (int i = 0; i < count && data.remaining() >= 7; i++) {
             int code = data.getInt() & 0x7fffffff;
             data.position(data.position() + 3);
-            GameField.ClientCard c = engine.field.getCard(p, deckLoc, top - i);
+            ClientCard c = engine.field.getCard(p, deckLoc, top - i);
             revealed[i] = c;
             if (c != null && code != 0) c.setCode(code);
             DuelLogDialog.addLog("*[" + DataManager.get().getName(code) + "]", code);
@@ -84,11 +84,11 @@ public class DeckHandMotionManager {
             engine.soundManager.playSoundEffect(SoundManager.SFX.REVEAL);
         DuelLogDialog.addLog(DuelLogDialog.sysFormat(207, "翻开卡组上方%d张卡：", count));
         final int top = engine.field.getCardCount(p, extraLoc) - 1;
-        final GameField.ClientCard[] revealed = new GameField.ClientCard[count];
+        final ClientCard[] revealed = new ClientCard[count];
         for (int i = 0; i < count && data.remaining() >= 7; i++) {
             int code = data.getInt() & 0x7fffffff;
             data.position(data.position() + 3);
-            GameField.ClientCard c = engine.field.getCard(p, extraLoc, top - i);
+            ClientCard c = engine.field.getCard(p, extraLoc, top - i);
             revealed[i] = c;
             if (c != null && code != 0) c.setCode(code);
             DuelLogDialog.addLog("*[" + DataManager.get().getName(code) + "]", code);
@@ -107,10 +107,10 @@ public class DeckHandMotionManager {
      * count>5?12:45）。整段以 {@code animHoldUntilMs} 持统一动画闸门，令后续消息串行等待揭示播完。
      * 回放快进（instantPlace）下 revealTopCardOut/moveCardAnimated 自动同步落位、不排程不持闸。
      */
-    private void scheduleTopReveal(GameField.ClientCard[] revealed, float shift, int count) {
+    private void scheduleTopReveal(ClientCard[] revealed, float shift, int count) {
         if (engine.field.instantPlace) {
             // 快进重排：只同步落位（卡码已写回），不排程翻开动画、不持闸
-            for (GameField.ClientCard c : revealed) {
+            for (ClientCard c : revealed) {
                 if (c != null) engine.field.revealTopCardOut(c, 0f, 1);
             }
             return;
@@ -119,7 +119,7 @@ public class DeckHandMotionManager {
         final long stepMs = (holdFrames + 6) * 17L;
         long lastEndMs = 0L;
         for (int i = 0; i < revealed.length; i++) {
-            final GameField.ClientCard c = revealed[i];
+            final ClientCard c = revealed[i];
             if (c == null) continue;
             final long base = i * stepMs;
             engine.mainHandler.postDelayed(() -> {
@@ -159,7 +159,7 @@ public class DeckHandMotionManager {
             // 真实卡码只由本消息（入手后公开确认，loc=手卡，服务器向双方转发）送达；旧实现
             // 只记日志不写码，对方手卡因缺码不翻面，随后 MSG_SHUFFLE_HAND 直接洗切盖回卡背
             int lp = engine.localPlayer(ctrl);
-            GameField.ClientCard pcard = engine.field.getCard(lp, loc, seq);
+            ClientCard pcard = engine.field.getCard(lp, loc, seq);
             if (pcard != null && code != 0) {
                 boolean newlyKnown = pcard.code == 0;
                 pcard.setCode(code);
@@ -200,14 +200,14 @@ public class DeckHandMotionManager {
     public void applyShuffleDeck(ByteBuffer data) {
         // duelclient.cpp MSG_SHUFFLE_DECK L2620-2657：卡组不足 2 张直接返回（无声无动画）
         final int p = engine.localPlayer(data.get() & 0xFF);
-        final List<GameField.ClientCard> deck = engine.field.players[p].deck;
+        final List<ClientCard> deck = engine.field.players[p].deck;
         if (deck.size() < 2) return;
         final boolean rev = engine.field.deckReversed;
         if (rev) {
             // L2626-2631：先置 deck_reversed=false 使正向排布为新落点，逐张 10 帧移过去，
             // WaitFrameSignal(10)（is_moving 占住闸门 10 帧）
             engine.field.deckReversed = false;
-            for (GameField.ClientCard c : deck) {
+            for (ClientCard c : deck) {
                 if (c != null) engine.field.moveCardAnimated(c, 10);
             }
         }
@@ -215,20 +215,20 @@ public class DeckHandMotionManager {
         // 正向排布到位后启动（30 帧单动画，期间 aniFrame>0 持续占住统一动画闸门）
         final long preDelay = rev ? 170L : 0L;
         Runnable shuffleWork = () -> {
-            for (GameField.ClientCard c : deck) {
+            for (ClientCard c : deck) {
                 if (c != null) {
                     c.setCode(0);
                     c.is_reversed = false;
                 }
             }
             engine.soundManager.playSoundEffect(SoundManager.SFX.SHUFFLE); // L2638
-            for (GameField.ClientCard c : deck) {
+            for (ClientCard c : deck) {
                 if (c != null) engine.field.startDeckShake(c);
             }
             // L2651-2655：抖完 5 轮后恢复倒转标记并 10 帧移回倒转排布（延迟 30 帧接在抖动后）
             if (rev) {
                 engine.field.deckReversed = true;
-                for (GameField.ClientCard c : deck) {
+                for (ClientCard c : deck) {
                     if (c != null) engine.field.moveCardAnimated(c, 10, 30);
                 }
             }
@@ -253,7 +253,7 @@ public class DeckHandMotionManager {
         // 洗切一律等引擎为「非抽卡入手」发出的 MSG_SHUFFLE_HAND 播放一次，避免重复洗切。
         final int p = engine.localPlayer(data.get() & 0xFF);
         final int count = data.get() & 0xFF;
-        final List<GameField.ClientCard> hand = engine.field.players[p].hand;
+        final List<ClientCard> hand = engine.field.players[p].hand;
         // 洗切接管该侧手牌：入手的揭示蚂蚁线到此为止
         engine.field.revealHighlightCards.clear();
         // 读取新卡面（L2689-2692 在聚拢停留段才 SetCode），停留段后延迟换入，
@@ -265,7 +265,7 @@ public class DeckHandMotionManager {
         if (engine.field.instantPlace) {
             // 回放快进重排：不播聚拢/翻面动画，同步换入洗后新卡面（延迟换面会逃逸到排空后）
             int sidx = 0;
-            for (GameField.ClientCard c : hand) {
+            for (ClientCard c : hand) {
                 if (c == null) continue;
                 if (sidx < count) setHandCode(c, newCodes[sidx] & 0x7fffffff);
                 c.clearDescHints();
@@ -280,7 +280,7 @@ public class DeckHandMotionManager {
         // 对齐 C++ L2669-2681：对方手卡先进行一次整体翻面（聚拢 + 卡背朝外）
         boolean needFlipForOpponent = (p == 1) && !engine.replayMode && !engine.isSingleMode;
         if (needFlipForOpponent) {
-            for (GameField.ClientCard c : hand) {
+            for (ClientCard c : hand) {
                 if (c == null || c.code == 0) continue;
                 // 对齐 C++ L2673-2674：向玩家侧聚拢并旋转至卡背朝向观众
                 // Java 用 curX/curY 移动，通过 updateHandFlip 控制翻转
@@ -294,7 +294,7 @@ public class DeckHandMotionManager {
             }
         }
         int maxTotal = 0;
-        for (GameField.ClientCard c : hand) {
+        for (ClientCard c : hand) {
             if (c == null) continue;
             // 洗切接管：仍处于冻结待码的入手卡（确认码未到达）释放冻结，随洗切动画
             // 从卡组坐标归位到手牌，不致卡在卡组顶
@@ -311,7 +311,7 @@ public class DeckHandMotionManager {
             final long revealDelay = (maxTotal - 6L) * 17L;
             engine.mainHandler.postDelayed(() -> {
                 int idx = 0;
-                for (GameField.ClientCard c : hand) {
+                for (ClientCard c : hand) {
                     if (c == null) continue;
                     if (idx < count) setHandCode(c, newCodes[idx] & 0x7fffffff);
                     c.clearDescHints(); // L2691：desc_hints.clear()
@@ -324,7 +324,7 @@ public class DeckHandMotionManager {
         } else if (count > 0) {
             // 手卡列表为空（无卡可动画）：直接换面，保持与旧实现一致的同步语义
             int idx = 0;
-            for (GameField.ClientCard c : hand) {
+            for (ClientCard c : hand) {
                 if (c == null) continue;
                 if (idx < count) setHandCode(c, newCodes[idx] & 0x7fffffff);
                 c.clearDescHints();
@@ -339,10 +339,10 @@ public class DeckHandMotionManager {
      *  仅里侧（非表侧）额外卡参与抖动与换码；不足 2 张直接返回（同 C++ L2708，无声无动画）。 */
     public void applyShuffleExtra(int player, int count, ByteBuffer data) {
         final int p = engine.localPlayer(player);
-        final List<GameField.ClientCard> extra = engine.field.players[p].extra;
+        final List<ClientCard> extra = engine.field.players[p].extra;
         // 收集里侧额外卡（对齐 C++ !(position & POS_FACEUP)）
-        final List<GameField.ClientCard> facedowns = new ArrayList<>();
-        for (GameField.ClientCard c : extra) {
+        final List<ClientCard> facedowns = new ArrayList<>();
+        for (ClientCard c : extra) {
             if (c != null && (c.position & GameField.POS_FACEUP) == 0) facedowns.add(c);
         }
         if (facedowns.size() < 2) return;
@@ -350,12 +350,12 @@ public class DeckHandMotionManager {
         if (!engine.replaySkip && count > 1)
             engine.soundManager.playSoundEffect(SoundManager.SFX.SHUFFLE);
         // L2713-2727：5 轮抖动（复用 startDeckShake 的 30 帧单动画，仅里侧卡；instantPlace 下其内部同步落位）
-        for (GameField.ClientCard c : facedowns) engine.field.startDeckShake(c);
+        for (ClientCard c : facedowns) engine.field.startDeckShake(c);
         if (!engine.field.instantPlace) {
             engine.animHoldUntilMs = System.currentTimeMillis() + 30L * 17L + 100L;
         }
         // L2729-2731：抖后逐张写入洗后卡码（里侧卡以背面呈现，换码不露正面）
-        for (GameField.ClientCard c : facedowns) {
+        for (ClientCard c : facedowns) {
             if (data.remaining() >= 4) c.setCode(data.getInt() & 0x7fffffff);
         }
         postFieldChanged();
@@ -369,7 +369,7 @@ public class DeckHandMotionManager {
      *  MSG_SHUFFLE_HAND L2690 SetCode + L2691 desc_hints.clear），遮蔽即 code=0、无任何身份信息，
      *  chain_code 从不参与手卡展示；故此处遗忘揭示身份，直到该卡被正面放到场上才重新亮码。
      *  早退分支（遮蔽保护 / 持闸窗口）不动，保持已揭示卡面不受影响。 */
-    private static void setHandCode(GameField.ClientCard c, int newCode) {
+    private static void setHandCode(ClientCard c, int newCode) {
         if (newCode == 0 && (GameField.preserveMaskedHandCode || c.revealHeld) && c.code != 0) return;
         c.setCode(newCode);
         if (newCode == 0) c.chain_code = 0;
@@ -389,12 +389,12 @@ public class DeckHandMotionManager {
      * <p>不逐张持闸也能工作：统一动画屏障（GameEngine.drainPendingMsgs）在任一消息产生动画后
      * 即关闭并 break，所以连续的 MSG_MOVE 天然串行，无需旧版的 50ms 去抖批次。
      */
-    public void applyMoveToHandReveal(int localPlayer, GameField.ClientCard arrivingCard) {
+    public void applyMoveToHandReveal(int localPlayer, ClientCard arrivingCard) {
         applyMoveToHandReveal(localPlayer, arrivingCard, true);
     }
 
     /** playSound=false 供 MSG_CONFIRM_CARDS 复用：确认消息入口已播过 REVEAL 音效，不再叠加 */
-    public void applyMoveToHandReveal(int localPlayer, GameField.ClientCard arrivingCard, boolean playSound) {
+    public void applyMoveToHandReveal(int localPlayer, ClientCard arrivingCard, boolean playSound) {
         if (arrivingCard == null || engine.field.instantPlace) return;
         // 冻结待码释放：本卡自 MSG_MOVE 起停在卡组顶坐标等码，现卡码已由
         // MSG_CONFIRM_CARDS 写入——直接以正面从卡组位飞入手卡（翻面进度置满，不走
@@ -434,7 +434,7 @@ public class DeckHandMotionManager {
         // 持闸期间后续消息（含引擎的 MSG_SHUFFLE_HAND）不放行，洗切紧接在揭示之后播一次
         final long hold = 24L * 17L;
         engine.animHoldUntilMs = System.currentTimeMillis() + hold;
-        final GameField.ClientCard card = arrivingCard;
+        final ClientCard card = arrivingCard;
         engine.mainHandler.postDelayed(() -> {
             // 展示结束：解除持闸保护，手卡遮蔽语义恢复正常；清除行进蚂蚁线，
             // 否则 revealHighlightCards 不清空 → 蚂蚁线一直跟着该卡

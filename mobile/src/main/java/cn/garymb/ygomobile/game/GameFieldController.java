@@ -558,11 +558,11 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
      * 菜单构建逻辑已迁移至 CmdMenuDialog.showCardCommandMenu：
      * 此处仅转发触点与当前命令上下文（idle/battle）
      */
-    void showCardCommandMenu(GameField.ClientCard card, float tapX, float tapY) {
+    void showCardCommandMenu(ClientCard card, float tapX, float tapY) {
         showCardCommandMenu(card, tapX, tapY, false);
     }
 
-    void showCardCommandMenu(GameField.ClientCard card, float tapX, float tapY, boolean viewButton) {
+    void showCardCommandMenu(ClientCard card, float tapX, float tapY, boolean viewButton) {
         if (cmdMenuDialog == null) {
             cmdMenuDialog = new CmdMenuDialog(activity);
         }
@@ -585,7 +585,7 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
 
     /** 回放态堆叠区整列表查看（FieldSelectManager 委托）：回放中无命令菜单，
      *  点双方卡组/额外/墓地/除外直接弹正面卡片列表，复用 CmdMenuDialog 的「查看」实现 */
-    void showReplayPileView(GameField.ClientCard card) {
+    void showReplayPileView(ClientCard card) {
         if (cmdMenuDialog == null) {
             cmdMenuDialog = new CmdMenuDialog(activity);
         }
@@ -704,7 +704,7 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
             // is_selectable 洗回 false——若拿会话后的状态判断是否弹菜单，点击候选超量怪兽会被
             // 误判为「非候选且持素材」而误弹命令菜单（gframe MSG_SELECT_CARD 的 ClickCard
             // L1459-1492：候选卡点击只切换选中/应答，从不 ShowMenu）
-            GameField.ClientCard picked = engine.getField().getCard(player, location, sequence);
+            ClientCard picked = engine.getField().getCard(player, location, sequence);
             final boolean wasSelectable = picked != null && picked.is_selectable;
             select.handleCardSelection(player, location, sequence);
             // 场上直接选卡的点击同样展示状态气泡（与旧长按可见性持平）
@@ -730,7 +730,7 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
             }
             return;
         }
-        GameField.ClientCard card = engine.getField().getCard(player, location, sequence);
+        ClientCard card = engine.getField().getCard(player, location, sequence);
         if (card == null) {
             dismissCmdMenu();
             hideFieldStatusTip();
@@ -763,7 +763,7 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     }
 
     /** 排期展示点击气泡：取代际后延后一帧执行，期间任何隐藏使本次排期作废 */
-    private void scheduleFieldStatusTip(GameFieldView fieldView, GameField.ClientCard card,
+    private void scheduleFieldStatusTip(GameFieldView fieldView, ClientCard card,
                                         int player, int location, int sequence,
                                         float tapX, float tapY) {
         final long gen = ++tipGeneration;
@@ -784,7 +784,7 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
     }
 
     /** 点击卡片后的状态气泡：无状态文字/投影失败时收起旧标签，有则直接替换（show 内部先 hide） */
-    private void showFieldStatusTip(long gen, GameField.ClientCard card, int player,
+    private void showFieldStatusTip(long gen, ClientCard card, int player,
                                     int location, int sequence, float tapX, float tapY) {
         if (gen != tipGeneration) return;   // 延后期间已被其他点击取代
         GameFieldView fieldView = viewController != null ? viewController.getView() : null;
@@ -808,7 +808,7 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         // 为长按的手势不会再派发 onSingleTapUp，故不会连带触发选中。非候选卡维持旧规格
         // （详情与状态标签均由点击触发，长按不响应）
         if (engine == null || !select.isCardSelecting) return;
-        GameField.ClientCard card = engine.getField().getCard(player, location, sequence);
+        ClientCard card = engine.getField().getCard(player, location, sequence);
         if (card == null || !card.is_selectable) return;
         GameFieldView fieldView = viewController != null ? viewController.getView() : null;
         if (fieldView != null) {

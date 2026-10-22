@@ -2,16 +2,12 @@ package cn.garymb.ygomobile.game;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.enums.CardLocation;
 import ocgcore.enums.CardPosition;
-import ocgcore.enums.CardType;
 
 public class GameField {
     public static final int MAX_MONSTER_ZONE = 7;
@@ -66,405 +62,6 @@ public class GameField {
     public static final int CHINT_DESC_ADD = 6;
     /** duelclient.cpp MSG_CARD_HINT L4106 CHINT_DESC_REMOVE：移除一条提示，计数归零才真正删除 */
     public static final int CHINT_DESC_REMOVE = 7;
-
-    public static class ClientCard {
-        public int code;
-        public int alias;
-        public int type;
-        public int level;
-        public int rank;
-        public int attribute;
-        public long race;
-        public int attack;
-        public int defense;
-        public int baseAttack;
-        public int baseDefense;
-        public int position;
-        public int owner;
-        public int controler;
-        public int location;
-        public int sequence;
-        public int lScale;
-        public int rScale;
-        public boolean isPublic;
-        public boolean isDisabled;
-        public int reason;
-        public ClientCard equipCard;
-        public List<ClientCard> targetCards = new ArrayList<>();
-        public List<ClientCard> overlayCards = new ArrayList<>();
-        public Map<Integer, Integer> counters = new HashMap<>();
-        public int turnCounter;
-
-        public int cmdFlag;
-        public int opParam;
-        public int select_seq;
-        public boolean is_selectable;
-        public boolean is_selected;
-        public boolean is_highlighting;
-        public int chain_code;
-        public int link;
-        public int link_marker;
-        public ClientCard equipTarget;
-        public List<ClientCard> equipped = new ArrayList<>();
-        /** client_field.h ClientCard::ownerTarget：被哪些卡的永续效果以其为对象（MSG_CARD_TARGET 反向登记） */
-        public List<ClientCard> ownerTarget = new ArrayList<>();
-        public List<ClientCard> overlayed = new ArrayList<>();
-        public ClientCard overlayTarget;
-        public int status;
-
-        /** duelclient.cpp MSG_CARD_HINT 的 desc_hints：效果文字 id→引用计数；TreeMap 对齐 C++ std::map 升序遍历，ClearData 不清（与 C++ 一致）。 */
-        public final Map<Integer, Integer> descHints = new TreeMap<>();
-
-        public boolean is_moving;
-        public boolean is_fading;
-        public boolean is_hovered;
-        public boolean is_reversed;
-        public boolean is_showequip;
-        public boolean is_showtarget;
-        public boolean is_showchaintarget;
-
-        public String atkString = "";
-        public String defString = "";
-        public String lvString = "";
-        public String linkString = "";
-        public String lscString = "";
-        public String rscString = "";
-
-        public float curX, curY, curZ;
-        public float curRotX, curRotY, curRotZ;
-        public float dPosX, dPosY, dPosZ;
-        public float dRotX, dRotY, dRotZ;
-        public int aniFrame;
-        public float curAlpha = 255;
-        public float dAlpha;
-        /** 手卡点击抬高动画进度（0=原位，1=完全抬高）：渲染线程逐帧线性推进，对齐 client_card.cpp 手卡 MoveCard(5)（约 5 帧）。 */
-        public float handLiftAnim;
-        // 动画插值起点/终点与总帧数（缓动轨迹）
-        public float animFromX, animFromY, animFromZ;
-        public float animToX, animToY, animToZ;
-        public float animFromRotX, animFromRotY, animFromRotZ;
-        public float animToRotX, animToRotY, animToRotZ;
-        public float animFromAlpha, animToAlpha;
-        public int animTotalFrame;
-        /** 同区重排抖动横向速度（对齐 MSG_MOVE L3022-3030 侧移后回正）：非零时改用「先侧移后归位」两阶段轨迹，符号 pc==1 取正。 */
-        public float animJitterX;
-        /** 动画启动延迟帧（对齐 MSG_MOVE L3032-3038 WaitFrameSignal(10)：素材先归位、本体延迟再落），延迟期内不插值不扣 aniFrame。 */
-        public float animDelayFrame;
-        /** 卡组抖动动画进行中标记（duelclient.cpp MSG_SHUFFLE_DECK L2637-2650 的 5 轮抖动，
-         *  轨迹由 GameFieldMotion.updateListAnimation 关键帧推进，见 startDeckShake） */
-        public boolean is_deck_shake;
-        /** 洗手卡聚拢动画进行中标记（duelclient.cpp MSG_SHUFFLE_HAND L2662-2699，
-         *  轨迹由 GameFieldMotion.updateListAnimation 关键帧推进，见 startHandShuffle） */
-        public boolean is_hand_shuffle;
-        /** 卡组抖动每轮随机幅度（对应 C++ 每轮 dPos = real_dist(rnd)*0.4-0.2，3 帧总位移 = 3×dPos） */
-        public final float[] deckShakeDx = new float[5];
-        /** 洗手卡关键帧基准：新布局落点与聚拢中线位置 */
-        public float hsToX, hsToY, hsToZ, hsToRotX, hsToRotY;
-        public float hsGatherX;
-        /**
-         * 手卡翻面进度：1=正面、0=卡背、-1=未参与翻面；目标值恒由卡码决定（code!=0→1），updateHandFlip 每帧 0.2 靠拢（5 帧，对齐 MSG_SHUFFLE_HAND L2672 dRot 步进）。
-         * 手卡走相机 billboard 不读 curRot*，只有本值驱动的 X 轴挤压+正/背面贴图切换才能真正翻面；效果入手时把对方手卡置 0 供其确认，洗切清零后自动翻回卡背。
-         */
-        public float handFlipT = -1f;
-        /**
-         * 入手揭示持闸窗口内：本卡正处于「非抽卡入手向对手翻面确认」的展示期
-         * （DeckHandMotionManager.applyMoveToHandReveal 置位，展示结束即清除）。
-         * 实况联机加入遮蔽式服务端时，MSG_MOVE 解除遮蔽带来的真实卡码会被紧随的
-         * 手卡遮蔽刷新（MSG_UPDATE_DATA/MSG_UPDATE_CARD/MSG_SHUFFLE_HAND 零码块）
-         * 打回 0，翻面确认半途变回卡背；持闸窗口内与回放态 preserveMaskedHandCode
-         * 同法保护，窗口结束后恢复正常遮蔽语义。
-         */
-        public boolean revealHeld;
-        /**
-         * 遮蔽入手冻结待码：客机加入遮蔽型服务器时，对方「卡组→手卡」的 MSG_MOVE 卡码为 0，
-         * 而真实卡码由紧随其后的 MSG_CONFIRM_CARDS 送达。本标记的卡已入手但冻结在卡组顶坐标
-         * 不动（不参与手牌重排/飞入），等写入卡码后由 applyMoveToHandReveal 直接以正面飞入
-         * 手卡，消除「背面入手→翻开」两步观感；无确认消息时超时兜底释放照旧背面入位。
-         */
-        public boolean pendingFaceupAdd;
-
-        /**
-         * 卡组 / 额外卡组顶卡揭示态（对齐 duelclient.cpp MSG_CONFIRM_DECKTOP / MSG_CONFIRM_EXTRATOP
-         * 的 dRot(π/5)+is_moving 翻开露出卡面）：本标记为真时，渲染层即使卡片非表侧
-         * （卡组 / 额外顶卡 isFaceUp()==false）也按卡码贴卡面，与 C++ drawing.cpp 移动中卡片
-         * 同绘正反两面（is_moving）等效。由 {@code GameFieldMotion.revealTopCardOut} 置位，
-         * 翻回卡背后由 DeckHandMotionManager 调度清除（不入通用落定清理，以免中途抹掉停留段）。
-         */
-        public boolean top_reveal;
-
-        public boolean isFaceUp() {
-            return (position & (CardPosition.FaceUpAttack.value() | CardPosition.FaceUpDefence.value())) != 0;
-        }
-
-        /**
-         * 本卡是否为叠在下层的超量素材（location==OVERLAY）：素材恒表侧公开，但引擎查询只携宿主姿态，position 全凭客户端补齐；凡需判「这张卡一定朝上」统一经此，避免占位卡带 0 姿态被画成卡背。
-         */
-        public boolean isOverlayMaterial() {
-            return location == CardLocation.Overlay.value();
-        }
-
-        /**
-         * 展示用卡码（对齐 event_handler.cpp L1673 hover 只判 mcard->code 的语义扩展）：
-         * 场上里侧表示卡一旦被公开（POS_REVEAL 解遮蔽 / 无限泡影等 MSG_POS_CHANGE 携真实码），
-         * 后续遮蔽型零码查询即便把 code 洗回 0，setCode(0) 也已把原公开码备份进 chain_code
-         * （client_card.cpp SetCode L37-48 同款备份，本为飞行途中继续绘卡面而设），
-         * 点击详情 / 长按悬浮 / 渲染层浮现卡图一律经本方法取「已公开的最新卡码」。
-         */
-        public int displayCode() {
-            return code != 0 ? code : chain_code;
-        }
-
-        /** 本卡码是否属于「已公开过卡码的场上里侧卡」（reveal-once-stay-known 保码判据） */
-        public boolean isRevealedFieldFaceDown() {
-            return (location & 0x0C) != 0 && !isFaceUp() && code != 0;
-        }
-
-        public boolean isAttack() {
-            return (position & (CardPosition.FaceUpAttack.value() | CardPosition.FaceDownAttack.value())) != 0;
-        }
-
-        public boolean isMonster() {
-            return (type & CardType.Monster.getId()) != 0;
-        }
-
-        public boolean isExtraCard() {
-            return (type & (CardType.Fusion.getId() | CardType.Synchro.getId()
-                    | CardType.Xyz.getId() | CardType.Link.getId())) != 0;
-        }
-
-        public boolean isLink() {
-            return (type & CardType.Link.getId()) != 0;
-        }
-
-        public boolean isXyz() {
-            return (type & CardType.Xyz.getId()) != 0;
-        }
-
-        public void clearCmdFlag() {
-            cmdFlag = 0;
-            is_selectable = false;
-            is_selected = false;
-            is_highlighting = false;
-        }
-
-        public void setCode(int newCode) {
-            if (code == newCode) return;
-            if (newCode == 0) {
-                chain_code = code;
-            }
-            code = newCode;
-        }
-
-        public void clearData() {
-            alias = 0;
-            type = 0;
-            level = 0;
-            rank = 0;
-            race = 0;
-            attribute = 0;
-            attack = 0;
-            defense = 0;
-            baseAttack = 0;
-            baseDefense = 0;
-            lScale = 0;
-            rScale = 0;
-            link = 0;
-            link_marker = 0;
-            status = 0;
-
-            atkString = "";
-            defString = "";
-            lvString = "";
-            linkString = "";
-            lscString = "";
-            rscString = "";
-            counters.clear();
-        }
-
-        /** duelclient.cpp L4105：desc_hints[value]++ */
-        public void addDescHint(int desc) {
-            Integer c = descHints.get(desc);
-            descHints.put(desc, c == null ? 1 : c + 1);
-        }
-
-        /** duelclient.cpp L4107-4109：desc_hints[value]--，归零 erase */
-        public void removeDescHint(int desc) {
-            Integer c = descHints.get(desc);
-            if (c == null) return;
-            if (c - 1 <= 0) descHints.remove(desc);
-            else descHints.put(desc, c - 1);
-        }
-
-        /** duelclient.cpp MSG_SHUFFLE_HAND L2691：洗手卡后逐张 desc_hints.clear() */
-        public void clearDescHints() {
-            descHints.clear();
-        }
-
-        public void clearTarget() {
-            for (ClientCard pcard : targetCards) {
-                pcard.is_showtarget = false;
-                pcard.overlayCards.remove(this);
-            }
-            for (ClientCard pcard : overlayCards) {
-                pcard.is_showtarget = false;
-                pcard.targetCards.remove(this);
-            }
-            targetCards.clear();
-            overlayCards.clear();
-        }
-
-        public void updateQuery(ByteBuffer buf) {
-            if (buf.remaining() < 4) return;
-            int flag = buf.getInt();
-            if (flag == 0) {
-                // 遮蔽保护（回放态 preserveMaskedHandCode / 实况入手揭示持闸 revealHeld）：
-                // 整块清零的遮蔽刷新不清掉手卡区已有的真实卡码；场上里侧卡一经公开
-                //（POS_REVEAL 解遮蔽 / 泡影类 POS_CHANGE 携码）同样保留，不洗回 0
-                if (!((preserveMaskedHandCode || revealHeld) && (location & 0x02) != 0 && code != 0)
-                        && !isRevealedFieldFaceDown()) {
-                    clearData();
-                }
-                return;
-            }
-            if ((flag & QUERY_CODE) != 0 && buf.remaining() >= 4) {
-                int pdata = buf.getInt();
-                // 遮蔽保护：仅卡码被服务器置零的手卡块——保留已揭示的真实卡码
-                // （回放态或入手揭示持闸窗口内）；场上已公开的里侧卡同理保码
-                if (pdata == 0 && ((preserveMaskedHandCode || revealHeld) && (location & 0x02) != 0 && code != 0)) {
-                    // 跳过 clearData/setCode(0)，其余字段照旧解析
-                } else if (pdata == 0 && isRevealedFieldFaceDown()) {
-                    // 场上里侧已公开：跳过洗码，姿态等其余字段照旧解析
-                } else {
-                    if (pdata == 0) clearData();
-                    setCode(pdata);
-                }
-            }
-            if ((flag & QUERY_POSITION) != 0 && buf.remaining() >= 4) {
-                int pdata = (buf.getInt() >> 24) & 0xff;
-                /** 翻转召唤/位置变更：position 改变需强制客户端重置动画插值状态并重绘。
-                 *   旧实现仅写 position，未清除动画字段，导致卡片仍沿用旧 curRotX/curRotY
-                 *   插值结果渲染（如仍显示里侧守备），玩家误以为操作未生效；此处清动画
-                 *   字段可让 buildCardModel 立即用新姿态计算正确旋转角。 */
-                if (position != pdata && code > 0) {
-                    position = pdata;
-                    /** 重置动画插值起点/终点与帧数，确保下帧立即用新姿态目标值，不继续旧动画 */
-                    animFromX = animToX = curX;
-                    animFromY = animToY = curY;
-                    animFromZ = animToZ = curZ;
-                    animFromRotX = animToRotX = dRotX;
-                    animFromRotY = animToRotY = dRotY;
-                    animFromRotZ = animToRotZ = dRotZ;
-                    animTotalFrame = 0;
-                } else {
-                    position = pdata;
-                }
-            }
-            if ((flag & QUERY_ALIAS) != 0 && buf.remaining() >= 4) alias = buf.getInt();
-            if ((flag & QUERY_TYPE) != 0 && buf.remaining() >= 4) type = buf.getInt();
-            if ((flag & QUERY_LEVEL) != 0 && buf.remaining() >= 4) {
-                int pdata = buf.getInt();
-                if (level != pdata) {
-                    level = pdata;
-                    // 连接怪兽无等级（引擎查询 level=0，链接值另由 QUERY_LINK 呈现）：
-                    // 左上角不显示等级文本，避免「L0」；其余怪兽照旧（TYPE 在 LEVEL 之前读入，
-                    // 此处 isLink() 已反映本块最新卡型）
-                    lvString = (pdata != 0 && !isLink()) ? "L" + level : "";
-                }
-            }
-            if ((flag & QUERY_RANK) != 0 && buf.remaining() >= 4) {
-                int pdata = buf.getInt();
-                if (pdata != 0 && rank != pdata) {
-                    rank = pdata;
-                    lvString = "R" + rank;
-                }
-            }
-            if ((flag & QUERY_ATTRIBUTE) != 0 && buf.remaining() >= 4) attribute = buf.getInt();
-            if ((flag & QUERY_RACE) != 0 && buf.remaining() >= 4) race = buf.getInt();
-            if ((flag & QUERY_ATTACK) != 0 && buf.remaining() >= 4) {
-                attack = buf.getInt();
-                atkString = attack < 0 ? "?" : String.valueOf(attack);
-            }
-            if ((flag & QUERY_DEFENSE) != 0 && buf.remaining() >= 4) {
-                defense = buf.getInt();
-                if (isLink()) {
-                    defString = "-";
-                } else {
-                    defString = defense < 0 ? "?" : String.valueOf(defense);
-                }
-            }
-            if ((flag & QUERY_BASE_ATTACK) != 0 && buf.remaining() >= 4) baseAttack = buf.getInt();
-            if ((flag & QUERY_BASE_DEFENSE) != 0 && buf.remaining() >= 4)
-                baseDefense = buf.getInt();
-            if ((flag & QUERY_REASON) != 0 && buf.remaining() >= 4) reason = buf.getInt();
-            if ((flag & QUERY_REASON_CARD) != 0 && buf.remaining() >= 4) buf.getInt();
-            if ((flag & QUERY_EQUIP_CARD) != 0 && buf.remaining() >= 4) {
-                buf.get();
-                buf.get();
-                buf.get();
-                buf.get();
-            }
-            if ((flag & QUERY_TARGET_CARD) != 0 && buf.remaining() >= 4) {
-                int count = buf.getInt();
-                for (int i = 0; i < count && buf.remaining() >= 4; i++) {
-                    buf.get();
-                    buf.get();
-                    buf.get();
-                    buf.get();
-                }
-            }
-            if ((flag & QUERY_OVERLAY_CARD) != 0 && buf.remaining() >= 4) {
-                int count = buf.getInt();
-                for (int i = 0; i < count && buf.remaining() >= 4; i++) {
-                    int ocode = buf.getInt();
-                    if (i >= overlayed.size()) {
-                        ClientCard xcard = new ClientCard();
-                        overlayed.add(xcard);
-                        xcard.overlayTarget = this;
-                        xcard.location = CardLocation.Overlay.value();
-                        xcard.sequence = overlayed.size() - 1;
-                        xcard.owner = controler;
-                        xcard.controler = controler;
-                    }
-                    ClientCard mat = overlayed.get(i);
-                    // 本块查询不携素材姿态（引擎只给宿主的），而渲染层靠 isFaceUp() 决定正/背面，
-                    // 故凡从本块认得的素材一律钉成表侧：新建的占位如此，MSG_RELOAD_FIELD 已建的
-                    // 占位（此处只补卡码的那条路径）也如此——后者若不重设，一旦占位来自未带姿态的
-                    // 旧数据就会被画成卡背，而卡码明明存在（查看详情可见卡面讯息）
-                    mat.position = POS_FACEUP;
-                    mat.setCode(ocode);
-                }
-            }
-            if ((flag & QUERY_COUNTERS) != 0 && buf.remaining() >= 4) {
-                int count = buf.getInt();
-                for (int i = 0; i < count && buf.remaining() >= 4; i++) {
-                    int ctype = buf.getShort() & 0xFFFF;
-                    int ccount = buf.getShort() & 0xFFFF;
-                    counters.put(ctype, ccount);
-                }
-            }
-            if ((flag & QUERY_OWNER) != 0 && buf.remaining() >= 4) owner = buf.getInt();
-            if ((flag & QUERY_STATUS) != 0 && buf.remaining() >= 4) status = buf.getInt();
-            if ((flag & QUERY_LSCALE) != 0 && buf.remaining() >= 4) {
-                lScale = buf.getInt();
-                lscString = String.valueOf(lScale);
-            }
-            if ((flag & QUERY_RSCALE) != 0 && buf.remaining() >= 4) {
-                rScale = buf.getInt();
-                rscString = String.valueOf(rScale);
-            }
-            if ((flag & QUERY_LINK) != 0 && buf.remaining() >= 8) {
-                int pdata = buf.getInt();
-                if (link != pdata) {
-                    link = pdata;
-                }
-                linkString = "L\u2013" + link;
-                int pdata2 = buf.getInt();
-                if (link_marker != pdata2) {
-                    link_marker = pdata2;
-                }
-            }
-        }
-    }
 
     public static class PlayerField {
         public int lp;
@@ -545,47 +142,23 @@ public class GameField {
     public int currentPhase;
     public int turnCount;
     public boolean isTag;
-    /** 回放快进重排期间的即时落位模式：移动/淡入淡出/LP/洗牌动画全部直接到位，
-     *  不产生 aniFrame——动画闸门天然不阻塞，快进队列可单帧排空（GameEngine.drainReplayQueueNow）。
-     *  投喂线程置位/复位、主线程派发链读取，volatile 防 JIT 提升旧值使落位门控失效 */
+    /** 回放快进重排期间的即时落位模式：移动/淡入淡出/LP/洗牌动画全部直接到位，不产生 aniFrame——动画闸门天然不阻塞，快进队列可单帧排空（GameEngine.drainReplayQueueNow）；投喂线程置位/复位、主线程派发链读取，volatile 防 JIT 提升旧值使落位门控失效 */
     public volatile boolean instantPlace = false;
-    /** 回放态遮蔽保护（用户规格：不引擎重跑也要对方手卡正面）：合并的客户端视角录像里，
-     *  对方手卡的 UPDATE_DATA/UPDATE_CARD 块被服务器中继遮蔽（整块清零或 code=0），
-     *  而同一张卡的真实卡码已由流内 MSG_DRAW/MSG_MOVE 未遮蔽中继写入卡对象；若再让
-     *  零块覆盖会把对方手卡永远压成背面。置位时手卡区已有卡码的卡忽略零块
-     *  （ClientCard 为 static 内嵌类，故本开关也为 static；仅随回放会话置位/复位，
-     *  实况遮蔽语义不受影响） */
+    /** 回放态遮蔽保护（用户规格：不引擎重跑也要对方手卡正面）：合并的客户端视角录像里，对方手卡的 UPDATE_DATA/UPDATE_CARD 块被服务器中继遮蔽（整块清零或 code=0），而同一张卡的真实卡码已由流内 MSG_DRAW/MSG_MOVE 未遮蔽中继写入卡对象；若再让零块覆盖会把对方手卡永远压成背面。置位时手卡区已有卡码的卡忽略零块（ClientCard 为独立类，故本开关也为 static；仅随回放会话置位/复位，实况遮蔽语义不受影响） */
     public static boolean preserveMaskedHandCode = false;
     public List<ChainInfo> chains = new ArrayList<>();
 
-    /**
-     * 正在构建中的连锁（对齐 dField.current_chain）：MSG_CHAINING 重建、BECOME_TARGET 追加 target、CHAINED 压入 chains；供生成「在连锁%d发动」等标签。
-     */
+    /** 正在构建中的连锁（对齐 dField.current_chain）：MSG_CHAINING 重建、BECOME_TARGET 追加 target、CHAINED 压入 chains；供生成「在连锁%d发动」等标签。 */
     public ChainInfo currentChain = new ChainInfo();
     public List<ClientCard> overlayCards = new ArrayList<>();
-    /**
-     * 淡出中的已离场卡片（对齐 MSG_MOVE cl==0 FadeCard 后 RemoveCard）：结构性移除同步完成、卡片暂存本列表继续渲染，动画播完由 updateCardAnimation purge，避免消失卡瞬间掉帧。
-     */
+    /** 淡出中的已离场卡片（对齐 MSG_MOVE cl==0 FadeCard 后 RemoveCard）：结构性移除同步完成、卡片暂存本列表继续渲染，动画播完由 updateCardAnimation purge，避免消失卡瞬间掉帧。 */
     public final List<ClientCard> fadingCards = new ArrayList<>();
-    /** C++ duelclient.cpp L2958 appear = quick_animation ? 12 : 20（本工程无快动画开关，取 20）：
-     *  MSG_MOVE pl==0 / cl==0 出现与消失卡片的淡入淡出帧数 */
+    /** C++ duelclient.cpp L2958 appear = quick_animation ? 12 : 20（本工程无快动画开关，取 20）：MSG_MOVE pl==0 / cl==0 出现与消失卡片的淡入淡出帧数 */
     public static final int APPEAR_FRAME = 20;
     final List<PendingOverlay> pendingOverlays = new ArrayList<>();
     public int[] extraPCount = new int[2];
     public long disabledField;
-    /**
-     * HINT_ZONE 通讯（duelclient.cpp L1529-1572）展开出的被标注魔陷格集，位布局与
-     * disabledField 同构（本地视角：seat0 MZ bits0-6 / SZ bits8-15，seat1 高 16 位）。
-     * 仅接受无效类效果的 SZ 位来位——无限泡影类脚本效果处理成功时
-     * Duel.Hint(HINT_ZONE, tp, 0x1<<(seq+8)) 宣告自身所在列的 SZONE 位，本端把它标到
-     * 同列两张魔陷格——同侧 SZONE 格（同 seq）与对侧镜像 SZONE 格（4-seq，aux.GetColumn
-     * 同式）；仅主列 seq 0-4（额外怪兽列无魔陷对应格）。
-     * MZ 位（bit0-6/16-22）为封锁格子类卡片（封锁龙/黄金国亡灵 等，效果伴随
-     * MSG_FIELD_DISABLED 白 X）的怪兽纵列宣告，桌面端只对掩码位瞬时高亮 40 帧、从不
-     * 扩张魔陷格；本端若同样展开会出现「白 X 同纵列魔陷格错误显示泡影标注」的误报，
-     * 故不产生持久标注。
-     * 效果携 RESET_PHASE+PHASE_END，故下一个 MSG_NEW_TURN 清除。
-     */
+    /** HINT_ZONE 通讯（duelclient.cpp L1529-1572）展开出的被标注魔陷格集，位布局与 disabledField 同构（本地视角：seat0 MZ bits0-6 / SZ bits8-15，seat1 高 16 位）；仅接受无效类效果的 SZ 位来位——无限泡影类脚本效果处理成功时 Duel.Hint(HINT_ZONE, tp, 0x1<<(seq+8)) 宣告自身所在列的 SZONE 位，本端把它标到同列两张魔陷格——同侧 SZONE 格（同 seq）与对侧镜像 SZONE 格（4-seq，aux.GetColumn 同式）；仅主列 seq 0-4（额外怪兽列无魔陷对应格）。MZ 位（bit0-6/16-22）为封锁格子类卡片（封锁龙/黄金国亡灵 等，效果伴随 MSG_FIELD_DISABLED 白 X）的怪兽纵列宣告，桌面端只对掩码位瞬时高亮 40 帧、从不扩张魔陷格；本端若同样展开会出现「白 X 同纵列魔陷格错误显示泡影标注」的误报，故不产生持久标注。效果携 RESET_PHASE+PHASE_END，故下一个 MSG_NEW_TURN 清除。 */
     public int hintZoneMask;
     public boolean deckReversed;
     public boolean cantCheckGrave;
@@ -607,9 +180,7 @@ public class GameField {
     public boolean[] pzoneAct = new boolean[2];
     public boolean contiAct;
 
-    /**
-     * 攻击宣言绿色弧形流动动画状态（对齐 MSG_ATTACK L3817-3866 + GenArrow/drawing attack_sv）：onAttack 写入攻击者/目标卡与时间戳，drawAttackArc 在约 0.9s 内绘制；arcTarget==null 表示直接攻击。
-     */
+    /** 攻击宣言绿色弧形流动动画状态（对齐 MSG_ATTACK L3817-3866 + GenArrow/drawing attack_sv）：onAttack 写入攻击者/目标卡与时间戳，drawAttackArc 在约 0.9s 内绘制；arcTarget==null 表示直接攻击。 */
     public volatile ClientCard arcAttacker;
     public volatile ClientCard arcTarget;
     public volatile long arcStartMs;
@@ -619,9 +190,7 @@ public class GameField {
 
     public List<ClientCard> selectableCards = new ArrayList<>();
     public List<ClientCard> selectedCards = new ArrayList<>();
-    /**
-     * 正在「揭示」展示的手牌卡——由 applyMoveToHandReveal 加入，SelectionOutlineRenderer 对其绘行进蚂蚁线（不受 is_selectable 门控）；展示结束/洗切时清空，亦复用为灵摆召唤两张刻度卡。 
-     */
+    /** 正在「揭示」展示的手牌卡——由 applyMoveToHandReveal 加入，SelectionOutlineRenderer 对其绘行进蚂蚁线（不受 is_selectable 门控）；展示结束/洗切时清空，亦复用为灵摆召唤两张刻度卡。 */
     public final List<ClientCard> revealHighlightCards = new ArrayList<>();
     public List<ClientCard> selectsumCards = new ArrayList<>();
     public List<ClientCard> selectsumAll = new ArrayList<>();
@@ -630,8 +199,7 @@ public class GameField {
     public int selectMin, selectMax, mustSelectCount;
     public int selectSumval, selectMode;
     public int selectHint;
-    /** 对齐 duelclient.cpp L40 event_string：由 HINT_EVENT 及召唤/抽卡/伤害/攻击/连锁等事件消息写入，
-     *  在 MSG_SELECT_CHAIN / MSG_SELECT_EFFECTYN 询问前作为「触发时点」前缀拼接（L2176/2178） */
+    /** 对齐 duelclient.cpp L40 event_string：由 HINT_EVENT 及召唤/抽卡/伤害/攻击/连锁等事件消息写入，在 MSG_SELECT_CHAIN / MSG_SELECT_EFFECTYN 询问前作为「触发时点」前缀拼接（L2176/2178） */
     public String eventString = "";
     public boolean selectCancelable;
     public boolean selectReady;
@@ -654,10 +222,7 @@ public class GameField {
 
     public final DuelInfo dInfo = new DuelInfo();
 
-    /** dInfo.duelRule 的静态镜像：几何门面入口（getZoneRect/getPileRect）为 static，
-     *  需按 master rule 选 materials.cpp 的 rule0(field2)/rule1(field3) 格子布局；
-     *  经 {@link #setDuelRule(int)} 统一写入（GameMessageParser/ReloadFieldBuilder/ReplayPlayer），
-     *  默认 4（当前环境恒 New Master Rule） */
+    /** dInfo.duelRule 的静态镜像：几何门面入口（getZoneRect/getPileRect）为 static，需按 master rule 选 materials.cpp 的 rule0(field2)/rule1(field3) 格子布局；经 {@link #setDuelRule(int)} 统一写入（GameMessageParser/ReloadFieldBuilder/ReplayPlayer），默认 4（当前环境恒 New Master Rule） */
     public static volatile int sDuelRule = 4;
 
     /** 设置本局 master rule：同时写实例 dInfo 与静态镜像，几何分支单一入口 */
@@ -683,12 +248,10 @@ public class GameField {
     long lastTimeTickMs;
 
     // === 区域规格 / 场地底板 / 格子与堆叠尺寸真值（materials.cpp）；落点计算在 GameFieldGeometry ===
-    /** 区域规格：怪兽/魔陷区宽 290px、高 254px，格子间 2px 间隔 → 横向间距 292px；
-     *  X 坐标以场地中心 3.95 为轴按 (292px世界长)/1.1 放大，决斗场更宽且与 field3.png 拉伸适配 */
+    /** 区域规格：怪兽/魔陷区宽 290px、高 254px，格子间 2px 间隔 → 横向间距 292px；X 坐标以场地中心 3.95 为轴按 (292px世界长)/1.1 放大，决斗场更宽且与 field3.png 拉伸适配 */
     static final float X_SCALE = (292f * 0.8f / 177f) / 1.1f;
 
-    /** C++ materials.cpp vField：底板贴图 uv(0,0)-(1,1) 覆盖的世界矩形。
-     *  底板、格子、卡片落点共用 fx()/恒等 Y 这同一仿射映射，故贴图网格与格子必然完美重叠 */
+    /** C++ materials.cpp vField：底板贴图 uv(0,0)-(1,1) 覆盖的世界矩形；底板、格子、卡片落点共用 fx()/恒等 Y 这同一仿射映射，故贴图网格与格子必然完美重叠 */
     public static final float FIELD_TEX_X_MIN = -1f;
     public static final float FIELD_TEX_X_MAX = 9f;
     public static final float FIELD_TEX_Y_MIN = -4f;
@@ -739,9 +302,7 @@ public class GameField {
         attackableCards.clear();
         contiCards.clear();
         revealHighlightCards.clear();
-        // 断线/结束/新开一局时选择态列表必须随场一并清空：旧实现漏清，
-        // 残留的 ClientCard 引用 is_selectable 仍为 true，SelectionOutlineRenderer
-        // 继续对其绘制蚂蚁线 → 「重现开局蚂蚁线依旧显示」
+        // 断线/结束/新开一局时选择态列表必须随场一并清空，旧实现漏清致残留 is_selectable 蚂蚁线（SelectionOutlineRenderer 仍绘线）
         selectableCards.clear();
         selectedCards.clear();
         selectsumCards.clear();
@@ -760,10 +321,7 @@ public class GameField {
         extraPCount[0] = 0;
         extraPCount[1] = 0;
         eventString = "";
-        // LP 增减动画状态机必须随场一并复位：旧实现漏清，lpPending/lpcstring 等残留到下一局，
-        // lpBarTicker 心跳继续驱动 updateLpAnimation/refreshLpFloatText，导致 match 局间
-        // （换 side、等待换备卡）重新显示决斗场时「再次播放上一局最后一次伤害的浮字/扣血动画」。
-        // 复位后 lpcstring 为空 → GameTopInfoManager.refreshLpFloatText 自动隐藏浮字并关闭浮窗层。
+        // LP 增减动画状态机必须随场一并复位，旧实现漏清致残留到下一局、局间重显决斗场时重播上一局最后一次伤害的浮字/扣血动画（复位后 lpcstring 为空，浮字自动隐藏）
         lpPending = false;
         lpDelay = 0;
         lpframe = 0;
@@ -774,18 +332,11 @@ public class GameField {
         lpcstring = "";
     }
 
-    /**
-     * 接收 HINT_ZONE 掩码（已换算为本地视角）并展开为魔陷格标注集存入 hintZoneMask：
-     * 只处理 SZONE 位（bit8-15/24-31，无限泡影类宣告）→ 标注同纵列两张魔陷格
-     * （同侧 seq 与对侧镜像 4-seq）；MZ 位（bit0-6/16-22）为封区类效果（伴随
-     * MSG_FIELD_DISABLED 白 X）的怪兽纵列宣告，不做持久标注；来位在 disabledField
-     * 同位已被封锁（该魔陷格带白 X）时亦跳过，标注不与交叉线重叠。
-     * 仅主列 seq 0-4（额外灵摆/共用连接格 5/6/7 无魔陷对应列）
-     */
+    /** 接收 HINT_ZONE 掩码（本地视角）展开为魔陷格标注集存 hintZoneMask：仅 SZONE 位标注同纵列两格（同侧 seq 与对侧镜像 4-seq），MZ 位为封区类宣告不做持久标注，来位已被 disabledField 封锁时跳过，仅主列 seq 0-4 */
     public void applyHintZone(int zones) {
         for (int bit = 0; bit < 32; bit++) {
             if ((zones & (1 << bit)) == 0) continue;
-            if ((bit & 8) == 0) continue;                       // MZ 位（0-6/16-22）：封区宣告，跳过
+            if ((bit & 8) == 0) continue;                       // MZ 位：封区宣告，跳过
             if ((disabledField & (1L << bit)) != 0) continue;   // 该格已带白 X：不叠加标注
             markSpellColumn(bit >= 16 ? 1 : 0, (bit & 7));
         }
@@ -805,13 +356,7 @@ public class GameField {
         return (hintZoneMask & (1 << (seat * 16 + (mz ? sequence : 8 + sequence)))) != 0;
     }
 
-    /**
-     * 决斗结束（MSG_WIN/STOC_DUEL_END）与断开连接时清除全部选择态蚂蚁线显示：
-     * 不清场（场上卡片保持显示），仅复位选择标记并清空轮廓渲染器读取的各列表——
-     * selectableCards/activatableCards/selectedCards/selectsumCards/selectsumAll/
-     * revealHighlightCards；视图侧格子高亮 mask 由 GameFieldController.clearSelectionVisuals
-     * 经 GameFieldViewController.clearHighlight() 归零。
-     */
+    /** 决斗结束（MSG_WIN/STOC_DUEL_END）与断开连接时清除全部选择态蚂蚁线显示：不清场仅复位选择标记并清空轮廓渲染器读取的各列表，视图侧格子高亮 mask 由 GameFieldController.clearSelectionVisuals 归零 */
     public void clearSelectionVisuals() {
         resetSelectFlags(selectableCards);
         resetSelectFlags(activatableCards);
@@ -921,12 +466,7 @@ public class GameField {
         return count;
     }
 
-    // ================================================================================================
-    //  以下为转发桩：行为实现逐行等价移植至同包协作类，对外契约（签名 / 可见性）保持不变。
-    //  · 卡片增删改 / 超量素材 / 命令·选择状态清理   → GameFieldCards (cards)
-    //  · 坐标几何 GetCardLocation / 格子·堆叠矩形      → GameFieldGeometry (geometry)
-    //  · LP 动画 / HUD 时间·计数 / 卡片动画更新 / 布局 → GameFieldMotion (motion)
-    // ================================================================================================
+    // === 转发桩：行为实现逐行等价移植至同包协作类，对外契约（签名/可见性）不变；增删改·超量·命令选择清理→GameFieldCards(cards)，坐标几何/格子·堆叠矩形→GameFieldGeometry(geometry)，LP 动画·HUD·卡片动画·布局→GameFieldMotion(motion) ===========
 
     // === LP 变化动画 / HUD 时间·计数显示（GameFieldMotion）===
 
@@ -1029,8 +569,7 @@ public class GameField {
         return geometry.getCardLocation(pcard);
     }
 
-    /** 连锁图标锚点（移植 ClientField::GetChainLocation）：手卡固定于魔陷区后中央、不随卡离场，
-     *  无对应锚点（OVERLAY 等）返回 null，调用方回退用卡片当前坐标 */
+    /** 连锁图标锚点（移植 ClientField::GetChainLocation）：手卡固定于魔陷区后中央不随卡离场，无对应锚点（OVERLAY 等）返回 null 由调用方回退用卡片当前坐标 */
     public float[] getChainLocation(int controler, int location, int sequence) {
         return geometry.getChainLocation(controler, location, sequence);
     }
@@ -1049,18 +588,12 @@ public class GameField {
         motion.refreshAllCards();
     }
 
-    /**
-     * 回放「上一步」逆向倒放：重算前抓取当前各显示卡的渲染位置快照（步骤 N 显示态），
-     * 供投喂线程记录后于落点交主线程 {@link #applyReverseAnimation} 逆向补间。委托 {@code motion}。
-     */
+    /** 回放「上一步」逆向倒放：重算前抓取当前各显示卡的渲染位置快照（步骤 N 显示态），供投喂线程记录后于落点交主线程 applyReverseAnimation 逆向补间；委托 motion */
     public java.util.List<ReplayPosSnap> collectDisplayPositions() {
         return motion.collectDisplayPositions();
     }
 
-    /**
-     * 回放「上一步」逆向倒放：重算落定后把发生位移的卡从步骤 N 显示位逆向补间回 N-1 落定位
-     * （仅改渲染层 cur*，不动模型字段）。须在主线程调用。委托 {@code motion}。
-     */
+    /** 回放「上一步」逆向倒放：重算落定后把发生位移的卡从步骤 N 显示位逆向补间回 N-1 落定位（仅改渲染层 cur*，不动模型字段），须在主线程调用；委托 motion */
     public void applyReverseAnimation(java.util.List<ReplayPosSnap> snapN) {
         motion.applyReverseAnimation(snapN);
     }
@@ -1069,11 +602,7 @@ public class GameField {
         motion.setCardPos(pcard);
     }
 
-    /**
-     * 飞行起点兜底落位（仅供从未定位过的卡使用）：临时回写旧 c/l/s 求旧区域几何位置，
-     * 再恢复 addCard 已写入的新值，使后续 moveCardAnimated 从旧位置飞向新位置；
-     * 正常链路（卡已在旧区域定位）不会触达此路径。
-     */
+    /** 飞行起点兜底落位（仅供从未定位过的卡使用）：临时回写旧 c/l/s 求旧区域几何位置再恢复 addCard 已写入的新值，使后续 moveCardAnimated 从旧位置飞向新位置，正常链路不会触达此路径 */
     public void setCardPosForMove(ClientCard pcard, int oldCtrl, int oldLocBase, int oldSeq) {
         if (pcard == null || oldLocBase == 0) return;
         int keepCtrl = pcard.controler;
@@ -1096,8 +625,7 @@ public class GameField {
         motion.moveCardAnimated(pcard, frame, delay);
     }
 
-    /** 带同区滑出抖动（±0.3/帧，对齐 duelclient.cpp MSG_MOVE L3025-3033）的移动动画，
-     *  jitterX 与动画启动原子设置，消除渲染线程抢先以 jitter=0 收敛的竞态 */
+    /** 带同区滑出抖动（±0.3/帧，对齐 duelclient.cpp MSG_MOVE L3025-3033）的移动动画，jitterX 与动画启动原子设置，消除渲染线程抢先以 jitter=0 收敛的竞态 */
     public void moveCardAnimated(ClientCard pcard, int frame, int delay, float jitterX) {
         motion.moveCardAnimated(pcard, frame, delay, jitterX);
     }
@@ -1117,8 +645,7 @@ public class GameField {
         motion.startHandReveal(pcard, flip);
     }
 
-    /** 卡组 / 额外卡组顶卡揭示翻开（duelclient.cpp MSG_CONFIRM_DECKTOP / MSG_CONFIRM_EXTRATOP）：
-     *  顶卡横向滑出堆叠并旋转面朝相机露出卡面，停留段亮面，调用方随后 moveCardAnimated 转回原位盖回 */
+    /** 卡组 / 额外卡组顶卡揭示翻开（duelclient.cpp MSG_CONFIRM_DECKTOP / MSG_CONFIRM_EXTRATOP）：顶卡横向滑出堆叠并旋转面朝相机露出卡面，停留段亮面，调用方随后 moveCardAnimated 转回原位盖回 */
     public void revealTopCardOut(ClientCard pcard, float shiftX, int frame) {
         motion.revealTopCardOut(pcard, shiftX, frame);
     }

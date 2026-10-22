@@ -23,12 +23,12 @@ class ReplayZoneCounter {
      */
     int zoneBlockCount(int playerIdx, int location) {
         GameEngine engine = player.engine;
-        List<GameField.ClientCard> list = engine.field.players[engine.localPlayer(playerIdx)]
+        List<ClientCard> list = engine.field.players[engine.localPlayer(playerIdx)]
                 .getLocationList(location);
         if (list == null) return 0;
         if (location == 0x04 || location == 0x08) return list.size();
         int count = 0;
-        for (GameField.ClientCard card : list) {
+        for (ClientCard card : list) {
             if (card != null) count++;
         }
         return count;
@@ -53,11 +53,11 @@ class ReplayZoneCounter {
         field.refreshAllCards();
     }
 
-    private void writeZoneCodes(List<GameField.ClientCard> list, List<Integer> codes) {
+    private void writeZoneCodes(List<ClientCard> list, List<Integer> codes) {
         if (list == null || codes == null) return;
         int n = Math.min(list.size(), codes.size());
         for (int i = 0; i < n; i++) {
-            GameField.ClientCard card = list.get(i);
+            ClientCard card = list.get(i);
             if (card == null) continue;
             card.code = codes.get(i);
         }

@@ -5,6 +5,7 @@ import android.opengl.Matrix;
 import java.util.List;
 
 import cn.garymb.ygomobile.game.GameField;
+import cn.garymb.ygomobile.game.ClientCard;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.YGOUtil;
 
@@ -35,11 +36,11 @@ class FieldCardRenderer {
      * 手卡走相机 billboard，场上卡按 Y→X→Z 旋转，末尾统一 scale(CARD_W, CARD_H)；
      * 手卡额外按 handFlipT 做 X 轴挤压以呈现「绕竖轴翻面」的视觉效果
      */
-    void buildCardModel(GameField.ClientCard c, float[] out) {
+    void buildCardModel(ClientCard c, float[] out) {
         buildCardModel(c, out, 0f);
     }
 
-    private void buildCardModel(GameField.ClientCard c, float[] out, float zBias) {
+    private void buildCardModel(ClientCard c, float[] out, float zBias) {
         Matrix.setIdentityM(out, 0);
         if (c.location == 0x02) {
             Matrix.translateM(out, 0, FieldGeometry.mirrorX(c.curX),
@@ -65,13 +66,13 @@ class FieldCardRenderer {
      * 转半圈的投影宽度，先压到 0 再展开；留 0.06 下限避免完全退化成一条线（billboard 无厚度）。
      * handFlipT<0（尚未参与翻面）不挤压。
      */
-    static float handFlipSqueeze(GameField.ClientCard c) {
+    static float handFlipSqueeze(ClientCard c) {
         if (c.handFlipT < 0f) return 1f;
         return Math.max(0.06f, Math.abs(c.handFlipT - 0.5f) * 2f);
     }
 
     /** 手卡当前该贴卡面还是卡背：翻面进度过半才算正面（未参与翻面时按卡码直接判定） */
-    static boolean handShowsFace(GameField.ClientCard c) {
+    static boolean handShowsFace(ClientCard c) {
         return c.handFlipT < 0f || c.handFlipT >= 0.5f;
     }
 
@@ -96,11 +97,11 @@ class FieldCardRenderer {
     /**
      * 线程安全遍历：索引式 + 全量兜底，网络线程并发增删时最多丢一帧
      */
-    private void drawCardList(List<GameField.ClientCard> list) {
+    private void drawCardList(List<ClientCard> list) {
         if (list == null) return;
         try {
             for (int i = 0, n = list.size(); i < n; i++) {
-                GameField.ClientCard c;
+                ClientCard c;
                 try {
                     c = list.get(i);
                 } catch (Throwable e) {
@@ -112,7 +113,7 @@ class FieldCardRenderer {
         }
     }
 
-    private void drawPile(List<GameField.ClientCard> pile) {
+    private void drawPile(List<ClientCard> pile) {
         if (pile == null) return;
         try {
             // 堆叠厚度严格对齐 C++ client_field.cpp：每张卡按真实 sequence 的线性 curZ
@@ -120,7 +121,7 @@ class FieldCardRenderer {
             // 侧视厚度随张数线性增长（60 张 ≈0.60 > 40 张 ≈0.40 ≈ 15 张 ≈0.15 的 3 倍）。
             // 飞行中的卡保留自身动画的 Z 插值（从来源堆高度飞至目标堆高度），绘出立体弧线。
             for (int i = 0, s = pile.size(); i < s; i++) {
-                GameField.ClientCard c;
+                ClientCard c;
                 try {
                     c = pile.get(i);
                 } catch (Throwable e) {
@@ -143,11 +144,11 @@ class FieldCardRenderer {
      * 会出现“半张卡图 + 半张卡背”的 z-fighting，盖放卡还会被底板吞掉；
      * 单面绘制同时把 overdraw 减半。
      */
-    private void drawCard(GameField.ClientCard c) {
+    private void drawCard(ClientCard c) {
         drawCard(c, 0f);
     }
 
-    private void drawCard(GameField.ClientCard c, float zBias) {
+    private void drawCard(ClientCard c, float zBias) {
         if (c == null) return;
         float alpha = Math.max(0f, Math.min(1f, c.curAlpha / 255f));
         if (alpha <= 0.01f) return;
@@ -253,7 +254,7 @@ class FieldCardRenderer {
     }
 
     /** 本卡是否为应浮现卡图的「已公开卡码的场上里侧卡」（不含手卡/堆叠区/移动中卡片） */
-    private static boolean isBreathRevealCard(GameField.ClientCard c) {
+    private static boolean isBreathRevealCard(ClientCard c) {
         return (c.location & 0x0C) != 0 && !c.isFaceUp() && !c.isOverlayMaterial()
                 && !c.is_moving && c.displayCode() > 0;
     }
@@ -264,7 +265,7 @@ class FieldCardRenderer {
      * 深度剔除，必须更近视点才能透出），alpha 随 reveal 呼吸波在 0↔0.4 摆动，
      * 与卡背的 1→0.6 淡出此消彼长（频率为格子呼吸的一半，见 {@link #revealWave()}）
      */
-    private void drawBreathReveal(GameField.ClientCard c, int code, float alpha, float wave) {
+    private void drawBreathReveal(ClientCard c, int code, float alpha, float wave) {
         System.arraycopy(view.mModel, 0, view.mModelTmp, 0, 16);
         Matrix.rotateM(view.mModelTmp, 0, 180f, 0f, 1f, 0f);
         Matrix.translateM(view.mModelTmp, 0, 0f, 0f, 0.004f);
@@ -274,7 +275,7 @@ class FieldCardRenderer {
         }
     }
 
-    private int pickGlowColor(GameField.ClientCard c) {
+    private int pickGlowColor(ClientCard c) {
         if (isSelectedCard(c)) return GLOW_YELLOW;
         if (c.is_selected) return GLOW_YELLOW;
         if (c.is_highlighting) return GLOW_CYAN;
@@ -284,7 +285,7 @@ class FieldCardRenderer {
         return 0;
     }
 
-    boolean isSelectedCard(GameField.ClientCard c) {
+    boolean isSelectedCard(ClientCard c) {
         return c.controler == view.selectedPlayer && c.location == view.selectedLocation
                 && c.sequence == view.selectedSequence;
     }
@@ -293,7 +294,7 @@ class FieldCardRenderer {
      * 我方手卡后移量：基准量由 solveCamera 按俯仰角动态解算（保证不遮挡魔陷区），
      * 再叠加 XML field_hand_shift 的手动微调；对方手卡保持 gframe 原位
      */
-    float handY(GameField.ClientCard c) {
+    float handY(ClientCard c) {
         return c.curY - (c.controler == 0 ? view.cam.selfHandShift : 0f);
     }
 
@@ -307,11 +308,11 @@ class FieldCardRenderer {
         if (f == null) return;
         float step = dt * 12f;
         for (int p = 0; p < 2; p++) {
-            List<GameField.ClientCard> hand = f.players[p].hand;
+            List<ClientCard> hand = f.players[p].hand;
             if (hand == null) continue;
             try {
                 for (int i = 0, n = hand.size(); i < n; i++) {
-                    GameField.ClientCard c;
+                    ClientCard c;
                     try {
                         c = hand.get(i);
                     } catch (Throwable e) {
@@ -334,14 +335,14 @@ class FieldCardRenderer {
      * 选中手卡抬升量：按动画进度 c.handLiftAnim(0..1) 线性插值（对齐 drawing.cpp 手卡
      * MoveCard(5) 的线性抬升），而非按选中状态瞬时跳变；进度由 updateHandLift 逐帧推进。
      */
-    float handLift(GameField.ClientCard c) {
+    float handLift(ClientCard c) {
         return HAND_LIFT * c.handLiftAnim;
     }
 
     /**
      * 选中手卡抬升的 Z 分量：沿相机 up 轴抬升，Z 分量 = mCamRot[6] × 抬升量
      */
-    float handLiftZ(GameField.ClientCard c) {
+    float handLiftZ(ClientCard c) {
         return view.cam.mCamRot[6] * handLift(c);
     }
 

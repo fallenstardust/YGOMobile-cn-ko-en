@@ -134,9 +134,9 @@ public class DuelHintManager {
                     if ((l & 0xF1) != 0) return true;
                     if ((l & CardLocation.Hand.value()) != 0 && field != null && c >= 0 && c < 2) {
                         // 对齐 hand_count[c]：PlayerField.hand 为定长索引表（空位 null），取非空实卡数
-                        List<GameField.ClientCard> hand = field.players[c].hand;
+                        List<ClientCard> hand = field.players[c].hand;
                         int handCount = 0;
-                        for (GameField.ClientCard cc : hand) if (cc != null) handCount++;
+                        for (ClientCard cc : hand) if (cc != null) handCount++;
                         if (handCount >= 10 && ++handInMsg[c] > 1) return true;
                     }
                 }

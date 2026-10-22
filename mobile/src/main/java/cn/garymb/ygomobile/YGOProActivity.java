@@ -41,6 +41,7 @@ import cn.garymb.ygomobile.game.ChatInputUI;
 import cn.garymb.ygomobile.game.DeckEditorManager;
 import cn.garymb.ygomobile.game.GameEngine;
 import cn.garymb.ygomobile.game.GameField;
+import cn.garymb.ygomobile.game.ClientCard;
 import cn.garymb.ygomobile.game.GameFieldController;
 import cn.garymb.ygomobile.game.GameTopInfoManager;
 import cn.garymb.ygomobile.game.ReplayPlayer;
@@ -1521,7 +1522,7 @@ public class YGOProActivity extends AppCompatActivity {
         }
     }
 
-    public void showCardInfoPanel(GameField.ClientCard card) {
+    public void showCardInfoPanel(ClientCard card) {
         cardDetailPanel.showCardInfo(card);
     }
 

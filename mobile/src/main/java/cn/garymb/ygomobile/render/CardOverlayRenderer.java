@@ -14,6 +14,7 @@ import java.util.List;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.game.GameEngine;
 import cn.garymb.ygomobile.game.GameField;
+import cn.garymb.ygomobile.game.ClientCard;
 import cn.garymb.ygomobile.utils.YGOUtil;
 
 /**
@@ -128,9 +129,9 @@ final class CardOverlayRenderer {
     private int arrowVao, arrowVbo;
     private FloatBuffer arrowBuf;
     // 攻击弧显示期间需隐藏的 tAttack(attack.png) 浮动箭头：即当前弧线起点攻击者
-    private GameField.ClientCard hideAttackCard;
+    private ClientCard hideAttackCard;
     /** 已选定为当前攻击目标的对方怪兽：攻击弧展示期内不再在其卡上绘制 attack 浮动箭头 */
-    private GameField.ClientCard hideAttackTarget;
+    private ClientCard hideAttackTarget;
 
     // 可发动绿点专用矩阵 scratch：buildCardModel 内部会占用 view.mModelTmp 作手卡 billboard 临时量，
     // 不能把 mModelTmp 同时作为其 out，故本处用独立数组避免 multiplyMM 结果/源同数组的未定义行为。
@@ -232,12 +233,12 @@ final class CardOverlayRenderer {
         }
     }
 
-    private void activatableDotList(List<GameField.ClientCard> list, float alpha,
+    private void activatableDotList(List<ClientCard> list, float alpha,
                                     boolean spellZone, boolean mr4, int mask) {
         if (list == null) return;
         try {
             for (int i = 0, n = list.size(); i < n; i++) {
-                GameField.ClientCard c;
+                ClientCard c;
                 try {
                     c = list.get(i);
                 } catch (Throwable e) {
@@ -256,7 +257,7 @@ final class CardOverlayRenderer {
      *  场上卡默认贴屏幕右上顶点；灵摆魔陷带屏幕右侧的卡为例外（刻度文字占右上顶点），绿点改贴左上顶点。
      *  卡片局部空间非等比（CARD_W×CARD_H），按 1/CARD_W、1/CARD_H 反向缩放 x/y 使屏幕上呈正圆；
      *  抬升沿世界 +z（相机恒在上方）而非卡片局部 +z，保证盖放/竖立卡不被卡面遮挡。 */
-    private void drawActivatableDot(GameField.ClientCard c, float alpha,
+    private void drawActivatableDot(ClientCard c, float alpha,
                                     boolean spellZone, boolean mr4) {
         // 颜色按菜单内容细致区分（用户规格）：cmdFlag 含 COMMAND_ACTIVATE 时点击菜单必出
         // 「发动」（buildCardCommandMenu 以该位收集 activateList），绿点；不含发动而有
@@ -312,11 +313,11 @@ final class CardOverlayRenderer {
         view.quad.drawQuadTex(m, tex, alpha);
     }
 
-    private void overlayCardList(List<GameField.ClientCard> list, boolean mr4, boolean oppAttackHint) {
+    private void overlayCardList(List<ClientCard> list, boolean mr4, boolean oppAttackHint) {
         if (list == null) return;
         try {
             for (int i = 0, n = list.size(); i < n; i++) {
-                GameField.ClientCard c;
+                ClientCard c;
                 try {
                     c = list.get(i);
                 } catch (Throwable e) {
@@ -329,7 +330,7 @@ final class CardOverlayRenderer {
         }
     }
 
-    private void overlayCardStatus(GameField.ClientCard c, boolean mr4, boolean oppAttackHint) {
+    private void overlayCardStatus(ClientCard c, boolean mr4, boolean oppAttackHint) {
         if (c.is_moving) return;
         // z 层：装备/对象/连锁对象/无效图标在灵摆刻度图（lscale，curZ+0.02）上再高 0.01f
         if (c.is_showequip) {
@@ -366,7 +367,7 @@ final class CardOverlayRenderer {
      * 场上可攻击怪兽的 tAttack 动画箭头：沿场地纵轴朝敌方一侧上下浮动，对方半场绕法线转 180°，
      * 尺寸与装备/对象图标一致（vSymbol 0.7×0.7）。对齐 drawing.cpp DrawCard 攻击命令标记分支。
      */
-    private void drawAttackIcon(GameField.ClientCard c) {
+    private void drawAttackIcon(ClientCard c) {
         int tex = obtainIconTexture(ATTACK_TEX_KEY, IC_ATTACK);
         if (tex <= 0) return;
         // animTimeMs 为绝对毫秒时间戳，须以 double 计算相位，否则 float 在 ~1e10 量级丢精度导致抖动
@@ -394,7 +395,7 @@ final class CardOverlayRenderer {
      * 的 wFrac/hFrac=1 全卡足迹、zOff=SCALE_Z_OFF 无旋转路径。MR3（duel_rule&lt;4）额外灵摆区
      * seq6/7 的刻度已由 FieldTextureManager.compositePendulum 烘焙进卡图，这里直接跳过避免重影。
      */
-    private void drawPendulumScaleOverlay(GameField.ClientCard c, boolean mr4) {
+    private void drawPendulumScaleOverlay(ClientCard c, boolean mr4) {
         if ((c.type & TYPE_PENDULUM) == 0) return;
         if (c.location != 0x08) return;                        // LOCATION_SZONE
         if (!c.isFaceUp() || c.equipTarget != null) return;    // 对齐 drawing.cpp 表侧 & !equipTarget
@@ -424,7 +425,7 @@ final class CardOverlayRenderer {
 
     /** 卡片正上方绘一枚世界坐标正立（不随卡片旋转）的叠加图标，尺寸按卡片足迹分数换算；
      *  zOff 区分层：灵摆刻度图 SCALE_Z_OFF，状态/无效图标 ICON_Z_OFF（=刻度+0.01，不共面） */
-    private void drawFieldIcon(GameField.ClientCard c, int tex, float wFrac, float hFrac, float yOff, float zOff) {
+    private void drawFieldIcon(ClientCard c, int tex, float wFrac, float hFrac, float yOff, float zOff) {
         if (tex <= 0) return;
         Matrix.setIdentityM(view.mModel, 0);
         Matrix.translateM(view.mModel, 0, FieldGeometry.mirrorX(c.curX), c.curY + yOff, c.curZ + zOff);
@@ -486,7 +487,7 @@ final class CardOverlayRenderer {
                     ch.iconZ = anchor[2];
                     ch.iconPosCaptured = true;
                 } else {
-                    GameField.ClientCard card = ch.chainCard;
+                    ClientCard card = ch.chainCard;
                     if (card == null) {
                         try {
                             card = f.getCard(ch.controler, ch.location, ch.sequence);
@@ -534,7 +535,7 @@ final class CardOverlayRenderer {
      */
     void drawAttackArc(GameField f) {
         if (f == null || arrowProg == 0 || arrowBuf == null) return;
-        GameField.ClientCard atk = f.arcAttacker;
+        ClientCard atk = f.arcAttacker;
         if (atk == null) return;
         long elapsed = view.animTimeMs - f.arcStartMs;
         if (elapsed > ATTACK_ARC_MS) {
