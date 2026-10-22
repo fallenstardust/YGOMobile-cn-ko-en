@@ -1,0 +1,103 @@
+package cn.garymb.ygomobile.game.engine;
+import cn.garymb.ygomobile.game.gamefield.ClientCard;
+
+import ocgcore.DataManager;
+
+import cn.garymb.ygomobile.audio.SoundManager;
+
+/**
+ * === 召唤动画类型（onSummonAnimation 的 summonType 参数，对齐 duelclient.cpp showcard=5/7） ===
+ * 自 GameEngine 拆分而来：MSG_SUMMONING/MSG_SPSUMMONING/MSG_FLIPSUMMONING 的居中卡片动画，
+ * 以及 MSG_CHAIN_NEGATED/MSG_CHAIN_DISABLED 的效果无效动画（showcard=3）。
+ */
+public class SummonAnimationManager {
+
+    public static final int SUMMON_NORMAL = 0;   // 通常召唤（MSG_SUMMONING，case 7 翻面）
+    public static final int SUMMON_SPECIAL = 1;  // 特殊召唤（MSG_SPSUMMONING，case 5 放大淡入）
+    public static final int SUMMON_FLIP = 2;     // 反转召唤（MSG_FLIPSUMMONING，case 7 翻面）
+
+    /** ocgcore common.h：TYPE_TOKEN 0x4000（衍生物特殊召唤只放 token 音效） */
+    private static final long TYPE_TOKEN = 0x4000L;
+
+    private final GameEngine engine;
+
+    public SummonAnimationManager(GameEngine engine) {
+        this.engine = engine;
+    }
+
+    /** 召唤类卡片居中动画（对齐 duelclient.cpp showcard=5/7）：同步派发即入队特效，
+     *  闸门由 drainPendingMsgs 的统一动画屏障检测关闭，无需在此显式关闭 */
+    public void postSummonAnimation(int code, int summonType) {
+        if (engine.listener == null) return;
+        engine.listener.onSummonAnimation(code, summonType);
+    }
+
+    /**
+     * 效果无效卡片居中动画（对齐 duelclient.cpp MSG_CHAIN_NEGATED/DISABLED L3450-3452：
+     * showcardcode = chains[ct-1].code, showcarddif=0, showcard=3）。
+     * ct 为 1 基连锁序号；取不到卡码时不播放。
+     */
+    public void postNegatedAnimation(int chainCount) {
+        final int code = (chainCount >= 1 && chainCount <= engine.duelEvents.chainCodes.size())
+                ? engine.duelEvents.chainCodes.get(chainCount - 1) : 0;
+        if (code == 0 || engine.listener == null) return;
+        // 无效动画入队即由统一动画屏障关闭闸门，播完再处理后续消息
+        // （对齐 C++ MSG_CHAIN_NEGATED/DISABLED 的 WaitFrameSignal(30)）
+        engine.listener.onNegatedAnimation(code);
+    }
+
+    // ==== 召唤类消息（MSG_SUMMONING/MSG_SPSUMMONING/MSG_FLIPSUMMONING）====
+
+    public void onSummoning(int code, int ctrl, int loc, int seq) {
+        // duelclient.cpp MSG_SUMMONING L3247-3248：先试召唤主题歌（chants，按 code/alias），
+        // 无对应曲目才回退普通召唤音效
+        if (!engine.soundManager.playChant(code))
+            engine.soundManager.playSoundEffect(SoundManager.SFX.SUMMON);
+        // duelclient.cpp MSG_SUMMONING L3250/3252-3258：event_string=sys1603「[%ls]召唤中」+ showcard=7（翻面进入）
+        engine.hintManager.setEventString(1603, "[%s]召唤中", DataManager.get().getName(code));
+        postSummonAnimation(code, SUMMON_NORMAL);
+    }
+
+    public void onSpSummoning(int code, int ctrl, int loc, int seq) {
+        // duelclient.cpp MSG_SPSUMMONING L3280-3285：衍生物（TYPE_TOKEN）放 token 音效；
+        // 否则先试召唤主题歌，无对应曲目才回退特殊召唤音效
+        ocgcore.data.Card card = DataManager.get().getCardManager().getCard(code);
+        if (card != null && (card.Type & TYPE_TOKEN) != 0) {
+            engine.soundManager.playSoundEffect(SoundManager.SFX.TOKEN);
+        } else if (!engine.soundManager.playChant(code)) {
+            engine.soundManager.playSoundEffect(SoundManager.SFX.SPECIAL_SUMMON);
+        }
+        // duelclient.cpp MSG_SPSUMMONING L3286-3290：event_string=sys1605「[%ls]特殊召唤中」+ if(code) showcard=5（放大淡入）
+        engine.hintManager.setEventString(1605, "[%s]特殊召唤中", DataManager.get().getName(code));
+        if (code != 0) postSummonAnimation(code, SUMMON_SPECIAL);
+    }
+
+    public void onFlipSummoning(int code, int ctrl, int loc, int seq, int position) {
+        // duelclient.cpp MSG_FLIPSUMMONING L3312-3313：先试召唤主题歌，无对应曲目才回退 flip 音效
+        if (!engine.soundManager.playChant(code))
+            engine.soundManager.playSoundEffect(SoundManager.SFX.FLIP);
+        // duelclient.cpp MSG_FLIPSUMMONING L3314-3320：event_string=sys1607「[%ls]反转召唤中」+ showcard=7（翻面进入）
+        engine.hintManager.setEventString(1607, "[%s]反转召唤中", DataManager.get().getName(code));
+        
+        // 获取卡片并更新位置和代码，触发翻转动画（对齐 C++ duelclient.cpp MSG_FLIPSUMMONING L3307-3318：
+        // pcard->SetCode(code); pcard->position = cp; mainGame->dField.MoveCard(pcard, 10)）。
+        // ctrl 必须先经 localPlayer 换算为本地视角座位再查卡——GameField.getCard 接收的是本地 controler，
+        // 与 MoveEventApplier.applyPosChange（同为里侧翻开/攻守互转的翻面动画权威实现）同一套映射；
+        // 旧实现直接用协议原始 ctrl 查找，本方非先攻（或观战/换边）时 pcard 取空 → 整个翻转分支被跳过，
+        // 卡片既不翻开也不改变矩形（背面横向 → 正面纵向）。
+        int localCtrl = engine.localPlayer(ctrl & 1);
+        ClientCard pcard = engine.field.getCard(localCtrl, loc & 0x7f, seq);
+        if (pcard != null) {
+            pcard.setCode(code);
+            pcard.position = position;  // 设置新位置（POS_FACEUP_ATTACK/DEFENSE 等）
+            // getCardLocation 依新 position 求目标姿态：里侧翻开 curRotY、攻守互转 curRotZ，
+            // 播放横向卡背翻为纵向正面的转动动画（frame=10 与 C++ 一致）
+            engine.field.moveCard(pcard, 10);
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onFieldChanged();
+            });
+        }
+        
+        postSummonAnimation(code, SUMMON_FLIP);
+    }
+}

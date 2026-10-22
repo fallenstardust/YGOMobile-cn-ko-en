@@ -21,7 +21,7 @@
         android:clipChildren="false">
 
         <!-- 决斗场区域：GameFieldView 3D 渲染 -->
-        <cn.garymb.ygomobile.render.GameFieldView
+        <cn.garymb.ygomobile.render.gamefieldview.GameFieldView
             android:id="@+id/game_field_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

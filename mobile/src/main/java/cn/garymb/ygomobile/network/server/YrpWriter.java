@@ -10,7 +10,7 @@ import java.nio.ByteOrder;
 import java.util.Arrays;
 
 /**
- * YRP2（REPLAY_UNIFORM）录像写入器，{@code cn.garymb.ygomobile.game.ReplayReader} 的写端对偶，
+ * YRP2（REPLAY_UNIFORM）录像写入器，{@code cn.garymb.ygomobile.game.replay.ReplayReader} 的写端对偶，
  * 移植 {@code Classes/gframe/replay.cpp}（BeginRecord/WriteHeader/WriteData/WriteInt32/WriteResponse/
  * RemoveData/EndRecord）与 {@code single_duel.cpp::TPResult/GetResponse/EndDuel} 的调用序列。
  *
@@ -44,7 +44,7 @@ public final class YrpWriter {
      */
     public static final int REPLAY_MSG_GUEST_VIEW = 0x80;
     /** 回放聊天伪帧消息号：ocgcore 消息号表之外（0xF1，引擎永不产出），本工程专用，
-     *  与 {@code cn.garymb.ygomobile.game.GameEngine.REPLAY_CHAT_FRAME} 对偶（帧体 [playerType(1B)][UTF-8]） */
+     *  与 {@code cn.garymb.ygomobile.game.engine.GameEngine.REPLAY_CHAT_FRAME} 对偶（帧体 [playerType(1B)][UTF-8]） */
     public static final int REPLAY_CHAT_FRAME = 0xF1;
     public static final int REPLAY_ID_YRP2 = 0x32707279;
 

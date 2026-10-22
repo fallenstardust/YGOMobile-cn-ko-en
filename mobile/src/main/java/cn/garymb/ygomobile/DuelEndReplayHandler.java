@@ -14,10 +14,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-import cn.garymb.ygomobile.game.GameEngine;
-import cn.garymb.ygomobile.game.ReplayReader;
-import cn.garymb.ygomobile.ui.dialogs.ReplaySaveDialog;
-import cn.garymb.ygomobile.ui.dialogs.YesOrNoDialog;
+import cn.garymb.ygomobile.game.engine.GameEngine;
+import cn.garymb.ygomobile.game.replay.ReplayReader;
+import cn.garymb.ygomobile.ui.dialogs.replay.ReplaySaveDialog;
+import cn.garymb.ygomobile.ui.dialogs.lobby.YesOrNoDialog;
 
 /** 决斗结束与录像保存子系统（自 EngineCallbackDelegate 拆出）：待处理录像队列、观战结算动画排空等待、逐个录像保存/自动保存对话框与落盘、决斗结束提示与对外复位/断开抑制标志。 */
 class DuelEndReplayHandler {

@@ -29,7 +29,7 @@
              field_preview_zones    = 预览开关：设计时是否显示区域槽位/堆叠区（仅编辑态生效）
              field_preview_hand     = 预览开关：设计时是否显示双方示例手卡（仅编辑态生效）
              field_preview_labels   = 预览开关：设计时是否显示堆叠区名称标签（仅编辑态生效） -->
-        <cn.garymb.ygomobile.render.GameFieldView
+        <cn.garymb.ygomobile.render.gamefieldview.GameFieldView
             android:id="@+id/game_field_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

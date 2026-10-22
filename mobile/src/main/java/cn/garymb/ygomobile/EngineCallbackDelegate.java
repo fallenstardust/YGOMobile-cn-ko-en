@@ -1,15 +1,19 @@
 package cn.garymb.ygomobile;
+import cn.garymb.ygomobile.ui.dialogs.duel.CardDisplayDialog;
+import cn.garymb.ygomobile.ui.dialogs.lobby.PlayerWaitingDialog;
+import cn.garymb.ygomobile.render.card.CardDetailPanel;
+import cn.garymb.ygomobile.game.deck.DeckEditorManager;
 
 import android.util.Log;
 
 import java.nio.ByteBuffer;
 
-import cn.garymb.ygomobile.game.GameEngine;
-import cn.garymb.ygomobile.game.GameField;
-import cn.garymb.ygomobile.game.ReplayMsgMerger;
-import cn.garymb.ygomobile.game.ShowDialogUtil;
-import cn.garymb.ygomobile.render.SpecEffectOverlay;
-import cn.garymb.ygomobile.ui.dialogs.YesOrNoDialog;
+import cn.garymb.ygomobile.game.engine.GameEngine;
+import cn.garymb.ygomobile.game.gamefield.GameField;
+import cn.garymb.ygomobile.game.replay.ReplayMsgMerger;
+import cn.garymb.ygomobile.game.select.ShowDialogUtil;
+import cn.garymb.ygomobile.render.spec.SpecEffectOverlay;
+import cn.garymb.ygomobile.ui.dialogs.lobby.YesOrNoDialog;
 import ocgcore.enums.DuelPhase;
 
 /** 引擎回调委托类（由 YGOProActivity 按 // === 分栏拆分而来）：承载 GameEngine.EngineListener 全部回调实现，并内聚居中特效覆盖层（SpecEffectOverlay）、阶段文字码与本地玩家显示名解析；决斗结束/录像处理子系统拆入同包 DuelEndReplayHandler。与门面同包，通过包级私有直连 YGOProActivity 的共享状态字段与 UI 编排方法，不引入 Context 对象。 */
@@ -153,7 +157,7 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
         activity.runOnUiThread(() -> {
             activity.topInfoManager.updateCardCountDisplay(activity.engine.getField());
             // 堆叠区查看列表弹窗（观战/录像）即时刷新：任何 field 变化后重拉 supplier，将宿主区域最新状态同步到已开着的弹窗（如果有）
-            cn.garymb.ygomobile.ui.dialogs.CardDisplayDialog.refreshLiveDialogs();
+            cn.garymb.ygomobile.ui.dialogs.duel.CardDisplayDialog.refreshLiveDialogs();
         });
     }
 

@@ -1,4 +1,6 @@
 package cn.garymb.ygomobile;
+import cn.garymb.ygomobile.render.card.CardDetailPanel;
+import cn.garymb.ygomobile.game.deck.DeckEditorManager;
 
 import android.view.View;
 

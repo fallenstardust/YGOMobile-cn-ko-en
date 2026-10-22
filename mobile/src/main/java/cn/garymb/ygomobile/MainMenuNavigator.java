@@ -3,10 +3,10 @@ package cn.garymb.ygomobile;
 import java.util.List;
 
 import cn.garymb.ygomobile.network.LanDiscoveryManager;
-import cn.garymb.ygomobile.ui.dialogs.CreateHostDialog;
-import cn.garymb.ygomobile.ui.dialogs.LanModeDialog;
-import cn.garymb.ygomobile.ui.dialogs.PlayerWaitingDialog;
-import cn.garymb.ygomobile.ui.dialogs.SingleModeDialog;
+import cn.garymb.ygomobile.ui.dialogs.lobby.CreateHostDialog;
+import cn.garymb.ygomobile.ui.dialogs.lobby.LanModeDialog;
+import cn.garymb.ygomobile.ui.dialogs.lobby.PlayerWaitingDialog;
+import cn.garymb.ygomobile.ui.dialogs.lobby.SingleModeDialog;
 
 /**
  * 局域网主菜单导航协作类（由 YGOProActivity 按 // === 分栏拆分而来）：

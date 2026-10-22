@@ -5,7 +5,7 @@ import android.util.Log;
 import java.nio.ByteBuffer;
 
 import cn.garymb.ygomobile.audio.SoundManager;
-import cn.garymb.ygomobile.game.GameEngine;
+import cn.garymb.ygomobile.game.engine.GameEngine;
 
 /**
  * STOC 通讯回调处理（自 DuelClient.StocHandler 平移为顶层类，逻辑零改；

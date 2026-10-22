@@ -1,8 +1,9 @@
 package cn.garymb.ygomobile;
+import cn.garymb.ygomobile.render.card.CardDetailPanel;
 
 import android.view.View;
 
-import cn.garymb.ygomobile.game.DeckEditorManager;
+import cn.garymb.ygomobile.game.deck.DeckEditorManager;
 import cn.garymb.ygomobile.lite.R;
 import ocgcore.data.Card;
 
