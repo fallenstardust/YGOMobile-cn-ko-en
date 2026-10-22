@@ -128,7 +128,7 @@ uint32_t engineCardReader(uint32_t code, card_data* data) {
 // 按包名字典序升序覆写物化进 <root>/expansions/script/，即靠后的包优先）；
 // 其余路径（single/ 等）
 // 保持主目录优先、expansions 兜底，不影响残局脚本既有行为
-byte* engineScriptReader(const char* scriptPath, int* slen) {
+uint8_t* engineScriptReader(const char* scriptPath, int* slen) {
     if (!scriptPath || g_rootPath.empty())
         return nullptr;
     const char* rel = scriptPath;
@@ -309,7 +309,7 @@ Java_cn_garymb_ygomobile_engine_OcgDuelEngine_nativeSetResponseB(JNIEnv* env, jc
     if (resp == nullptr)
         return;
     jsize len = env->GetArrayLength(resp);
-    std::vector<byte> tmp(len > 0 ? len : 1, 0);
+    std::vector<uint8_t> tmp(len > 0 ? len : 1, 0);
     env->GetByteArrayRegion(resp, 0, len, reinterpret_cast<jbyte*>(tmp.data()));
     set_responseb(duel, tmp.data());
 }
