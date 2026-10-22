@@ -28,6 +28,7 @@ import java.nio.ByteBuffer;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.DialogScale;
+import cn.garymb.ygomobile.utils.ImePopupAdjuster;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.field.TextureLoader;
@@ -219,6 +220,10 @@ public class PosSelectDialog {
         popupWindow.showAtLocation(gameRight, Gravity.NO_GRAVITY, x, y);
         // 记住展开态几何，收缩把手/恢复据此在展开与底部横条间 resize 窗口
         if (collapseShell != null) collapseShell.rememberExpanded(x, y, popupW, popupH);
+        // 输入法抬升联动（用户规格）：抬键盘时本弹窗底边贴聊天输入框上沿，
+        // 收起后回到 layout_game_right 中央，逻辑统一在 ImePopupAdjuster；
+        // 已收缩为底部横条时（内容隐藏）工具类自动跳过，交由横条自身重锚跟随
+        ImePopupAdjuster.attach(popupWindow);
     }
 
     private void build(int code, int positions) {

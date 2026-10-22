@@ -19,6 +19,7 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.AbsListView;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -144,8 +145,39 @@ public class DraggablePopupHelper {
             popupWindow.setWidth(ViewGroup.LayoutParams.MATCH_PARENT);
             popupWindow.setHeight(ViewGroup.LayoutParams.MATCH_PARENT);
         }
+        // 用户规格：所有 dialog 不响应返回键/返回手势（含输入框的弹窗除外，见方法注释）
+        ignoreBackKey(popupWindow, contentView);
         // 用户规格：聊天输入框与输入法显示在所有弹窗前面——统一应用 Android 12+ 键盘分层修复
         applyImeLayeringFix(popupWindow);
+    }
+
+    /**
+     * 弹窗不响应返回键与返回手势（用户规格：所有 dialog 都不因返回键被隐藏，否则决斗
+     * 询问窗被误关后无法应答、游戏卡死）。系统 PopupWindow 的 PopupDecorView 在
+     * {@code dispatchKeyEvent} 中对 KEYCODE_BACK/KEYCODE_ESCAPE 无条件 {@code dismiss()}，
+     * 该内容是弹窗视图树的根，事件根本不会下发到弹窗内容层，故 OnKeyListener/重写
+     * dispatchKeyEvent 一律拦不到（RPSDialog 已按本结论验证）；唯一可靠做法是给弹窗窗口
+     * 加 FLAG_NOT_FOCUSABLE，使其不接收按键、返回键落到 Activity 由其决定是否响应。
+     * <p>
+     * 含输入框（EditText/AppCompatEditText）的弹窗例外：窗口不可获焦时键盘无法向其输入文字，
+     * 为保输入可用维持原获焦设置，此类弹窗返回键仍会将其关闭。
+     */
+    public static void ignoreBackKey(PopupWindow popupWindow, View content) {
+        if (popupWindow == null || content == null) return;
+        if (containsTextInput(content)) return;
+        popupWindow.setFocusable(false);
+    }
+
+    /** 内容视图中是否存在文本输入框（递归查找，AppCompatEditText 继承自 EditText 一并命中） */
+    private static boolean containsTextInput(View view) {
+        if (view instanceof EditText) return true;
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                if (containsTextInput(group.getChildAt(i))) return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -478,6 +510,8 @@ public class DraggablePopupHelper {
             }
             return false;
         });
+        // 同 5 参重载：把手式弹窗也不响应返回键/返回手势（含输入框的弹窗除外）
+        ignoreBackKey(popupWindow, contentView);
         // 同 5 参重载：把手式弹窗也统一应用 Android 12+ 键盘分层修复
         applyImeLayeringFix(popupWindow);
     }
@@ -1070,12 +1104,33 @@ public class DraggablePopupHelper {
         }
 
         /**
+         * 触点是否落在 Activity 视图树的聊天输入框上（屏幕坐标判定）：决斗中显示的对话框
+         * 底边可能压到输入框上沿，此时按「触点在本层内容区」由本层吞掉事件，玩家就点不到
+         * 输入框、无法唤起输入法（用户规格：显示 dialog 时也要能点输入框抬键盘与输入法）。
+         * 命中时本层放弃这次手势，原样交给 Activity 视图树。
+         */
+        private boolean isTouchOnChatInput(float rawX, float rawY) {
+            Activity act = resolveActivity(getContext());
+            if (act == null) return false;
+            View chat = act.findViewById(R.id.et_chat_input);
+            if (chat == null || !chat.isShown() || chat.getWidth() <= 0 || chat.getHeight() <= 0) {
+                return false;
+            }
+            int[] loc = new int[2];
+            chat.getLocationOnScreen(loc);
+            return rawX >= loc[0] && rawX < loc[0] + chat.getWidth()
+                    && rawY >= loc[1] && rawY < loc[1] + chat.getHeight();
+        }
+
+        /**
          * 判定本次手势的转发目标：
+         * 0) 触点在 Activity 的聊天输入框上 → Activity decor（对话框压住输入框时点击仍直达输入框）；
          * 1) 触点在本层内容区 → null（自身处理，按钮点击/拖拽照旧）；
          * 2) 触点在其他弹窗层内容区 → 该层（跨窗口转发，抬手后置顶）；
          * 3) 都不命中 → Activity decorView（决斗场、手卡、侧边六按钮等树内下层 UI 继续响应）
          */
         private View resolveGestureTarget(MotionEvent ev) {
+            if (isTouchOnChatInput(ev.getRawX(), ev.getRawY())) return passThroughTarget;
             if (isTouchInsideContent(ev.getX(), ev.getY())) return null;
             DragFrameLayout layer = findTopLayerAt(ev.getRawX(), ev.getRawY());
             if (layer != null && layer != this) return layer;
@@ -1580,6 +1635,10 @@ public class DraggablePopupHelper {
      */
     private static boolean applyRegionAnchor(PopupWindow popupWindow, View region, int mode) {
         if (popupWindow == null || region == null) return true;
+        // 输入法抬升期间不锚定：此刻内容按「底边贴抬高后的聊天输入框上沿」临时定位，
+        // 锚定 margin 会把内容拉回区域中央而与输入框重叠（用户规格：互不遮挡）。返回 false
+        // 让重试监听继续等待，输入法收起后由 ImePopupAdjuster 还原时补做锚定，弹窗回到区域中央
+        if (ImePopupAdjuster.isAdjusted(popupWindow)) return false;
         if (region.getWidth() <= 0 || region.getHeight() <= 0) return false;
         View wrapper = popupWindow.getContentView();
         if (!(wrapper instanceof ViewGroup)) return true;
@@ -1700,6 +1759,53 @@ public class DraggablePopupHelper {
         View content = popupWindow.getContentView();
         return content instanceof DragFrameLayout
                 && ((DragFrameLayout) content).centerRegionId != View.NO_ID;
+    }
+
+    /**
+     * 该弹窗是否为 {@link #setupDraggablePopup} 包装成「铺满窗口的包装层」的弹窗：
+     * 供 {@link ImePopupAdjuster} 区分抬升方式——包装层弹窗收缩窗口并把内容贴底，
+     * 而猜拳/先后攻/位置选择这类自定位弹窗改为整窗上移（尺寸不动，不裁剪内容）。
+     */
+    public static boolean isWrappedFullscreenPopup(PopupWindow popupWindow) {
+        return popupWindow != null && popupWindow.getContentView() instanceof DragFrameLayout;
+    }
+
+    /**
+     * 该弹窗当前是否收缩成底部横条（包装层的收缩态）：未包装、无包装层或处于展开态返回 false。
+     * 供 {@link ImePopupAdjuster} 跳过收缩态弹窗——横条几何（贴区域底部、与聊天输入框同高同位）
+     * 由各 dialog 自己按布局变化解算，输入法抬升联动介入会把横条推离输入框或撑回整块窗口。
+     */
+    public static boolean isPopupCollapsed(PopupWindow popupWindow) {
+        if (popupWindow == null) return false;
+        View content = popupWindow.getContentView();
+        return content instanceof DragFrameLayout && ((DragFrameLayout) content).collapsed;
+    }
+
+    /**
+     * 弹窗参与输入法抬升联动的「内容根」：{@code setupDraggablePopup} 包装成全窗口的弹窗，
+     * 其区域锚定 margin 与贴底重力都作用在包装层的第一个子 view（真正的对话框根布局）上，
+     * 故抬升/还原必须改这个子 view 而不是包装层本身；未包装的自定位弹窗返回值即其内容视图。
+     */
+    public static View liftedContentView(PopupWindow popupWindow) {
+        if (popupWindow == null) return null;
+        View root = popupWindow.getContentView();
+        if (root instanceof DragFrameLayout && ((DragFrameLayout) root).getChildCount() > 0) {
+            return ((DragFrameLayout) root).getChildAt(0);
+        }
+        return root;
+    }
+
+    /**
+     * 让弹窗按已登记的区域重新定位（未登记过区域的弹窗为无操作）：
+     * 供 {@link ImePopupAdjuster} 在输入法收起、窗口恢复全尺寸后补做被推迟的区域锚定，
+     * 使弹窗回到 layout_game_right 中央（用户规格）。
+     */
+    public static void reanchorPopup(PopupWindow popupWindow) {
+        if (popupWindow == null) return;
+        View wrapper = popupWindow.getContentView();
+        if (wrapper instanceof DragFrameLayout) {
+            ((DragFrameLayout) wrapper).reanchorToRegion();
+        }
     }
 
     /** 清除本弹窗持久化的拖拽位置，下次显示回到默认居中布局。 */

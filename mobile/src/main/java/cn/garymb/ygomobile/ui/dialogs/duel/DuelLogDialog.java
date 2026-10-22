@@ -23,6 +23,7 @@ import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
+import cn.garymb.ygomobile.utils.ImePopupAdjuster;
 import cn.garymb.ygomobile.utils.YGOUtil;
 
 import ocgcore.DataManager;
@@ -255,6 +256,9 @@ public class DuelLogDialog {
             popupWindow.showAtLocation(decor, Gravity.NO_GRAVITY, 0, 0);
         }
         anchorTopRightInGameRight();
+        // 输入法抬升联动（用户规格）：抬键盘时本面板底边贴聊天输入框上沿（贴区域顶缘，
+        // 故只收缩窗口不改为贴底），收起后回到 layout_game_right 右上角，逻辑统一在 ImePopupAdjuster
+        ImePopupAdjuster.attach(popupWindow);
     }
 
     public void dismiss() {

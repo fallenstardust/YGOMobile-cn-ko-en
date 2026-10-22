@@ -8,7 +8,6 @@ import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.os.Handler;
@@ -61,10 +60,11 @@ import cn.garymb.ygomobile.ui.dialogs.lobby.PlayerWaitingDialog;
 import cn.garymb.ygomobile.ui.dialogs.replay.ReplayModeDialog;
 import cn.garymb.ygomobile.ui.dialogs.lobby.SettingsDialog;
 import cn.garymb.ygomobile.ui.dialogs.lobby.SingleModeDialog;
-import cn.garymb.ygomobile.ui.dialogs.lobby.YesOrNoDialog;
+import cn.garymb.ygomobile.ui.dialogs.duel.YesOrNoDialog;
 import cn.garymb.ygomobile.utils.CrashHandler;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.FullScreenUtils;
+import cn.garymb.ygomobile.utils.ImePopupAdjuster;
 import cn.garymb.ygomobile.utils.RightAlignedTiledDrawable;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
@@ -320,18 +320,19 @@ public class YGOProActivity extends AppCompatActivity {
             }
         });
 
-        // 大厅聊天：输入法抬起时把 PlayerWaitingDialog 收缩到聊天输入框上方（底边贴输入框上沿），
-        // 而非全屏铺满——全屏透明层会压在键盘上吞掉按键；收缩后键盘/输入框在窗口边界外、触摸直达 IME，
-        // 且弹窗保持可见。收起后恢复全屏居中。（修复 Android 12+ 点聊天框后键盘点不动/关不掉）
-        chatInputUI.setLobbyImeVisibilityListener(new ChatInputUI.LobbyImeVisibilityListener() {
+        // 聊天：输入法把输入框抬高时，所有在显弹窗（玩家等待 + 决斗中的是/否询问、宣言类、
+        // 猜拳、先后攻、位置选择、卡片选择/显示、决斗记录、录像保存等，各 dialog 自行向
+        // ImePopupAdjuster 登记）统一抬成「底边紧贴输入框上沿」，不再与输入框/键盘互相遮挡；
+        // 输入法收起后各弹窗回到 layout_game_right 中央（区域锚定由工具类还原时补做）
+        chatInputUI.setImeVisibilityListener(new ChatInputUI.ImeVisibilityListener() {
             @Override
-            public void onLobbyImeShown() {
-                if (playerWaitingDialog != null) playerWaitingDialog.repositionForIme();
+            public void onImeShown() {
+                ImePopupAdjuster.notifyImeShown(etChatInput);
             }
 
             @Override
-            public void onLobbyImeHidden() {
-                if (playerWaitingDialog != null) playerWaitingDialog.restoreFromIme();
+            public void onImeHidden() {
+                ImePopupAdjuster.notifyImeHidden();
             }
         });
 
@@ -409,6 +410,11 @@ public class YGOProActivity extends AppCompatActivity {
         // 供重建尾部 onGameUIShown 复位后回显——会话跨旋转保留，按钮不得凭空消失（用户反馈）
         if (cardDetailPanel != null) cardDetailPanel.saveCancelOrFinishForRotation();
 
+        // 输入法抬升态在旋转重建起点即解除（用户规格：横竖屏切换后 dialog 一律回到区域中央）：
+        // 须早于 relayoutActivePopupsForOrientation 与猜拳/先后攻等自定位弹窗的旋转重定位，
+        // 否则抬升守卫会推迟区域锚定、弹窗卡在收缩后的临时位置
+        ImePopupAdjuster.notifyImeHidden();
+
         // 2) 关闭挂在旧视图树上的瞬态浮层：表情面板/drawspec 覆盖层（LP浮字/弹幕/居中特效）/
         // 卡片命令菜单；后续特效/弹幕经懒建新实例回到新树
         if (emotionDialog != null) emotionDialog.dismiss();
@@ -467,11 +473,8 @@ public class YGOProActivity extends AppCompatActivity {
             }
         } else if (lobbyChat) {
             enterLobbyChatUI();
-            // 旋转前若聊天输入法已把 PlayerWaitingDialog 收缩到输入框上方：旋转后输入法已被系统
-            // 收起，须把弹窗还原为全屏居中（并清除待执行的收缩任务），否则 update() 收缩钉死的
-            // 窗口卡在旧尺寸，旋转重排无法撑回 MATCH_PARENT，弹窗偏离屏幕中央（用户反馈：抬高时
-            // 旋转不回中央、抬高收起后旋转偏移原位）
-            if (playerWaitingDialog != null) playerWaitingDialog.restoreFromIme();
+            // 旋转前若聊天输入法已把弹窗抬升到输入框上方：旋转开始时已统一 notifyImeHidden
+            // 解除抬升态（见本方法 1) 与 2) 之间），弹窗此时按新屏回到区域中央
         } else if (duelUiVisible) {
             if (layoutGameContent != null) layoutGameContent.setVisibility(View.VISIBLE);
             if (layoutGameRight != null) layoutGameRight.setVisibility(View.VISIBLE);
@@ -1268,9 +1271,11 @@ public class YGOProActivity extends AppCompatActivity {
      * <li>横屏：直接用原始横向图作窗口背景，layout_game_right 不设区域背景（透出窗口原图）；</li>
      * <li>竖屏：不再把横向图旋转 90° 后按高等比 REPEAT 平铺——旋转得到的纵向图窄于屏宽，
      * 平铺补边会在屏幕正中留下可见的图片拼贴边（历史 PlayerWaitingDialog 竖屏背景“正中显示
-     * 图片边缘”根因）。改为保持原本横向图，用 {@link RightAlignedTiledDrawable} 按 bounds 高等比
-     * 缩放并右对齐：横向图缩放到屏高后宽度恒大于屏宽，于是屏幕只显示图片最右侧的部分、左侧
-     * 超出屏幕的部分自然裁剪掉（无平铺缝）——决斗(bg.jpg)/卡组编辑(bg_deck.jpg)/大厅等待界面同规格。</li>
+     * 图片边缘”根因）。改为保持原本横向图，用 {@link RightAlignedTiledDrawable} 以<b>整个窗口</b>
+     * 为基准做 cover 缩放并右对齐（只显示图片最右侧的部分，左侧超出屏幕的部分被裁掉，X 方向
+     * CLAMP 不再平铺补边）：窗口背景与 layout_game_right 区域背景共用同一映射，区域显示的就是
+     * 它实机宽度所处位置的那一片图，两者逐像素连续、无拼接缝——决斗(bg.jpg)/卡组编辑(bg_deck.jpg)/
+     * 大厅等待界面同规格。</li>
      * </ul>
      * 原始解码位图不改动，故旋转切换（rebuildUiForOrientation）与缓存命中（setWindowBackground）都会重算。
      */

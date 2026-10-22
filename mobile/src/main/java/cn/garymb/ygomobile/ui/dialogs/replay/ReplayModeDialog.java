@@ -1,5 +1,5 @@
 package cn.garymb.ygomobile.ui.dialogs.replay;
-import cn.garymb.ygomobile.ui.dialogs.lobby.YesOrNoDialog;
+import cn.garymb.ygomobile.ui.dialogs.duel.YesOrNoDialog;
 
 import android.app.Activity;
 import android.content.Context;
@@ -36,7 +36,6 @@ import cn.garymb.ygomobile.game.replay.ReplayPlayer;
 import cn.garymb.ygomobile.game.replay.ReplayReader;
 import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.lite.R;
-import cn.garymb.ygomobile.render.card.CardDetailPanel;
 import cn.garymb.ygomobile.ui.activities.ShareFileActivity;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
 import cn.garymb.ygomobile.utils.DialogScale;

@@ -1,5 +1,5 @@
 package cn.garymb.ygomobile.ui.dialogs.deck;
-import cn.garymb.ygomobile.ui.dialogs.lobby.YesOrNoDialog;
+import cn.garymb.ygomobile.ui.dialogs.duel.YesOrNoDialog;
 
 import android.app.Activity;
 import android.content.Context;

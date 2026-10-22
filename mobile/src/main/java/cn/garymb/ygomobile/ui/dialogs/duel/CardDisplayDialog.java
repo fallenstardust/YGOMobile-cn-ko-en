@@ -42,6 +42,7 @@ import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.card.CardStatusTipHelper;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.DialogScale;
+import cn.garymb.ygomobile.utils.ImePopupAdjuster;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
@@ -762,6 +763,9 @@ public class CardDisplayDialog {
                 } else {
                     popupWindow.showAtLocation(anchor, Gravity.CENTER, 0, 0);
                 }
+                // 输入法抬升联动（用户规格）：抬键盘时本弹窗底边贴聊天输入框上沿，
+                // 收起后回到 layout_game_right 中央，逻辑统一在 ImePopupAdjuster
+                ImePopupAdjuster.attach(popupWindow);
                 // 对话框显示期间禁用决斗场阶段按钮
                 if (context instanceof YGOProActivity) {
                     ((YGOProActivity) context).notifyGameDialogShown(this);

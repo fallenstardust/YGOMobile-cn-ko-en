@@ -22,11 +22,11 @@ import cn.garymb.ygomobile.ui.dialogs.duel.AnnounceCardDialog;
 import cn.garymb.ygomobile.ui.dialogs.duel.AnnounceNumberDialog;
 import cn.garymb.ygomobile.ui.dialogs.duel.AnnounceRaceDialog;
 import cn.garymb.ygomobile.ui.dialogs.duel.CardDisplayDialog;
-import cn.garymb.ygomobile.ui.dialogs.lobby.FirstOrSecondDialog;
-import cn.garymb.ygomobile.ui.dialogs.lobby.OptionDialog;
+import cn.garymb.ygomobile.ui.dialogs.duel.FirstOrSecondDialog;
+import cn.garymb.ygomobile.ui.dialogs.duel.OptionDialog;
 import cn.garymb.ygomobile.ui.dialogs.duel.PosSelectDialog;
-import cn.garymb.ygomobile.ui.dialogs.lobby.RPSDialog;
-import cn.garymb.ygomobile.ui.dialogs.lobby.YesOrNoDialog;
+import cn.garymb.ygomobile.ui.dialogs.duel.RPSDialog;
+import cn.garymb.ygomobile.ui.dialogs.duel.YesOrNoDialog;
 import ocgcore.DataManager;
 
 /**

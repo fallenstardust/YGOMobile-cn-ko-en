@@ -1,5 +1,4 @@
 package cn.garymb.ygomobile.ui.dialogs.duel;
-import cn.garymb.ygomobile.ui.dialogs.lobby.OptionDialog;
 
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -86,7 +85,7 @@ public class CmdMenuDialog {
     private final View contentView;
     private final LinearLayout layoutItems;
     /** 本次 dismiss 是否由菜单项动作触发：点菜单项关闭不收起状态标签，
-     *  点菜单以外/返回键关闭则联动隐藏（视同「点击卡片以外的位置」） */
+     *  点菜单以外位置关闭则联动隐藏（视同「点击卡片以外的位置」） */
     private boolean dismissedByAction;
 
     public CmdMenuDialog(YGOProActivity activity) {
@@ -97,7 +96,10 @@ public class CmdMenuDialog {
         popupWindow = new PopupWindow(contentView, dp(MENU_WIDTH_DP),
                 ViewGroup.LayoutParams.WRAP_CONTENT, true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        popupWindow.setFocusable(true);
+        // 用户规格：所有 dialog 不响应返回键/返回手势。焦点型 PopupWindow 的返回键由系统
+        // PopupDecorView 无条件 dismiss（内容层拦不到），故菜单窗口不接收按键，只保留
+        // 「点击菜单外关闭」（outsideTouchable 的 FLAG_WATCH_OUTSIDE_TOUCH 与获焦性无关）
+        popupWindow.setFocusable(false);
         popupWindow.setOutsideTouchable(true);
         // 命令菜单不走 DraggablePopupHelper 全屏包装，单独应用同一 Android 12+ 键盘分层
         // 修复（用户规格：聊天输入框与输入法显示在所有弹窗前面）：菜单窗口压到键盘之下，
@@ -114,7 +116,7 @@ public class CmdMenuDialog {
     }
 
     /**
-     * 菜单项与动作一一对应；不追加“取消”项（点击菜单外/返回键即关闭），
+     * 菜单项与动作一一对应；不追加“取消”项（点击菜单外即关闭；返回键按用户规格不响应），
      * 弹窗总高度随条目数量动态变化
      */
     public void setItems(List<String> labels, List<Runnable> actions) {

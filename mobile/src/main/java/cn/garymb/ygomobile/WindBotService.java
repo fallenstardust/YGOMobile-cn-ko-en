@@ -10,6 +10,8 @@ import android.content.IntentFilter;
 import android.util.Log;
 
 import libwindbot.windbot.WindBot;
+import mono.embeddinator.AndroidImpl;
+import mono.embeddinator.Runtime;
 
 /**
  * windbot 全局监听（原逻辑分散在 ResCheckTask 中，仅 MainActivity 创建路径初始化）：
@@ -54,6 +56,12 @@ public final class WindBotService {
             Log.i(TAG, "init windbot: " + settings.getResourcePath()
                     + (forceReinit ? " (force reinit)" : ""));
             try {
+                // 清单已移除 AAR 的 AndroidRuntimeProvider（避免插件宿主开机在主线程 boot Mono
+                // 触发 SIGABRT），改为首次真正使用 WindBot 时在本后台线程手动提供实现：
+                // Embeddinator 的 Runtime.initialize 依赖 implementation 非空，否则抛
+                // "AndroidRuntimeProvider is not configured"。必须在触碰任何 libwindbot 类
+                //（触发 Native_libWindbot.<clinit> → Runtime.loadLibrary）之前设置。
+                Runtime.setImplementation(new AndroidImpl(context.getApplicationContext()));
                 WindBot.initAndroid(settings.getResourcePath(),
                         settings.getDataBasePath() + "/" + DATABASE_NAME,
                         settings.getResourcePath() + "/" + CORE_BOT_CONF_PATH);

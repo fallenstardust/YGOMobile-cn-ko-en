@@ -24,6 +24,7 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 
+import cn.garymb.ygomobile.ui.dialogs.duel.YesOrNoDialog;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;

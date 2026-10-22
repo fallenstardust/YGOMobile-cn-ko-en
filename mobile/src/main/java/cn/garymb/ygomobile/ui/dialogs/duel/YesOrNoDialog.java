@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.ui.dialogs.lobby;
+package cn.garymb.ygomobile.ui.dialogs.duel;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -16,7 +16,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -46,6 +45,7 @@ import cn.garymb.ygomobile.render.card.CardDetailPanel;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
+import cn.garymb.ygomobile.utils.ImePopupAdjuster;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.data.Card;
@@ -695,6 +695,9 @@ public class YesOrNoDialog {
                 } else {
                     popupWindow.showAtLocation(anchor, Gravity.CENTER, 0, 0);
                 }
+                // 输入法抬升联动（用户规格）：抬键盘时本弹窗底边贴聊天输入框上沿，
+                // 收起后回到 layout_game_right 中央，逻辑统一在 ImePopupAdjuster
+                ImePopupAdjuster.attach(popupWindow);
                 // 对齐 C++ SoundManager::PlayDialogSound：询问/确认类（wQuery/wSurrender/
                 // wOptions/wAN* 等）弹 question 音效，纯消息类（wMessage）弹 info 音效
                 if (context instanceof YGOProActivity) {

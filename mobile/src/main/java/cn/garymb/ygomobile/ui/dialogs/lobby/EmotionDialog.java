@@ -22,7 +22,7 @@ import cn.garymb.ygomobile.utils.DialogScale;
  * 本类仅负责运行时绑定按钮图片（TextureLoader.getEmoticon，与 emoticonCodes 顺序一致）与点击行为。
  * 点击表情（对齐 event_handler.cpp BUTTON_EMOTICON_0..15）：
  * 播放按钮音效 → 隐藏面板 → 将表情编码（如 "&laugh"）作为聊天消息经 CTOS_CHAT 发送；
- * 入口按钮为开关切换（对齐 BUTTON_EMOTICON），点击面板外或返回键自动关闭。
+ * 入口按钮为开关切换（对齐 BUTTON_EMOTICON），点击面板外自动关闭；返回键按用户规格不响应。
  */
 public class EmotionDialog {
 
@@ -47,7 +47,9 @@ public class EmotionDialog {
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT, true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        popupWindow.setFocusable(true);
+        // 用户规格：所有 dialog 不响应返回键/返回手势——焦点型 PopupWindow 的返回键由系统
+        // PopupDecorView 无条件 dismiss（内容层拦不到），故窗口不接收按键，只保留点击面板外关闭
+        popupWindow.setFocusable(false);
         popupWindow.setOutsideTouchable(true);
     }
 

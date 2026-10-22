@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.ui.dialogs.lobby;
+package cn.garymb.ygomobile.ui.dialogs.duel;
 
 import android.app.Activity;
 import android.content.Context;
@@ -25,6 +25,7 @@ import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
+import cn.garymb.ygomobile.utils.ImePopupAdjuster;
 
 import ocgcore.DataManager;
 
@@ -213,6 +214,7 @@ public class OptionDialog {
             View decor = activity.getWindow().getDecorView();
             DraggablePopupHelper.centerPopupInRegion(popupWindow, null);
             draggableHelper.showPopup(popupWindow, decor);
+            ImePopupAdjuster.attach(popupWindow);
             showing = true;
         }
     }
@@ -274,6 +276,9 @@ public class OptionDialog {
     private void showAnchoredInGameRight(View gameRight) {
         DraggablePopupHelper.centerPopupInRegion(popupWindow, gameRight);
         draggableHelper.showPopup(popupWindow, gameRight);
+        // 输入法抬升联动（用户规格）：抬键盘时本弹窗底边贴聊天输入框上沿，
+        // 收起后回到 layout_game_right 中央，逻辑统一在 ImePopupAdjuster
+        ImePopupAdjuster.attach(popupWindow);
     }
 
     /**

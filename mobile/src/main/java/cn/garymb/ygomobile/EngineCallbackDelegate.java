@@ -1,8 +1,4 @@
 package cn.garymb.ygomobile;
-import cn.garymb.ygomobile.ui.dialogs.duel.CardDisplayDialog;
-import cn.garymb.ygomobile.ui.dialogs.lobby.PlayerWaitingDialog;
-import cn.garymb.ygomobile.render.card.CardDetailPanel;
-import cn.garymb.ygomobile.game.deck.DeckEditorManager;
 
 import android.util.Log;
 
@@ -13,7 +9,7 @@ import cn.garymb.ygomobile.game.gamefield.GameField;
 import cn.garymb.ygomobile.game.replay.ReplayMsgMerger;
 import cn.garymb.ygomobile.game.select.ShowDialogUtil;
 import cn.garymb.ygomobile.render.spec.SpecEffectOverlay;
-import cn.garymb.ygomobile.ui.dialogs.lobby.YesOrNoDialog;
+import cn.garymb.ygomobile.ui.dialogs.duel.YesOrNoDialog;
 import ocgcore.enums.DuelPhase;
 
 /** 引擎回调委托类（由 YGOProActivity 按 // === 分栏拆分而来）：承载 GameEngine.EngineListener 全部回调实现，并内聚居中特效覆盖层（SpecEffectOverlay）、阶段文字码与本地玩家显示名解析；决斗结束/录像处理子系统拆入同包 DuelEndReplayHandler。与门面同包，通过包级私有直连 YGOProActivity 的共享状态字段与 UI 编排方法，不引入 Context 对象。 */

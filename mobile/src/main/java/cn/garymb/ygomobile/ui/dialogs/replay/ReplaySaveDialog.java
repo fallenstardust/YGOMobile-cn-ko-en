@@ -19,6 +19,7 @@ import android.widget.TextView;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
+import cn.garymb.ygomobile.utils.ImePopupAdjuster;
 import ocgcore.DataManager;
 
 /**
@@ -133,6 +134,9 @@ public class ReplaySaveDialog {
                 } else {
                     popupWindow.showAtLocation(anchor, Gravity.CENTER, 0, 0);
                 }
+                // 输入法抬升联动（用户规格）：抬键盘时本弹窗底边贴聊天输入框上沿，
+                // 收起后回到 layout_game_right 中央，逻辑统一在 ImePopupAdjuster
+                ImePopupAdjuster.attach(popupWindow);
             } catch (Exception e) {
                 // Token expired or window already showing
             }

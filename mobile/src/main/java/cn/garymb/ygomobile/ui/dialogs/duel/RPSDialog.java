@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.ui.dialogs.lobby;
+package cn.garymb.ygomobile.ui.dialogs.duel;
 
 import android.app.Activity;
 import android.content.Context;
@@ -94,9 +94,11 @@ public class RPSDialog {
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         if (cancelable) {
-            // 可取消：外部点击/返回键均可关闭
+            // 可取消：外部点击可关闭；返回键按用户规格不响应（焦点型弹窗的 BACK 由系统
+            // PopupDecorView 无条件关闭，内容层拦不到，故窗口一律不接收按键）
             popupWindow.setOutsideTouchable(true);
-            popupWindow.setFocusable(true);
+            popupWindow.setFocusable(false);
+            popupWindow.setTouchable(true);
         } else {
             // 不可取消（YGOProActivity 传入 setCancelable(false)）：
             // 1) outsideTouchable=false —— 外部点击不关闭；

@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.ui.dialogs.duel;
+package cn.garymb.ygomobile.ui.dialogs.deck;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
@@ -31,7 +31,9 @@ public class EffectCategoryPopupWindow extends PopupWindow {
         this.listener = listener;
 
         setOutsideTouchable(true);
-        setFocusable(true);
+        // 用户规格：所有 dialog 不响应返回键/返回手势——焦点型 PopupWindow 的返回键由系统
+        // PopupDecorView 无条件 dismiss（内容层拦不到），故窗口不接收按键，点面板外仍可关闭
+        setFocusable(false);
 
         View contentView = LayoutInflater.from(context).inflate(R.layout.popup_effect_category, null);
         Button btnOk = contentView.findViewById(R.id.btn_effect_category_ok);

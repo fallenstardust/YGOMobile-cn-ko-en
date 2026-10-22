@@ -37,7 +37,7 @@ import cn.garymb.ygomobile.ui.cards.deck.MyDeckItem;
 import cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareApiUtil;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginToken;
 import cn.garymb.ygomobile.ui.dialogs.deck.DeckSelectorDialog;
-import cn.garymb.ygomobile.ui.dialogs.lobby.YesOrNoDialog;
+import cn.garymb.ygomobile.ui.dialogs.duel.YesOrNoDialog;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.ui.widget.CardGroupView;
 import cn.garymb.ygomobile.ui.widget.CardView;

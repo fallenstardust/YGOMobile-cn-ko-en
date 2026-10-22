@@ -1,4 +1,4 @@
-package cn.garymb.ygomobile.ui.dialogs.lobby;
+package cn.garymb.ygomobile.ui.dialogs.duel;
 
 import android.app.Activity;
 import android.content.Context;
@@ -14,6 +14,7 @@ import android.widget.Button;
 import android.widget.PopupWindow;
 
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.utils.ImePopupAdjuster;
 import ocgcore.DataManager;
 
 /**
@@ -91,6 +92,9 @@ public class FirstOrSecondDialog {
         if (gameRight != null) {
             showing = true;
             showAtFieldCenterOrAwaitLayout(gameRight);
+            // 输入法抬升联动（用户规格）：抬键盘时本弹窗底边贴聊天输入框上沿，
+            // 收起后回到 layout_game_right 中央，逻辑统一在 ImePopupAdjuster
+            ImePopupAdjuster.attach(popupWindow);
         } else {
             // 极端兜底：找不到锚点时屏幕居中
             popupWindow.showAtLocation(activity.getWindow().getDecorView(), Gravity.CENTER, 0, 0);

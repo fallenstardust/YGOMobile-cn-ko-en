@@ -13,7 +13,7 @@ import java.util.Random;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.render.card.CardDetailPanel;
-import cn.garymb.ygomobile.ui.dialogs.lobby.YesOrNoDialog;
+import cn.garymb.ygomobile.ui.dialogs.duel.YesOrNoDialog;
 import ocgcore.DataManager;
 
 /**

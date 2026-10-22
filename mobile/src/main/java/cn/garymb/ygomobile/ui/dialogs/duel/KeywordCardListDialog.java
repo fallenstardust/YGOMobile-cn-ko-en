@@ -28,6 +28,7 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
+import cn.garymb.ygomobile.utils.ImePopupAdjuster;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
@@ -157,6 +158,9 @@ public class KeywordCardListDialog {
         schedulePanelHeight();
         DraggablePopupHelper.dockPopupInRegionLeft(popupWindow, region != null ? region : anchor);
         draggableHelper.showPopup(popupWindow, region != null ? region : anchor);
+        // 输入法抬升联动（用户规格）：抬键盘时本面板底边贴聊天输入框上沿，
+        // 收起后回到 layout_game_right 内贴左缘居中，逻辑统一在 ImePopupAdjuster
+        ImePopupAdjuster.attach(popupWindow);
     }
 
     /**
