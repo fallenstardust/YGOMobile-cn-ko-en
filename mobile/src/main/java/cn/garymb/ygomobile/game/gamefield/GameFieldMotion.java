@@ -228,7 +228,8 @@ public class GameFieldMotion {
 
     private void updateListAnimation(List<ClientCard> list) {
         for (ClientCard pcard : list) {
-            if (pcard == null || pcard.aniFrame <= 0) continue;
+            // 抬跳动画用独立计数器，不占 aniFrame：循环门控放宽到两者之一进行中
+            if (pcard == null || (pcard.aniFrame <= 0 && !pcard.is_bounce)) continue;
             // 启动延迟：对齐 C++ 素材先飞、本体/后续卡 WaitFrameSignal 后再动的串行时序；
             // 延迟期内 aniFrame 不扣减，统一动画屏障（isAnimating）持续等待，消息不会提前推进
             if (pcard.animDelayFrame > 0) {
@@ -311,6 +312,26 @@ public class GameFieldMotion {
                 float t = Math.min(1f, Math.max(0f, 1f - pcard.aniFrame / (float) total));
                 pcard.curAlpha = pcard.animFromAlpha
                         + (pcard.animToAlpha - pcard.animFromAlpha) * t;
+            }
+            // 发动效果抬跳（用户规格：明显抬高后落回原高度的短暂小动画，幅度见 BOUNCE_LIFT_Z）：
+            // 独立于 aniFrame 的正弦半周期叠加在 bounceBaseZ 上，峰值居中、两端精确回基准。
+            // 抬高量与光晕强度 bounceGlow 取同一条正弦曲线：卡片下方白晕与抬高同步亮、
+            // 回落同步淡出（用户规格）。
+            // 必须放在 is_moving 写 curZ 之后：同帧用「基准+抬高」覆盖插值结果——场上卡
+            // 移动前后 Z 同为权威位（animFromZ==animToZ==基准），覆盖不破坏移动轨迹。
+            if (pcard.is_bounce) {
+                pcard.bounceFrame -= field.animationSpeed;
+                float bt = pcard.bounceTotal > 0
+                        ? 1f - pcard.bounceFrame / (float) pcard.bounceTotal : 1f;
+                if (bt >= 1f) {
+                    pcard.is_bounce = false;
+                    pcard.curZ = pcard.bounceBaseZ;
+                    pcard.bounceGlow = 0f;
+                } else {
+                    float lift = (float) Math.sin(Math.PI * Math.max(0f, bt));
+                    pcard.curZ = pcard.bounceBaseZ + BOUNCE_LIFT_Z * lift;
+                    pcard.bounceGlow = lift;
+                }
             }
             pcard.aniFrame -= field.animationSpeed;
             if (pcard.aniFrame <= 0) {
@@ -413,6 +434,10 @@ public class GameFieldMotion {
         c.is_fading = false;
         c.is_deck_shake = false;
         c.is_hand_shuffle = false;
+        // 抬跳与落定同步收尾：吸附权威几何后清标记并把被拾高的 Z 拉回基准（setCardPos 已写回），
+        // 光晕强度一并归零，避免观战/快进落定时白晕残留
+        c.is_bounce = false;
+        c.bounceGlow = 0f;
         c.top_reveal = false;
         // 冻结待码的入手卡（客机遮蔽入手停在卡组顶坐标）强制落位入手，
         // 其 350ms 超时兜底回调以 pendingFaceupAdd==false 为首行早退，不再迟到拽动手牌
@@ -503,6 +528,40 @@ public class GameFieldMotion {
         if (diff > Math.PI) diff -= (float) (Math.PI * 2);
         if (diff < -Math.PI) diff += (float) (Math.PI * 2);
         return from + diff;
+    }
+
+    // === 发动效果抬跳小动画（用户规格） ===
+
+    /**
+     * 抬跳抬高高度：curZ 即卡片「抬高高度」轴（revealTopCardOut 用 loc[2]+0.06 抬高使揭示卡
+     * 凸出即同轴佐证）。原值 0.05 用户反馈视觉上不够明显，提到 0.15（与同区抖动 0.15/0.3
+     * 同量级、约为卡宽三分之一）后抬起/落回清晰可辨。
+     */
+    public static final float BOUNCE_LIFT_Z = 0.15f;
+    /** 抬跳总帧数（约 18 帧 ≈ 0.3 秒：正弦半周期拾起再落回，短暂不干扰后续操作） */
+    private static final int BOUNCE_FRAMES = 18;
+
+    /**
+     * 发动效果抬跳：卡片矩形抬高 {@link #BOUNCE_LIFT_Z} 高度并落回原高度的短暂小动画，
+     * 同时卡片下方白色光晕随抬高一起亮一下（强度曲线 bounceGlow 与抬高量同步，见
+     * updateListAnimation 抬跳段），供玩家视觉确认怪兽区/额外怪兽区/魔陷区是哪张卡在
+     * 发动效果（触发点：DuelEventHandler.onChaining 按 location & (0x04|0x08) 判定）。
+     * 独立计数器不占 aniFrame→不持统一动画闸门；可与翻面/移动动画并行（仅叠加 Z）；
+     * 卡组抖动/洗手卡的关键帧轨迹整帧写 curZ，不参与以免被覆盖。
+     */
+    public void bounceCard(ClientCard pcard) {
+        if (pcard == null || field.instantPlace) return;
+        if (pcard.is_deck_shake || pcard.is_hand_shuffle) return;
+        if (pcard.is_bounce) {
+            // 动画途中再次发动：以原基准重新起跳，不重采基准（此刻 curZ 带拾高量）
+            pcard.bounceFrame = pcard.bounceTotal;
+            return;
+        }
+        // 基准取移动终态高度（飞行途中发动）或当前高度；场上卡两种情形 Z 都等于权威位
+        pcard.bounceBaseZ = pcard.is_moving ? pcard.animToZ : pcard.curZ;
+        pcard.bounceTotal = BOUNCE_FRAMES;
+        pcard.bounceFrame = BOUNCE_FRAMES;
+        pcard.is_bounce = true;
     }
 
     // === 回放「上一步」逆向倒放（渲染层补间，不动模型字段） ===

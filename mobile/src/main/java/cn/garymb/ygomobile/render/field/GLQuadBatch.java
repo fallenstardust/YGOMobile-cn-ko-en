@@ -43,6 +43,25 @@ public class GLQuadBatch {
                     "out vec4 fragColor;\n" +
                     "void main(){ fragColor=uColor; }\n";
 
+    // 径向渐变光晕专用程序：自带最小 VS（原始 UV 直通，不走 uUVRect/uFlip 变换）+ FS 按
+    // 到中心距离平滑衰减（内亮外透）。纯色 FS 画出的光晕是矩形硬边（用户反馈），而逐像素
+    // 半径衰减无论卡片宽高比如何都无棱角：四角处 d>1 直接全透，边缘中点连续淡出
+    private static final String GLOW_VS =
+            "#version 300 es\n" +
+                    "layout(location=0) in vec2 aPos;\n" +
+                    "layout(location=1) in vec2 aUV;\n" +
+                    "uniform mat4 uMVP;\n" +
+                    "out vec2 vUV;\n" +
+                    "void main(){ vUV=aUV; gl_Position=uMVP*vec4(aPos,0.0,1.0); }\n";
+    private static final String FS_GLOW =
+            "#version 300 es\n" +
+                    "precision mediump float;\n" +
+                    "in vec2 vUV;\n" +
+                    "uniform vec4 uColor;\n" +
+                    "out vec4 fragColor;\n" +
+                    "void main(){ float d=length(vUV-vec2(0.5))*2.0;\n" +
+                    "  fragColor=vec4(uColor.rgb, uColor.a*(1.0-smoothstep(0.55,1.0,d))); }\n";
+
     // 单位矩形（XY 平面，法线 +Z；v=0 在局部 -Y 边即 Bitmap 顶部；u 为标准布局。
     // 场地卡 uFlipU=1 抵消相机 +X→屏幕左 镜像；手卡 billboard 局部+Y=屏幕上方，
     // 需 uFlipU=0 + uFlipV=1 恢复正向贴图）
@@ -54,9 +73,10 @@ public class GLQuadBatch {
     };
 
     // === GL 资源（着色器程序句柄 / uniform 位置 / 单位矩形 VAO，仅本类绘制原语使用）===
-    private int texProg, colorProg;
+    private int texProg, colorProg, glowProg;
     private int texLocMVP, texLocTint, texLocTex, texLocFlipU, texLocFlipV, texLocUVRect;
     private int colorLocMVP, colorLocColor;
+    private int glowLocMVP, glowLocColor;
     private int vao;
 
     private final GameFieldView view;
@@ -65,10 +85,11 @@ public class GLQuadBatch {
         this.view = view;
     }
 
-    /** onSurfaceCreated 回调：编译两个程序、查询 uniform 位置、建立单位矩形 VAO */
+    /** onSurfaceCreated 回调：编译各程序、查询 uniform 位置、建立单位矩形 VAO */
     public void init() {
         texProg = createProgram(VS, FS_TEX);
         colorProg = createProgram(VS, FS_COLOR);
+        glowProg = createProgram(GLOW_VS, FS_GLOW);
         texLocMVP = GLES30.glGetUniformLocation(texProg, "uMVP");
         texLocTint = GLES30.glGetUniformLocation(texProg, "uTint");
         texLocTex = GLES30.glGetUniformLocation(texProg, "uTex");
@@ -77,6 +98,8 @@ public class GLQuadBatch {
         texLocUVRect = GLES30.glGetUniformLocation(texProg, "uUVRect");
         colorLocMVP = GLES30.glGetUniformLocation(colorProg, "uMVP");
         colorLocColor = GLES30.glGetUniformLocation(colorProg, "uColor");
+        glowLocMVP = GLES30.glGetUniformLocation(glowProg, "uMVP");
+        glowLocColor = GLES30.glGetUniformLocation(glowProg, "uColor");
 
         FloatBuffer fb = ByteBuffer.allocateDirect(QUAD.length * 4)
                 .order(ByteOrder.nativeOrder()).asFloatBuffer();
@@ -113,11 +136,25 @@ public class GLQuadBatch {
 
     public void drawQuadTexUV(float[] model, int texId, float alpha, float flipU, float flipV,
                        float offU, float offV, float scU, float scV) {
+        drawQuadTexUVBright(model, texId, alpha, flipU, flipV, offU, offV, scU, scV, 1f);
+    }
+
+    public void drawQuadTexBright(float[] model, int texId, float alpha, float bright) {
+        drawQuadTexUVBright(model, texId, alpha, 1f, 0f, 0f, 0f, 1f, 1f, bright);
+    }
+
+    /**
+     * 可调亮度的贴图四边形：tint RGB 取 bright（1=原亮度），片元为贴图×tint 的乘法提亮，
+     * 整体变亮不往白去（饱和不冲淡），供发动抬跳卡图微增亮度使用（用户规格）。
+     * 默认 flip/UV 子矩形与 {@link #drawQuadTex(float[], int, float)} 三参入口一致
+     */
+    public void drawQuadTexUVBright(float[] model, int texId, float alpha, float flipU, float flipV,
+                                    float offU, float offV, float scU, float scV, float bright) {
         if (texId <= 0) return;
         GLES30.glUseProgram(texProg);
         Matrix.multiplyMM(view.mMVP, 0, view.cam.mVP, 0, model, 0);
         GLES30.glUniformMatrix4fv(texLocMVP, 1, false, view.mMVP, 0);
-        GLES30.glUniform4f(texLocTint, 1f, 1f, 1f, alpha);
+        GLES30.glUniform4f(texLocTint, bright, bright, bright, alpha);
         GLES30.glUniform1f(texLocFlipU, flipU);
         GLES30.glUniform1f(texLocFlipV, flipV);
         GLES30.glUniform4f(texLocUVRect, offU, offV, scU, scV);
@@ -138,6 +175,18 @@ public class GLQuadBatch {
         Matrix.multiplyMM(view.mMVP, 0, view.cam.mVP, 0, model, 0);
         GLES30.glUniformMatrix4fv(colorLocMVP, 1, false, view.mMVP, 0);
         GLES30.glUniform4f(colorLocColor, r, g, b, a);
+        glBindQuadVao();
+    }
+
+    /**
+     * 世界空间径向渐变光晕四边形：中心最亮、向四周逐像素平滑衰减到全透（无矩形硬边/棱角），
+     * 供发动抬跳等卡片底部光晕使用（衰减曲线见 FS_GLOW）
+     */
+    public void drawQuadRadialGlow(float[] model, float r, float g, float b, float a) {
+        GLES30.glUseProgram(glowProg);
+        Matrix.multiplyMM(view.mMVP, 0, view.cam.mVP, 0, model, 0);
+        GLES30.glUniformMatrix4fv(glowLocMVP, 1, false, view.mMVP, 0);
+        GLES30.glUniform4f(glowLocColor, r, g, b, a);
         glBindQuadVao();
     }
 

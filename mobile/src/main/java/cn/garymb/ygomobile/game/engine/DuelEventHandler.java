@@ -343,6 +343,14 @@ public class DuelEventHandler implements GameMessageParser.MessageHandler {
             float shift = (localCc == 1) ? 0.15f : -0.15f;
             engine.field.moveCardAnimated(chainCard, 10, 0, shift);
         }
+        // 用户规格：怪兽区域（含额外怪兽区，0x04）/魔法陷阱区域（0x08）的卡发动效果时，
+        // 卡片矩形明显抬高并落回原高度的短暂小动画（幅度见 GameFieldMotion.BOUNCE_LIFT_Z，
+        // 用户反馈 0.05 不明显后已加大），供玩家视觉确认是哪张卡发动；
+        // 与上方翻面移动分支并存无冲突（抬跳仅叠加 Z，场上卡移动前后 Z 同权威位），
+        // 墓地/除外原地发动的侧滑（位置非 0x04/0x08）不重复抬跳；实况与回放同走本链路
+        if (chainCard != null && (chainCard.location & (0x04 | 0x08)) != 0) {
+            engine.field.bounceCard(chainCard);
+        }
         engine.field.currentChain.code = code;
         engine.field.currentChain.desc = desc;
         engine.field.currentChain.controler = localCc;

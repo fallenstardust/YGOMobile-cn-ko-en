@@ -95,6 +95,23 @@ public class ClientCard {
     public float animJitterX;
     /** 动画启动延迟帧（对齐 MSG_MOVE L3032-3038 WaitFrameSignal(10)：素材先归位、本体延迟再落），延迟期内不插值不扣 aniFrame。 */
     public float animDelayFrame;
+    /** 发动效果抬跳动画进行中标记（用户规格：怪兽区/额外怪兽区/魔陷区的卡发动效果时，
+     *  卡片矩形明显抬高并落回原高度的短暂小动画，供玩家视觉确认是哪张卡发动；
+     *  幅度见 GameFieldMotion.BOUNCE_LIFT_Z）：
+     *  由 GameFieldMotion.bounceCard 触发，逐帧段在 updateListAnimation 以独立计数器推进，
+     *  不占用 aniFrame——短暂提示动画不参与统一动画屏障（isAnimating）持闸。 */
+    public boolean is_bounce;
+    /** 抬跳基准 Z（起动瞬间记录）：卡正处移动动画时取 animToZ（移动终态高度），否则取 curZ；
+     *  抬高量叠加在此基准上，结束精确落回，与 is_moving 的 Z 插值互不冲突（场上卡移动前后 Z 同权威位） */
+    public float bounceBaseZ;
+    /** 抬跳剩余帧（独立于 aniFrame 计数，animationSpeed 逐帧扣减） */
+    public float bounceFrame;
+    /** 抬跳总帧数（进度归一化用，正弦半周期：起终点高度=基准，峰值=基准+BOUNCE_LIFT_Z） */
+    public int bounceTotal;
+    /** 抬跳光晕强度 0..1（用户规格：卡片下方白色发光光晕随抬高一起亮、回落恢复原状）：
+     *  由 updateListAnimation 每帧写入与抬高量同一条正弦半周期曲线，渲染层
+     *  FieldCardRenderer.drawBounceGlow 按此控制白晕的亮度与扩散尺寸 */
+    public float bounceGlow;
     /** 卡组抖动动画进行中标记（duelclient.cpp MSG_SHUFFLE_DECK L2637-2650 的 5 轮抖动，轨迹由 GameFieldMotion.updateListAnimation 关键帧推进，见 startDeckShake） */
     public boolean is_deck_shake;
     /** 洗手卡聚拢动画进行中标记（duelclient.cpp MSG_SHUFFLE_HAND L2662-2699，轨迹由 GameFieldMotion.updateListAnimation 关键帧推进，见 startHandShuffle） */

@@ -631,6 +631,13 @@ public class GameField {
         motion.moveCardAnimated(pcard, frame, delay, jitterX);
     }
 
+    /** 发动效果抬跳小动画（用户规格：卡片矩形明显抬高后落回原高度，幅度见
+     *  GameFieldMotion.BOUNCE_LIFT_Z），供玩家视觉确认怪兽区/额外怪兽区/魔陷区是哪张卡
+     *  在发动效果；独立计数器不持动画闸门；委托 motion */
+    public void bounceCard(ClientCard pcard) {
+        motion.bounceCard(pcard);
+    }
+
     /** 卡组抖动单动画（duelclient.cpp MSG_SHUFFLE_DECK L2637-2650：5 轮 × (3 帧抖开 + 3 帧回位)） */
     public void startDeckShake(ClientCard pcard) {
         motion.startDeckShake(pcard);
