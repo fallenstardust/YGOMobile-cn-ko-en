@@ -17,6 +17,7 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import java.util.Map;
+import java.util.TreeMap;
 
 import cn.garymb.ygomobile.game.gamefield.GameField;
 import cn.garymb.ygomobile.game.gamefield.ClientCard;
@@ -43,7 +44,9 @@ import ocgcore.enums.CardType;
  * 而是把标签挂到 DraggablePopupHelper 的包装层（DragFrameLayout，铺满窗口且 clipChildren=false）
  * 作为第 2 个子 View —— 该层所有命中/居中判定只看 getChildAt(0)，故不影响弹窗行为与尺寸。
  * <p>
- * 标签文字逐行镜像 ClientField::ShowCardInfoInList（event_handler.cpp L2919-2964）。
+ * 标签文字 = 列表提示 ClientField::ShowCardInfoInList（event_handler.cpp L2919-2964）叠加
+ * 场上悬停 stTip 的通讯当前值段（event_handler.cpp L1676-1737）：卡名/别名之外，即时显示
+ * 通讯查询给出的当前攻/守、星数/LINK、种族/属性、灵摆刻度与计数器。
  */
 public class CardStatusTipHelper {
 
@@ -336,9 +339,9 @@ public class CardStatusTipHelper {
     }
 
     /**
-     * 逐行镜像 ClientField::ShowCardInfoInList（event_handler.cpp L2919-2948）：
-     * 卡名 → 225 叠放素材 → 224 正规特殊召唤 → *desc_hints → 216 在连锁%d发动 → 217 被连锁选择为对象。
-     * 卡组内的卡只保留卡名（C++ location != LOCATION_DECK 才继续）。
+     * 卡名 → 通讯当前值段（攻/守、星数/LINK+种族/属性、灵摆刻度、计数器） → 225 叠放素材 →
+     * 224 正规特殊召唤 → *desc_hints → 216 在连锁%d发动 → 217 被连锁选择为对象。
+     * 卡组内的卡只保留卡名（C++ location != LOCATION_DECK 才继续，与悬停 stTip L1625 同）。
      */
     public static String buildStatusText(GameField field, ClientCard card) {
         if (card == null) return null;
@@ -361,7 +364,7 @@ public class CardStatusTipHelper {
             }
         }
         if (card.location != CardLocation.Deck.value()) {
-            appendStatDiffLines(sb, dm, card);
+            appendLiveStatLines(sb, dm, card);
             if (card.overlayTarget != null) {
                 appendLine(sb, dm.formatSystemString(225, "叠放于[%s](%d)下",
                         dm.getName(card.overlayTarget.displayCode()), card.overlayTarget.sequence + 1));
@@ -395,57 +398,90 @@ public class CardStatusTipHelper {
     }
 
     /**
-     * 通讯当前值与卡表原始值的差异行（详情面板只显原值，差异全部落在本标签，
-     * 语义对应 drawing.cpp Game::DrawStatus L1200-1224：当前值≠基础值时以变色文字
-     * 显示在卡图上；纯文本无法着色，以「当前(原X)↑/↓」标注）
+     * 通讯中该卡的当前值行（镜像场上悬停 stTip，event_handler.cpp L1679-1716：atkstring/defstring、
+     * ★/☆或LINK、race/attribute 同行、手卡灵摆刻度、计数器 [名]: 个数），数据全部取查询块
+     * 写入的字段（updateQuery），不读 cards.db；详情面板只显卡表原值，故当前值≠原值时在该值
+     * 后内联「(原…↑/↓)」注记（保留原差异行语义，对应 drawing.cpp DrawStatus 的变色文字信息量）。
+     * type==0 表示未收到该卡查询（暗卡等），不输出任何当前值行；卡表查不到 cd（衍生物等）只显当前值。
      */
-    private static void appendStatDiffLines(StringBuilder sb, DataManager dm,
-                                            ClientCard card) {
-        // type==0 表示未收到该卡 query（暗卡等），无可比对
-        int cardCode = card.displayCode();
-        if (cardCode == 0 || card.type == 0) return;
-        Card cd = dm.getCardManager().getCard(cardCode);
-        if (cd == null || !cd.isType(CardType.Monster)) return;
+    private static void appendLiveStatLines(StringBuilder sb, DataManager dm, ClientCard card) {
+        if (card.type == 0) return;
         StringManager sm = dm.getStringManager();
-        // 等级 / 阶级 / LINK 数值（对应 C++ lvstring / linkstring）
-        if (cd.isLink()) {
-            if (card.link > 0 && card.link != cd.getLinkNumber()) {
-                appendLine(sb, "LINK-" + card.link + "(原LINK-" + cd.getLinkNumber() + ")");
+        int cardCode = card.displayCode();
+        Card cd = cardCode != 0 ? dm.getCardManager().getCard(cardCode) : null;
+        boolean monster = (card.type & CardType.Monster.getId()) != 0;
+        boolean link = card.isLink();
+        if (monster) {
+            // 攻/守：优先查询拼好的 atkString/defString（<0→"?"、连接怪守→"-"，同 updateQuery）
+            String atk = !card.atkString.isEmpty() ? card.atkString : statValue(card.attack);
+            String def = !card.defString.isEmpty() ? card.defString : statValue(card.defense);
+            StringBuilder ad = new StringBuilder(atk).append('/').append(def);
+            if (cd != null) {
+                if (card.attack != cd.Attack) {
+                    ad.append("(攻原").append(statValue(cd.Attack))
+                            .append(statDelta(card.attack, cd.Attack)).append(')');
+                }
+                if (!link && card.defense != cd.Defense) {
+                    ad.append("(守原").append(statValue(cd.Defense))
+                            .append(statDelta(card.defense, cd.Defense)).append(')');
+                }
             }
-        } else if (cd.isType(CardType.Xyz)) {
-            if (card.rank > 0 && card.rank != cd.getStar()) {
-                appendLine(sb, "阶级 " + card.rank + "(原" + cd.getStar() + ")");
+            appendLine(sb, ad.toString());
+            // 星数行（C++ L1686-1694：非连接★，有阶级则☆）与种族/属性同行（L1695-1698 " 种族/属性"）
+            StringBuilder lv = new StringBuilder();
+            if (link) {
+                if (card.link > 0) lv.append("LINK-").append(card.link);
+            } else {
+                int star = card.level != 0 ? card.level : card.rank;
+                if (star > 0) lv.append(card.rank != 0 ? '\u2606' : '\u2605').append(star);
             }
-        } else {
-            if (card.level > 0 && card.level != cd.getStar()) {
-                appendLine(sb, "等级 " + card.level + "(原" + cd.getStar() + ")");
+            if (cd != null && lv.length() > 0) {
+                if (link) {
+                    if (card.link != cd.getLinkNumber()) {
+                        lv.append("(原LINK-").append(cd.getLinkNumber()).append(')');
+                    }
+                } else {
+                    int star = card.level != 0 ? card.level : card.rank;
+                    if (star != cd.getStar()) {
+                        lv.append("(原").append(cd.getStar()).append(')');
+                    }
+                }
             }
+            String raceStr = card.race != 0 ? sm.getRaceString(card.race) : "";
+            String attrStr = card.attribute != 0 ? sm.getAttributeString(card.attribute) : "";
+            if (!raceStr.isEmpty() || !attrStr.isEmpty()) {
+                lv.append(' ').append(raceStr).append('/').append(attrStr);
+                if (cd != null) {
+                    if (card.race != 0 && card.race != cd.Race) {
+                        lv.append("(原").append(sm.getRaceString(cd.Race)).append(')');
+                    }
+                    if (card.attribute != 0 && card.attribute != cd.Attribute) {
+                        lv.append("(原").append(sm.getAttributeString(cd.Attribute)).append(')');
+                    }
+                }
+            }
+            if (lv.length() > 0) appendLine(sb, lv.toString());
         }
-        if (card.attribute != 0 && card.attribute != cd.Attribute) {
-            appendLine(sb, "属性 " + sm.getAttributeString(card.attribute)
-                    + "(原" + sm.getAttributeString(cd.Attribute) + ")");
+        // 灵摆刻度：C++ 仅两处输出——手卡（怪/灵摆怪 L1699-1702）与魔陷区非怪卡（L1708-1711）
+        boolean pendulum = (card.type & CardType.Pendulum.getId()) != 0;
+        boolean scalePlace = card.location == CardLocation.Hand.value()
+                || (!monster && card.location == CardLocation.SpellZone.value());
+        if (pendulum && scalePlace && (card.lScale > 0 || card.rScale > 0)) {
+            boolean lsDiff = cd != null && card.lScale > 0 && card.lScale != cd.LeftScale;
+            boolean rsDiff = cd != null && card.rScale > 0 && card.rScale != cd.RightScale;
+            StringBuilder sc = new StringBuilder().append(card.lScale).append('/').append(card.rScale);
+            if (lsDiff || rsDiff) {
+                sc.append("(原").append(lsDiff ? cd.LeftScale : card.lScale)
+                        .append('/').append(rsDiff ? cd.RightScale : card.rScale).append(')');
+            }
+            appendLine(sb, sc.toString());
         }
-        if (card.race != 0 && card.race != cd.Race) {
-            appendLine(sb, "种族 " + sm.getRaceString(card.race)
-                    + "(原" + sm.getRaceString(cd.Race) + ")");
-        }
-        // 攻/守：client_card.h attack/defense vs base_attack/base_defense，
-        // 原始表值即未修正前的基准，当前值不同即显示差异行
-        if (card.attack != cd.Attack) {
-            appendLine(sb, "攻击力 " + statValue(card.attack) + "(原" + statValue(cd.Attack) + ")"
-                    + statDelta(card.attack, cd.Attack));
-        }
-        if (!cd.isLink() && card.defense != cd.Defense) {
-            appendLine(sb, "守备力 " + statValue(card.defense) + "(原" + statValue(cd.Defense) + ")"
-                    + statDelta(card.defense, cd.Defense));
-        }
-        boolean lsDiff = card.lScale > 0 && card.lScale != cd.LeftScale;
-        boolean rsDiff = card.rScale > 0 && card.rScale != cd.RightScale;
-        if (lsDiff || rsDiff) {
-            int lsc = lsDiff ? card.lScale : cd.LeftScale;
-            int rsc = rsDiff ? card.rScale : cd.RightScale;
-            appendLine(sb, "灵摆刻度 " + lsc + "/" + rsc
-                    + "(原" + cd.LeftScale + "/" + cd.RightScale + ")");
+        // 计数器（C++ L1713-1716 "[名]: 个数"，std::map 升序——HashMap 按类型 id 排序对齐）
+        if (!card.counters.isEmpty()) {
+            TreeMap<Integer, Integer> sorted = new TreeMap<>(card.counters);
+            for (Map.Entry<Integer, Integer> e : sorted.entrySet()) {
+                appendLine(sb, "[" + dm.getCounterName(e.getKey()) + "]: " + e.getValue());
+            }
         }
     }
 

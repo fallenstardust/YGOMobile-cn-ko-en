@@ -841,10 +841,19 @@ public class YGOProActivity extends AppCompatActivity {
      * 决斗内聊天行/弹幕长按观察：事件穿透的透明覆盖窗（SpecEffectOverlay）自身不接收触摸，
      * 故在 Activity 派发点非消费式转发给聊天协作类——仅据此命中顶部文字做长按复制/减速，
      * 普通点按继续原样穿透到下层决斗场（return super 不改派发链，不影响卡片选择等正常操作）。
+     * <p>
+     * 另外：卡片状态气泡（CardStatusTipHelper.FieldTip）是事件穿透的全屏 PopupWindow，下层
+     * 任何控件（阶段按钮/顶部信息/聊天等非 GL 区域）的点击都不会经过决斗场的空白点隐藏路径，
+     * 故在派发起点按下去重：每次新触摸按下先收起在显示的气泡；若本次落点是可显示气泡的卡片，
+     * 抬手时 onCardClick 会以新代际重新排期展示，不受本次收起影响（需求：点屏上任意
+     * 不产出新气泡的位置即隐藏旧气泡）。
      */
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        if (fieldCtl != null) fieldCtl.onFieldTouchForChat(ev);
+        if (fieldCtl != null) {
+            fieldCtl.onFieldTouchForChat(ev);
+            if (ev.getActionMasked() == MotionEvent.ACTION_DOWN) fieldCtl.hideFieldStatusTip();
+        }
         return super.dispatchTouchEvent(ev);
     }
 
