@@ -50,6 +50,10 @@ public class GameEngine {
 
         void onSelectRequired(int selectType, ByteBuffer data);
 
+        /** 应答确实发出（对齐 duelclient.cpp DuelClient::SendResponse L4503-4520 的按钮收起时点）：
+         *  UI 侧按当前询问类型即时收起主阶/战斗指令的下一阶段、结束阶段与洗切按钮 */
+        default void onResponseSent() {}
+
         void onDuelResult(int winner, int reason);
 
         void onHintMessage(String hint);

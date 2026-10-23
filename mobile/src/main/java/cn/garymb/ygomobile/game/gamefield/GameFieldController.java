@@ -677,6 +677,20 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
         phaseBar.setEpButtonAllowed(allowed);
     }
 
+    /**
+     * 应答离场即时收起指令按钮（对齐 duelclient.cpp DuelClient::SendResponse L4507-4520）：
+     * 战斗指令(10)应答收 M2/EP，主阶指令(11)应答再收 BP/EP/洗切；其余询问类型不触碰
+     */
+    public void onCommandResponded(int selectType) {
+        if (selectType != 10 && selectType != 11) return;
+        phaseBar.hideNextAndEpButtons();
+        if (selectType == 11) {
+            // 洗切手卡与 btnBP/btnEP 同属 IDLECMD 应答收起集（gframe btnShuffle 同点隐藏）
+            CardDetailPanel panel = activity.getCardDetailPanel();
+            if (panel != null) panel.updateShuffleButton(false);
+        }
+    }
+
     public void updateActionButtonsForPhase(int phase, boolean isMyTurn) {
         phaseBar.updateActionButtonsForPhase(phase, isMyTurn);
     }

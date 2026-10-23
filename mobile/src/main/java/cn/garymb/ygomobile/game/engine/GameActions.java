@@ -52,6 +52,11 @@ public class GameActions {
                     + (responseData == null ? 0 : responseData.length));
             return;
         }
+        // 对齐 duelclient.cpp DuelClient::SendResponse L4503-4520：对主阶/战斗指令的任何应答
+        // 离场瞬间即收起下一阶段(BP/M2)、结束阶段(EP)与洗切按钮，连锁/效果处理期间不再显示，
+        // 直至下一条指令通讯重新点亮；按钮显隐属 UI，经 listener 回调由界面侧按当前询问类型处理；
+        // 被屏障丢弃的应答未真正离场，不触发收起
+        if (engine.listener != null) engine.listener.onResponseSent();
         // 残局：无网络，应答经引擎泵线程喂回本地决斗引擎（对齐 SingleMode::SetResponse）
         if (engine.isSingleMode) {
             engine.singleRunner.submitResponse(responseData);

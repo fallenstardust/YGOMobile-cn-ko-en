@@ -72,6 +72,20 @@ class FieldPhaseBar {
     // === 阶段按钮 ===
 
     /**
+     * 即时收起下一阶段(BP/M2)与结束阶段(EP)按钮（对齐 duelclient.cpp
+     * DuelClient::SendResponse L4507-4520：对 MSG_SELECT_IDLECMD/MSG_SELECT_BATTLECMD
+     * 的任何应答——发动/召唤/盖放/攻击/切阶段——离场瞬间即隐藏 btnBP/btnM2/btnEP，
+     * 连锁与效果处理期间不再显示，直至下一条指令通讯（beginIdleCommand/
+     * beginBattleCommand）或阶段切换（updateActionButtonsForPhase）重新点亮
+     */
+    void hideNextAndEpButtons() {
+        if (phaseNextLabel.isEmpty() && !phaseEpVisible) return;
+        phaseNextLabel = "";
+        phaseEpVisible = false;
+        pushPhaseDisplay();
+    }
+
+    /**
      * 按通讯显示/隐藏结束阶段按钮：仅当服务端下发
      * MSG_SELECT_IDLE_CMD(selectType=11) / MSG_SELECT_BATTLE_CMD(selectType=10)
      * 请求本地行动时，才允许进入结束阶段

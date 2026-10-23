@@ -371,6 +371,19 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
     }
 
     @Override
+    public void onResponseSent() {
+        // 对齐 duelclient.cpp DuelClient::SendResponse L4507-4520：主阶(11)/战斗(10)指令的
+        // 应答一发出即收起 BP/M2、EP 与洗切按钮，发动效果/连锁期间不再残留显示；
+        // 询问类型在发出应答的当前时刻读取（与 C++ 按 curMsg 同步判定同构），后续
+        // 按钮重点亮只能由下一条指令通讯或阶段切换触发
+        final int selectType = activity.getCurrentSelectType();
+        if (selectType != 10 && selectType != 11) return;
+        activity.runOnUiThread(() -> {
+            if (activity.fieldCtl != null) activity.fieldCtl.onCommandResponded(selectType);
+        });
+    }
+
+    @Override
     public void onDuelResult(int winner, int reason) {
         activity.topInfoManager.stopTimer();
         // MSG_WIN 结算即清除场上所有蚂蚁线高亮（选择态列表 + 格子 mask），胜负文字/结算窗照常展示；多局制下一局结束时也不残留上局高亮
