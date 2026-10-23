@@ -335,6 +335,9 @@ public class YGOProActivity extends AppCompatActivity {
                 ImePopupAdjuster.notifyImeHidden();
             }
         });
+        // 提早把聊天输入框登记进联动工具：静置期采样其屏幕上沿基准，供玩家等待弹窗
+        // 按「输入框是否真被抬高」的几何判定抬升/回位（不随输入法显隐事件翻转闪动）
+        ImePopupAdjuster.bindChatInput(etChatInput);
 
         cardDetailPanel = new CardDetailPanel(this);
         // 横屏侧边六按钮列直接承载在视图树 layout_game_right 内（不再用浮层，见方法注释），
@@ -434,6 +437,8 @@ public class YGOProActivity extends AppCompatActivity {
         layoutDeckEditor = findViewById(R.id.layout_deck_editor);
         etChatInput = findViewById(R.id.et_chat_input);
         if (chatInputUI != null) chatInputUI.bindChatInput(etChatInput);
+        // 旋转后新输入框实例同步重绑联动工具：刷新静置上沿基准的采样视图（旧视图树作废）
+        ImePopupAdjuster.bindChatInput(etChatInput);
         // 横屏侧边六按钮列直接承载在新视图树 layout_game_right 内，把聊天输入框高度重新
         // 同步为树内 btn_chat 实测高（旋转重建后新树默认尺寸需重算）
         syncChatInputHeightToToggle();

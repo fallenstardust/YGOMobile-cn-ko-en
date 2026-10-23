@@ -6,7 +6,9 @@ import android.os.Looper;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.WindowManager;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.PopupWindow;
 
@@ -49,11 +51,18 @@ import java.util.List;
  *   已是用户手动收缩态的同样接管：横条随键盘逐轮重锚贴住抬高后的输入框、窗口底边同步
  *   收缩，收起后保持收缩态随输入框降回原位仍紧贴其上方（用户规格），不自动展开；
  *   键盘抬起期间横条一律不可点（展开会再次吞掉输入法触摸，用户规格），复原统一由
- *   还原序列完成。仅聊天输入框持有焦点时介入：宣言卡等自带搜索框弹窗自身的输入路径不最小化。</li>
+ *   还原序列完成。仅聊天输入框持有焦点时介入；内容含 EditText 的弹窗（宣言卡搜索框、
+ *   录像保存名称等）登记时自动识别，一律不自动最小化——收缩成横条会藏起输入框导致
+ *   无法输入（用户反馈），改走下方「收缩窗口 + 内容贴底」整 dialog 抬高方式。</li>
  *   <li><b>收缩窗口 + 内容贴底（旧方式）</b>（{@link #attach(PopupWindow, boolean)} 传
- *   autoMinimize=false，用户规格：玩家等待弹窗维持原本整个 dialog 被抬高、不加最小化）：
+ *   autoMinimize=false，或弹窗内容含 EditText 被强制置位）：
  *   窗口顶保持原位、窗口底缩到「输入框上沿 − 安全间隙」，内容重力改底部对齐并清零纵向
- *   margin，整个 dialog 视觉上被抬高贴住输入框。</li>
+ *   margin，整个 dialog 视觉上被抬高贴住输入框。其中不最小化且自身无输入框的（玩家
+ *   等待弹窗）在登记时即冻结本窗口 softInputMode，消除 WMS 二次 resize 与本类下发
+ *   互相拉扯引起的快速上下闪动（用户反馈）。
+ *   <b>抬升/最小化的触发对所有登记弹窗一律由几何判定驱动</b>：只凭「聊天输入框实测
+ *   上沿相对静置基准落定后是否真被抬高」决定（不论输入法是否显示）——输入法直接
+ *   覆盖界面而未抬高输入框时不做最小化/抬升（用户规格），不再受显隐事件翻转影响。</li>
  *   <li><b>整窗上移</b>（先后攻/位置选择这类以 {@code showAtLocation} 绝对坐标定位、自带尺寸的
  *   小弹窗）：尺寸不动，整窗上移「弹窗底边 − 输入框上沿」的差值，使底边贴输入框上沿，且不裁剪
  *   内容；本就位于输入框上方则不抬升。本方式直接改写窗口 {@code x/y}，故只适用于绝对坐标定位
@@ -100,6 +109,19 @@ public final class ImePopupAdjuster {
     /** 还原后核对窗口矩形与基准矩形的允许误差（像素） */
     private static final int VERIFY_TOL_PX = 2;
 
+    /**
+     * 聊天输入框「被抬高」的判定阈值（dp，玩家等待弹窗几何判定专用）：实测上沿比
+     * 静置基准上移超过此距离才算抬高——键盘弹起但输入框未动时弹窗保持原处，不抬升
+     * （用户规格），也吸收掉事件抖动引起的快速上下闪动。
+     */
+    private static final int CHAT_LIFT_TRIGGER_DP = 24;
+
+    /**
+     * 抬升解算前要求的「落定」轮数：连续这么多轮实测输入框上沿一致才算最终高度
+     * （60ms/轮 → 约 120ms 静止窗口，覆盖键盘动画尾帧抖动）。
+     */
+    private static final int CHAT_STABLE_TICKS = 2;
+
     /** 还原收敛后补做区域锚定的轮数：窗口撑回与 margin 解算分帧完成，多补几轮确保回到区域中央 */
     private static final int RESTORE_REANCHOR_PASSES = 4;
 
@@ -119,8 +141,25 @@ public final class ImePopupAdjuster {
     /** 聊天输入框弱引用：抬升位置以它的实时屏幕上沿为准（旋转重建后由 Activity 重新传入新实例） */
     private static WeakReference<View> sChatInput;
 
+    /** 聊天输入框静置上沿基准（屏幕 px）：只在落定且未处于抬高态时重采，抬高判定以它为准 */
+    private static int sChatRestTop = -1;
+    /** 抬高态锁存（玩家等待弹窗专用）：输入框落定后被抬高才置 true，落定降回基准高度才
+     *  置 false；动画途中的中间值不参与翻转，杜绝逐帧追逐引起的闪动（用户规格） */
+    private static boolean sChatLiftState = false;
+    /** {@link #CHAT_LIFT_TRIGGER_DP} 换算成的像素（随 {@link #refreshLiftSafety} 同密度刷新） */
+    private static int sChatLiftTriggerPx = 0;
+    /** 聊天输入框视图根的全局布局监听：非键盘期实时更新静置基准；重绑时先摘旧再挂新 */
+    private static ViewTreeObserver.OnGlobalLayoutListener sRestSampler;
+
     /** 本轮状态切换已连续无纠正的轮数 */
     private static int sIdleTicks = 0;
+
+    /** 落定判定：上一轮解算时聊天输入框的实测上沿（-2 = 尚未采样） */
+    private static int sStableChatTop = -2;
+    /** 输入框上沿与上一轮连续一致的轮数（达 {@link #CHAT_STABLE_TICKS} 视为键盘动画落定） */
+    private static int sStableCount = 0;
+    /** 当前是否已落定：玩家等待/含 EditText 弹窗只在此态下发移动，动画途中不动 */
+    private static boolean sChatStable = true;
 
     /** {@link #LIFT_SAFETY_DP} 换算成的像素（按登记时所在屏幕密度，attach 与键盘弹起时刷新） */
     private static int sLiftSafetyPx = 0;
@@ -130,6 +169,7 @@ public final class ImePopupAdjuster {
         if (reference == null || reference.getContext() == null) return;
         float density = reference.getContext().getResources().getDisplayMetrics().density;
         sLiftSafetyPx = Math.max(1, Math.round(LIFT_SAFETY_DP * density));
+        sChatLiftTriggerPx = Math.round(CHAT_LIFT_TRIGGER_DP * density);
     }
 
     /** 状态切换后的首轮解算任务：{@link #schedule(long)} 的延时即键盘动画等待时间，到点直接进 tick 循环 */
@@ -143,8 +183,18 @@ public final class ImePopupAdjuster {
          *  （抬升走 {@link #stepMinimize} 自动最小化，或 noAutoMinimize 时走旧收缩+贴底） */
         final boolean liftMode;
         /** true = 包装层弹窗不做自动最小化，维持旧的「收缩窗口 + 内容贴底」整 dialog 抬高
-         *  （{@link #attach(PopupWindow, boolean)} 传 autoMinimize=false，用户规格：玩家等待） */
+         *  （{@link #attach(PopupWindow, boolean)} 传 autoMinimize=false，或因含 EditText 被
+         *  强制置位，用户规格：玩家等待 / 含输入框弹窗不加最小化） */
         final boolean noAutoMinimize;
+        /** true = 弹窗内容子树含 EditText（宣言卡搜索框、录像保存名称等）：一律不缩小/
+         *  不最小化；聊天输入框未持焦时（弹窗自身输入框唤起键盘）完全不介入，保留其
+         *  原生 ADJUST_RESIZE 输入路径（用户规格） */
+        final boolean hasEditText;
+        /** true = 玩家等待弹窗方式（不最小化且自身无输入框）：抬升改由「聊天输入框实测
+         *  上沿相对静置基准是否真被抬高」的几何判定驱动，不论输入法是否显示都不再受
+         *  显隐事件翻转影响；键盘显示期冻结本弹窗 softInputMode，消除 WMS 二次 resize
+         *  与本类还原下发的互相拉扯（输入框未抬高时快速上下闪动的根源，用户反馈） */
+        final boolean followChatLift;
         /** 参与抬升的内容根（包装层弹窗为包装层的第一个子 view） */
         final WeakReference<View> contentRef;
 
@@ -201,11 +251,14 @@ public final class ImePopupAdjuster {
         /** 内容视图上的注销监听（注销时摘除，避免 dialog 反复显示/关闭在同一视图上堆叠监听） */
         View.OnAttachStateChangeListener attachListener;
 
-        Entry(PopupWindow popup, boolean liftMode, View content, boolean noAutoMinimize) {
+        Entry(PopupWindow popup, boolean liftMode, View content, boolean noAutoMinimize,
+              boolean hasEditText) {
             this.popupRef = new WeakReference<>(popup);
             this.liftMode = liftMode;
             this.contentRef = new WeakReference<>(content);
             this.noAutoMinimize = noAutoMinimize;
+            this.hasEditText = hasEditText;
+            this.followChatLift = noAutoMinimize && !hasEditText;
         }
 
         PopupWindow popup() {
@@ -231,6 +284,8 @@ public final class ImePopupAdjuster {
      * @param autoMinimize 铺满窗口的包装层弹窗抬升时是否自动最小化为底部收缩横条（默认 true）；
      *                     传 false 维持旧的「收缩窗口 + 内容贴底」整 dialog 抬高方式（用户规格：
      *                     玩家等待弹窗不加最小化功能）；自定位弹窗的整窗上移不受此参数影响。
+     *                     弹窗内容含 EditText 时无论传值一律强制按不最小化处理（用户规格：
+     *                     不得缩小包含 edittext 布局的 dialog）。
      */
     public static void attach(PopupWindow popup, boolean autoMinimize) {
         if (popup == null) return;
@@ -241,10 +296,24 @@ public final class ImePopupAdjuster {
         View content = DraggablePopupHelper.liftedContentView(popup);
         if (content == null) return;
         refreshLiftSafety(content);
+        // 含 EditText 的弹窗（宣言卡搜索框等）强制不自动最小化：收缩成横条会把输入框
+        // 一并藏起，聊天抬键盘时用户无法继续输入（用户反馈）
+        boolean hasEditText = containsEditText(content);
         final Entry entry = new Entry(popup,
-                !DraggablePopupHelper.isWrappedFullscreenPopup(popup), content, !autoMinimize);
-        entry.wantLift = sImeUp;
+                !DraggablePopupHelper.isWrappedFullscreenPopup(popup), content,
+                !autoMinimize || hasEditText, hasEditText);
+        // 期望态一律由输入框几何锁存决定（用户规格：只有聊天输入框真被抬高才抬升/
+        // 最小化，输入法直接覆盖未抬高输入框时不处理），基准未建立前退回 IME 事件态
+        entry.wantLift = sChatRestTop > 0 ? sChatLiftState : sImeUp;
         ENTRIES.add(entry);
+        // 跟随输入框抬高的弹窗（玩家等待）登记即刻冻结本窗口的 IME 自适应：等首轮 tick
+        // 再冻会留下 WMS 按键盘高度收缩铺满窗口的空窗，随后的还原下发与二次 resize 来回
+        // 拉扯，即真机仍见残余快速上下闪动的根源（用户反馈）；冻结后窗口尺寸只由本类下发
+        if (entry.followChatLift) {
+            View w = windowViewOf(popup);
+            WindowManager.LayoutParams lp = w == null ? null : paramsOf(w);
+            if (w != null && lp != null) freezeImeMode(entry, w, lp);
+        }
         entry.attachListener = new View.OnAttachStateChangeListener() {
             @Override
             public void onViewAttachedToWindow(View v) {
@@ -315,12 +384,73 @@ public final class ImePopupAdjuster {
         return false;
     }
 
+    /** 视图子树内是否含 EditText（含子类）：用于识别自带输入框、一律不得缩小的弹窗 */
+    private static boolean containsEditText(View v) {
+        if (v == null) return false;
+        if (v instanceof EditText) return true;
+        if (v instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) v;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                if (containsEditText(group.getChildAt(i))) return true;
+            }
+        }
+        return false;
+    }
+
     // ══════════════════════════════════════════════════════════════════════
     // Activity / 聊天输入框侧接口：输入法显隐驱动
     // ══════════════════════════════════════════════════════════════════════
 
     /**
-     * 输入法抬起：把所有在显且已登记的弹窗抬升到「底边贴聊天输入框上沿」。
+     * 提早绑定聊天输入框（Activity 在 initViews 与旋转重建绑定新视图后调用）：登记弱引用
+     * 并在视图根挂全局布局监听，非键盘期采样输入框静置上沿基准，使玩家等待弹窗的几何
+     * 判定（只凭「输入框是否真被抬高」）从第一次抬键盘起就可用；不绑定时基准在首次
+     * 键盘收起后才建立，期间退回旧的 IME 事件驱动。
+     */
+    public static void bindChatInput(View chat) {
+        if (chat == null) return;
+        sChatInput = new WeakReference<>(chat);
+        refreshLiftSafety(chat);
+        View root = chat.getRootView();
+        if (root == null) return;
+        ViewTreeObserver vto = root.getViewTreeObserver();
+        if (!vto.isAlive()) return;
+        if (sRestSampler != null) {
+            try {
+                vto.removeOnGlobalLayoutListener(sRestSampler);
+            } catch (Exception ignored) {
+            }
+        }
+        sRestSampler = () -> {
+            int t = measureChatTop();
+            if (t <= 0) return;
+            // 布局变化不重采基准也不翻转状态：仅在「瞬时判定与当前抬高态不一致」
+            // 或基准尚未建立时唤醒解算，由 tick 在落定后才真正切换抬高/回位，
+            // 杜绝键盘动画中间帧污染基准引起的快速上下闪动（用户反馈）
+            boolean liftedNow = sChatRestTop > 0
+                    && t < sChatRestTop - sChatLiftTriggerPx;
+            if (sChatRestTop > 0 && liftedNow == sChatLiftState) return;
+            for (Entry e : ENTRIES) {
+                if (e.followChatLift) {
+                    schedule(0L);
+                    return;
+                }
+            }
+        };
+        vto.addOnGlobalLayoutListener(sRestSampler);
+        // 首帧布局完成后立即采一次基准（initViews 时输入框尚未布局）
+        chat.post(() -> {
+            if (sImeUp) return;
+            int t = measureChatTop();
+            if (t > 0) sChatRestTop = t;
+        });
+    }
+
+    /**
+     * 输入法抬起：不再事件驱动地把弹窗置为抬升态——抬升/最小化一律由 tick 按
+     * 「聊天输入框实测上沿相对静置基准是否真被抬高」的锁存态决定（用户规格：输入法
+     * 直接覆盖界面而未抬高输入框时不做最小化/抬升），此处仅记录事件态供基准未建立时
+     * 退回，并延时启动解算等待键盘动画落定。
      *
      * @param chatInput 当前视图树中的聊天输入框（旋转重建后须传新实例）
      */
@@ -328,15 +458,14 @@ public final class ImePopupAdjuster {
         sImeUp = true;
         sChatInput = chatInput == null ? null : new WeakReference<>(chatInput);
         refreshLiftSafety(chatInput);
-        setWantLift(true);
         // 键盘动画结束后首轮解算，其后由 tick 逐轮纠正到实测底边与输入框上沿一致
         schedule(SETTLE_DELAY_MS);
     }
 
-    /** 输入法收起：所有已抬升的弹窗回到基准矩形（区域居中的重新贴回区域中央） */
+    /** 输入法收起：同样不事件翻转期望态（收起动画途中几何尚未落定，事件抢跑会把
+     *  弹窗提前放回又抬起来一次——残余闪动），回位由 tick 在输入框落定降回后统一处理 */
     public static void notifyImeHidden() {
         sImeUp = false;
-        setWantLift(false);
         schedule(0L);
     }
 
@@ -347,6 +476,9 @@ public final class ImePopupAdjuster {
      */
     public static void restoreAll() {
         setWantLift(false);
+        // 旋转/重建后旧方向的静置基准与抬高态不再适用：作废基准，下一轮落定时重采新静置位
+        sChatRestTop = -1;
+        sChatLiftState = false;
         schedule(0L);
     }
 
@@ -382,8 +514,37 @@ public final class ImePopupAdjuster {
     /** 一轮解算：仍有纠正则继续下一轮，连续 {@link #MAX_IDLE_TICKS} 轮无纠正即停 */
     private static void tick() {
         int chatTop = measureChatTop();
+        // 落定判定：连续多轮实测输入框上沿一致 = 键盘动画已结束（用户要求：拿到
+        // 最终高度后再移动，不随动画过程持续变化）；实测变动轮直接继续解算，
+        // 不受无纠正轮数上限提前停轮
+        if (chatTop == sStableChatTop) {
+            if (sStableCount < CHAT_STABLE_TICKS) sStableCount++;
+        } else {
+            sStableChatTop = chatTop;
+            sStableCount = 0;
+        }
+        sChatStable = sStableCount >= CHAT_STABLE_TICKS;
+        // 抬高状态机（玩家等待弹窗判据）：只在输入框落定后翻转，不参考输入法事件——
+        // 抬高后不管输入法是否仍显示都保持贴输入框上沿，落定降回基准高度才回位（用户规格）；
+        // 静置态重采基准使旋转/HUD 缩放后的新静置位自动跟上，动画途中的中间值一律不污染基准
+        boolean liftedNow = chatTop > 0 && sChatRestTop > 0
+                && chatTop < sChatRestTop - sChatLiftTriggerPx;
+        if (sChatStable && chatTop > 0) {
+            if (sChatLiftState) {
+                if (!liftedNow) sChatLiftState = false;
+            } else {
+                sChatRestTop = chatTop;
+                if (liftedNow) sChatLiftState = true;
+            }
+        }
+        // 「被抬高」= 落定态锁存结果：不论输入法是否显示，只看几何
+        boolean chatLifted = sChatLiftState;
         boolean corrected = false;
         for (Entry e : new ArrayList<>(ENTRIES)) {
+            // 全部弹窗统一几何驱动（用户规格：duel dialog 只在聊天输入框真被抬高时才
+            // 最小化/抬升，输入法直接覆盖界面而未抬高输入框时不做处理），不再受显隐
+            // 事件翻转影响；基准未建立前退回旧 IME 事件态
+            e.wantLift = sChatRestTop > 0 ? chatLifted : sImeUp;
             if (step(e, chatTop)) corrected = true;
         }
         prune();
@@ -392,7 +553,7 @@ public final class ImePopupAdjuster {
         } else {
             sIdleTicks++;
         }
-        if (sIdleTicks < MAX_IDLE_TICKS && hasWork()) {
+        if (!sChatStable || (sIdleTicks < MAX_IDLE_TICKS && hasWork())) {
             MAIN.removeCallbacks(TICK);
             MAIN.postDelayed(TICK, TICK_MS);
         }
@@ -454,6 +615,28 @@ public final class ImePopupAdjuster {
         // （chat 无焦点）不最小化也不收缩，避免打断其自身输入。
         boolean chatFocused = sChatInput != null && sChatInput.get() != null
                 && sChatInput.get().hasFocus();
+        // 玩家等待弹窗（followChatLift）：登记起一律持续冻结本窗口的 IME 自适应，
+        // 使抬升/还原只由本类下发——ADJUST_RESIZE 下 WMS 会同步收缩铺满窗口的弹窗，
+        // 与还原下发构成两个互相拉扯的定位控制器（快速上下闪动的根源）；本弹窗
+        // 自身无输入框，冻结不影响任何输入路径（用户规格：只看输入框几何，不管输入法）
+        if (entry.followChatLift) {
+            freezeImeMode(entry, window, p);
+        }
+        // 含 EditText 弹窗：聊天输入框持焦（聊天联动抬键盘）期间同样冻结——键盘动画
+        // 途中 WMS 的连续 resize 会把弹窗跟着键盘一点点爬动（用户要求只在输入框
+        // 落定后一次性移动）；焦点转到本弹窗输入框后立即解除，恢复 ADJUST_RESIZE
+        // 原生输入路径
+        if (entry.hasEditText) {
+            if (chatFocused) freezeImeMode(entry, window, p);
+            else releaseImeMode(entry, window, p);
+        }
+        // 含 EditText 弹窗且聊天未持焦（键盘由本弹窗自己的输入框唤起）：完全
+        // 不介入，保留其原生 ADJUST_RESIZE 输入路径；聊天持焦抬键盘时才走整 dialog
+        // 贴边抬高（不缩小、不最小化，用户规格）
+        if (entry.hasEditText && entry.wantLift && !chatFocused) return false;
+        // 动画途中不下发（用户规格：拿到聊天输入框最终高度后再移动）：玩家等待与
+        // 含 EditText 弹窗都待输入框上沿落定后一次性移到/回位；其余弹窗维持逐轮跟随
+        if ((entry.followChatLift || entry.hasEditText) && !sChatStable) return false;
         if (entry.wantLift && chatTop > 0 && !entry.liftMode && !entry.noAutoMinimize
                 && !entry.userExpandedFlag) {
             return chatFocused
@@ -637,15 +820,23 @@ public final class ImePopupAdjuster {
             entry.reanchorPasses = RESTORE_REANCHOR_PASSES;
             return true;
         }
-        if (!entry.liftedEver) return false;
+        if (!entry.liftedEver) {
+            // 从未抬升过但期间被冻结过：含 EditText 弹窗在此解除；followChatLift 弹窗
+            // 永久保持冻结（位置只由本类几何状态机下发，解除会把窗口交回 WMS 二次 resize）
+            if (!sImeUp && !entry.followChatLift) releaseImeMode(entry, window, p);
+            return false;
+        }
 
         boolean winOk = Math.abs(height - entry.baseH) <= VERIFY_TOL_PX
                 && Math.abs(top - entry.baseTop) <= VERIFY_TOL_PX;
         boolean contentOk = !contentNeedsRestore(entry);
         if (winOk && contentOk && entry.reanchorPasses == 0) {
-            // 实测确认已回到基准：此时键盘确已降回，解除抬升期的 IME 冻结（回到弹窗
-            // 自身的 softInputMode），作废基准，下一轮按当前（可能已旋转过的）干净几何重采
-            releaseImeMode(entry, window, p);
+            // 实测确认已回到基准：作废基准重采，使随后的旋转能把新屏幕尺寸纳入基准；
+            // 收敛前绝不重采，否则收缩中的临时尺寸会被当成「原位」。followChatLift 弹窗
+            // 永不解除冻结（回到弹窗自身模式会再引入 WMS 二次 resize 拉扯，闪动根源）
+            if (!entry.followChatLift) {
+                releaseImeMode(entry, window, p);
+            }
             entry.liftedEver = false;
             entry.repairTries = 0;
             entry.rebuiltOnce = false;
@@ -653,9 +844,12 @@ public final class ImePopupAdjuster {
             return false;
         }
         if (entry.repairTries >= MAX_REPAIR_TRIES) {
-            // 修复到上限仍不收敛（该 ROM 拒绝把窗口撑回）：接受当前几何并停手、解除 IME
-            // 冻结，但<em>保留</em>原基准——收缩态绝不能被当成基准，否则下一次抬升/还原都以偏矮的窗口为准
-            releaseImeMode(entry, window, p);
+            // 修复到上限仍不收敛（该 ROM 拒绝把窗口撑回）：接受当前几何并停手，
+            // 但<em>保留</em>原基准——收缩态绝不能被当成基准，否则下一次抬升/还原都以偏矮的
+            // 窗口为准；followChatLift 弹窗永不解除冻结
+            if (!entry.followChatLift) {
+                releaseImeMode(entry, window, p);
+            }
             entry.liftedEver = false;
             entry.repairTries = 0;
             entry.reanchorPasses = 0;

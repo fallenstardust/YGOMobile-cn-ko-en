@@ -350,7 +350,9 @@ public class PlayerWaitingDialog {
 
         draggableHelper.showPopup(popupWindow, anchorView);
         // 输入法抬升联动（用户规格：本弹窗维持原本整个 dialog 被抬高的方式，不做自动最小化，
-        // 故 autoMinimize=false）：点聊天输入框抬高输入法时本弹窗底边贴输入框上沿，收起后回到屏幕中央
+        // 故 autoMinimize=false）：几何判定驱动——聊天输入框实测被抬高（不论输入法是否显示）
+        // 时底边贴输入框上沿，输入框未被抬高则保持原处，键盘显示期由工具类冻结本窗口
+        // 的 IME 自适应，消除之前「输入框未抬高时快速上下闪动」的 WMS 二次 resize 拉扯
         ImePopupAdjuster.attach(popupWindow, false);
 
         if (listener != null) listener.onPlayerWaitingShown();

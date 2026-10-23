@@ -147,6 +147,10 @@ public class AnnounceCardDialog {
 
     private OnCardDeclaredListener listener;
     private OnDismissListener dismissListener;
+    /** 本次 dismiss 是否由主动关闭（点确定/新宣言替换）触发：返回键/屏幕边缘手势
+     *  导致的误关（系统 PopupDecorView 对 BACK 无条件 dismiss，内容层拦不到，见
+     *  DraggablePopupHelper#ignoreBackKey 结论）需保留搜索文字重新弹出，以免决斗卡住 */
+    private boolean closingIntentionally;
 
     public AnnounceCardDialog(Context context) {
         this.context = context;
@@ -227,7 +231,33 @@ public class AnnounceCardDialog {
         // DragFrameLayout.onSizeChanged 按区域重新解算 topMargin 定位，使 dialog 回到原位、不再滞留屏外。
         popupWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         popupWindow.setOnDismissListener(() -> {
-            if (dismissListener != null) dismissListener.onDismiss();
+            if (closingIntentionally) {
+                // 主动关闭（点确定 / 静态工厂替换）：正常回调外部监听并复位标志
+                closingIntentionally = false;
+                if (dismissListener != null) dismissListener.onDismiss();
+                return;
+            }
+            // 非主动关闭 = 返回键/边缘手势误关（用户规格：不响应，宣言必须完成）：
+            // 保留搜索文字重新弹出；Activity 正在销毁时不再重弹，回调外部监听收尾
+            if (context instanceof android.app.Activity) {
+                android.app.Activity act = (android.app.Activity) context;
+                if (act.isFinishing() || act.isDestroyed()) {
+                    if (dismissListener != null) dismissListener.onDismiss();
+                    return;
+                }
+            }
+            final String keepText = etInput != null ? etInput.getText().toString() : "";
+            handler.post(() -> {
+                // 重弹排队期间已被新的宣言弹窗替换（静态工厂重新赋值 current）：不再重弹
+                if (current != this) return;
+                show(null);
+                // show() 重新 build() 后 etInput 已指向新视图：回填误关前的搜索文字，
+                // TextWatcher 会自动按文字重新过滤可宣言列表
+                if (etInput != null && !keepText.isEmpty()) {
+                    etInput.setText(keepText);
+                    etInput.setSelection(keepText.length());
+                }
+            });
         });
 
         draggableHelper = new DraggablePopupHelper(context, "announce_card");
@@ -530,10 +560,11 @@ public class AnnounceCardDialog {
                 } else {
                     popupWindow.showAtLocation(anchor, Gravity.CENTER, 0, 0);
                 }
-                // 输入法抬升联动（用户规格）：抬键盘时本弹窗底边贴聊天输入框上沿，
+                // 输入法抬升联动（用户规格）：聊天输入框被抬高时本弹窗底边贴其上沿，
                 // 收起后回到 layout_game_right 中央，逻辑统一在 ImePopupAdjuster。
-                // 本弹窗自带搜索输入框：焦点在本弹窗内时聊天输入框未被抬高，
-                // 工具类解算发现无遮挡会自动跳过抬升，输入体验不受影响
+                // 本弹窗含 EditText（搜索框）：登记时被自动识别，一律不自动最小化/收缩
+                // （收缩成横条会藏起输入框无法打字，用户反馈）；焦点在本弹窗搜索框时
+                // 工具完全不介入，保留原生 ADJUST_RESIZE 输入路径
                 ImePopupAdjuster.attach(popupWindow);
             } catch (Exception e) {
                 // Token expired or window already showing
@@ -549,9 +580,11 @@ public class AnnounceCardDialog {
     public void dismiss() {
         if (popupWindow != null && popupWindow.isShowing()) {
             try {
+                // 主动关闭：置标志让 OnDismissListener 走正常回调而非误关重弹
+                closingIntentionally = true;
                 popupWindow.dismiss();
             } catch (Exception e) {
-                // Ignore
+                closingIntentionally = false;
             }
         }
     }

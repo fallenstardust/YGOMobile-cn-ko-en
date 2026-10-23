@@ -623,7 +623,12 @@ public class DraggablePopupHelper {
         private static final String PREF_Y = "_y";
         private final SharedPreferences prefs;
         private final String dialogId;
-        private float grabDX, grabDY, downX, downY;
+        private float downX, downY;
+        /** 拖拽累计平移量（施加到全部子视图的 translation 上）：包装层自身永不平移，
+         *  否则整层拖离原位后腾出的带状区域不再命中本层，跨窗口触摸转发失效，
+         *  场上/手卡点击不再响应抬高与卡片详情（用户反馈），拖回原位又恢复 */
+        private float dragTX, dragTY;
+        private float startDragTX, startDragTY;
         private boolean dragging;
         /** 本弹窗是否可拖动（默认 true；经 {@link #setDragEnabled(PopupWindow, boolean)} 按 dialog 禁用，
          *  用户规格：建主/局域网/单机/录像/玩家等待对齐 C++ 定位弹窗不可拖） */
@@ -674,9 +679,9 @@ public class DraggablePopupHelper {
         private View collapseTitleView;
         private boolean collapsible;
         private boolean collapsed;
-        /** 收缩前对话框被拖拽的整层平移量：收缩时暂存并归零，让横条统一锚定到
-         *  layout_game_right 底部中央、与聊天输入框同高同位；展开时还原以保持对话框
-         *  被拖到的位置（横竖屏、任意拖拽位置一致，用户规格） */
+        /** 收缩前对话框被拖拽的平移量快照：收缩时暂存并归零，让横条统一锚定到
+         *  layout_game_right 底部中央、与聊天输入框同高同位；展开时还原到子视图平移，
+         *  对话框仍回到被拖到的位置（横竖屏、任意拖拽位置一致，用户规格） */
         private float preCollapseTX;
         private float preCollapseTY;
         /** 本次手势 DOWN 是否落在收缩横条/把手上：是则整体禁用拖拽逻辑 */
@@ -699,14 +704,33 @@ public class DraggablePopupHelper {
             this.passThroughTarget = target;
         }
 
-        /** 启用/禁用本层拖拽：禁用时拖拽逻辑整体旁路，已有的整层平移归零回锚定位 */
+        /** 启用/禁用本层拖拽：禁用时拖拽逻辑整体旁路，已有的拖拽平移归零回锚定位 */
         void setDragEnabled(boolean enabled) {
             this.dragEnabled = enabled;
             if (!enabled) {
                 dragging = false;
-                setTranslationX(0f);
-                setTranslationY(0f);
+                clearDragOffset();
             }
+        }
+
+        /** 把拖拽平移量施加/清零到全部子视图（层自身保持铺满窗口，命中与转发不受拖拽影响） */
+        private void applyDragOffsetToChildren() {
+            for (int i = 0; i < getChildCount(); i++) {
+                View child = getChildAt(i);
+                child.setTranslationX(dragTX);
+                child.setTranslationY(dragTY);
+            }
+        }
+
+        /** 拖拽平移彻底归零（含子视图与层自身的历史残留） */
+        private void clearDragOffset() {
+            dragTX = 0f;
+            dragTY = 0f;
+            startDragTX = 0f;
+            startDragTY = 0f;
+            setTranslationX(0f);
+            setTranslationY(0f);
+            applyDragOffsetToChildren();
         }
 
         void setDesignSize(int w, int h, float createdF) {
@@ -802,19 +826,21 @@ public class DraggablePopupHelper {
             if (!collapsible || getChildCount() == 0) return;
             View content = getChildAt(0);
             if (doCollapse) {
-                // 收缩一律归零拖拽残留的整层平移：包装层被拖到任意位置后，横条若随层一起平移，
-                // refreshCollapseAnchors 的横向居中虽按整层屏幕坐标补偿、但纵向用 bottomMargin 相对
-                // 已平移的层底边锚定，会把横条偏离 layout_game_right 底部中央与聊天输入框（尤其纵向）。
+                // 收缩一律归零拖拽残留平移：横条若随拖拽偏移一起平移，
+                // refreshCollapseAnchors 的横向居中虽按子视图屏幕坐标补偿、但纵向用 bottomMargin 相对
+                // 已平移的内容锚定，会把横条偏离 layout_game_right 底部中央与聊天输入框（尤其纵向）。
                 // 故先记下平移量再归零，让横条在净零平移下精确锚定到底部中央/与聊天输入框同高同位；
                 // 展开时还原平移，对话框仍回到被拖到的原位置（横竖屏一致，用户规格）
-                preCollapseTX = getTranslationX();
-                preCollapseTY = getTranslationY();
-                setTranslationX(0f);
-                setTranslationY(0f);
+                preCollapseTX = dragTX;
+                preCollapseTY = dragTY;
+                dragTX = 0f;
+                dragTY = 0f;
+                applyDragOffsetToChildren();
                 refreshCollapseAnchors();
             } else {
-                setTranslationX(preCollapseTX);
-                setTranslationY(preCollapseTY);
+                dragTX = preCollapseTX;
+                dragTY = preCollapseTY;
+                applyDragOffsetToChildren();
             }
             collapsed = doCollapse;
             content.setVisibility(doCollapse ? GONE : VISIBLE);
@@ -1011,11 +1037,9 @@ public class DraggablePopupHelper {
          * 旧区域实例已脱离视图树，按 id 从当前 Activity 视图树重新解析同 id 新实例并重算居中偏移。
          */
         void relayoutForOrientation() {
-            // 旋转一律重新按区域定位：先归零拖拽残留的整层平移（与 centerPopupInRegion/dock 同语义），
+            // 旋转一律重新按区域定位：先归零拖拽残留的平移（含子视图，与 centerPopupInRegion/dock 同语义），
             // 否则旧方向的平移叠加新 margin 会把内容与把手推出可视区（标题缺顶、「▼」消失、询问窗无法取消）
-            setTranslationX(0f);
-            setTranslationY(0f);
-            // 旋转已丢弃拖拽位置，收缩前平移快照同步作废，避免展开时把内容/横条恢复到旧方向的失效平移
+            clearDragOffset();
             preCollapseTX = 0f;
             preCollapseTY = 0f;
             // 子视图尺寸依赖外部解算的弹窗（如选卡/卡片确认按区域宽烘焙卡图）→ 交由自定义重排全权处理
@@ -1303,8 +1327,13 @@ public class DraggablePopupHelper {
             View contentView = getChildAt(0);
             if (contentView.getVisibility() != VISIBLE) return false;
             if (!(contentView instanceof ViewGroup)) return false;
-            float cx = x - contentView.getLeft() + contentView.getScrollX();
-            float cy = y - contentView.getTop() + contentView.getScrollY();
+            // 命中坐标以子视图「可视位置」为准（布局位+平移）：拖拽平移施加在子视图
+            // translation 上（层自身不动），Android 真实派发按变换后矩阵命中子视图，
+            // 预判定不计平移会把滑块/列表的按下误判成非滚动区而抢去拖 dialog（用户反馈）
+            float cx = x - contentView.getLeft() - contentView.getTranslationX()
+                    + contentView.getScrollX();
+            float cy = y - contentView.getTop() - contentView.getTranslationY()
+                    + contentView.getScrollY();
             if (cx < 0 || cy < 0 || cx >= contentView.getWidth() || cy >= contentView.getHeight())
                 return false;
             return findScrollableChild((ViewGroup) contentView, cx, cy) != null;
@@ -1315,8 +1344,8 @@ public class DraggablePopupHelper {
                 View child = parent.getChildAt(i);
                 if (!child.isShown()) continue;
 
-                float cx = x - child.getLeft() + child.getScrollX();
-                float cy = y - child.getTop() + child.getScrollY();
+                float cx = x - child.getLeft() - child.getTranslationX() + child.getScrollX();
+                float cy = y - child.getTop() - child.getTranslationY() + child.getScrollY();
 
                 if (cx < 0 || cy < 0 || cx >= child.getWidth() || cy >= child.getHeight()) {
                     continue;
@@ -1349,16 +1378,37 @@ public class DraggablePopupHelper {
                     || v instanceof SeekBar;
         }
 
+        /**
+         * 内容子树中是否有「正在按压跟踪」的可滚动视图（滑块/列表）：预判定因缩放、
+         * 旋转重排等残余坐标误差漏判时，子视图实际已接住 DOWN 并在跟踪（Android 真实
+         * 派发按变换后矩阵命中），此刻绝不允许拖拽再抢走手势——否则选卡/卡片确认弹窗
+         * 拖完一次横向滑块后再次按住滑块会变成拖动 dialog（用户反馈）。
+         */
+        private boolean hasPressedScrollableChild() {
+            return getChildCount() > 0 && findPressedScrollable(getChildAt(0));
+        }
+
+        private static boolean findPressedScrollable(View v) {
+            if (!v.isShown()) return false;
+            if (isScrollableView(v) && v.isPressed()) return true;
+            if (v instanceof ViewGroup) {
+                ViewGroup g = (ViewGroup) v;
+                for (int i = 0, n = g.getChildCount(); i < n; i++) {
+                    if (findPressedScrollable(g.getChildAt(i))) return true;
+                }
+            }
+            return false;
+        }
+
         private void handleDrag(MotionEvent ev) {
             if (!dragEnabled) return;
             switch (ev.getAction()) {
                 case MotionEvent.ACTION_DOWN:
                     downX = ev.getRawX();
                     downY = ev.getRawY();
-                    int[] loc = new int[2];
-                    getLocationOnScreen(loc);
-                    grabDX = ev.getRawX() - loc[0];
-                    grabDY = ev.getRawY() - loc[1];
+                    // 以当前拖拽平移量为起点，子视图随手指相对位移移动（层自身不平移）
+                    startDragTX = dragTX;
+                    startDragTY = dragTY;
                     dragging = false;
                     break;
 
@@ -1372,29 +1422,26 @@ public class DraggablePopupHelper {
                         }
                     }
                     if (dragging) {
-                        int[] cur = new int[2];
-                        getLocationOnScreen(cur);
-                        int laidX = (int) (cur[0] - getTranslationX());
-                        int laidY = (int) (cur[1] - getTranslationY());
                         float[] clamped = clampLayerTranslation(
-                                ev.getRawX() - grabDX - laidX,
-                                ev.getRawY() - grabDY - laidY);
-                        setTranslationX(clamped[0]);
-                        setTranslationY(clamped[1]);
+                                startDragTX + (ev.getRawX() - downX),
+                                startDragTY + (ev.getRawY() - downY));
+                        dragTX = clamped[0];
+                        dragTY = clamped[1];
+                        applyDragOffsetToChildren();
                     }
                     break;
 
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
                     if (dragging) {
-                        // 区域锚定弹窗不持久化整层偏移：下次显示/旋转都按区域重算定位，
+                        // 区域锚定弹窗不持久化拖拽偏移：下次显示/旋转都按区域重算定位，
                         // 旧方向的绝对屏幕坐标重放到新方向会把内容推到屏外
                         if (centerRegionId == View.NO_ID) {
                             int[] finalLoc = new int[2];
                             getLocationOnScreen(finalLoc);
                             prefs.edit()
-                                    .putInt(dialogId + PREF_X, finalLoc[0])
-                                    .putInt(dialogId + PREF_Y, finalLoc[1])
+                                    .putInt(dialogId + PREF_X, finalLoc[0] + (int) dragTX)
+                                    .putInt(dialogId + PREF_Y, finalLoc[1] + (int) dragTY)
                                     .apply();
                         }
                     }
@@ -1404,8 +1451,9 @@ public class DraggablePopupHelper {
         }
 
         /**
-         * 限定整层平移幅度：保证对话框内容至少保留 {@code keep} 像素在屏内。区域锚定弹窗一旦被
-         * 整层平移到屏外将无法再与其交互（询问窗丢失即死锁），因此拖拽不允许把内容拖到不可恢复的位置。
+         * 限定拖拽平移幅度：保证对话框内容至少保留 {@code keep} 像素在屏内。拖拽偏移一旦
+         * 把内容移到屏外将无法再与其交互（询问窗丢失即死锁），因此不允许拖到不可恢复的位置。
+         * 平移施加在各子视图上（层自身铺满窗口不移动），几何解算以内容子视图布局位为基准。
          */
         private float[] clampLayerTranslation(float tx, float ty) {
             if (getChildCount() == 0 || getWidth() <= 0 || getHeight() <= 0) {
@@ -1482,6 +1530,12 @@ public class DraggablePopupHelper {
                     return result || true;
 
                 case MotionEvent.ACTION_MOVE:
+                    if (!touchOnScrollable && !touchOnCollapseWidget && hasPressedScrollableChild()) {
+                        // DOWN 时预判定漏了、但可滚动子视图（滑块/列表）实际已接住并在跟踪：
+                        // 改判为滚动手势交回子视图，禁止起拖 dialog
+                        touchOnScrollable = true;
+                        return super.dispatchTouchEvent(ev);
+                    }
                     if (!touchOnScrollable && !touchOnCollapseWidget) {
                         handleDrag(ev);
                         if (dragging) {
@@ -1713,10 +1767,14 @@ public class DraggablePopupHelper {
         if (!(wrapper instanceof ViewGroup)) return true;
         ViewGroup wrapperGroup = (ViewGroup) wrapper;
         if (wrapperGroup.getChildCount() == 0) return true;
-        // 三种锚定同语义「每次绝对贴区域」：归零上次拖拽/重排对整层施加的平移，
+        // 三种锚定同语义「每次绝对贴区域」：归零上次拖拽/重排施加的平移（含子视图），
         // 残留平移叠加 margin 会把内容推出可视区（标题缺顶、「▼」消失、弹窗无法取消）
-        wrapper.setTranslationX(0f);
-        wrapper.setTranslationY(0f);
+        if (wrapper instanceof DragFrameLayout) {
+            ((DragFrameLayout) wrapper).clearDragOffset();
+        } else {
+            wrapper.setTranslationX(0f);
+            wrapper.setTranslationY(0f);
+        }
         View content = wrapperGroup.getChildAt(0);
         ViewGroup.LayoutParams raw = content.getLayoutParams();
         if (!(raw instanceof FrameLayout.LayoutParams)) return true;
