@@ -352,6 +352,19 @@ public class CmdMenuDialog {
             buildCardCommandMenu(card, engine, cmdContext, options, actions);
         }
 
+        // 用户规格（新）：仅在是/否询问窗（YesOrNoDialog）显示时，点击正带黄色虚线行进轮廓
+        // 的可选卡（is_selectable 且未选中，SelectionOutlineRenderer 绘虚线，即连锁/效果
+        // 询问候选卡）不显示「发动」按钮——此时应由询问窗应答，菜单再给发动入口冗余且误导；
+        // 其余按钮、其余卡片与询问窗不显示时全部保持原有行为不变
+        if (YesOrNoDialog.isShowingAny() && card.is_selectable && !card.is_selected) {
+            String activateText = sysString(SYS_ACTIVATE);
+            int idx = options.indexOf(activateText);
+            if (idx >= 0) {
+                options.remove(idx);
+                actions.remove(idx);
+            }
+        }
+
         if (options.isEmpty()) {
             dismiss();
             return;

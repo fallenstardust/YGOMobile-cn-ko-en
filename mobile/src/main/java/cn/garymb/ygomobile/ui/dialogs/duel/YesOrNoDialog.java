@@ -777,6 +777,11 @@ public class YesOrNoDialog {
         return new ArrayList<>(sShowingDialogs);
     }
 
+    /** 是否有是/否询问窗正在显示（CmdMenuDialog 据此决定黄色虚线可选卡是否隐藏「发动」按钮） */
+    public static boolean isShowingAny() {
+        return !sShowingDialogs.isEmpty();
+    }
+
     /** 关闭全部正在显示的弹窗（询问工厂弹新窗前调用，保证同屏至多一个询问窗） */
     public static void dismissShowingDialogs() {
         for (YesOrNoDialog d : snapshotShowingDialogs()) {
