@@ -12,6 +12,7 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.core.content.ContextCompat;
 
@@ -39,6 +40,10 @@ import ocgcore.enums.CardRace;
  * 日志由通讯解析端通过静态 addLog 追加（对齐 Game::AddLog，game.cpp L2270-2276）；
  * 列表项点击：携带卡代码（logParam>0）时展示对应卡信息（对齐 event_handler.cpp LISTBOX_LOG L2175-2182）。
  * 记录在整个对局期间保留，退出对战（hideGameUI）时统一清空（对齐 CloseDuelWindow）。
+ * <p>顶部双 tab（Android 端扩展，用户规格）：「消息记录」即上述日志；「聊天记录」经静态
+ * addChat 追加对局内全部到达的聊天（实况逐条、录像打开时一次性预载全部），点击/长按均与
+ * 消息条目同款选中变色（同一 LogAdapter），长按额外复制该条文本，「清空」按钮只清当前 tab；
+ * 两个 tab 的存储均独立于显示屏蔽（禁用聊天/屏蔽观战照常记录）。
  */
 public class DuelLogDialog {
 
@@ -65,7 +70,15 @@ public class DuelLogDialog {
 
     /** 日志在对局期间持续累积，独立于对话框是否显示（对齐 lstLog/logParam 生命周期） */
     private static final List<LogItem> logItems = new ArrayList<>();
+    /** 聊天tab条目：与 logItems 同生命周期；实况在 FieldChatBoard.appendChat 逐条追加（不受
+     *  显示屏蔽门控），录像在打开时经 onReplayChatPreload 一次性预载录像内全部聊天。
+     *  统一存 LogItem（cardCode 恒为 0）使两个 tab 可共用同一 LogAdapter 与选中态配色 */
+    private static final List<LogItem> chatLines = new ArrayList<>();
     private static DuelLogDialog showingInstance;
+
+    /** tab 索引：消息记录（现有日志）/ 聊天记录 */
+    private static final int TAB_LOG = 0;
+    private static final int TAB_CHAT = 1;
 
     /** 对齐 Game::AddLog(msg, param)：追加一条日志，可携带卡代码供点击查看卡信息 */
     public static void addLog(String text, int cardCode) {
@@ -81,6 +94,19 @@ public class DuelLogDialog {
     /** 对齐 BUTTON_CLEAR_LOG：清空日志 */
     public static void clearLogs() {
         logItems.clear();
+        if (showingInstance != null) showingInstance.refresh();
+    }
+
+    /** 聊天tab追加一条已格式化的聊天文本（「昵称: 内容」/「[System]: …」等，格式化在记录点完成） */
+    public static void addChat(String line) {
+        if (line == null || line.isEmpty()) return;
+        chatLines.add(new LogItem(line, 0));
+        if (showingInstance != null) showingInstance.refresh();
+    }
+
+    /** 清空聊天记录（退出对战 hideGameUI / 重新预载录像聊天前调用） */
+    public static void clearChats() {
+        chatLines.clear();
         if (showingInstance != null) showingInstance.refresh();
     }
 
@@ -157,13 +183,20 @@ public class DuelLogDialog {
 
     private final YGOProActivity activity;
     private final LogAdapter adapter;
+    /** 聊天tab复用同一 LogAdapter（数据源换成 chatLines，cardCode 恒 0 则无卡码高亮），
+     *  选中态变色与消息tab完全一致；两套选中位独立互不串台 */
+    private final LogAdapter chatAdapter;
     private PopupWindow popupWindow;
     private DraggablePopupHelper draggableHelper;
     private ListView lvLog;
+    private TextView tabLog, tabChat;
+    /** 当前展示的 tab（消息/聊天）：记忆切换选择在单次实例内保留，重新打开不重置 */
+    private int currentTab = TAB_LOG;
 
     public DuelLogDialog(YGOProActivity activity) {
         this.activity = activity;
-        this.adapter = new LogAdapter(DialogScale.wrap(activity));
+        this.adapter = new LogAdapter(DialogScale.wrap(activity), logItems);
+        this.chatAdapter = new LogAdapter(DialogScale.wrap(activity), chatLines);
         build();
     }
 
@@ -176,8 +209,23 @@ public class DuelLogDialog {
         btnClear.setText(mStringManager.getSystemString(SYS_CLEAR, "清空"));
         btnClose.setText(mStringManager.getSystemString(SYS_CLOSE, "确定"));
 
+        // tab 条：消息tab标题取 sys1271「消息记录」（对齐桌面 wLogs 标题）；聊天tab标题用 App 内
+        // 同款中文文本（strings.conf 无对应系统串）；配色在 selectTab 中统一切换
+        tabLog = root.findViewById(R.id.btn_tab_duel_log_msg);
+        tabChat = root.findViewById(R.id.btn_tab_duel_log_chat);
+        tabLog.setText(mStringManager.getSystemString(SYS_TITLE, "消息记录"));
+        tabChat.setText("聊天记录");
+        tabLog.setOnClickListener(v -> selectTab(TAB_LOG));
+        tabChat.setOnClickListener(v -> selectTab(TAB_CHAT));
+
         lvLog.setAdapter(adapter);
         lvLog.setOnItemClickListener((parent, view, position, id) -> {
+            // 聊天tab点击：与消息条目同款选中变色（同一 LogAdapter 的 setSelected），
+            // 但聊天条目无卡码，不触发看卡信息
+            if (currentTab == TAB_CHAT) {
+                if (position >= 0 && position < chatLines.size()) chatAdapter.setSelected(position);
+                return;
+            }
             // 对齐 LISTBOX_LOG：携带卡代码的条目点击后展示卡信息
             if (position < 0 || position >= logItems.size()) return;
             adapter.setSelected(position);
@@ -189,10 +237,24 @@ public class DuelLogDialog {
                 }
             }
         });
+        // 用户规格：长按聊天记录条目 = 选中该条（与点击同变色）并复制该条全文
+        // （与决斗内聊天行/弹幕长按复制同提示）
+        lvLog.setOnItemLongClickListener((parent, view, position, id) -> {
+            if (currentTab != TAB_CHAT) return false;
+            if (position < 0 || position >= chatLines.size()) return false;
+            String line = chatLines.get(position).text;
+            if (line == null || line.isEmpty()) return false;
+            chatAdapter.setSelected(position);
+            YGOUtil.copyMessage(activity, line);
+            Toast.makeText(activity, "已复制聊天内容", Toast.LENGTH_SHORT).show();
+            return true;
+        });
         btnClear.setOnClickListener(v -> {
             SoundManager soundManager = activity.getSoundManager();
             if (soundManager != null) soundManager.playSoundEffect(SoundManager.SFX.BUTTON);
-            clearLogs();
+            // 清空只作用于当前 tab（用户规格：两个 tab 的记录互不误伤）
+            if (currentTab == TAB_CHAT) clearChats();
+            else clearLogs();
         });
         btnClose.setOnClickListener(v -> {
             SoundManager soundManager = activity.getSoundManager();
@@ -221,6 +283,20 @@ public class DuelLogDialog {
         draggableHelper.setDragEnabled(popupWindow, false); // 固定右上角，不可拖动
         // 旋转后按新视图树重新贴 layout_game_right 右上角（区域按 id 解析，交由自定义重排全权处理）
         draggableHelper.registerOrientationRelayout(popupWindow, this::anchorTopRightInGameRight);
+        // 按当前 tab 初始化适配器与配色（构造后 currentTab 默认 TAB_LOG）
+        selectTab(currentTab);
+    }
+
+    /** 切换消息/聊天 tab：换适配器、刷选中配色并重绘（选中=#FFD27F，未选=#808080） */
+    private void selectTab(int tab) {
+        currentTab = tab;
+        boolean chat = tab == TAB_CHAT;
+        if (lvLog != null) lvLog.setAdapter(chat ? chatAdapter : adapter);
+        if (tabLog != null)
+            tabLog.setTextColor(YGOUtil.c(chat ? R.color.chat_color_gray : R.color.duel_log_card_text));
+        if (tabChat != null)
+            tabChat.setTextColor(YGOUtil.c(chat ? R.color.duel_log_card_text : R.color.chat_color_gray));
+        refresh();
     }
 
     /** 把铺满整屏的记录浮层内容贴到 layout_game_right 右上角；区域未就绪由锚定方法内部延后处理 */
@@ -257,8 +333,10 @@ public class DuelLogDialog {
         }
         anchorTopRightInGameRight();
         // 输入法抬升联动（用户规格）：抬键盘时本面板底边贴聊天输入框上沿（贴区域顶缘，
-        // 故只收缩窗口不改为贴底），收起后回到 layout_game_right 右上角，逻辑统一在 ImePopupAdjuster
-        ImePopupAdjuster.attach(popupWindow);
+        // 故只收缩窗口不改为贴底），收起后回到 layout_game_right 右上角，逻辑统一在 ImePopupAdjuster。
+        // autoMinimize=false（用户规格：本弹窗不要最小化）：抬升期不收缩成底部最小化横条，
+        // 维持整面板收缩贴底的旧方式（与玩家等待弹窗同款）
+        ImePopupAdjuster.attach(popupWindow, false);
     }
 
     public void dismiss() {
@@ -273,6 +351,15 @@ public class DuelLogDialog {
     }
 
     private void refresh() {
+        if (currentTab == TAB_CHAT) {
+            // 聊天tab：刷新条目并滚动到最新一条（与消息tab同规格的追加式展示）；
+            // 表已清空则选中位同步复位，防止旧选中下标残留到新条目上
+            if (chatLines.isEmpty()) chatAdapter.selectedPosition = -1;
+            chatAdapter.notifyDataSetChanged();
+            if (lvLog != null)
+                lvLog.post(() -> lvLog.setSelection(Math.max(0, chatLines.size() - 1)));
+            return;
+        }
         if (logItems.isEmpty()) {
             adapter.selectedPosition = -1;
         }
@@ -297,9 +384,12 @@ public class DuelLogDialog {
         private int selectedPosition = -1;
 
         private final LayoutInflater inflater;
+        /** 数据源：消息tab传 logItems，聊天tab传 chatLines（同型 List<LogItem>，聊天条目 cardCode 恒 0） */
+        private final List<LogItem> items;
 
-        LogAdapter(Context context) {
+        LogAdapter(Context context, List<LogItem> items) {
             inflater = LayoutInflater.from(context);
+            this.items = items;
         }
 
         /** 点击条目：更新选中位置并重绘，原选中项自动失去焦点恢复原样式 */
@@ -311,12 +401,12 @@ public class DuelLogDialog {
 
         @Override
         public int getCount() {
-            return logItems.size();
+            return items.size();
         }
 
         @Override
         public LogItem getItem(int position) {
-            return logItems.get(position);
+            return items.get(position);
         }
 
         @Override
@@ -332,7 +422,7 @@ public class DuelLogDialog {
             } else {
                 tv = (TextView) convertView;
             }
-            LogItem item = logItems.get(position);
+            LogItem item = items.get(position);
             tv.setText(item.text);
             if (position == selectedPosition) {
                 // 选中态：背景 ygopro_line_color、文字 colorNavy

@@ -27,6 +27,7 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.render.spec.SpecEffectOverlay;
 import cn.garymb.ygomobile.render.field.TextureLoader;
+import cn.garymb.ygomobile.ui.dialogs.duel.DuelLogDialog;
 import cn.garymb.ygomobile.ui.dialogs.lobby.PlayerWaitingDialog;
 
 /**
@@ -51,6 +52,11 @@ public class FieldChatBoard extends FieldChatBoardBase {
     // === 聊天消息（对齐 gframe game.cpp AddChatMsg + drawing.cpp DrawChatMsg） ===
 
     public void appendChat(int playerType, String message) {
+        // 消息记录·聊天tab（用户规格：始终记录全部到达的聊天，独立于下方显示屏蔽门控；表情码
+        // 按原文入表）。回放模式的逐帧重现不再记录：录像聊天在打开时已经 preloadReplayChat
+        // 一次性全量预载，避免重复入表
+        if (ctl.engine == null || !ctl.engine.replayMode)
+            DuelLogDialog.addChat(formatChatLogLine(playerType, message));
         AppsSettings settings = AppsSettings.get();
         if (message == null) message = "";
         // 严格对齐 gframe duelclient.cpp STOC_CHAT 对 chat_player_type 的门控分组：
@@ -393,6 +399,41 @@ public class FieldChatBoard extends FieldChatBoardBase {
             default:
         }
     }
+    /**
+     * 聊天tab行格式化（与 appendLobbyChat 的前缀/取名口径一致，但不受任何屏蔽设置影响）：
+     * 玩家(0-3)→「昵称: 内容」（昵称经 chatLocalType/chatNameByLocalType 按先攻视角取值，
+     * 实况与回放预载同源）；8→[System]；9→[Script Error]；观战 11-19 无前缀（对齐大厅列表，
+     * 观战昵称服务端不下发）；其余（4-7/10/20+ 含归一前的隐藏名路径）→[********]。
+     */
+    protected String formatChatLogLine(int playerType, String message) {
+        if (message == null) message = "";
+        if (playerType >= 0 && playerType < 4)
+            return chatNameByLocalType(chatLocalType(playerType)) + ": " + message;
+        if (playerType == 8) return "[System]: " + message;
+        if (playerType == 9) return "[Script Error]: " + message;
+        if (playerType >= 11 && playerType <= 19) return message;
+        return "[********]: " + message;
+    }
+
+    /**
+     * 录像聊天预载（用户规格：打开录像即全部可见）：一次性把聊天时间线内全部 0xF1 帧体
+     * 按帧序（即时间序）解析格式化后灌入消息记录·聊天tab，无需播放到对应时间点；先清旧表
+     * 防重复点播叠加。在引擎主线程调用（EngineCallbackDelegate 转发），此时 replayMode 与
+     * playerInfos 昵称已由 ReplayPlayer.load 的 startSession 先行写好，取名与实况同源。
+     */
+    public void preloadReplayChat(List<byte[]> bodies) {
+        DuelLogDialog.clearChats();
+        if (bodies == null) return;
+        for (byte[] body : bodies) {
+            if (body == null || body.length < 2) continue;
+            int playerType = body[0] & 0xFF;
+            String text = new String(body, 1, body.length - 1,
+                    java.nio.charset.StandardCharsets.UTF_8);
+            if (text.isEmpty()) continue;
+            DuelLogDialog.addChat(formatChatLogLine(playerType, text));
+        }
+    }
+
     /** 隐藏聊天消息文本（对齐 gframe BUTTON_CHATTING 切换关闭时的 ClearChatMsg：清空聊天显示） */
     public void clearChatMessages() {
         myChatLines.clear();

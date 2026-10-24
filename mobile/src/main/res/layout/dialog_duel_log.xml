@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 决斗日志对话框（对应桌面版 gframe wLogs：lstLog + btnClearLog + btnCloseLog，game.cpp L624-633） -->
+<!-- 决斗日志对话框（对应桌面版 gframe wLogs：lstLog + btnClearLog + btnCloseLog，game.cpp L624-633；
+     顶部增加「消息记录/聊天记录」双 tab，Android 端扩展：聊天tab 记录对局/录像全部聊天，长按条目复制） -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/duel_log_root"
     android:layout_width="match_parent"
@@ -7,6 +8,34 @@
     android:background="@drawable/window2s"
     android:orientation="vertical"
     android:padding="10dp">
+
+    <!-- tab 条：文本与配色由 DuelLogDialog.selectTab 代码设置（选中=duel_log_card_text，未选=chat_color_gray） -->
+    <LinearLayout
+        android:id="@+id/layout_duel_log_tabs"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/btn_tab_duel_log_msg"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:paddingVertical="3dp"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+
+        <TextView
+            android:id="@+id/btn_tab_duel_log_chat"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:paddingVertical="3dp"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+    </LinearLayout>
 
     <ListView
         android:id="@+id/lv_duel_log"

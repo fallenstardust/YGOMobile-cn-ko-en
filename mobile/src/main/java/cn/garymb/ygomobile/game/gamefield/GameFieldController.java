@@ -329,6 +329,11 @@ public class GameFieldController extends GameFieldControllerBase {
         chat.clearChatMessages();
     }
 
+    /** 录像打开即全部可见：把聊天时间线全部 0xF1 帧体一次性预载入消息记录·聊天tab（主线程转发 FieldChatBoard） */
+    public void preloadReplayChat(java.util.List<byte[]> bodies) {
+        if (chat != null) chat.preloadReplayChat(bodies);
+    }
+
     public void enterLobbyChatMode() {
         chat.enterLobbyChatMode();
     }

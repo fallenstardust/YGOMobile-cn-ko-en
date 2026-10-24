@@ -481,9 +481,10 @@ public abstract class YGOProActivityBase extends AppCompatActivity {
         if (emotionDialog != null) emotionDialog.dismiss();
         // 退出对战时关闭正在显示的宣言类对话框（属性/数字/种族），避免残留弹窗遮挡返回界面
         if (dialogUtil != null) dialogUtil.dismissAnnounceDialogs();
-        // 关闭日志面板并清空记录（对齐桌面版 CloseDuelWindow 的 lstLog->clear）
+        // 关闭日志面板并清空记录（对齐桌面版 CloseDuelWindow 的 lstLog->clear）；聊天tab 同生命周期一并清空
         if (duelLogDialog != null) duelLogDialog.dismiss();
         DuelLogDialog.clearLogs();
+        DuelLogDialog.clearChats();
         if (dialogContainer != null) dialogContainer.setVisibility(View.GONE);
         if (layoutGameRight != null) layoutGameRight.setVisibility(View.GONE);
         setGameTopPanelVisible(false);

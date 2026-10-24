@@ -297,6 +297,14 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
             chatFrameCount = ReplayChatTimeline.countChatFrames(replayData.msgFrames);
             chatTimeline.build(replayData == null ? null : replayData.msgFrames);
             startSession();
+            // 消息记录·聊天tab（用户规格：打开录像即全部可见）：时间线建好、昵称写入后即把全部
+            // 聊天帧一次性预载入表（主线程侧解析格式化），无需播放到对应时间点
+            final List<byte[]> preloadChat = chatTimeline.collectChatBodies();
+            if (!preloadChat.isEmpty()) {
+                engine.mainHandler.post(() -> {
+                    if (engine.listener != null) engine.listener.onReplayChatPreload(preloadChat);
+                });
+            }
             if (source.engineDriven()) {
                 // 旧格式重跑不产 MSG_START（gframe 由 dField.Initial 建场），此处自行建初始场
                 buildInitialField();

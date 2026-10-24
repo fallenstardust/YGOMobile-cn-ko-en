@@ -3,6 +3,7 @@ package cn.garymb.ygomobile;
 import android.util.Log;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 
 import cn.garymb.ygomobile.game.engine.GameEngine;
 import cn.garymb.ygomobile.game.gamefield.GameField;
@@ -211,6 +212,12 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
     @Override
     public void onReplayChatReset() {
         activity.runOnUiThread(() -> activity.fieldCtl.clearChatMessages());
+    }
+
+    /** 录像打开即全部可见：聊天时间线全部帧体一次性预载入消息记录·聊天tab（解析/格式化在 FieldChatBoard 主线程完成） */
+    @Override
+    public void onReplayChatPreload(List<byte[]> chatBodies) {
+        activity.runOnUiThread(() -> activity.fieldCtl.preloadReplayChat(chatBodies));
     }
 
     /** 回放 rewind 重排（上一步/从头重放）渲染冻结屏障：hold=true 冻结 GL 渲染（从 MSG_START 重算落点权威态期间保留当前帧不上屏，避免中间态闪烁）并同步抑制居中特效覆盖层——覆盖层是独立 PopupWindow 不受 GL 冻结影响，置位即停当前大图/文字、清待播队列并拒新入队（弹幕/聊天行不受影响）；hold=false 解除冻结恢复逐帧驱动，并通知引擎特效已空闲，避免统一动画屏障继续等待被掐掉的动画而拖住落点排空。转主线程透传到渲染视图与覆盖层。 */

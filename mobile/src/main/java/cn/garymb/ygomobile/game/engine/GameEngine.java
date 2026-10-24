@@ -108,6 +108,9 @@ public class GameEngine {
         /** rewind 重排时清空聊天显示防重复 */
         default void onReplayChatReset() {}
 
+        /** 录像打开即全部可见：宿主把聊天时间线内全部 0xF1 帧体（playerType(1)+UTF-8 文本）一次性预载入消息记录·聊天tab */
+        default void onReplayChatPreload(List<byte[]> chatBodies) {}
+
         /** 观战切视角：宿主把双方聊天左右对调 */
         default void onViewpointSwapped() {}
 

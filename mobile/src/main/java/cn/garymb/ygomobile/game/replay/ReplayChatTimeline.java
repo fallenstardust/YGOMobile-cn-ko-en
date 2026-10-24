@@ -71,6 +71,13 @@ final class ReplayChatTimeline {
         }
     }
 
+    /** 全部聊天帧体（帧序即时间序，不动游标）：录像打开时预载「消息记录·聊天」一次性取出。 */
+    List<byte[]> collectChatBodies() {
+        List<byte[]> out = new ArrayList<>(entries.size());
+        for (Entry e : entries) out.add(e.body);
+        return out;
+    }
+
     /** 转码产物帧：把时间线聊天帧按步号交错并回重跑 captured 帧（否则遮蔽文件转码固化后 0xF1 被抹掉、丢聊天）。 */
     List<byte[]> buildTranscodeFrames(List<byte[]> captured) {
         List<byte[]> out = new ArrayList<>(captured.size() + entries.size());
