@@ -723,9 +723,17 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
             ClientCard picked = engine.getField().getCard(player, location, sequence);
             final boolean wasSelectable = picked != null && picked.is_selectable;
             select.handleCardSelection(player, location, sequence);
-            // 场上直接选卡的点击同样展示状态气泡（与旧长按可见性持平）
+            // 场上直接选卡的点击同样展示状态气泡（与旧长按可见性持平）；
+            // 堆叠区（卡组/墓地/除外/额外）不展示顶卡气泡——C++ 悬停 stTip 的 stat 段同样
+            // 仅 location & 0xe（手卡/怪区/魔陷区，event_handler.cpp L1675）才拼接，堆叠区无标签
             if (picked != null) {
-                scheduleFieldStatusTip(fieldView, picked, player, location, sequence, tapX, tapY);
+                boolean pickedPile = location == 0x01 || location == 0x40
+                        || location == 0x10 || location == 0x20;
+                if (pickedPile) {
+                    hideFieldStatusTip();
+                } else {
+                    scheduleFieldStatusTip(fieldView, picked, player, location, sequence, tapX, tapY);
+                }
                 // 效果发动各步骤（支付cost/是否连锁/选择连锁卡等）期间的点击查看：无论该卡
                 // 是否为本次候选，都即时刷新详情面板（对齐 gframe ClickCard 后无条件 ShowCardInfo）；
                 // 用会话前捕获的卡片引用，自动应答结束会话、场区列表随之变化后依旧取得到被点卡；
@@ -772,10 +780,15 @@ public class GameFieldController implements GameFieldView.OnCardClickListener {
                 activity.showCardInfoPanel(card);
             }
         }
-        // 通讯当前值与原始值的差异行走悬浮标签（原长按触发，现改为点击触发，点卡片
+        // 通讯当前值行走悬浮标签（原长按触发，现改为点击触发，点卡片
         // 以外位置隐藏）：气泡为独立全屏窗口，创建耗时，同样延后到下一帧，
-        // 不得与命令菜单同消息显示拖慢菜单上屏
-        scheduleFieldStatusTip(fieldView, card, player, location, sequence, tapX, tapY);
+        // 不得与命令菜单同消息显示拖慢菜单上屏。堆叠区（卡组/墓地/除外/额外）
+        // 不展示顶卡气泡（同 C++ 悬停 stTip 不含堆叠区），并收起旧气泡
+        if (isPile) {
+            hideFieldStatusTip();
+        } else {
+            scheduleFieldStatusTip(fieldView, card, player, location, sequence, tapX, tapY);
+        }
     }
 
     /** 排期展示点击气泡：取代际后延后一帧执行，期间任何隐藏使本次排期作废 */

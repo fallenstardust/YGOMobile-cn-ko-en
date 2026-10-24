@@ -108,9 +108,10 @@ public class ClientCard {
     public float bounceFrame;
     /** 抬跳总帧数（进度归一化用，正弦半周期：起终点高度=基准，峰值=基准+BOUNCE_LIFT_Z） */
     public int bounceTotal;
-    /** 抬跳光晕强度 0..1（用户规格：卡片下方白色发光光晕随抬高一起亮、回落恢复原状）：
+    /** 抬跳发光强度 0..1（用户规格：围绕卡片矩形边缘的外发光随抬高一起亮、回落恢复原状，
+     *  颜色随卡种——怪兽 holo 橙/魔法荧光绿/陷阱荧光玫红）：
      *  由 updateListAnimation 每帧写入与抬高量同一条正弦半周期曲线，渲染层
-     *  FieldCardRenderer.drawBounceGlow 按此控制白晕的亮度与扩散尺寸 */
+     *  FieldCardRenderer.drawBounceGlow 按此控制边缘发光的亮度与晕带宽度 */
     public float bounceGlow;
     /** 卡组抖动动画进行中标记（duelclient.cpp MSG_SHUFFLE_DECK L2637-2650 的 5 轮抖动，轨迹由 GameFieldMotion.updateListAnimation 关键帧推进，见 startDeckShake） */
     public boolean is_deck_shake;

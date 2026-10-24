@@ -26,8 +26,18 @@ public class FieldCardRenderer {
     private static final int GLOW_CYAN = YGOUtil.c(R.color.pure_cyan);
     private static final int GLOW_RED = YGOUtil.c(R.color.glow_red);
 
+    // 发动抬跳矩形边缘外发光按卡种着色（用户规格：怪兽 holo orange bright、
+    // 魔法荧光绿、陷阱荧光玫红；取代旧底部白色径向光晕）
+    private static final int EDGE_GLOW_MONSTER = YGOUtil.c(R.color.holo_orange_bright);
+    private static final int EDGE_GLOW_SPELL = YGOUtil.c(R.color.neon_green);
+    private static final int EDGE_GLOW_TRAP = YGOUtil.c(R.color.neon_rose);
+    // 卡种位（ocgcore common.h TYPE_SPELL/TYPE_TRAP）：魔法/陷阱显式判位，
+    // 怪兽（TYPE_MONSTER=0x1）与类型未加载的卡回退 holo 橙
+    private static final int TYPE_SPELL = 0x2;
+    private static final int TYPE_TRAP = 0x4;
+
     // 发动抬跳时卡图峰值提亮量（用户规格：亮度只增加一点点、不要明显让卡图变白）：
-    // 乘法提亮峰值 +8%，强度随 bounceGlow 与抬高/底部光晕同一条正弦曲线同起同落
+    // 乘法提亮峰值 +8%，强度随 bounceGlow 与抬高/边缘发光同一条正弦曲线同起同落
     private static final float BOUNCE_BRIGHT_MAX = 0.08f;
 
     private final GameFieldView view;
@@ -164,9 +174,10 @@ public class FieldCardRenderer {
 
         int glow = pickGlowColor(c);
         if (glow != 0) drawGlow(glow, alpha, front);
-        // 发动抬跳白色光晕（用户规格：卡片下方白晕随抬高一起亮一下，回落恢复原状）：
+        // 发动抬跳矩形边缘外发光（用户规格：围绕该卡矩形边缘的发光环随抬高亮起、
+        // 回落恢复原状；颜色随卡种——怪兽 holo 橙/魔法荧光绿/陷阱荧光玫红）：
         // 强度 c.bounceGlow 由动画层每帧写入，与抬高量同一条正弦半周期曲线，严格同步
-        if (c.is_bounce && c.bounceGlow > 0.01f) drawBounceGlow(c.bounceGlow, alpha, front);
+        if (c.is_bounce && c.bounceGlow > 0.01f) drawBounceGlow(c, c.bounceGlow, alpha, front);
 
         int code = c.code != 0 ? c.code : (c.is_moving ? c.chain_code : 0);
         if (isHand) {
@@ -222,7 +233,7 @@ public class FieldCardRenderer {
             // 后者虽非表侧但已转到面朝相机且携真实卡码，翻开的顶卡须亮出卡面
             int tex = obtainTexture(code, FieldGeometry.pendulumMode(c), FieldGeometry.pendulumScale(c));
             if (tex > 0) {
-                // 抬跳同步卡图微提亮（用户规格：与底部光晕同步的亮度增加再回到原亮度，
+                // 抬跳同步卡图微提亮（用户规格：与边缘发光同步的亮度增加再回到原亮度，
                 // 只一点点不变白）：乘法提亮峰值 +8%，峰值与抬高最高点对齐、两端回原亮度；
                 // 非抬跳期走原入口不受影响
                 float bright = c.is_bounce ? 1f + BOUNCE_BRIGHT_MAX * c.bounceGlow : 1f;
@@ -373,20 +384,34 @@ public class FieldCardRenderer {
     }
 
     /**
-     * 发动抬跳的白色光晕（用户规格：卡片下方白晕随抬高一起亮、回落恢复原状）：
-     * 经 GLQuadBatch.drawQuadRadialGlow 逐像素径向渐变——中心亮、向外连续淡到全透，
-     * 无矩形硬边/棱角（用户反馈旧纯色平面太像矩形）；亮度与晕圈尺寸均由强度驱动——
+     * 发动抬跳的矩形边缘外发光（用户规格：围绕该卡矩形边缘的发光环随抬高亮起、
+     * 回落恢复原状，取代旧底部白色径向光晕）：经 GLQuadBatch.drawQuadRectEdgeGlow
+     * 以「卡片半边长=1」逐像素求到矩形边缘的距离——边界处最亮、向外连续淡到全透，
+     * 四角圆角化无棱角，卡面以内由后绘卡图遮挡；亮度与晕带宽度均由强度驱动——
      * 抬到最高最亮最扩散，落回基准即淡到零（曲线与抬高量同源，见 ClientCard.bounceGlow）。
-     * 晕圈比卡面宽出 30%~60% 给渐变留足过渡空间；深度偏移比常规 {@link #drawGlow} 更深
-     * （-0.008），两圈光晕同屏时不共面 z-fighting；背面朝向相机时偏移取反，
-     * 保证白晕恒落在卡片之下
+     * 颜色随卡种（pickBounceGlowColor）；深度偏移比常规 {@link #drawGlow} 更深（-0.008），
+     * 两圈光晕同屏时不共面 z-fighting；背面朝向相机时偏移取反，保证发光恒落在卡片之下
      */
-    private void drawBounceGlow(float glow, float cardAlpha, boolean front) {
+    private void drawBounceGlow(ClientCard c, float glow, float cardAlpha, boolean front) {
         System.arraycopy(view.mModel, 0, view.mModelTmp, 0, 16);
         Matrix.translateM(view.mModelTmp, 0, view.mModelTmp, 0, 0f, 0f, front ? -0.008f : 0.008f);
-        float scale = 1.30f + 0.30f * glow;
-        Matrix.scaleM(view.mModelTmp, 0, view.mModelTmp, 0, scale, scale, 1f);
-        view.quad.drawQuadRadialGlow(view.mModelTmp, 1f, 1f, 1f, Math.min(1f, 0.9f * glow) * cardAlpha);
+        // 发光带宽（卡片半边长单位）随强度由 0.14 增至 0.30；四边形放大倍率再留 0.06
+        // 余量，使 alpha 在四边形边界前已淡到零，不外露硬边
+        float w = 0.14f + 0.16f * glow;
+        float k = 1.0f + w + 0.06f;
+        Matrix.scaleM(view.mModelTmp, 0, view.mModelTmp, 0, k, k, 1f);
+        int color = pickBounceGlowColor(c);
+        view.quad.drawQuadRectEdgeGlow(view.mModelTmp,
+                ((color >> 16) & 0xFF) / 255f, ((color >> 8) & 0xFF) / 255f, (color & 0xFF) / 255f,
+                Math.min(1f, 0.95f * glow) * cardAlpha, k, w);
+    }
+
+    /** 边缘发光颜色按卡种（用户规格）：0x2 魔法→荧光绿，0x4 陷阱→荧光玫红，
+     *  其余（怪兽及 type 尚未由 refresh 加载的卡回退）→holo orange bright */
+    private static int pickBounceGlowColor(ClientCard c) {
+        if ((c.type & TYPE_SPELL) != 0) return EDGE_GLOW_SPELL;
+        if ((c.type & TYPE_TRAP) != 0) return EDGE_GLOW_TRAP;
+        return EDGE_GLOW_MONSTER;
     }
 
     // 卡图 / 卡背纹理由 FieldTextureManager 提供

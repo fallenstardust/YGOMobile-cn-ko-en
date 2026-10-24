@@ -43,9 +43,10 @@ public class GLQuadBatch {
                     "out vec4 fragColor;\n" +
                     "void main(){ fragColor=uColor; }\n";
 
-    // 径向渐变光晕专用程序：自带最小 VS（原始 UV 直通，不走 uUVRect/uFlip 变换）+ FS 按
-    // 到中心距离平滑衰减（内亮外透）。纯色 FS 画出的光晕是矩形硬边（用户反馈），而逐像素
-    // 半径衰减无论卡片宽高比如何都无棱角：四角处 d>1 直接全透，边缘中点连续淡出
+    // 边缘外发光专用程序：自带最小 VS（原始 UV 直通，不走 uUVRect/uFlip 变换）+ FS 以
+    // 「卡片半边长=1」为单位逐像素求到卡片矩形边缘的距离：卡片边界处最亮、向外连续
+    // 淡到全透，四角圆角化无棱角；卡片以内被后绘的卡面遮挡，发光环紧贴矩形边缘
+    //（用户规格：取代旧底部径向白晕）
     private static final String GLOW_VS =
             "#version 300 es\n" +
                     "layout(location=0) in vec2 aPos;\n" +
@@ -53,14 +54,16 @@ public class GLQuadBatch {
                     "uniform mat4 uMVP;\n" +
                     "out vec2 vUV;\n" +
                     "void main(){ vUV=aUV; gl_Position=uMVP*vec4(aPos,0.0,1.0); }\n";
-    private static final String FS_GLOW =
+    private static final String FS_EDGE_GLOW =
             "#version 300 es\n" +
                     "precision mediump float;\n" +
                     "in vec2 vUV;\n" +
                     "uniform vec4 uColor;\n" +
+                    "uniform vec2 uKW;\n" +
                     "out vec4 fragColor;\n" +
-                    "void main(){ float d=length(vUV-vec2(0.5))*2.0;\n" +
-                    "  fragColor=vec4(uColor.rgb, uColor.a*(1.0-smoothstep(0.55,1.0,d))); }\n";
+                    "void main(){ vec2 c=abs(vUV-vec2(0.5))*2.0*uKW.x;\n" +
+                    "  float d=length(max(c-vec2(1.0),vec2(0.0)));\n" +
+                    "  fragColor=vec4(uColor.rgb, uColor.a*(1.0-smoothstep(0.0,uKW.y,d))); }\n";
 
     // 单位矩形（XY 平面，法线 +Z；v=0 在局部 -Y 边即 Bitmap 顶部；u 为标准布局。
     // 场地卡 uFlipU=1 抵消相机 +X→屏幕左 镜像；手卡 billboard 局部+Y=屏幕上方，
@@ -76,7 +79,7 @@ public class GLQuadBatch {
     private int texProg, colorProg, glowProg;
     private int texLocMVP, texLocTint, texLocTex, texLocFlipU, texLocFlipV, texLocUVRect;
     private int colorLocMVP, colorLocColor;
-    private int glowLocMVP, glowLocColor;
+    private int glowLocMVP, glowLocColor, glowLocKW;
     private int vao;
 
     private final GameFieldView view;
@@ -89,7 +92,7 @@ public class GLQuadBatch {
     public void init() {
         texProg = createProgram(VS, FS_TEX);
         colorProg = createProgram(VS, FS_COLOR);
-        glowProg = createProgram(GLOW_VS, FS_GLOW);
+        glowProg = createProgram(GLOW_VS, FS_EDGE_GLOW);
         texLocMVP = GLES30.glGetUniformLocation(texProg, "uMVP");
         texLocTint = GLES30.glGetUniformLocation(texProg, "uTint");
         texLocTex = GLES30.glGetUniformLocation(texProg, "uTex");
@@ -100,6 +103,7 @@ public class GLQuadBatch {
         colorLocColor = GLES30.glGetUniformLocation(colorProg, "uColor");
         glowLocMVP = GLES30.glGetUniformLocation(glowProg, "uMVP");
         glowLocColor = GLES30.glGetUniformLocation(glowProg, "uColor");
+        glowLocKW = GLES30.glGetUniformLocation(glowProg, "uKW");
 
         FloatBuffer fb = ByteBuffer.allocateDirect(QUAD.length * 4)
                 .order(ByteOrder.nativeOrder()).asFloatBuffer();
@@ -179,14 +183,18 @@ public class GLQuadBatch {
     }
 
     /**
-     * 世界空间径向渐变光晕四边形：中心最亮、向四周逐像素平滑衰减到全透（无矩形硬边/棱角），
-     * 供发动抬跳等卡片底部光晕使用（衰减曲线见 FS_GLOW）
+     * 世界空间矩形边缘外发光四边形：卡片矩形边缘处最亮、向外逐像素连续淡到全透
+     *（四角圆角化无棱角；卡片以内被后绘卡面遮挡），供发动抬跳等边缘光晕使用
+     *（衰减曲线见 FS_EDGE_GLOW）；k 为四边形相对卡片的放大倍率（须 ≥ 1+w），
+     * w 为发光带宽（单位：卡片半边长）
      */
-    public void drawQuadRadialGlow(float[] model, float r, float g, float b, float a) {
+    public void drawQuadRectEdgeGlow(float[] model, float r, float g, float b, float a,
+                                     float k, float w) {
         GLES30.glUseProgram(glowProg);
         Matrix.multiplyMM(view.mMVP, 0, view.cam.mVP, 0, model, 0);
         GLES30.glUniformMatrix4fv(glowLocMVP, 1, false, view.mMVP, 0);
         GLES30.glUniform4f(glowLocColor, r, g, b, a);
+        GLES30.glUniform2f(glowLocKW, k, w);
         glBindQuadVao();
     }
 

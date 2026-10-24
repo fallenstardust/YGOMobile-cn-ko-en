@@ -49,6 +49,9 @@
     <!-- 可发动呼吸提示点（CardOverlayRenderer）：含发动→荧光绿，仅其他命令→荧光蓝 -->
     <color name="neon_green">#39FF14</color>
     <color name="neon_blue">#00BFFF</color>
+    <!-- 发动抬跳矩形边缘外发光按卡种着色（FieldCardRenderer）：魔法→neon_green，
+         陷阱→本荧光玫红，怪兽→holo_orange_bright（已有） -->
+    <color name="neon_rose">#FF007F</color>
     <!-- 基础纯色（gframe 聊天/高亮/时点用高饱和色） -->
     <color name="pure_red">#FF0000</color>
     <color name="pure_green">#00FF00</color>

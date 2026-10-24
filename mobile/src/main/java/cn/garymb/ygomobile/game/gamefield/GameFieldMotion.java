@@ -315,8 +315,8 @@ public class GameFieldMotion {
             }
             // 发动效果抬跳（用户规格：明显抬高后落回原高度的短暂小动画，幅度见 BOUNCE_LIFT_Z）：
             // 独立于 aniFrame 的正弦半周期叠加在 bounceBaseZ 上，峰值居中、两端精确回基准。
-            // 抬高量与光晕强度 bounceGlow 取同一条正弦曲线：卡片下方白晕与抬高同步亮、
-            // 回落同步淡出（用户规格）。
+            // 抬高量与发光强度 bounceGlow 取同一条正弦曲线：围绕卡片矩形边缘的外发光
+            // 与抬高同步亮、回落同步淡出（用户规格，颜色随卡种见 FieldCardRenderer）。
             // 必须放在 is_moving 写 curZ 之后：同帧用「基准+抬高」覆盖插值结果——场上卡
             // 移动前后 Z 同为权威位（animFromZ==animToZ==基准），覆盖不破坏移动轨迹。
             if (pcard.is_bounce) {
@@ -435,7 +435,7 @@ public class GameFieldMotion {
         c.is_deck_shake = false;
         c.is_hand_shuffle = false;
         // 抬跳与落定同步收尾：吸附权威几何后清标记并把被拾高的 Z 拉回基准（setCardPos 已写回），
-        // 光晕强度一并归零，避免观战/快进落定时白晕残留
+        // 发光强度一并归零，避免观战/快进落定时边缘发光残留
         c.is_bounce = false;
         c.bounceGlow = 0f;
         c.top_reveal = false;
@@ -543,8 +543,8 @@ public class GameFieldMotion {
 
     /**
      * 发动效果抬跳：卡片矩形抬高 {@link #BOUNCE_LIFT_Z} 高度并落回原高度的短暂小动画，
-     * 同时卡片下方白色光晕随抬高一起亮一下（强度曲线 bounceGlow 与抬高量同步，见
-     * updateListAnimation 抬跳段），供玩家视觉确认怪兽区/额外怪兽区/魔陷区是哪张卡在
+     * 同时围绕该卡矩形边缘的外发光随抬高一起亮一下（强度曲线 bounceGlow 与抬高量同步，见
+     * updateListAnimation 抬跳段；颜色随卡种，渲染层 FieldCardRenderer 处理），供玩家视觉确认怪兽区/额外怪兽区/魔陷区是哪张卡在
      * 发动效果（触发点：DuelEventHandler.onChaining 按 location & (0x04|0x08) 判定）。
      * 独立计数器不占 aniFrame→不持统一动画闸门；可与翻面/移动动画并行（仅叠加 Z）；
      * 卡组抖动/洗手卡的关键帧轨迹整帧写 curZ，不参与以免被覆盖。
