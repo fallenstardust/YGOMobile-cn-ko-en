@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.game.chat.ChatInputUI;
 import cn.garymb.ygomobile.lite.R;
 
 import static cn.garymb.ygomobile.utils.DraggablePopupHelperBase.DragFrameLayout;
@@ -138,6 +139,10 @@ class DragFrameLayoutImpl extends DragFrameLayoutBase {
          */
         protected View resolveGestureTarget(MotionEvent ev) {
             if (isTouchOnChatInput(ev.getRawX(), ev.getRawY())) return passThroughTarget;
+            // 触点不在 Activity 的聊天输入框上：先按用户规格让持有焦点的输入框失焦并收起
+            // 输入法（本层接管的按下事件不经 Activity.dispatchTouchEvent，需在此补同一判定）
+            ChatInputUI.clearFocusIfTouchedOutside(resolveActivity(getContext()),
+                    ev.getRawX(), ev.getRawY());
             if (isTouchInsideContent(ev.getX(), ev.getY())) return null;
             DragFrameLayout layer = findTopLayerAt(ev.getRawX(), ev.getRawY());
             if (layer != null && layer != this) return layer;

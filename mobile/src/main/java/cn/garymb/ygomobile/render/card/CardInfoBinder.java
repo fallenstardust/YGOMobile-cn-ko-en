@@ -7,10 +7,12 @@ import android.graphics.Color;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
 import android.text.TextPaint;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
+import android.text.style.ImageSpan;
 import android.util.SparseArray;
 import android.view.View;
 import android.widget.ImageView;
@@ -32,6 +34,7 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.game.deck.CardSearcherManager;
 import cn.garymb.ygomobile.game.gamefield.GameField;
 import cn.garymb.ygomobile.game.gamefield.ClientCard;
+import cn.garymb.ygomobile.game.gamefield.EffectActivationLedger;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.dialogs.duel.KeywordCardListDialog;
@@ -66,6 +69,13 @@ class CardInfoBinder {
     private Context context;
     private View anchor;
     private Card currentDisplayCard;
+    /** 最近一次经 ClientCard 路径展示的场卡引用（纯卡表展示/面板收起置空）：发动账本变化
+     *  的及时刷新沿此引用重算标记（半场权威，无需玩家重新点卡，用户规格1） */
+    private ClientCard lastShownClientCard;
+    /** 当前展示卡的半场（0=我方 1=对方 -1=半场未知按双方合并展示）：决定账本过滤与绿/红勾 */
+    private int displayedSide = -1;
+    /** 正在展示的卡详绑定器：引擎派发线程 notifyLedgerChanged 的回调入口（决斗面板为唯一活动实例） */
+    private static volatile CardInfoBinder sActiveBinder;
     private KeywordCardListDialog keywordDialog;
     /**
      * 卡组编辑模式下的关键词导航器：非空时点击高亮词不再弹 {@link KeywordCardListDialog}，
@@ -158,6 +168,8 @@ class CardInfoBinder {
     void dismissKeywordListDialog() {
         dismissKeywordDialog();
         currentDisplayCard = null;
+        lastShownClientCard = null;
+        displayedSide = -1;
         resetRelatedState();
     }
 
@@ -171,6 +183,8 @@ class CardInfoBinder {
     void showDefault() {
         currentCardCode = -1;
         currentDisplayCard = null;
+        lastShownClientCard = null;
+        displayedSide = -1;
         resetRelatedState();
         // 不在此收起关键词卡片列表弹窗：旋转重建流程会先经 onGameUIShown→showDefault 再回显，
         // 若此处 dismiss 会使命中列表在横竖屏切换时消失（用户要求切换方向不隐藏）。
@@ -239,7 +253,15 @@ class CardInfoBinder {
         // 详情面板只显示卡表原始数据（对齐 game.cpp Game::ShowCardInfo(int code) 全部取 cd 原值），
         // 通讯修改后的等级/属性/种族/攻守/刻度一律不进详情，差异在长按标签中显示
         bindCardLevel(cardData);
-        bindCardDesc(cardData);
+        // 已发动效果标记（用户规格）：descHints（CHINT 持续提示，仅少数卡有）与决斗级账本
+        // 按卡码的发动记录（MSG_CHAINING 登记）合并；半场权威：场卡/列表临时 ClientCard 的
+        // controler 已是本地索引，账本按该半场过滤——我方发动绿勾、对手发动红勾，同名卡双方
+        // 标记严格区分（用户规格2）；账本维度使手卡/墓地/额外/卡组/怪兽区/魔陷区
+        //（含灵摆区/额外怪兽区）列表点卡重建的临时 ClientCard 也能命中
+        lastShownClientCard = clientCard;
+        displayedSide = clientCard.controler == 1 ? 1 : 0;
+        sActiveBinder = this;
+        bindCardDesc(cardData, collectEffectRefs(code, cardData, displayedSide, clientCard));
 
         if (svCardDesc != null) {
             svCardDesc.fullScroll(ScrollView.FOCUS_UP);
@@ -265,7 +287,17 @@ class CardInfoBinder {
         bindCardSetname(card);
         bindCardAttr(card);
         bindCardLevel(card);
-        bindCardDesc(card);
+        // 卡表卡（关键词查卡/确认弹窗/日志/旋转恢复等）同样按卡码查决斗账本（需求2/4：
+        // 旋转后 restoreAfterRebind 走本路径，标记须保留）：与最近展示的场卡同卡码时沿用其
+        // 半场（旋转恢复不丢归属），否则双方合并展示（纯查卡无归属信息，我方发动段绿勾、
+        // 对方发动段红勾）；卡组编辑态不查账本，避免上一局发动记录脏染卡组编辑器详情；
+        // 决斗未开始/回放未发动时账本为空自然短路
+        ClientCard shown = lastShownClientCard != null && lastShownClientCard.displayCode() == card.Code
+                ? lastShownClientCard : null;
+        displayedSide = shown != null ? (shown.controler == 1 ? 1 : 0) : -1;
+        sActiveBinder = this;
+        bindCardDesc(card, deckCardListHandler != null ? Collections.<EffectRef>emptyList()
+                : collectEffectRefs(card.Code, card, displayedSide, shown));
 
         if (svCardDesc != null) {
             svCardDesc.fullScroll(ScrollView.FOCUS_UP);
@@ -304,6 +336,8 @@ class CardInfoBinder {
     void showUnknownCard() {
         currentCardCode = -1;
         currentDisplayCard = null;
+        lastShownClientCard = null;
+        displayedSide = -1;
         resetRelatedState();
         if (layout != null) {
             layout.setVisibility(View.VISIBLE);
@@ -434,7 +468,7 @@ class CardInfoBinder {
         tvCardLevel.setVisibility(View.VISIBLE);
     }
 
-    private void bindCardDesc(Card cardData) {
+    private void bindCardDesc(Card cardData, List<EffectRef> effectRefs) {
         if (tvCardDesc == null) return;
         // 记录当前展示的卡，供关键词 queryable 判定（唯一命中即当前卡自身则视为不可查）
         currentDisplayCard = cardData;
@@ -443,6 +477,10 @@ class CardInfoBinder {
         lastRelatedCards = Collections.emptyList();
         updateRelatedButtonVisibility();
         final String desc = cardData.Desc == null ? "" : cardData.Desc;
+        // 发动引用集在 UI 线程快照拷贝：账本由通讯/派发线程写入（内部并发安全集合），
+        // 后台遍历快照避免与写入交叉；纯卡表展示传空列表则整段标记逻辑短路
+        final List<EffectRef> usedIds = effectRefs == null || effectRefs.isEmpty()
+                ? Collections.<EffectRef>emptyList() : new ArrayList<>(effectRefs);
         // 纯文本立即显示（描述先可读，不等待任何扫描）
         tvCardDesc.setText(desc);
         // 关键词解析 + 高亮 spannable 构建 + queryable 判定（缓存未命中为全卡表扫描）+
@@ -453,11 +491,12 @@ class CardInfoBinder {
         executorService.execute(() -> {
             if (gen != bindGen) return;
             List<String> keywords = new ArrayList<>();
-            CharSequence styled = buildStyledDesc(desc, card, keywords);
+            // 关键词高亮构建后再叠加已发动效果标记（命中行灰+绿勾，用户规格）
+            final CharSequence marked = markUsedEffects(buildStyledDesc(desc, card, keywords), desc, usedIds);
             List<Card> related = relatedCards(card, keywords);
             mainHandler.post(() -> {
                 if (gen != bindGen || tvCardDesc == null) return;
-                tvCardDesc.setText(styled);
+                tvCardDesc.setText(marked);
                 tvCardDesc.setMovementMethod(LinkMovementMethod.getInstance());
                 spanStringList.clear();
                 spanStringList.addAll(keywords);
@@ -465,6 +504,511 @@ class CardInfoBinder {
                 updateRelatedButtonVisibility();
             });
         });
+    }
+
+    /** 已发动效果行的显示色（用户规格：用过的效果行改灰色，未用行保持原色） */
+    private static final int COLOR_USED_EFFECT = YGOUtil.c(R.color.chat_color_gray);
+    /** 行首插入的打勾前缀：首字符（不换行空格）由 ImageSpan 占位绘制绿圆对勾图标，次字符留间隙 */
+    private static final String USED_MARK_PREFIX = "\u00A0 ";
+
+    /**
+     * 在关键词高亮结果上叠加「已发动效果」标记（用户规格：不改 cards.cdb，让描述里每个
+     * 效果段落都能对应到引擎）。refs 为发动引用集（descHints 合成记录 + 账本 Activation，
+     * 每条携 完整字符串 id × 半场 × 发动回合），每个 id 两级定位：
+     * <ol>
+     * <li>文本相等匹配：id 经 DataManager.getDesc 取 str1~16/系统字符串文本，归一化后与
+     * 归一化段落行全等才命中。实测本仓库 cdb 的 str 多为「特殊召唤」类短碎片，故严禁
+     * contains 包含匹配（碎片会蹭中错误段落），相等匹配仅作 str 规范库的加成路径。</li>
+     * <li>锚点映射：卡码型 id 低 4 位 offset 即脚本 aux.Stringid(code, n) 的编号。
+     * 非灵摆卡实测圆圈序号/项目符序位 == offset；灵摆怪兽脚本编号约定实测两种约各半
+     * （连续 87 : 重启 79）：灵摆框与怪兽框按文档顺序连续编号（c41546），或怪兽框从 0
+     * 重启、灵摆效果多无 SetDescription（c1186447）。纯文本无法预判属哪种，改用运行时
+     * 证据自证：一旦观测到 offset ≥ 怪兽框段数（重启约定下不可能出现）即判定连续编号，
+     * 否则默认重启编号——重启卡全对；连续卡发动怪兽效果后立即自证转 seq，残余风险仅
+     * 「连续卡的灵摆效果发动（offset&lt;P）误标怪兽框同序号段」。对按规范制作的新卡该歧义已消除：
+     * 分段扫描时若检测到两框圆圈序号全局连续（各段序号==文档序，即跨框连续编号规范），
+     * 确定性采用连续映射，无需发动证据。灵摆框段落只在连续模式或文本命中时标记。
+     * 系统字符串 id（≤MAX_STRING_ID）无段序含义，仅走文本匹配。</li>
+     * </ol>
+     * 段落 = 段首效果标记行（换行符后的第一个 ①②③ 圆圈序号行；全文无圆圈序号的传统卡才认 ● 项目符行）
+     * 起、到下一标记行前止，其间的续行/●行等所有行归该段整段置灰；两类框标题行（含半角 `[` 或
+     * 全角 `【` 且含灵摆/怪兽关键词的短行）与两框之间的分隔线不归入任何段（邻段置灰不连带）。打勾图标只插段首。
+     * 段落自末向首逆序处理：插入前缀只影响其后偏移，未处理段的原始
+     * 行下标仍有效。在后台线程执行，不触碰视图。
+     */
+    private CharSequence markUsedEffects(CharSequence styled, String desc, List<EffectRef> refs) {
+        if (refs == null || refs.isEmpty() || desc.isEmpty()) return styled;
+        // 拆行：[start, end) 不含换行符
+        List<int[]> lines = new ArrayList<>();
+        int lineStart = 0;
+        for (int i = 0; i < desc.length(); i++) {
+            if (desc.charAt(i) == '\n') {
+                lines.add(new int[]{lineStart, i});
+                lineStart = i + 1;
+            }
+        }
+        lines.add(new int[]{lineStart, desc.length()});
+        int lineCount = lines.size();
+        // 分段规则（用户规格）：段 = 段首圆圈序号行（换行符后第一个序号）起、到下一序号行
+        // 前一行止，其间的续行/●行/【】框标题行等所有行均归该段；全文无圆圈序号行的传统卡
+        // 才按段首 ●/项目符行分段。先扫一遍判定有无圆圈序号行，有则项目符不再切段
+        boolean hasCircled = false;
+        for (int k = 0; k < lineCount && !hasCircled; k++) {
+            hasCircled = leadingCircledIndex(desc.substring(lines.get(k)[0], lines.get(k)[1]).trim()) >= 0;
+        }
+        // 段落归属扫描：框标题行/分隔线切换灵摆框/怪兽框状态但自身不归任何段（paraOf=-1）；
+        // 圆圈/项目符行开启新段落（docIdx 全文连续），并记录 {docIdx, anchor, box, boxOrder}：anchor=段首圆圈序号
+        // 或全文项目符序位（非灵摆卡即 offset），boxOrder=怪兽框内段落序位（重启编号的怪兽框 offset）；
+        // 首段之前的背景文本行（含“这个卡名的①②效果…”行）与框标题行/分隔线 paraOf=-1 不参与映射
+        int[] paraOf = new int[lineCount];
+        String[] normLines = new String[lineCount];
+        List<int[]> meta = new ArrayList<>();
+        int docIdx = -1, para = -1, bulletSeq = 0, monSeq = -1;
+        boolean inPend = false, inMon = false, pendulumSeen = false;
+        for (int i = 0; i < lineCount; i++) {
+            String raw = desc.substring(lines.get(i)[0], lines.get(i)[1]);
+            normLines[i] = normalizeEffectLine(raw);
+            String trimmed = raw.trim();
+            // 用户规格：两类框标题行与分隔线都不属于任何效果段（邻段被标记也不连带置灰）
+            if (isDividerLine(trimmed)) {
+                paraOf[i] = -1;
+                continue;
+            }
+            boolean boxMarker = false;
+            if (isPendulumBoxMarkerLine(trimmed)) {
+                inPend = true; inMon = false; pendulumSeen = true; boxMarker = true;
+            } else if (isMonsterBoxMarkerLine(trimmed)) {
+                inPend = false; inMon = true; boxMarker = true;
+            }
+            if (boxMarker) {
+                paraOf[i] = -1;
+                continue;
+            }
+            int circled = leadingCircledIndex(trimmed);
+            int anchor;
+            if (circled >= 0) {
+                anchor = circled;
+                bulletSeq = circled + 1;   // 其后若混排 ● 续编号，避开已占用的圆圈序号
+            } else if (!hasCircled && !trimmed.isEmpty() && isBulletChar(trimmed.charAt(0))) {
+                anchor = bulletSeq++;
+            } else {
+                anchor = -1;
+            }
+            if (anchor >= 0) {
+                docIdx++;
+                para = docIdx;
+                int box = inPend ? 1 : (inMon ? 2 : 0);
+                if (box == 2) monSeq++;
+                meta.add(new int[]{docIdx, anchor, box, box == 2 ? monSeq : -1});
+            }
+            paraOf[i] = para;
+        }
+        // 段落→段首圆圈序号：per-duel 条款判定时需要知道限制句中序号与本段的对应关系
+        int[] paraAnchor = new int[docIdx + 1];
+        for (int[] m : meta) paraAnchor[m[0]] = m[1];
+        int monCount = monSeq + 1, pendCount = 0;
+        for (int[] m : meta) if (m[2] == 1) pendCount++;
+        // 灵摆分框仅在两框都有段落时启用；否则退回全文锚点映射（含只有单框标记的异常文本）
+        boolean pendulum = pendulumSeen && pendCount > 0 && monCount > 0;
+        // 确定性自证（cdb/脚本规范：两框按文档顺序全局连续编号，怪兽框不从①重启）：
+        // 圆圈序号==文档序的卡直接连续映射，不必等发动证据；官方逐框重启卡文命中不了
+        // 本检测（怪兽框首段序号 0 ≠ 文档序 P），仍走下方证据路
+        boolean globalAnchors = false;
+        if (pendulum) {
+            globalAnchors = true;
+            for (int[] m : meta) {
+                if (m[1] != m[0]) { globalAnchors = false; break; }
+            }
+        }
+        int maxObservedOffset = -1;
+        for (EffectRef ref : refs) {
+            long uid = ref.id & 0xFFFFFFFFL;
+            if (uid > DataManager.MAX_STRING_ID) maxObservedOffset = Math.max(maxObservedOffset, (int) (uid & 0xf));
+        }
+        // 证据自证：重启约定下发动 offset 恒 ≤ monCount-1，观测到更大值即连续编号卡
+        boolean seqMode = pendulum && (globalAnchors || maxObservedOffset >= monCount);
+        // 标记位域：0=未标 1=对方发动(红勾) 2=我方发动(绿勾)，同段落双方命中时绿优先
+        int[] mark = new int[lineCount];
+        final int nowTurn = EffectActivationLedger.getCurrentTurn();
+        for (EffectRef ref : refs) {
+            long uid = ref.id & 0xFFFFFFFFL;
+            // ① 文本全等匹配（str 规范的库最权威，不依赖编号约定假设）；str 行首带不带
+            //    圆圈序号+冒号均可命中 desc 段首行（规范 B：str 填段落全文）
+            List<int[]> hits = new ArrayList<>();
+            String norm = normalizeEffectLine(DataManager.get().getDesc(ref.id, ""));
+            if (!norm.isEmpty()) {
+                String normCore = stripCircledPrefix(norm);
+                for (int i = 0; i < lineCount; i++) {
+                    if (norm.equals(normLines[i])
+                            || (!normCore.isEmpty()
+                            && normCore.equals(stripCircledPrefix(normLines[i])))) {
+                        hits.add(new int[]{paraOf[i], i});
+                    }
+                }
+            }
+            // ② 锚点映射兑底；offset 落在辅助/适用效果等无对应段落的高序号时自然无命中
+            if (hits.isEmpty() && uid > DataManager.MAX_STRING_ID) {
+                int offset = (int) (uid & 0xf);
+                int hitDoc = -1;
+                for (int[] m : meta) {
+                    if (!pendulum) {
+                        if (m[1] == offset) { hitDoc = m[0]; break; }
+                    } else if (seqMode) {
+                        if (m[0] == offset) { hitDoc = m[0]; break; }
+                    } else if (m[2] == 2 && m[3] == offset) {
+                        hitDoc = m[0];
+                        break;
+                    }
+                }
+                if (hitDoc >= 0) {
+                    for (int i = 0; i < lineCount; i++) {
+                        if (paraOf[i] == hitDoc) {
+                            hits.add(new int[]{hitDoc, i});
+                            break;
+                        }
+                    }
+                }
+            }
+            if (hits.isEmpty()) continue;
+            // 回合门控（用户规格3）：1回合1次类标记随回合轮转过期（MSG_WIN/MSG_START 整账
+            // 清空后只剩当回合）；引擎不下发限制类别（MSG_CHAINING 仅 code/loc/desc），
+            // 故非当回合记录需命中段落块的「决斗中只能使用1次」类条款才持续显示
+            if (ref.turn != nowTurn && !hitsArePerDuel(hits, paraOf, paraAnchor, lines, desc)) continue;
+            int val = ref.side == 0 ? 2 : 1;
+            for (int[] h : hits) markParagraph(mark, paraOf, h[1], val);
+        }
+        SpannableStringBuilder sb = new SpannableStringBuilder(styled);
+        boolean iconAvailable = context != null;
+        // 标记行按段聚成连续块自下而上处理：同段才合并成块（背景文本两相邻标记行不并），
+        // 块首插打勾前缀、整块铺灰
+        int i = lineCount - 1;
+        while (i >= 0) {
+            if (mark[i] == 0) { i--; continue; }
+            int paraId = paraOf[i];
+            int j = i;
+            while (j - 1 >= 0 && mark[j - 1] != 0 && paraId >= 0 && paraOf[j - 1] == paraId) j--;
+            int blockStart = lines.get(j)[0];
+            int blockEnd = lines.get(i)[1];
+            String prefix = iconAvailable ? USED_MARK_PREFIX : "";
+            if (!prefix.isEmpty()) sb.insert(blockStart, prefix);
+            int contentStart = blockStart + prefix.length();
+            int contentEnd = blockEnd + prefix.length();
+            if (contentStart < contentEnd) {
+                if (iconAvailable) {
+                    // 半场区分（用户规格2）：我方发动绿勾、对手发动红勾，同段双方都发动时绿优先
+                    sb.setSpan(new ImageSpan(context,
+                                    mark[j] == 1 ? R.drawable.ic_effect_used_check_red
+                                            : R.drawable.ic_effect_used_check,
+                                    ImageSpan.ALIGN_BASELINE),
+                            blockStart, blockStart + 1, SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+                // 用户规格：已发动段整段铺灰，但高亮词（「」/"" 引用文本）的 ForegroundColorSpan
+                // 维持原色（白/蓝）——收集范围内已有的前景 span，只在未被覆盖的空隙段铺灰；
+                // ClickableSpan/下划线不受影响，高亮词仍可点击查卡
+                List<int[]> keeps = new ArrayList<>();
+                for (ForegroundColorSpan old : sb.getSpans(contentStart, contentEnd, ForegroundColorSpan.class)) {
+                    int s = Math.max(contentStart, sb.getSpanStart(old));
+                    int e = Math.min(contentEnd, sb.getSpanEnd(old));
+                    if (s < e) keeps.add(new int[]{s, e});
+                }
+                keeps.sort((a, b) -> a[0] != b[0] ? a[0] - b[0] : a[1] - b[1]);
+                int pos = contentStart;
+                for (int[] k : keeps) {
+                    if (k[0] > pos) markGray(sb, pos, k[0]);
+                    if (k[1] > pos) pos = k[1];
+                }
+                if (pos < contentEnd) markGray(sb, pos, contentEnd);
+            }
+            i = j - 1;
+        }
+        return sb;
+    }
+
+    /** 已发动段灰色前景 span（与高亮词前景 span 分段互斥，避免整段覆盖改写原色） */
+    private static void markGray(SpannableStringBuilder sb, int start, int end) {
+        sb.setSpan(new ForegroundColorSpan(COLOR_USED_EFFECT), start, end,
+                SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
+    }
+
+    /** 命中的是效果段内任意行（含续行）则整段标记；背景文本（para -1）仅标记该行。
+     *  值语义 1=对方(红勾) 2=我方(绿勾)，双方命中同段时取 max 即绿优先、不降级 */
+    private static void markParagraph(int[] mark, int[] paraOf, int lineIdx, int val) {
+        if (paraOf[lineIdx] < 0) {
+            mark[lineIdx] = Math.max(mark[lineIdx], val);
+            return;
+        }
+        for (int i = 0; i < mark.length; i++) {
+            if (paraOf[i] == paraOf[lineIdx]) mark[i] = Math.max(mark[i], val);
+        }
+    }
+
+    /** 「决斗中只能使用1次」类限制条款关键词（实测 assets 6 套 cdb）：中文「决斗中只能…」、
+     * 繁中「決鬥中/決闘中」、日「デュエル中に１度しか…」、韩「듀얼( 중에) 1번밖에/1장밖에」、
+     * 西「por Duel(o)」、英/葡「per Duel」；拉丁部分小写比较 */
+    private static final String[] PER_DUEL_MARKS = {
+            "决斗中", "決鬥中", "決闘中", "デュエル中", "듀얼", "per duel", "por duelo"
+    };
+    /** 与决斗词同现的「一度/しか」类限定词，排除仅卡名含决斗字样的行 */
+    private static final String[] PER_DUEL_ONCE_WORDS = {"只能", "しか", "밖에", "만", "once", "vez"};
+
+    /** 命中行所在段落块内是否存在 per-duel 条款（任一命中成立即跨回合持续保留）：
+     *  段落块 = 该段全部行 + 段首上方紧邻的连续背景行（发动限制语句惯写在段首之前，
+     *  如「这个卡名的②的效果在决斗中只能使用1次。」）；para=-1 背景命中时取该行上下紧邻背景行 */
+    private static boolean hitsArePerDuel(List<int[]> hits, int[] paraOf, int[] paraAnchor, List<int[]> lines, String desc) {
+        for (int[] h : hits) {
+            int para = h[0];
+            int lo, hi;
+            if (para >= 0) {
+                lo = Integer.MAX_VALUE;
+                hi = -1;
+                for (int k = 0; k < paraOf.length; k++) {
+                    if (paraOf[k] == para) { if (k < lo) lo = k; if (k > hi) hi = k; }
+                }
+                if (hi < 0) continue;
+                while (lo - 1 >= 0 && paraOf[lo - 1] < 0) lo--;
+            } else {
+                lo = h[1];
+                hi = h[1];
+                while (lo - 1 >= 0 && paraOf[lo - 1] < 0) lo--;
+                while (hi + 1 < paraOf.length && paraOf[hi + 1] < 0) hi++;
+            }
+            char anchorCh = para >= 0 && para < paraAnchor.length
+                    ? (char) (0x2460 + paraAnchor[para]) : 0;
+            for (int k = lo; k <= hi; k++) {
+                if (lineMarksPerDuel(desc.substring(lines.get(k)[0], lines.get(k)[1]), anchorCh)) return true;
+            }
+        }
+        return false;
+    }
+
+    /** 单行是否携归属本段的 per-duel 条款：含决斗词+一度限定词的行按读句分隔符拆小句，
+     *  含决斗词的小句无圆圈序号（全局限制句，如「这个卡名的效果在决斗中只能使用1次」）
+     *  即命中；有小句带序号时须含本段序号（如「①的效果1回合只能使用1次，②的效果在决斗
+     *  中只能使用1次」只对②持续） */
+    private static boolean lineMarksPerDuel(String line, char anchorCh) {
+        String low = line.toLowerCase(java.util.Locale.ROOT);
+        boolean anyMark = false;
+        for (String m : PER_DUEL_MARKS) {
+            if (low.contains(m)) { anyMark = true; break; }
+        }
+        if (!anyMark) return false;
+        boolean anyOnce = false;
+        for (String w : PER_DUEL_ONCE_WORDS) {
+            if (low.contains(w)) { anyOnce = true; break; }
+        }
+        if (!anyOnce) return false;
+        for (String c : line.split("[，,、。．；;]")) {
+            String cl = c.toLowerCase(java.util.Locale.ROOT);
+            boolean hasMark = false;
+            for (String m : PER_DUEL_MARKS) {
+                if (cl.contains(m)) { hasMark = true; break; }
+            }
+            if (!hasMark) continue;
+            boolean hasCircled = false;
+            for (int k = 0; k < c.length(); k++) {
+                char ch = c.charAt(k);
+                if (ch >= 0x2460 && ch <= 0x2473) { hasCircled = true; break; }
+            }
+            if (!hasCircled) return true;
+            if (anchorCh != 0 && c.indexOf(anchorCh) >= 0) return true;
+        }
+        return false;
+    }
+
+    /** 汇总标记所需的「已发动」段落引用候选：descHints（CHINT 持续提示，属当前展示卡半场，
+     *  回合取当前恒可见）与账本按半场过滤的发动记录（side=-1 取双方）合并；每条记录以展示
+     *  卡码重建完整字符串 id code*16+offset（供 getDesc 文本匹配与锚点映射） */
+    private static List<EffectRef> collectEffectRefs(int code, Card cardData, int side, ClientCard cc) {
+        List<EffectRef> refs = new ArrayList<>();
+        if (cc != null && !cc.descHints.isEmpty()) {
+            int cur = EffectActivationLedger.getCurrentTurn();
+            // 半场以展示态 side 为准（视角切换后 cc.controler 对临时卡可能过期）；
+            // side=-1（纯卡表无归属）时 descHints 无法判侧，退回卡片自身 controler
+            int hintSide = side >= 0 ? side : (cc.controler == 1 ? 1 : 0);
+            for (Integer id : cc.descHints.keySet()) {
+                long uid = id & 0xFFFFFFFFL;
+                if (uid <= 0x7fffffffL) refs.add(new EffectRef(id, hintSide, cur));
+            }
+        }
+        long base = (long) code * 16;
+        for (EffectActivationLedger.Activation a : EffectActivationLedger.activationsFor(code, cardData.Alias, side)) {
+            long uid = base + a.offset;
+            if (uid <= 0x7fffffffL) refs.add(new EffectRef((int) uid, a.side, a.turn));
+        }
+        return refs;
+    }
+
+    /** 标记候选引用：完整字符串 id + 发动半场（0=我方绿勾/1=对方红勾）+ 发动回合（回合门控基准） */
+    private static final class EffectRef {
+        final int id;
+        final int side;
+        final int turn;
+        EffectRef(int id, int side, int turn) {
+            this.id = id;
+            this.side = side;
+            this.turn = turn;
+        }
+    }
+
+    /** 引擎派发线程在发动登记/回合轮转/开局胜负清零后回调（经 CardDetailPanel.refreshCardDetailMarks
+     *  进入）：主线程重绑正在展示卡的描述标记（用户规格1：本回合发动无需重新点卡即时刷新） */
+    static void notifyLedgerChanged() {
+        final CardInfoBinder b = sActiveBinder;
+        if (b == null) return;
+        b.mainHandler.post(b::refreshShownMarks);
+    }
+
+    /** 效果发动专用的门控刷新（用户规格2：不同卡码的卡发动不打扰面板）：仅当发动卡与
+     *  正在展示卡同码、或互为异画/同名 alias（两码共用效果段落与账本镜像）时才重绑 */
+    static void notifyLedgerChanged(int activatedCode) {
+        final CardInfoBinder b = sActiveBinder;
+        if (b == null) return;
+        b.mainHandler.post(() -> {
+            if (b.affectsShownCard(activatedCode)) b.refreshShownMarks();
+        });
+    }
+
+    /** 视角切换回调（观战/单人自动翻转/回放交换，用户规格3）：账本 side 语义已随视角
+     *  整体对调（EffectActivationLedger.swapSides）、场卡 controler 已由 swapField 重算，
+     *  展示卡半场取绑定态快照翻转后无条件重绑，绿/红勾随双方互换 */
+    static void notifyViewpointSwapped() {
+        final CardInfoBinder b = sActiveBinder;
+        if (b == null) return;
+        b.mainHandler.post(() -> {
+            if (b.displayedSide >= 0) b.displayedSide = 1 - b.displayedSide;
+            b.refreshShownMarks();
+        });
+    }
+
+    /** 发动卡码是否与正在展示卡相关：同码直接相关；异画卡与本卡共用效果段落编号和
+     *  账本 alias 镜像，任一方向 alias 指向展示卡码也相关 */
+    private boolean affectsShownCard(int code) {
+        int cur = currentCardCode;
+        if (cur <= 0 || code <= 0) return false;
+        if (code == cur) return true;
+        Card shown = currentDisplayCard;
+        if (shown != null && shown.Alias > 0 && shown.Alias == code) return true;
+        Card other = DataManager.get().getCardManager().getCard(code);
+        return other != null && other.Alias > 0 && other.Alias == cur;
+    }
+
+    /** 重绑当前展示卡描述段落标记（不动其它绑定项与滚动位置）；卡组编辑态/无展示态跳过。
+     *  半场取 displayedSide 绑定态快照而非重读 cc.controler：临时卡（列表重建）不在场卡
+     *  容器内、swapField 不会翻转其 controler，而 displayedSide 已随视角切换统一翻转，
+     *  场卡/临时卡两条路语义一致（用户规格3） */
+    private void refreshShownMarks() {
+        if (deckCardListHandler != null || currentDisplayCard == null || currentCardCode <= 0) return;
+        ClientCard cc = lastShownClientCard != null && lastShownClientCard.displayCode() == currentCardCode
+                ? lastShownClientCard : null;
+        bindCardDesc(currentDisplayCard, collectEffectRefs(currentCardCode, currentDisplayCard, displayedSide, cc));
+    }
+
+    /**
+     * 灵摆框标题行（多语言，实测 assets 6 套 cards.cdb）：中「←6 【灵摆】 6→/【灵摆】」、
+     * 英「[ Pendulum Effect ]」、西「【Efecto de Péndulo】」、葡「[ Pendulum Effect ]/
+     * 【Efeito Pêndulo】」、韩「【펜듈럼 효과】」、日「【Ｐスケール：青６／赤６】(兼作灵摆框首行，
+     * 日文无独立 Ｐ効果 标题)」。判据（用户归纳）：行含 [ 或 【 且含灵摆关键词的短行。
+     * 圆圈序号开头的效果行（如“①：此卡①的灵摆效果…”）不算。
+     */
+    private static boolean isPendulumBoxMarkerLine(String trimmed) {
+        return isBoxMarkerLine(trimmed, PENDULUM_TITLE_KEYWORDS);
+    }
+
+    /**
+     * 怪兽框标题行（多语言）：中「【怪兽效果】/【怪兽描述】」、英/葡「[ Monster Effect ]」、
+     * 西「【Efecto de Monstruo】」、葡「【Efeito de Monstro】」、韩「【몬스터 효과】」、
+     * 日「【モンスター効果】」。判据同灵摆框标题行。
+     */
+    private static boolean isMonsterBoxMarkerLine(String trimmed) {
+        return isBoxMarkerLine(trimmed, MONSTER_TITLE_KEYWORDS);
+    }
+
+    /** 框标题行关键词（拉丁部分一律小写，匹配前对行做 toLowerCase；CJK/假名/谚文不受大小写影响） */
+    private static final String[] PENDULUM_TITLE_KEYWORDS = {
+            "灵摆", "靈擺", "pendulum", "펜듈럼",
+            "péndulo", "pêndulo",                       // 西 / 葡（含尖音符变体）
+            "ｐスケール", "pスケール", "ｐ効果", "p効果" // 日文框首行/Ｐ効果标题
+    };
+    private static final String[] MONSTER_TITLE_KEYWORDS = {
+            "怪兽", "怪獸",                                   // 简/繁（覆盖【怪兽效果】与【怪兽描述】变体）
+            "monster",                                        // 英/葡 [ Monster Effect ]
+            "몬스터", "モンスター",                        // 韩 / 日
+            "monstruo", "monstro"                             // 西 / 葡
+    };
+
+    private static boolean isBoxMarkerLine(String trimmed, String... keywords) {
+        // 段首圆圈行优先当效果段处理，不当框标记
+        if (trimmed.isEmpty() || leadingCircledIndex(trimmed) >= 0) return false;
+        // 用户判据：框标题行必含 [ 或 【 两种方括号之一，且为短行（效果段长句不算）
+        if (trimmed.length() > 24) return false;
+        if (trimmed.indexOf('[') < 0 && trimmed.indexOf('【') < 0) return false;
+        String low = trimmed.toLowerCase(java.util.Locale.ROOT);
+        for (String k : keywords) {
+            if (low.contains(k)) return true;
+        }
+        return false;
+    }
+
+    /** 分隔线（用户规格：同框标题行一样不归入任何段落）：整行由横线/短横类字符组成，
+     * 如英/葡「----------------------------------------」、西「━━━━━━━━━━…」 */
+    private static boolean isDividerLine(String trimmed) {
+        if (trimmed.isEmpty()) return false;
+        for (int i = 0; i < trimmed.length(); i++) {
+            char c = trimmed.charAt(i);
+            if (c == '-' || c == '—' || c == '–' || c == '─' || c == '━' || c == '═'
+                    || c == '=' || c == '_' || c == '~' || c == '〜' || c == '·' || c == '*') {
+                continue;
+            }
+            return false;
+        }
+        return true;
+    }
+
+    /** 效果行归一化：去行首项目符号（cdb 描述行常见 ●/◆/- 等前缀，脚本 str 文本不含）与全部空白 */
+    private static String normalizeEffectLine(String s) {
+        String t = s.trim();
+        while (!t.isEmpty() && isBulletChar(t.charAt(0))) {
+            t = t.substring(1).trim();
+        }
+        StringBuilder sb = new StringBuilder(t.length());
+        for (int i = 0; i < t.length(); i++) {
+            char c = t.charAt(i);
+            if (c == ' ' || c == '\t' || c == '\r' || c == '\n'
+                    || c == '　' || c == '\u00A0') continue;
+            sb.append(c);
+        }
+        return sb.toString();
+    }
+
+    /** 段落匹配增强：反复剥去行首圆圈序号及其后紧跟的冒号/句点/分号。cdb 惯例 str 不含段首
+     *  ①：前缀而 desc 段首行含，不归一则全等匹配落空退回编号启发；剥后两侧均无序号时仍相等，
+     *  不会把不同序号段误判为同一段（序号差异只剩这一处前缀的卡才会两侧同时命中） */
+    private static String stripCircledPrefix(String s) {
+        String t = s;
+        while (!t.isEmpty() && t.charAt(0) >= '\u2460' && t.charAt(0) <= '\u2473') {
+            t = t.substring(1);
+            if (!t.isEmpty() && (t.charAt(0) == ':' || t.charAt(0) == '：'
+                    || t.charAt(0) == '.' || t.charAt(0) == ';' || t.charAt(0) == '；')) {
+                t = t.substring(1);
+            }
+        }
+        return t;
+    }
+
+    private static boolean isBulletChar(char c) {
+        return c == '●' || c == '○' || c == '◦' || c == '・' || c == '-' || c == '–' || c == '—'
+                || c == '*' || c == '▪' || c == '‣' || c == '•' || c == '◆' || c == '◇' || c == '■';
+    }
+
+    /**
+     * 行首圆圈序号：①~⑳（U+2460~U+2473）映射为效果序位 0~19，非圆圈开头返回 -1。
+     * 现代卡描述以段首圆圈序号标注各效果，该序位即脚本 aux.Stringid(code, n) 的 n，
+     * 亦是 CHINT_DESC_ADD hint 值（code*16+n）的低 4 位，据此定位已发动效果段落。
+     */
+    private static int leadingCircledIndex(String trimmedLine) {
+        if (trimmedLine.isEmpty()) return -1;
+        char c = trimmedLine.charAt(0);
+        return (c >= '\u2460' && c <= '\u2473') ? c - '\u2460' : -1;
     }
 
     /**
@@ -594,11 +1138,13 @@ class CardInfoBinder {
         updateRelatedButtonVisibility();
     }
 
-    /** 仅当前展示卡存在关联卡时显示按钮；无当前卡/未知卡/无关联卡时 GONE */
+    /** 仅当前展示卡存在关联卡时显示按钮；无当前卡/未知卡/无关联卡时 INVISIBLE（用户规格：
+     *  不再 GONE——按钮居于卡名/属性区 FrameLayout 右侧不影响测高，但部分布局变体下显隐
+     *  切换仍会牵动下方描述区高度，恒定占位可避免逐卡跳动） */
     private void updateRelatedButtonVisibility() {
         if (btnRelatedCards == null) return;
         boolean show = currentDisplayCard != null && !lastRelatedCards.isEmpty();
-        btnRelatedCards.setVisibility(show ? View.VISIBLE : View.GONE);
+        btnRelatedCards.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
     }
 
     /** 关联卡片按钮点击入口：按当前卡聚合的关联卡列表分流展示（卡组编辑态→搜索结果列表，决斗态→关键词列表弹窗） */

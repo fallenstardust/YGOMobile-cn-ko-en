@@ -11,6 +11,7 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.game.gamefield.ClientCard;
+import cn.garymb.ygomobile.game.gamefield.EffectActivationLedger;
 import cn.garymb.ygomobile.game.gamefield.GameFieldController;
 import cn.garymb.ygomobile.game.replay.ReplayPlayer;
 import cn.garymb.ygomobile.game.select.ShowDialogUtil;
@@ -33,13 +34,34 @@ public class CardDetailPanel extends CardDetailPanelMid {
         super(activity);
     }
 
+    /** 发动账本变更通知（引擎派发线程在 MSG_CHAINING 登记/MSG_NEW_TURN 回合推进/MSG_START、
+     * MSG_WIN 清零后调用）：若卡详正在展示同一张卡则及时重绑描述段落标记文本，
+     * 无需玩家重新点卡；实现下沉到 CardInfoBinder.notifyLedgerChanged（本类是包外可见入口） */
+    public static void refreshCardDetailMarks() {
+        CardInfoBinder.notifyLedgerChanged();
+    }
+
+    /** 效果发动的门控刷新入口（MSG_CHAINING 登记后调用，用户规格2）：只有发动卡与正在
+     *  展示卡同码/同 alias（异画与本卡）才重绑标记，其它卡码的发动不打扰面板，
+     *  避免每次发动都走一遍后台高亮/关联卡重建 */
+    public static void refreshCardDetailMarks(int activatedCode) {
+        CardInfoBinder.notifyLedgerChanged(activatedCode);
+    }
+
+    /** 视角切换统一入口（观战切视角/单人模式自动翻转/回放交换，用户规格3）：
+     *  发动账本的半场归属随视角整体对调，展示中已标记卡的绿/红勾同步互换 */
+    public static void notifyViewpointSwapped() {
+        EffectActivationLedger.swapSides();
+        CardInfoBinder.notifyViewpointSwapped();
+    }
+
     public void bindViews() {
         layout = activity.findViewById(R.id.layout_card_detail);
         panelRoot = activity.findViewById(R.id.layout_card_detail_panel);
         btnRelatedCards = activity.findViewById(R.id.btn_related_cards);
-        // 初始统一收起（横屏 XML 默认 visible、竖屏 gone，以代码为准消除差异），
+        // 初始统一收起为 INVISIBLE（用户规格：不再 GONE，恒定占位避免描述区高度逐卡跳动），
         // 显隐交由 binder 随当前卡是否有关联卡刷新（updateRelatedButtonVisibility）
-        if (btnRelatedCards != null) btnRelatedCards.setVisibility(View.GONE);
+        if (btnRelatedCards != null) btnRelatedCards.setVisibility(View.INVISIBLE);
         // 关联卡按钮引用注入 binder：由卡详绑定统一管控显隐（仅当前卡有关联卡时显示）
         binder.setRelatedButton(btnRelatedCards);
         binder.attachViews(layout, panelRoot,

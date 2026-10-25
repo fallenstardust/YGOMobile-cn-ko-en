@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.game.engine;
 import cn.garymb.ygomobile.game.gamefield.ClientCard;
+import cn.garymb.ygomobile.game.gamefield.EffectActivationLedger;
 import cn.garymb.ygomobile.game.gamefield.GameField;
 import cn.garymb.ygomobile.game.gamefield.MoveEventApplier;
 import cn.garymb.ygomobile.game.gamefield.ReloadFieldBuilder;
@@ -14,6 +15,7 @@ import java.util.List;
 
 import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.render.card.CardDetailPanel;
 import cn.garymb.ygomobile.ui.dialogs.duel.DuelLogDialog;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
@@ -75,11 +77,22 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
 
     @Override
     public void onStart(int playerType, int duelRule, int lp0, int lp1, int deck0, int extra0, int deck1, int extra1) {
+        // 新一局/回放从头重播：清空已发动效果账本并把当前回合号复位到 0（实况与回放同走本链路）；
+        // 随后刷新正在展示的卡详，清除上一局/上一轮重播残留的标记文本
+        EffectActivationLedger.clear();
+        EffectActivationLedger.setCurrentTurn(0);
+        CardDetailPanel.refreshCardDetailMarks();
         engine.messageParser.onStart(playerType, duelRule, lp0, lp1, deck0, extra0, deck1, extra1);
     }
 
     @Override
-    public void onWin(int player, int reason) { engine.messageParser.onWin(player, reason); }
+    public void onWin(int player, int reason) {
+        // 用户规格：胜负（当前一局结束信息）出现即清空全部发动标记——「决斗中只能使用1次」
+        // 类持续标记的寿命终点就是本局结束；新一局 MSG_START 会重发并再次复位
+        EffectActivationLedger.clear();
+        CardDetailPanel.refreshCardDetailMarks();
+        engine.messageParser.onWin(player, reason);
+    }
 
     @Override
     public void onUpdateData(int player, int location, ByteBuffer data) { engine.messageParser.onUpdateData(player, location, data); }
@@ -227,6 +240,10 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
         }
         engine.field.currentPlayer = engine.localPlayer(player);
         engine.field.turnCount++;
+        // 卡详发动标记随回合轮转过期（用户规格：1回合1次类标记在回合结束轮转时清除，
+        // 「决斗中只能使用1次」类由渲染方按描述文本判定后持续）：同步账本回合号并刷新正在展示的卡详
+        EffectActivationLedger.setCurrentTurn(engine.field.turnCount);
+        CardDetailPanel.refreshCardDetailMarks();
         // HINT_ZONE 纵列玫红标注清除：无限泡影类无效效果均携 RESET_PHASE+PHASE_END 于
         // 发动回合结束时失效，而客户端无显式失效通讯，下一个 MSG_NEW_TURN 即已跨过
         // 该 End Phase，此刻清除与效果寿命对齐（duelclient.cpp 仅瞬时高亮 40 帧，无持久态可照抄）
@@ -334,6 +351,15 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
         // 对齐 duelclient.cpp MSG_CHAINING L3346-3349：发动卡卡码变化（手卡/场上里侧卡翻开揭示）
         // 时 SetCode + MoveCard(pcard, 10)，由 code 0→真实卡码驱动 curRotY 插值，播放反面到正面的转动动画。
         ClientCard chainCard = engine.field.currentChain.chainCard;
+        // 卡详情「已发动效果」标记的数据源：普通发动效果不带 EFFECT_FLAG_CLIENT_HINT、
+        // 不会发 CHINT_DESC_ADD（descHints 对绝大多数卡恒空，旧版只拿它标记故永远不显示），
+        // 而每次效果发动必发的本消息才携 peffect->description=code*16+offset 与发动半场
+        // triggering_controler；按 卡码×半场×回合 登记进决斗级账本（不依赖 chainCard 是否解析
+        // 成功，墓地/卡组/额外等列表重建临时 ClientCard 场景也能按卡码命中），由
+        // CardInfoBinder 映射到描述段落；登记后按卡码门控刷新正在展示的卡详（用户规格1/2：
+        // 本回合发动即时反映无需重新点卡，但只有同码/同 alias 卡发动才打扰面板）
+        EffectActivationLedger.record(code, desc, localCc, engine.field.turnCount);
+        CardDetailPanel.refreshCardDetailMarks(code);
         if (chainCard != null && chainCard.code != code) {
             chainCard.setCode(code);
             engine.field.moveCardAnimated(chainCard, 10);

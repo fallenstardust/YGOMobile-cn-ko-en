@@ -106,6 +106,9 @@ class UndoClientCoordinator {
         if (turn < 0) return false;
         undoResyncTurn = -1;
         field.turnCount = turn;
+        // 撤回重同步回到历史回合：发动标记的「本回合」基准随之校正，并刷新正在展示的卡详
+        cn.garymb.ygomobile.game.gamefield.EffectActivationLedger.setCurrentTurn(turn);
+        cn.garymb.ygomobile.render.card.CardDetailPanel.refreshCardDetailMarks();
         if (undoResyncPlayer >= 0) {
             field.currentPlayer = engine.localPlayer(undoResyncPlayer & 1);
         }

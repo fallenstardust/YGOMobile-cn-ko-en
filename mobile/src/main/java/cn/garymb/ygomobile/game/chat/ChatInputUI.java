@@ -2,6 +2,7 @@ package cn.garymb.ygomobile.game.chat;
 import cn.garymb.ygomobile.game.engine.GameEngine;
 import cn.garymb.ygomobile.game.gamefield.GameTopInfoManager;
 
+import android.app.Activity;
 import android.content.Context;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.EditorInfo;
@@ -13,6 +14,7 @@ import android.widget.EditText;
 import androidx.annotation.Nullable;
 
 import cn.garymb.ygomobile.AppsSettings;
+import cn.garymb.ygomobile.lite.R;
 
 
 /**
@@ -206,6 +208,36 @@ public class ChatInputUI {
             }
         } catch (Exception e) {
             android.util.Log.e("ChatInputUI", "Chat input show IME error: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 按下点不在聊天输入框范围内时取消其焦点（用户规格：点输入框以外的任意区域即失焦、
+     * 停止光标闪动）：输入框持有焦点时先 clearFocus，再在输入法仍显示时一并收起。
+     * <p>
+     * 需要主动失焦的原因：Android 只在被点视图自身可获焦时才转移焦点，决斗场 GL 视图、
+     * 聊天列表、卡片详情等不可获焦的区域被点击后输入框一直保有焦点，形成「输入法已隐藏
+     * 但焦点仍在输入框」的错位，实机上表现为再次点击输入框唤不起输入法。
+     * <p>
+     * 触摸经弹窗包装层（{@code DragFrameLayout}）转发时不走 Activity.dispatchTouchEvent，
+     * 故两个派发点都调用本方法：Activity 派发点（未被弹窗接管的普通触摸）与弹窗层的按下
+     * 归属判定处（触点不在本层聊天输入框上时）。
+     */
+    public static void clearFocusIfTouchedOutside(Activity act, float screenX, float screenY) {
+        if (act == null) return;
+        View chat = act.findViewById(R.id.et_chat_input);
+        if (chat == null || !chat.hasFocus()) return;
+        int[] loc = new int[2];
+        chat.getLocationOnScreen(loc);
+        if (screenX >= loc[0] && screenX < loc[0] + chat.getWidth()
+                && screenY >= loc[1] && screenY < loc[1] + chat.getHeight()) {
+            return; // 触点就在输入框上：保持焦点，交由点击链路唤起输入法
+        }
+        chat.clearFocus();
+        InputMethodManager imm = (InputMethodManager)
+                act.getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm != null && chat.getWindowToken() != null) {
+            imm.hideSoftInputFromWindow(chat.getWindowToken(), 0);
         }
     }
     

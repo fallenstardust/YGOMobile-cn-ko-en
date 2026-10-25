@@ -1,5 +1,7 @@
 package cn.garymb.ygomobile.game.engine;
 
+import cn.garymb.ygomobile.render.card.CardDetailPanel;
+
 /** 对局视角管理（自 GameEngine 拆出）：本地视角显示名/座位昵称绑定、观战判定与切视角；状态（playerInfos/seatNames/tagPlayer/duelIsFirst/pendingSpectatorSwap）仍留在引擎，构造注入引擎引用。 */
 public class DuelViewpointManager {
     private final GameEngine engine;
@@ -84,6 +86,9 @@ public class DuelViewpointManager {
         engine.field.dInfo.lp[0] = engine.field.players[0].lp;
         engine.field.dInfo.lp[1] = engine.field.players[1].lp;
         engine.field.refreshAllCards();
+        // 卡详已发动标记随视角翻转（用户规格3）：账本半场归属整体对调后，正在展示卡的
+        // 绿/红勾按新视角重绑（观战手动切视角与单人模式逐回合自动翻转同走本链路）
+        CardDetailPanel.notifyViewpointSwapped();
         if (engine.listener != null) {
             engine.listener.onFieldChanged();
             engine.listener.onPlayerInfoUpdated(0);

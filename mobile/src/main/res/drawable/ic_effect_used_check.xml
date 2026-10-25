@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 卡片详情·已发动效果行首标记（用户规格：用过的效果行改灰并在行前加绿色圆形打勾图标）。
+     12dp 圆角小图标，随 9~12sp 描述文字比例合适；绿色圆底 #4CAF50 + 白色对勾 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="12dp"
+    android:height="12dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M12,2C17.52,2 22,6.48 22,12C22,17.52 17.52,22 12,22C6.48,22 2,17.52 2,12C2,6.48 6.48,2 12,2Z" />
+    <path
+        android:pathData="M7,12.5L10.5,16L17,8.5"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

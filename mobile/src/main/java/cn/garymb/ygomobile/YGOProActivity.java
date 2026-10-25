@@ -152,6 +152,9 @@ public class YGOProActivity extends YGOProActivityEngine {
         if (engineCallback != null) engineCallback.resetDuelEndState();
         if (topInfoManager != null) topInfoManager.stopTimer();
         if (dialogUtil != null) dialogUtil.dismissOpenGameDialogs();
+        // 撤回快照里被即时隐藏的询问窗一并作废：决斗已结束，服务端迟到/被拒的撤回 ACK
+        // 不得再把上一局的旧询问窗重新弹回主界面（restoreUndoHiddenDialogs 只认快照）
+        clearUndoHiddenDialogs();
         hideGameUI();
         if (layoutDeckEditor != null) layoutDeckEditor.setVisibility(View.GONE);
         if (layoutDeckControl != null) layoutDeckControl.setVisibility(View.GONE);

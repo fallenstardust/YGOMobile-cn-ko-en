@@ -559,6 +559,10 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         field.dInfo.lp[0] = field.players[0].lp;
         field.dInfo.lp[1] = field.players[1].lp;
         field.refreshAllCards();
+        // 卡详已发动标记随视角翻转（用户规格3，与实况 performSpectatorSwap 同口径）：
+        // 账本半场归属整体对调，展示中已标记卡的绿/红勾按新视角重绑；内部 post 主线程，
+        // 投喂线程/主线程（暂停态直接交换）调用均安全
+        cn.garymb.ygomobile.render.card.CardDetailPanel.notifyViewpointSwapped();
         notifyPlayerInfo(0);      // 名字/LP 条/卡数按新视角重取
         notifyPlayerInfo(1);
         // 回合方高亮（LPBarFrame 彩色/灰色与名字色）随视角翻转重刷

@@ -376,12 +376,20 @@ abstract class YGOProActivityUi extends YGOProActivityBase {
      * 故在派发起点按下去重：每次新触摸按下先收起在显示的气泡；若本次落点是可显示气泡的卡片，
      * 抬手时 onCardClick 会以新代际重新排期展示，不受本次收起影响（需求：点屏上任意
      * 不产出新气泡的位置即隐藏旧气泡）。
+     * <p>
+     * 聊天输入框失焦（用户规格）：按下点不在输入框上时取消其焦点并收起输入法，避免光标
+     * 一直闪动、输入法已隐藏而焦点仍在输入框时再点输入框唤不起输入法；弹窗包装层转发
+     * 进来的触摸不经本派发点，由 DragFrameLayout 的按下归属判定处调同一方法补齐。
      */
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
+        boolean down = ev.getActionMasked() == MotionEvent.ACTION_DOWN;
         if (fieldCtl != null) {
             fieldCtl.onFieldTouchForChat(ev);
-            if (ev.getActionMasked() == MotionEvent.ACTION_DOWN) fieldCtl.hideFieldStatusTip();
+            if (down) fieldCtl.hideFieldStatusTip();
+        }
+        if (down) {
+            ChatInputUI.clearFocusIfTouchedOutside(this, ev.getRawX(), ev.getRawY());
         }
         return super.dispatchTouchEvent(ev);
     }
