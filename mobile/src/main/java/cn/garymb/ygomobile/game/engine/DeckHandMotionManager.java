@@ -141,6 +141,43 @@ public class DeckHandMotionManager {
         engine.animHoldUntilMs = System.currentTimeMillis() + lastEndMs + 50L;
     }
 
+    /**
+     * 场上里侧卡「翻开确认→停留→盖回」整批动画（对齐 duelclient.cpp MSG_CONFIRM_CARDS
+     * field_confirm 分支 L2571-2608）：Wait(5) 后逐卡启动 5 帧原地翻开（revealFieldCard，
+     * 对应 C++ dRot=π/5 + is_moving）并在停留段置 is_highlighting（C++ L2579），持闸 90 帧
+     *（C++ L2602 实况 WaitFrameSignal(90)）后整批 MoveCard(5) 转回里侧落位盖回卡背并取消
+     * 高亮，末尾清除 top_reveal。整段以 {@code animHoldUntilMs} 持统一动画闸门，令后续消息
+     * 串行等待确认播完（等价 C++ 屏障）。回放快进（replaySkip，同 C++ isReplaySkiping 开头
+     * 直接 return）与快进落位（instantPlace）下不排程、不持闸。
+     */
+    private void scheduleFieldConfirmReveal(List<ClientCard> cards) {
+        // 回放快进（同 C++ isReplaySkiping 在本消息开头直接 return 不播）与即时落位：不排程、不持闸
+        if (engine.replaySkip || engine.field.instantPlace) return;
+        final long holdFrames = 90L;
+        final long flipStart = 5L * 17L;                    // C++ L2572 WaitFrameSignal(5)
+        final long coverStart = flipStart + 5L * 17L + holdFrames * 17L; // 翻开 5 帧 + 停留
+        final long endMs = coverStart + 5L * 17L;           // 盖回 5 帧
+        engine.mainHandler.postDelayed(() -> {
+            for (ClientCard c : cards) {
+                engine.field.revealFieldCard(c, 5);
+                c.is_highlighting = true; // C++ L2579：停留段高亮框
+            }
+            if (engine.listener != null) engine.listener.onFieldChanged();
+        }, flipStart);
+        engine.mainHandler.postDelayed(() -> {
+            for (ClientCard c : cards) {
+                engine.field.moveCardAnimated(c, 5);        // C++ L2605：转回里侧落位盖回
+                c.is_highlighting = false;                  // C++ L2606
+            }
+            if (engine.listener != null) engine.listener.onFieldChanged();
+        }, coverStart);
+        engine.mainHandler.postDelayed(() -> {
+            for (ClientCard c : cards) c.top_reveal = false;
+            if (engine.listener != null) engine.listener.onFieldChanged();
+        }, endMs);
+        engine.animHoldUntilMs = System.currentTimeMillis() + endMs + 50L;
+    }
+
     public void applyConfirmCards(int player, int skipPanel, int count, ByteBuffer data) {
         // 对齐 duelclient.cpp MSG_CONFIRM_CARDS L2527-2532：非回放快进时播 reveal 音效 + 记日志
         if (!engine.replaySkip)
@@ -149,6 +186,9 @@ public class DeckHandMotionManager {
 
         int start = data.position();
         int panelCount = 0; // 面板确认卡数（loc&0x41，对齐 duelclient.cpp L2546-2566 与 CardSelectController 过滤）
+        // 场上确认卡（对齐 C++ L2527 field_confirm：非卡组/额外的 loc，含手卡/坟地等，但翻开动画
+        // 仅对场上里侧卡触发，同 C++ L2581/2591 的 POS_FACEUP 跳过）
+        final List<ClientCard> fieldConfirm = new ArrayList<>();
         for (int i = 0; i < count && data.remaining() >= 7; i++) {
             int code = data.getInt() & 0x7fffffff;
             int ctrl = data.get() & 0xFF;
@@ -170,8 +210,17 @@ public class DeckHandMotionManager {
                 // 不重复播放，本机作为主机的既有观感保持不变
                 if (newlyKnown && loc == CardLocation.Hand.value() && !engine.field.instantPlace) {
                     applyMoveToHandReveal(lp, pcard, false);
+                } else if ((loc & CardLocation.Onfield.value()) != 0
+                        && (pcard.position & GameField.POS_FACEDOWN) != 0) {
+                    // 盖放到场上的里侧卡（来自卡组/墓地/除外/额外，确认消息把真实卡码送达本区）：
+                    // 收集后统一播「原地翻开确认→停留→盖回」动画（对齐 C++ L2571-2608）
+                    fieldConfirm.add(pcard);
                 }
             }
+        }
+        // 场上里侧确认动画：整批同时翻开、持闸停留、同时盖回（C++ 对 field_confirm 即整批同起同落）
+        if (!fieldConfirm.isEmpty()) {
+            scheduleFieldConfirmReveal(fieldConfirm);
         }
         // 日志读取后回退缓冲位置，供下方确认面板复用条目数据
         data.position(start);

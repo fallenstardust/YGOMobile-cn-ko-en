@@ -128,7 +128,12 @@ public class ClientCard {
     public boolean revealHeld;
     /** 遮蔽入手冻结待码：客机加入遮蔽型服务器时，对方「卡组→手卡」的 MSG_MOVE 卡码为 0，而真实卡码由紧随其后的 MSG_CONFIRM_CARDS 送达。本标记的卡已入手但冻结在卡组顶坐标不动（不参与手牌重排/飞入），等写入卡码后由 applyMoveToHandReveal 直接以正面飞入手卡，消除「背面入手→翻开」两步观感；无确认消息时超时兜底释放照旧背面入位。 */
     public boolean pendingFaceupAdd;
-    /** 卡组 / 额外卡组顶卡揭示态（对齐 duelclient.cpp MSG_CONFIRM_DECKTOP / MSG_CONFIRM_EXTRATOP 的 dRot(π/5)+is_moving 翻开露出卡面）：本标记为真时，渲染层即使卡片非表侧（卡组 / 额外顶卡 isFaceUp()==false）也按卡码贴卡面，与 C++ drawing.cpp 移动中卡片同绘正反两面（is_moving）等效。由 GameFieldMotion.revealTopCardOut 置位，翻回卡背后由 DeckHandMotionManager 调度清除（不入通用落定清理，以免中途抹掉停留段）。 */
+    /** 揭示翻面态（对齐 duelclient.cpp MSG_CONFIRM_DECKTOP / MSG_CONFIRM_EXTRATOP 的 dRot(π/5)+is_moving，
+     *  及 MSG_CONFIRM_CARDS field_confirm L2580-2597 场上里侧卡的同型翻开停留段）：顶卡揭示与场上里侧卡
+     *  确认揭示期间置位，表示本卡正被动画转到面朝相机亮出卡面（非表侧卡亦按卡码贴卡面，与 C++
+     *  drawing.cpp 移动中卡片同绘正反两面等效；渲染层实际按「朝向+卡码」判定，本标记为动画语义登记）。
+     *  由 GameFieldMotion.revealTopCardOut / revealFieldCard 置位，翻回卡背后由 DeckHandMotionManager
+     *  调度清除（不入通用落定清理，以免中途抹掉停留段）。 */
     public boolean top_reveal;
 
     public boolean isFaceUp() {

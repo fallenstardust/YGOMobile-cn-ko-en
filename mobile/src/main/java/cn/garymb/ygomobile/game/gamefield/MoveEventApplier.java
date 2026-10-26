@@ -170,10 +170,18 @@ public class MoveEventApplier {
         // 四个来源，导致对方「场上怪兽/魔陷回手」「超量素材回手」等入手不播揭示动画、直接背面入手
         //（用户反馈：对面加入手卡的卡必须全部展示动画）。洗切不在此处播放：引擎会为「非抽卡入手」
         // 置 shuffle_hand_check 并发出 MSG_SHUFFLE_HAND，由 DeckHandMotionManager.applyShuffleHand 唯一播放一次。
+        // 例外（用户规格，对齐 C++）：从场上离场的里侧表示卡回手不做任何翻面/高亮确认——gframe 的
+        // MSG_MOVE 分支（duelclient.cpp L2994-2998）对里侧回手卡只 SetCode、绝无确认动画，离场翻开确认
+        // 只挂在 MSG_CONFIRM_CARDS 的 field_confirm 分支（L2571-2608，针对回到场上格子的卡），从不挂在
+        // 回到手卡的移动上；且旧卡场上姿态为里侧时信息已不再公开，无论本端是否已知卡码一律静默背面入手
+        //（对方视角下遮蔽 MSG_MOVE 本就零码，此处同时约束己方全量视角不弹蚂蚁线高亮）。
         {
             int oldLocBase = oldLoc & 0x7f;
             int newLocBase = newLoc & 0x7f;
-            if (newLocBase == CardLocation.Hand.value() && oldLocBase != CardLocation.Hand.value()) {
+            boolean leftFieldFacedown = (oldLocBase & CardLocation.Onfield.value()) != 0
+                    && (oldPos & GameField.POS_FACEDOWN) != 0;
+            if (newLocBase == CardLocation.Hand.value() && oldLocBase != CardLocation.Hand.value()
+                    && !leftFieldFacedown) {
                 // 只对本次入手的那张卡揭示：对方卡从卡背翻到正面供对手确认、我方卡本就正面
                 // 不翻给对方看，两者均施加行进蚂蚁线高亮，展示结束后由引擎的洗切接管
                 ClientCard arriving = engine.field.getCard(newCtrl, newLocBase, newSeq);

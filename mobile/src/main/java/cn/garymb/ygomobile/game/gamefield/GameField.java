@@ -658,6 +658,12 @@ public class GameField {
         motion.revealTopCardOut(pcard, shiftX, frame);
     }
 
+    /** 场上里侧卡确认揭示（duelclient.cpp MSG_CONFIRM_CARDS field_confirm）：盖放到场上格子的里侧卡
+     *  收到携真实卡码的确认消息后，在本格原地翻到面朝相机露出卡面，停留段后调用方 moveCardAnimated 盖回 */
+    public void revealFieldCard(ClientCard pcard, int frame) {
+        motion.revealFieldCard(pcard, frame);
+    }
+
     public void setAnimationSpeed(float speed) {
         motion.setAnimationSpeed(speed);
     }

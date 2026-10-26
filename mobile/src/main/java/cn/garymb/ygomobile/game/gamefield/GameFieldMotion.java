@@ -251,6 +251,49 @@ public class GameFieldMotion extends GameFieldMotionBase {
         pcard.aniFrame = frame;
     }
 
+    /**
+     * 场上里侧卡的确认揭示（对齐 duelclient.cpp MSG_CONFIRM_CARDS field_confirm 分支 L2580-2597
+     * 的 dRot 翻开 + 停留段 is_highlighting + MoveCard 盖回）：从卡组 / 墓地 / 除外区 / 额外卡组
+     * 直接里侧盖放到场上格子的卡，确认消息（MSG_CONFIRM_CARDS，本端服务器对非卡组来源双发不解
+     * 遮蔽，见 DuelAnalyzer L289-295）携真实卡码到达后，在本格原地把卡翻到面朝相机（rotX/rotY/rotZ
+     * → 0，守备盖放顺带扶正横卡）露出卡面供双方确认，停留段后由调用方 {@code moveCardAnimated}
+     * 依新姿态目标转回卡背盖回（同 revealTopCardOut 的「翻回盖背」收尾）。起点取卡片当前姿态，
+     * 对表侧卡调用为无害（目标 rotY=0 即其表侧本态）。
+     * <p>抬高 loc[2]+0.03 使翻开段凸于格底板，避免里侧落位 Z（怪兽格含素材堆 0.02+0.01n、
+     * 魔陷格 0.01）与卡面共面被深度剔除；调用方随后的 moveCardAnimated 回写权威 Z。
+     */
+    public void revealFieldCard(ClientCard pcard, int frame) {
+        if (pcard == null || frame <= 0) return;
+        if (field.instantPlace) {
+            // 回放快进重排：只同步落位，不排程翻开动画
+            setCardPos(pcard);
+            pcard.top_reveal = false;
+            return;
+        }
+        float[] loc = field.getCardLocation(pcard);
+        pcard.top_reveal = true;
+        pcard.animJitterX = 0f;
+        pcard.animDelayFrame = 0;
+        pcard.animFromX = pcard.curX;
+        pcard.animFromY = pcard.curY;
+        pcard.animFromZ = pcard.curZ;
+        // 原地翻开：不平移（本格展示），仅微抬 Z 防与底板共面
+        pcard.animToX = pcard.curX;
+        pcard.animToY = pcard.curY;
+        pcard.animToZ = loc[2] + 0.03f;
+        pcard.animFromRotX = pcard.curRotX;
+        pcard.animFromRotY = pcard.curRotY;
+        pcard.animFromRotZ = pcard.curRotZ;
+        // 三轴全归零 → 卡面正对相机：里侧盖放 rotY≈π（守备另带 rotZ=±π/2 横置），
+        // 归一化到起点附近取最短路径翻正，与 revealTopCardOut 的 rotY π→0 同理
+        pcard.animToRotX = normalizeAngleTarget(pcard.curRotX, 0f);
+        pcard.animToRotY = normalizeAngleTarget(pcard.curRotY, 0f);
+        pcard.animToRotZ = normalizeAngleTarget(pcard.curRotZ, 0f);
+        pcard.animTotalFrame = frame;
+        pcard.is_moving = true;
+        pcard.aniFrame = frame;
+    }
+
     public void setAnimationSpeed(float speed) {
         field.animationSpeed = Math.max(0.25f, speed);
     }
