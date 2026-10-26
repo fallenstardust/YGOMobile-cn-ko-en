@@ -109,6 +109,20 @@ final class DuelZoneRefresh {
                 updateDataPayload(player, OcgDuelEngine.LOCATION_EXTRA, blocks, blocks.length));
     }
 
+    /**
+     * 撤回重同步专用的额外卡组刷新：与 {@link #refreshExtra} 的「只发本人」不同，这里走
+     * {@link DuelViewBroadcaster#sendDualViewAndRecord} 双视角发送（本人全量、对手与观战收遮蔽版），
+     * 里侧段整块清零（含 flag，客户端 updateQuery 见 flag=0 即整块跳过、维持占位卡的里侧态）。
+     * <p>必须有这一步：{@code query_field_info} 的 reload 载荷对五个堆叠区只写张数、不写姿态也不写卡码，
+     * 客户端重建出的额外占位卡因此既不知哪几张在堆顶表侧、也无卡码；而额外卡组顶的表侧卡
+     * （灵摆怪兽等「以表侧表示回到额外卡组」的卡）是双方可见的公开信息，只发本人会让对手侧
+     * 在撤回后把它显示成卡背（用户反馈的「撤回上一步使额外卡组顶表侧灵摆变里侧」）。
+     * <p>实时流程仍用 {@link #refreshExtra}（遮蔽语义与逐帧录像序列不变），本方法只在重同步里出现。
+     */
+    void refreshExtraResync(int player, int flag, int useCache) {
+        refreshMaskedZone(player, OcgDuelEngine.LOCATION_EXTRA, flag, useCache);
+    }
+
     void refreshSingle(int player, int location, int sequence) {
         refreshSingle(player, location, sequence, DuelAnalyzer.REFRESH_SINGLE_FLAG);
     }

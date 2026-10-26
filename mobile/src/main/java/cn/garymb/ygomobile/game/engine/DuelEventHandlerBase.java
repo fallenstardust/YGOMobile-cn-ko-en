@@ -218,13 +218,15 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
     }
 
     @Override
-    public void onReverseDeck(int player) {
-        engine.deckMotion.postFieldChanged();
+    public void onReverseDeck() {
+        // duelclient.cpp L2782-2791：翻转 deck_reversed 并逐张重摆双方卡组（整叠翻面动画）
+        engine.deckMotion.applyReverseDeck();
     }
 
     @Override
-    public void onDeckTop(int player, int code) {
-        engine.deckMotion.postFieldChanged();
+    public void onDeckTop(int player, int seq, int code) {
+        // duelclient.cpp L2792-2804：写入卡组第 seq 张的卡码并按需翻面
+        engine.deckMotion.applyDeckTop(player, seq, code);
     }
 
     @Override

@@ -50,8 +50,10 @@ public class GameMessageParser {
         void onRefreshDeck(int player);
         void onSwapGraveDeck(int player);
         void onShuffleSetCard(int player, int count, ByteBuffer data);
-        void onReverseDeck(int player);
-        void onDeckTop(int player, int code);
+        /** duelclient.cpp MSG_REVERSE_DECK L2782-2791：无载荷（引擎只写 1 字节消息号），效果把整个卡组翻面，handler 内翻转 deckReversed 并逐张重摆双方卡组 */
+        void onReverseDeck();
+        /** duelclient.cpp MSG_DECK_TOP L2792-2804：player(1) seq(1) code(4)，写入卡组第 seq 张（自顶往下）的卡码，高位置位表示该卡需翻面 */
+        void onDeckTop(int player, int seq, int code);
         void onNewTurn(int player);
         void onNewPhase(int phase);
         void onMove(int code, int oldControler, int oldLocation, int oldSequence, int oldPosition,
@@ -259,13 +261,16 @@ public class GameMessageParser {
                 break;
             }
             case ReverseDeck:
-                handler.onReverseDeck(buf.get() & 0xFF);
+                // duelclient.cpp L2782：MSG_REVERSE_DECK 无载荷，不可再读字节（曾多读 1 字节抛
+                // BufferUnderflowException 被 dispatchGameMsg 吞掉，等效丢消息 → 卡组翻面动画缺失）
+                handler.onReverseDeck();
                 break;
             case DeckTop: {
+                // duelclient.cpp L2792-2795：player(1) seq(1) code(4)，seq 用于自顶往下定位卡片
                 int player = buf.get() & 0xFF;
-                buf.get(); // seq
+                int seq = buf.get() & 0xFF;
                 int code = buf.getInt();
-                handler.onDeckTop(player, code);
+                handler.onDeckTop(player, seq, code);
                 break;
             }
             case NewTurn:

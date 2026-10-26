@@ -88,6 +88,10 @@ abstract class DuelAnalyzerBase implements YGOProtocol {
     int liveTurnPlayer = -1;
     /** 是否正处于连锁结算中（MSG_CHAINING 置真、CHAIN_END/新回合/新阶段复位）；DP/SP 发动询问仅在不在连锁中才计为锚点。 */
     boolean liveChainActive;
+    /** 引擎当前是否处于「整个卡组翻转正面朝上」状态（core.deck_reversed）。MSG_REVERSE_DECK 取反、
+     *  静默重放开始复位；live 与重放共用 analyze，故重放后其值即回退点该有的真实状态，
+     *  供 {@link UndoQuestionGuard#resyncAfterUndo} 在 reload 之后补发翻转与顶卡卡码。 */
+    boolean liveDeckReversed;
 
     // 协作类（同包，持 analyzer 反向引用，共享状态读写本体）
     DuelViewBroadcaster broadcaster;
@@ -172,6 +176,8 @@ abstract class DuelAnalyzerBase implements YGOProtocol {
     void refreshGrave(int player, int flag, int useCache) { zoneRefresh.refreshGrave(player, flag, useCache); }
     void refreshExtra(int player) { zoneRefresh.refreshExtra(player); }
     void refreshExtra(int player, int flag, int useCache) { zoneRefresh.refreshExtra(player, flag, useCache); }
+    /** 撤回重同步专用：额外卡组按双视角发送（本人全量、对手/观战遮蔽里侧），见 {@link DuelZoneRefresh#refreshExtraResync}。 */
+    void refreshExtraResync(int player, int flag, int useCache) { zoneRefresh.refreshExtraResync(player, flag, useCache); }
     void refreshSingle(int player, int location, int sequence) { zoneRefresh.refreshSingle(player, location, sequence); }
     void refreshSingle(int player, int location, int sequence, int flag) { zoneRefresh.refreshSingle(player, location, sequence, flag); }
 

@@ -2,8 +2,11 @@ package cn.garymb.ygomobile.network.server;
 
 import android.util.Log;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 
+import cn.garymb.ygomobile.engine.OcgDuelEngine;
 import cn.garymb.ygomobile.network.YGOProtocol;
 
 /**
@@ -24,7 +27,10 @@ final class UndoQuestionGuard implements YGOProtocol {
     /**
      * 撤回成功后把回退后的局面一次性推给全体（对齐“全量重载场地位”语义）：
      * ① MSG_RELOAD_FIELD 广播双方与观战；② Mzone/Szone/Hand/Grave/Extra 各自 refresh，沿用既有
-     * 遮蔽语义（Mzone 用 {@link DuelAnalyzer#RESYNC_MZONE_FLAG} 额外携素材卡码）；③ 复位两席位
+     * 遮蔽语义（Mzone 用 {@link DuelAnalyzer#RESYNC_MZONE_FLAG} 额外携素材卡码；Extra 走双视角，
+     * 因为 reload 不写姿态与卡码，堆顶表侧卡的身份与朝向只能靠这次刷新送到对手与观战侧）；
+     * ③ 引擎处于卡组翻转态（天变地异）时补发 MSG_REVERSE_DECK + 双方 MSG_DECK_TOP，
+     * 使正面朝上的卡组在回退后仍是正面朝上且顶卡可见卡图；④ 复位两席位
      * 状态并记下待重挂询问席位（{@link DuelAnalyzer#undoAskResponder}），询问由
      * {@link #hangUndoTerminalQuestion()} 延后单独挂回。全程 recordSuppressed：重同步不写录像。
      * <p>本阶段查询一律 use_cache=0：全量重载下客户端按占位新建全零 ClientCard，被省略字段无人
@@ -44,8 +50,23 @@ final class UndoQuestionGuard implements YGOProtocol {
             analyzer.refreshHand(1, DuelAnalyzer.REFRESH_HAND_FLAG, 0);
             analyzer.refreshGrave(0, DuelAnalyzer.REFRESH_GRAVE_FLAG, 0);
             analyzer.refreshGrave(1, DuelAnalyzer.REFRESH_GRAVE_FLAG, 0);
-            analyzer.refreshExtra(0, DuelAnalyzer.REFRESH_EXTRA_FLAG, 0);
-            analyzer.refreshExtra(1, DuelAnalyzer.REFRESH_EXTRA_FLAG, 0);
+            analyzer.refreshExtraResync(0, DuelAnalyzer.REFRESH_EXTRA_FLAG, 0);
+            analyzer.refreshExtraResync(1, DuelAnalyzer.REFRESH_EXTRA_FLAG, 0);
+            // 卡组翻面（天变地异）状态回退补齐：query_field_info 的 reload 载荷不携 core.deck_reversed，
+            // 客户端 field.clear() 又把 deckReversed 复位，于是正面朝上的卡组在撤回后变回常规朝下显示。
+            // 这里按静默重放后得到的引擎真值合成一条 MSG_REVERSE_DECK，让双方与观战走与实况同一条
+            // applyReverseDeck 路径（顺带带上整叠翻面动画），随后各补一条 MSG_DECK_TOP 把顶卡卡码重新
+            // 下发——引擎在翻转时本就为双方发这两条消息（processor.cpp case 13），实况链路
+            // （见 DuelAnalyzer 的 MSG_REVERSE_DECK / MSG_DECK_TOP 分支）也是原样广播、不做遮蔽。
+            if (analyzer.liveDeckReversed) {
+                analyzer.broadcastMsg(new byte[]{(byte) EngineMessage.MSG_REVERSE_DECK});
+                for (int p = 0; p < 2; p++) {
+                    byte[] top = deckTopPayload(p);
+                    if (top != null) {
+                        analyzer.broadcastMsg(top);
+                    }
+                }
+            }
             int responder = analyzer.room.lastResponse;
             byte[] terminal = analyzer.silentTerminal;
             if (terminal == null || analyzer.room.players[responder] == null) {
@@ -66,6 +87,34 @@ final class UndoQuestionGuard implements YGOProtocol {
         } finally {
             analyzer.recordSuppressed = false;
         }
+    }
+
+    /**
+     * 合成一条 MSG_DECK_TOP（player(1) seq(1)=0 code(4)）：code 取卡组顶（sequence = 张数-1）卡码，
+     * 高位置口径与 {@code processor.cpp} case 13 一致——顶卡姿态为 POS_FACEUP_DEFENSE（以里侧守备
+     * 表示回到卡组、翻转后仍该朝下）时置 bit31，其余情形清 bit31。卡组为空或查询失败返回 null。
+     */
+    private byte[] deckTopPayload(int player) {
+        int count = OcgDuelEngine.queryFieldCount(analyzer.pduel(), player, OcgDuelEngine.LOCATION_DECK);
+        if (count <= 0) {
+            return null;
+        }
+        byte[] blocks = OcgDuelEngine.queryCard(analyzer.pduel(), player, OcgDuelEngine.LOCATION_DECK,
+                count - 1, DuelAnalyzer.QUERY_CODE_POSITION, 0);
+        // 块布局 [clen(4)][flag(4)][code(4)][position(4)]，与 DuelZoneRefresh.refreshSingle 同一口径
+        if (blocks.length < 16) {
+            return null;
+        }
+        int code = DuelAnalyzer.readInt32(blocks, 8) & 0x7fffffff;
+        if (EngineMessage.getPosition(blocks, 12) == OcgDuelEngine.POS_FACEUP_DEFENSE) {
+            code |= 0x80000000;
+        }
+        return ByteBuffer.allocate(7).order(ByteOrder.LITTLE_ENDIAN)
+                .put((byte) EngineMessage.MSG_DECK_TOP)
+                .put((byte) player)
+                .put((byte) 0)
+                .putInt(code)
+                .array();
     }
 
     /**
@@ -238,6 +287,8 @@ final class UndoQuestionGuard implements YGOProtocol {
         analyzer.undoAskResponder = -1;
         // 静默重放从开局重写引擎状态：连锁进行标志先复位，livePhase/liveTurnPlayer 随后由重放消息流重新导出
         analyzer.liveChainActive = false;
+        // 卡组是否处于「天变地异」翻转态同样由重放里的 MSG_REVERSE_DECK 重新导出（开局为未翻转）
+        analyzer.liveDeckReversed = false;
         // 引擎即将重建：旧的 liveQuestion 属于要被抹掉的那一段，保活绝不能再把它重发出去
         analyzer.liveQuestion = null;
         analyzer.liveQuestionGeneration = -1;

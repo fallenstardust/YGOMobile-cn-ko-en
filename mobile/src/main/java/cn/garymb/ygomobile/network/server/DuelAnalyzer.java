@@ -348,6 +348,10 @@ final class DuelAnalyzer extends DuelAnalyzerBase {
                     break;
                 }
                 case EngineMessage.MSG_REVERSE_DECK: {
+                    // 引擎只在 core.deck_reversed 真值变化时发本消息（processor.cpp case 13），故跟着取反
+                    // 即为引擎当前状态；live 与静默重放共用本方法，重放后其值就是回退点该有的状态，
+                    // 供撤回重同步补发翻转（见 UndoQuestionGuard.resyncAfterUndo）
+                    liveDeckReversed = !liveDeckReversed;
                     broadcastMsg(range(msg, start, cursor));
                     break;
                 }

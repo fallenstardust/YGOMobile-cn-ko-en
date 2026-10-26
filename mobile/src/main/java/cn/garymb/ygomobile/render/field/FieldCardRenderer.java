@@ -203,10 +203,9 @@ public class FieldCardRenderer {
         }
 
         // 超量素材恒为表侧（引擎从不下发素材自身的姿态，只给宿主的），而叠放下层的素材
-        // 模型由 getCardLocation 的 OVERLAY 分支单独求出（恒平放朝上），故此处不依赖 position
-        // 一律视为表侧；否则一个 position 未被补齐的素材占位会带着卡码却被画成卡背
-        //（C++ Game::DrawCard 只看 m22 与卡码、从不读 position）
-        boolean faceUp = c.isFaceUp() || c.isOverlayMaterial();
+        // 模型由 getCardLocation 的 OVERLAY 分支单独求出（恒平放朝上），故素材不依赖 position
+        // 也一律按朝向判定画卡面；否则一个 position 未被补齐的素材占位会带着卡码却被画成卡背
+        //（C++ Game::DrawCard 只看 m22 与卡码、从不读 position，本端与之对齐）
         if (!front) {
             // 背面朝向相机（盖放/守备盖放/卡组背面）：绕局部 Y 翻 180° 后绘卡背，
             // 卡背自身正面朝相机，贴图方向与 gframe 一致且不与任何面共面
@@ -228,9 +227,14 @@ public class FieldCardRenderer {
                 //（用户反馈：观战跳到当前后，里侧公开卡的呼吸动画显示 unknown）
                 drawBreathReveal(c, c.displayCode(), alpha, wave);
             }
-        } else if ((faceUp || c.top_reveal) && code > 0) {
-            // 表侧卡与顶卡揭示中的卡组/额外卡（top_reveal，对齐 drawing.cpp is_moving 同绘两面）：
-            // 后者虽非表侧但已转到面朝相机且携真实卡码，翻开的顶卡须亮出卡面
+        } else if (code > 0) {
+            // 正面朝向相机且已拿到卡码即贴卡面（对齐 C++ Game::DrawCard 只看 m22 与卡码）：
+            // 顶卡揭示中的卡组/额外卡（top_reveal）虽非表侧但已转到面朝相机且携真实卡码，须亮出卡面；
+            // 天变地异翻转后的卡组顶卡同理——它的 position 仍是里侧（ocgcore 翻转不改姿态，
+            // 朝向全由 deckReversed != is_reversed 的 rotY 决定），旧的 faceUp||top_reveal 判据
+            // 使它即便拿到卡码也画成卡背，故此处只按「朝向 + 有码」判定。
+            // 放宽不影响任何背面卡：MZONE/SZONE 盖放、EXTRA 里侧、未翻转卡组在几何上恒为
+            // !front，全部由上方卡背分支消化
             int tex = obtainTexture(code, FieldGeometry.pendulumMode(c), FieldGeometry.pendulumScale(c));
             if (tex > 0) {
                 // 抬跳同步卡图微提亮（用户规格：与边缘发光同步的亮度增加再回到原亮度，
@@ -246,7 +250,8 @@ public class FieldCardRenderer {
                 view.quad.drawQuadColor(view.mModel, 0.35f, 0.35f, 0.40f, alpha);
             }
         } else {
-            // 正面朝向相机但非表侧表示（卡组顶等）：gframe 同样贴卡背材质
+            // 正面朝向相机但尚无卡码（遮蔽的卡组顶、未下发的堆叠卡等）：C++ 此时贴的是空纹理，
+            // 本端兜底绘卡背，避免翻转卡组里除顶卡外的其余卡在朝上面前出现空白矩形
             drawCoverQuad(view.mModel, c.owner != 0, alpha, 1f, 0f);
         }
     }

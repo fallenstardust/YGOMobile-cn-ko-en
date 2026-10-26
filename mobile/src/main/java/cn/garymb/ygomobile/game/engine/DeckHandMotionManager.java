@@ -248,6 +248,59 @@ public class DeckHandMotionManager {
         postFieldChanged();
     }
 
+    /**
+     * 天变地异等「整个卡组翻转」效果（对齐 duelclient.cpp MSG_REVERSE_DECK L2782-2791）。
+     * <p>卡组卡的朝向在本端不是 position 字段（ocgcore 无里/外侧概念，翻转后 position 仍是里侧），
+     * 而由 {@code GameFieldGeometry} 的 DECK 分支按 {@code back = (deckReversed == is_reversed)}
+     * 决定 rotY（同 client_field.cpp L826-851）。故本消息必须先把 {@code field.deckReversed} 取反，
+     * 再把双方卡组逐张 {@code moveCardAnimated(c, 10)}：落点与 rotY 随之翻转，形成整叠卡组
+     * 10 帧翻面动画（此前实现只 postFieldChanged、既不翻转标记也无动画，即用户反馈的
+     * 「天变地异没有翻转动画」）。
+     * <p>C++ 在回放快进下只翻标记不播动画；本端 {@code moveCardAnimated} 在 {@code instantPlace}
+     * 时内部同步落位、不产生 aniFrame，语义等价，故只需按同一闸门决定是否持闸。
+     * 本消息无载荷、无音效（同 C++）。
+     */
+    public void applyReverseDeck() {
+        engine.field.deckReversed = !engine.field.deckReversed;
+        for (int p = 0; p < 2; p++) {
+            final List<ClientCard> deck = engine.field.players[p].deck;
+            for (ClientCard c : deck) {
+                if (c != null) engine.field.moveCardAnimated(c, 10);
+            }
+        }
+        // 10 帧整叠翻面期间持统一动画闸门，令后续消息串行等待（快进落位时不持闸）
+        if (!engine.field.instantPlace) {
+            engine.animHoldUntilMs = System.currentTimeMillis() + 10L * 17L + 100L;
+        }
+        postFieldChanged();
+    }
+
+    /**
+     * 卡组顶卡下发（对齐 duelclient.cpp MSG_DECK_TOP L2792-2804）：引擎在卡组翻转后为双方各发一条
+     * 本消息，携顶卡卡码（bit31 = 该卡在翻转后仍应朝下，即 position 为 POS_FACEUP_DEFENSE）。
+     * 此前实现丢弃 seq、且 handler 只 postFieldChanged 不写卡码，导致卡组翻成正面朝上后
+     * 最上方那张卡既无卡图（code==0 走卡背兜底）、点击也看不了详情（卡详面板对 code&lt;=0 只显示默认）。
+     * seq 自卡组顶往下计数，本端以 {@code getCardCount-1-seq} 定位（同 applyConfirmDecktop）。
+     */
+    public void applyDeckTop(int player, int seq, int code) {
+        final int p = engine.localPlayer(player);
+        final int deckLoc = CardLocation.Deck.value();
+        final int top = engine.field.getCardCount(p, deckLoc) - 1;
+        ClientCard c = engine.field.getCard(p, deckLoc, top - seq);
+        if (c == null) return;
+        c.setCode(code & 0x7fffffff);
+        boolean rev = (code & 0x80000000) != 0;
+        if (c.is_reversed != rev) {
+            // 该卡相对整叠朝向需要反着摆（翻转卡组中仍朝下的一张）：置 is_reversed 并 5 帧翻过去
+            c.is_reversed = rev;
+            engine.field.moveCardAnimated(c, 5);
+            if (!engine.field.instantPlace) {
+                engine.animHoldUntilMs = System.currentTimeMillis() + 5L * 17L + 50L;
+            }
+        }
+        postFieldChanged();
+    }
+
     public void applyShuffleHand(ByteBuffer data) {
         // duelclient.cpp MSG_SHUFFLE_HAND L2659-2701：服务端已按洗后顺序重排并重发全部手卡，
         // 此刻列表已是新布局；动画为 聚拢→停留→换面→回新布局 的单条关键帧动画。

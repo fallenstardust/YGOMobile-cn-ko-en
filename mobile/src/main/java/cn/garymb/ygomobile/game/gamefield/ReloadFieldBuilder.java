@@ -98,6 +98,20 @@ public class ReloadFieldBuilder {
             // 额外卡组表侧张数（在上方 extra 占位卡全部入堆后赋值，避免 addCard 自增干扰）
             if (data.remaining() < 1) return;
             field.extraPCount[p] = data.get() & 0xFF;
+            // 额外卡组顶的表侧卡（灵摆怪兽等「以表侧表示回到额外卡组」的卡）朝向补齐：
+            // query_field_info 对五个堆叠区只写张数、不写姿态，上面的占位循环因此把每张额外卡都建成
+            // position=0（里侧）；而 client_field.cpp AddCard 的层序不变量是「里侧在下方、表侧连续集中在
+            // 堆顶」，extra_p_count 正是堆顶那连续几张的张数，故按它把末尾 pcount 张钉成表侧。
+            // 不补就会在撤回重同步后把堆顶本该表侧的灵摆画成卡背（用户反馈的问题2）。
+            // 精确姿态与其卡码由紧随其后的 refreshExtraResync（服务器双视角下发）校正。
+            int pcount = field.extraPCount[p];
+            if (pcount > 0) {
+                int extraCnt = field.getCardCount(p, CardLocation.Extra.value());
+                for (int seq = Math.max(0, extraCnt - pcount); seq < extraCnt; seq++) {
+                    ClientCard x = field.getCard(p, CardLocation.Extra.value(), seq);
+                    if (x != null) x.position = GameField.POS_FACEUP;
+                }
+            }
         }
         // C++ L4378：RefreshAllCards 重算全场落点（场上/手卡/墓地/除外/额外摆放位置即此恢复）
         field.refreshAllCards();
