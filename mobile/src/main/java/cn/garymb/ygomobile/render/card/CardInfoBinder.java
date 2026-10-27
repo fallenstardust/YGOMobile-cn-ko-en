@@ -520,14 +520,15 @@ class CardInfoBinder {
      * 归一化段落行全等才命中。实测本仓库 cdb 的 str 多为「特殊召唤」类短碎片，故严禁
      * contains 包含匹配（碎片会蹭中错误段落），相等匹配仅作 str 规范库的加成路径。</li>
      * <li>锚点映射：卡码型 id 低 4 位 offset 即脚本 aux.Stringid(code, n) 的编号。
-     * 非灵摆卡实测圆圈序号/项目符序位 == offset；灵摆怪兽脚本编号约定实测两种约各半
-     * （连续 87 : 重启 79）：灵摆框与怪兽框按文档顺序连续编号（c41546），或怪兽框从 0
-     * 重启、灵摆效果多无 SetDescription（c1186447）。纯文本无法预判属哪种，改用运行时
-     * 证据自证：一旦观测到 offset ≥ 怪兽框段数（重启约定下不可能出现）即判定连续编号，
-     * 否则默认重启编号——重启卡全对；连续卡发动怪兽效果后立即自证转 seq，残余风险仅
-     * 「连续卡的灵摆效果发动（offset&lt;P）误标怪兽框同序号段」。对按规范制作的新卡该歧义已消除：
-     * 分段扫描时若检测到两框圆圈序号全局连续（各段序号==文档序，即跨框连续编号规范），
-     * 确定性采用连续映射，无需发动证据。灵摆框段落只在连续模式或文本命中时标记。
+     * 统一原则（用户定稿，不做逐卡特例/兼容分支）：带序号段落共 n 个、灵摆框段落 p 个，
+     * 编号按文档序跨框全局连续——灵摆框段占 offset 0..p-1、怪兽框段从 offset p 起；
+     * 灵摆卡恒按「段落文档序==offset」映射，非灵摆卡按「段首圆圈序号==offset」（此类卡
+     * 圆圈序号即文档序），越界不标；卡面圆圈号保持官方逐框重启样式不影响映射。
+     * 上游现状脚本两套约定混用，故先查内置校准表 assets/effect_doc_map.txt
+     * （EffectDocMap，审计工具静态推定「现状编号→实际段落文档序」，仅收录与默认规则
+     * 不一致的高/中置信条目），查不到再回退默认映射——不改 cdb/script 即可消除现存错位
+     * （脚本全无 SetDescription 的段落无消息可标，校准表也救不了）。异画卡 Stringid 用
+     * 原卡号，uid>>>4 天然共享条目；hitDoc 超出当前语言段落数时校准失效回默认。
      * 系统字符串 id（≤MAX_STRING_ID）无段序含义，仅走文本匹配。</li>
      * </ol>
      * 段落 = 段首效果标记行（换行符后的第一个 ①②③ 圆圈序号行；全文无圆圈序号的传统卡才认 ● 项目符行）
@@ -557,13 +558,13 @@ class CardInfoBinder {
             hasCircled = leadingCircledIndex(desc.substring(lines.get(k)[0], lines.get(k)[1]).trim()) >= 0;
         }
         // 段落归属扫描：框标题行/分隔线切换灵摆框/怪兽框状态但自身不归任何段（paraOf=-1）；
-        // 圆圈/项目符行开启新段落（docIdx 全文连续），并记录 {docIdx, anchor, box, boxOrder}：anchor=段首圆圈序号
-        // 或全文项目符序位（非灵摆卡即 offset），boxOrder=怪兽框内段落序位（重启编号的怪兽框 offset）；
+        // 圆圈/项目符行开启新段落（docIdx 全文连续），并记录 {docIdx, anchor, box}：anchor=段首圆圈序号
+        // 或全文项目符序位（非灵摆卡即 offset）；
         // 首段之前的背景文本行（含“这个卡名的①②效果…”行）与框标题行/分隔线 paraOf=-1 不参与映射
         int[] paraOf = new int[lineCount];
         String[] normLines = new String[lineCount];
         List<int[]> meta = new ArrayList<>();
-        int docIdx = -1, para = -1, bulletSeq = 0, monSeq = -1;
+        int docIdx = -1, para = -1, bulletSeq = 0;
         boolean inPend = false, inMon = false, pendulumSeen = false;
         for (int i = 0; i < lineCount; i++) {
             String raw = desc.substring(lines.get(i)[0], lines.get(i)[1]);
@@ -597,36 +598,20 @@ class CardInfoBinder {
             if (anchor >= 0) {
                 docIdx++;
                 para = docIdx;
-                int box = inPend ? 1 : (inMon ? 2 : 0);
-                if (box == 2) monSeq++;
-                meta.add(new int[]{docIdx, anchor, box, box == 2 ? monSeq : -1});
+                meta.add(new int[]{docIdx, anchor, inPend ? 1 : (inMon ? 2 : 0)});
             }
             paraOf[i] = para;
         }
         // 段落→段首圆圈序号：per-duel 条款判定时需要知道限制句中序号与本段的对应关系
         int[] paraAnchor = new int[docIdx + 1];
         for (int[] m : meta) paraAnchor[m[0]] = m[1];
-        int monCount = monSeq + 1, pendCount = 0;
-        for (int[] m : meta) if (m[2] == 1) pendCount++;
+        int monCount = 0, pendCount = 0;
+        for (int[] m : meta) {
+            if (m[2] == 1) pendCount++;
+            else if (m[2] == 2) monCount++;
+        }
         // 灵摆分框仅在两框都有段落时启用；否则退回全文锚点映射（含只有单框标记的异常文本）
         boolean pendulum = pendulumSeen && pendCount > 0 && monCount > 0;
-        // 确定性自证（cdb/脚本规范：两框按文档顺序全局连续编号，怪兽框不从①重启）：
-        // 圆圈序号==文档序的卡直接连续映射，不必等发动证据；官方逐框重启卡文命中不了
-        // 本检测（怪兽框首段序号 0 ≠ 文档序 P），仍走下方证据路
-        boolean globalAnchors = false;
-        if (pendulum) {
-            globalAnchors = true;
-            for (int[] m : meta) {
-                if (m[1] != m[0]) { globalAnchors = false; break; }
-            }
-        }
-        int maxObservedOffset = -1;
-        for (EffectRef ref : refs) {
-            long uid = ref.id & 0xFFFFFFFFL;
-            if (uid > DataManager.MAX_STRING_ID) maxObservedOffset = Math.max(maxObservedOffset, (int) (uid & 0xf));
-        }
-        // 证据自证：重启约定下发动 offset 恒 ≤ monCount-1，观测到更大值即连续编号卡
-        boolean seqMode = pendulum && (globalAnchors || maxObservedOffset >= monCount);
         // 标记位域：0=未标 1=对方发动(红勾) 2=我方发动(绿勾)，同段落双方命中时绿优先
         int[] mark = new int[lineCount];
         final int nowTurn = EffectActivationLedger.getCurrentTurn();
@@ -646,18 +631,15 @@ class CardInfoBinder {
                     }
                 }
             }
-            // ② 锚点映射兑底；offset 落在辅助/适用效果等无对应段落的高序号时自然无命中
+            // ② 锚点映射兑底：先查校准表 EffectDocMap（现状脚本编号→实际段落，免改 cdb/script），
+            //    查不到再按统一原则默认映射；offset 落在辅助/适用效果等无对应段落的高序号时自然无命中
             if (hits.isEmpty() && uid > DataManager.MAX_STRING_ID) {
                 int offset = (int) (uid & 0xf);
-                int hitDoc = -1;
-                for (int[] m : meta) {
-                    if (!pendulum) {
-                        if (m[1] == offset) { hitDoc = m[0]; break; }
-                    } else if (seqMode) {
-                        if (m[0] == offset) { hitDoc = m[0]; break; }
-                    } else if (m[2] == 2 && m[3] == offset) {
-                        hitDoc = m[0];
-                        break;
+                int hitDoc = EffectDocMap.getDoc(context, (int) (uid >>> 4), offset);
+                if (hitDoc > docIdx) hitDoc = -1;   // 当前语言分段数少于校准表推定段数（罕见异体文本）：校准失效回默认
+                if (hitDoc < 0) {
+                    for (int[] m : meta) {
+                        if (pendulum ? (m[0] == offset) : (m[1] == offset)) { hitDoc = m[0]; break; }
                     }
                 }
                 if (hitDoc >= 0) {
