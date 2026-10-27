@@ -140,7 +140,7 @@ public class MoveEventApplier {
                 // 对方「非手卡→手卡」且消息与卡对象均无卡码（遮蔽型服务器的卡组/未知来源入手）：
                 // 真实卡码由紧随其后的 MSG_CONFIRM_CARDS 送达。此时不启动飞行动画（也不关动画闸门，
                 // 使确认消息尽快派发），把卡冻结在卡组顶坐标等待写码后直接正面飞入；
-                // 已有卡码（本端主机解遮蔽/墓地等公开区来源）仍走正常揭示飞行，行为不变
+                // 已有卡码（墓地/除外/场上表侧等公开区来源，主机侧不遮蔽也不泄露）仍走正常揭示飞行，行为不变
                 boolean freezeForConfirm = newLoc == CardLocation.Hand.value()
                         && (oldLoc & 0x7f) != CardLocation.Hand.value()
                         && code == 0 && card.code == 0 && newCtrl == 1
@@ -165,10 +165,11 @@ public class MoveEventApplier {
         // 卡片从任意非手卡区域（卡组 / 墓地 / 除外 / 额外 / 场上 / 超量素材）经效果加入手卡时，
         // 把入手的卡亮出到手牌展示片刻。普通抽卡走 MSG_DRAW 不经本 MSG_MOVE 分支，故这里不会
         // 误挂在正常抽卡上；newCtrl 已在方法开头经 localPlayer 转为本地视角索引。
-        // 揭示范围与服务端解遮蔽条件严格对齐（DuelAnalyzer MSG_MOVE：toHand = cl&HAND && !(pl&HAND)
-        // 即对「任意非手卡→手卡」的移动到对手公开真实卡码），旧实现只覆盖卡组/墓地/除外/额外
-        // 四个来源，导致对方「场上怪兽/魔陷回手」「超量素材回手」等入手不播揭示动画、直接背面入手
-        //（用户反馈：对面加入手卡的卡必须全部展示动画）。洗切不在此处播放：引擎会为「非抽卡入手」
+        // 揭示范围以「本端收到的 MSG_MOVE 是否带真实卡码」为准：主机侧对对手一律遮蔽入手卡码
+        //（DuelAnalyzer MSG_MOVE 对齐 single_duel.cpp L969-971），因此对手「卡组→手卡」的私有入手
+        // 到本端恒为 code==0，只走上面的 freezeForConfirm（等 MSG_CONFIRM_CARDS 补码或超时背面入位），
+        // 不会在此翻面亮出对手刚拿到的卡；只有公开来源（墓地/除外/场上等）与回放/单人全量视角才进入本揭示。
+        // 洗切不在此处播放：引擎会为「非抽卡入手」
         // 置 shuffle_hand_check 并发出 MSG_SHUFFLE_HAND，由 DeckHandMotionManager.applyShuffleHand 唯一播放一次。
         // 例外（用户规格，对齐 C++）：从场上离场的里侧表示卡回手不做任何翻面/高亮确认——gframe 的
         // MSG_MOVE 分支（duelclient.cpp L2994-2998）对里侧回手卡只 SetCode、绝无确认动画，离场翻开确认

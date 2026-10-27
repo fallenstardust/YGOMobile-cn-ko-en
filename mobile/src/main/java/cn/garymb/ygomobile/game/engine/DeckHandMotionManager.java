@@ -206,7 +206,7 @@ public class DeckHandMotionManager {
                 boolean newlyKnown = pcard.code == 0;
                 pcard.setCode(code);
                 // 首次经确认拿到卡码的手卡补翻面揭示（对齐 C++ L2577-2578 手卡高亮展示）；
-                // 卡码已在 MSG_MOVE 路径已知（本端主机解遮蔽/公开区来源）时揭示窗口已开，
+                // 卡码已在 MSG_MOVE 路径已知（公开区来源入手）时揭示窗口已开，
                 // 不重复播放，本机作为主机的既有观感保持不变
                 if (newlyKnown && loc == CardLocation.Hand.value() && !engine.field.instantPlace) {
                     applyMoveToHandReveal(lp, pcard, false);
@@ -283,15 +283,20 @@ public class DeckHandMotionManager {
                     if (c != null) engine.field.moveCardAnimated(c, 10, 30);
                 }
             }
-            // 回放快进重排（即时落位）：不持闸，且整段直接同步执行（见下）
-            if (!engine.field.instantPlace) {
-                engine.animHoldUntilMs = System.currentTimeMillis()
-                        + preDelay + 30L * 17L + 100L;
-            }
         };
         if (engine.field.instantPlace) {
+            // 回放快进重排（即时落位）：不持闸，整段直接同步执行
             shuffleWork.run();
         } else {
+            // 统一闸门必须在派发本条 MSG_SHUFFLE_DECK 时就同步持有、覆盖「正向排布→抖动→
+            // 倒转排布」整段并留余量。C++ 靠 WaitFrameSignal 把整段洗牌同步阻塞在消息线程上，
+            // 紧随其后的 MSG_DECK_TOP（field.cpp L996-1007：翻转态下洗牌后重新揭示新顶卡）要等
+            // 洗牌彻底结束才处理；旧实现把持闸写在延迟的 shuffleWork 里，闸门会在正向排布结束、
+            // shuffleWork 尚未运行（deck_reversed 仍为临时 false）时先放开，使 MSG_DECK_TOP 抢先写
+            // 顶卡卡码、随即又被 shuffleWork 的 setCode(0) 抹掉——即天变地异洗牌后顶卡变暗、
+            // 直到下次抽卡重新揭示的泄露式缺陷
+            engine.animHoldUntilMs = System.currentTimeMillis()
+                    + preDelay + 30L * 17L + (rev ? 10L * 17L : 0L) + 150L;
             engine.mainHandler.postDelayed(shuffleWork, preDelay);
         }
         postFieldChanged();
@@ -480,10 +485,11 @@ public class DeckHandMotionManager {
     }
 
     /**
-     * 卡片从卡组 / 墓地 / 除外区 / 额外卡组经效果加入手卡（引擎对此类移动发 MSG_MOVE 而非
+     * 卡片从公开区（墓地 / 除外区 / 场上等）经效果加入手卡（引擎对此类移动发 MSG_MOVE 而非
      * MSG_DRAW）：把入手的卡亮出到手牌并施加行进蚂蚁线高亮；<b>对方</b>卡额外做「卡背→正面」
-     * 翻面以供对手确认（新版服务端已对 MSG_MOVE→HAND 解除遮蔽，对手拿得到真实卡码；
-     * 旧版/第三方仍遮蔽时，公开区来源的卡码由本端自行保留，持闸窗口内遮蔽零刷新不再盖码），
+     * 翻面以供确认（仅当本端收到的这条 MSG_MOVE 带真实卡码时成立：公开来源、回放/单人全量视角；
+     * 主机侧对私有入手一律遮蔽卡码 single_duel.cpp L969-971，此时卡码只可能由 MSG_CONFIRM_CARDS
+     * 补足，无确认则卡保持背面，不得翻面），
      * <b>己方</b>卡本就正面、不翻给对方看，只高亮展示。
      *
      * <p>洗切不在这里合成：引擎随后会为「非抽卡入手」发出 MSG_SHUFFLE_HAND，由

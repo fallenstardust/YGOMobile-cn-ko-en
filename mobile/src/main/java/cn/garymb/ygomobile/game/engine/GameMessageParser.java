@@ -104,6 +104,8 @@ public class GameMessageParser {
         void onAnnounceNumber(int player, ByteBuffer data);
         /** duelclient.cpp MSG_CARD_HINT L4094-4100：controler(1) location(1) sequence(1) subseq(1，C++ 读入即弃) hintType(1) value(4) */
         void onCardHint(int player, int location, int sequence, int hintType, int value);
+        /** duelclient.cpp MSG_PLAYER_HINT L4135-4166：player(1) chtype(1) value(4)——CARD_QUESTION(谜题)描述提示特判禁查墓地 */
+        void onPlayerHint(int player, int hintType, int value);
         /** duelclient.cpp MSG_BECOME_TARGET L3486-3497：count(1) + count×[ctrl1 loc1 seq1 ss1(忽略)] */
         void onBecomeTarget(int count, ByteBuffer data);
         /** duelclient.cpp MSG_TAG_SWAP L4175-4287：player(1) mcount(1) ecount(1) pcount(1) hcount(1) topcode(4) + hcount×code(4) + ecount×code(4)，整段载荷交 handler 重建双方堆区 */
@@ -574,6 +576,14 @@ public class GameMessageParser {
                 int chType = buf.get() & 0xFF;
                 int chValue = buf.getInt();
                 handler.onCardHint(chPlayer, chLocation, chSequence, chType, chValue);
+                break;
+            }
+            case PlayerHint: {
+                // duelclient.cpp MSG_PLAYER_HINT L4137-4139：player(1) chtype(1) value(4) 共 6 字节
+                int phPlayer = buf.get() & 0xFF;
+                int phType = buf.get() & 0xFF;
+                int phValue = buf.getInt();
+                handler.onPlayerHint(phPlayer, phType, phValue);
                 break;
             }
             case TagSwap:

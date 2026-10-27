@@ -63,6 +63,13 @@ public class GameField {
     public static final int CHINT_DESC_ADD = 6;
     /** duelclient.cpp MSG_CARD_HINT L4106 CHINT_DESC_REMOVE：移除一条提示，计数归零才真正删除 */
     public static final int CHINT_DESC_REMOVE = 7;
+    /** ocgcore common.h L379 PHINT_DESC_ADD：MSG_PLAYER_HINT 追加一条玩家级描述提示 */
+    public static final int PHINT_DESC_ADD = 6;
+    /** ocgcore common.h L380 PHINT_DESC_REMOVE：MSG_PLAYER_HINT 撤回一条玩家级描述提示 */
+    public static final int PHINT_DESC_REMOVE = 7;
+    /** gframe client_field.h L195 CARD_QUESTION（谜题）：作为 MSG_PLAYER_HINT 的 value 下发时，
+     *  本端进入/解除「不可确认墓地」禁止态（对齐 duelclient.cpp MSG_PLAYER_HINT L4139-4150） */
+    public static final int CARD_QUESTION = 38723936;
 
     public static class PlayerField {
         public int lp;
@@ -162,6 +169,14 @@ public class GameField {
     /** HINT_ZONE 通讯（duelclient.cpp L1529-1572）展开出的被标注魔陷格集，位布局与 disabledField 同构（本地视角：seat0 MZ bits0-6 / SZ bits8-15，seat1 高 16 位）；仅接受无效类效果的 SZ 位来位——无限泡影类脚本效果处理成功时 Duel.Hint(HINT_ZONE, tp, 0x1<<(seq+8)) 宣告自身所在列的 SZONE 位，本端把它标到同列两张魔陷格——同侧 SZONE 格（同 seq）与对侧镜像 SZONE 格（4-seq，aux.GetColumn 同式）；仅主列 seq 0-4（额外怪兽列无魔陷对应格）。MZ 位（bit0-6/16-22）为封锁格子类卡片（封锁龙/黄金国亡灵 等，效果伴随 MSG_FIELD_DISABLED 白 X）的怪兽纵列宣告，桌面端只对掩码位瞬时高亮 40 帧、从不扩张魔陷格；本端若同样展开会出现「白 X 同纵列魔陷格错误显示泡影标注」的误报，故不产生持久标注。效果携 RESET_PHASE+PHASE_END，故下一个 MSG_NEW_TURN 清除。 */
     public int hintZoneMask;
     public boolean deckReversed;
+    /** 本次灵摆召唤预演已闪动的两侧刻度卡：同批逐张放置询问（ocgcore special_summon
+     *  每张怪兽各发一条 MSG_SELECT_PLACE）只在首次闪动，刻度对象未换期间不重复；
+     *  整组特殊召唤结束（MSG_SPSUMMONED）后清空，下次灵摆召唤重新闪动（仅主线程读写） */
+    public ClientCard pendulumPreludeL;
+    public ClientCard pendulumPreludeR;
+    /** 灵摆召唤标记：MSG_SELECT_UNSELECT_CARD 含 LOCATION_HAND 候选且两侧灵摆区有卡时置 true，
+     *  MSG_SELECT_PLACE 据此判断是否播放灵摆闪动预演；MSG_SPSUMMONED / IDLECMD / BATTLECMD / CHAIN 时清除 */
+    public boolean pendulumSelectPending;
     public boolean cantCheckGrave;
     public boolean tagSurrender;
     public boolean tagTeammateSurrender;
@@ -313,6 +328,9 @@ public class GameField {
         disabledField = 0;
         hintZoneMask = 0;
         deckReversed = false;
+        pendulumPreludeL = null;
+        pendulumPreludeR = null;
+        pendulumSelectPending = false;
         cantCheckGrave = false;
         tagSurrender = false;
         tagTeammateSurrender = false;
@@ -503,6 +521,18 @@ public class GameField {
 
     public void applyCardHint(int localControler, int location, int sequence, int hintType, int value) {
         cards.applyCardHint(localControler, location, sequence, hintType, value);
+    }
+
+    /**
+     * 玩家级描述提示（对齐 duelclient.cpp MSG_PLAYER_HINT L4139-4150）：仅当 CARD_QUESTION（谜题）
+     * 提示挂在本地玩家（localPlayer==0）时，ADD 置、REMOVE 清 cantCheckGrave「不可确认墓地」禁止态，
+     * 由本端点击墓地处（GameFieldControllerBase.showCardCommandMenu）拦截弹 cmdmenudialog。对方座位
+     *（localPlayer==1）挂同类提示由其各自客户端自行禁止，本端墓地不受影响，故此处直接忽略。
+     */
+    public void applyPlayerHint(int localPlayer, int hintType, int value) {
+        if (value == CARD_QUESTION && localPlayer == 0) {
+            cantCheckGrave = (hintType == PHINT_DESC_ADD);
+        }
     }
 
     public void addChainTarget(int localControler, int location, int sequence) {

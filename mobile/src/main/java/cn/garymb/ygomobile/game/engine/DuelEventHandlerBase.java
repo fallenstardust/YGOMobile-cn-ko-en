@@ -324,6 +324,11 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
     @Override
     public void onSpSummoned() {
         engine.hintManager.setEventString(1606, "怪兽特殊召唤成功");
+        // 整组特殊召唤结束：清空本次灵摆召唤的刻度闪动记录，使下一次灵摆召唤重新闪动
+        //（同批逐张 MSG_SELECT_PLACE 之间只会收到每张的 MSG_SPSUMMONING，不会到这里）
+        engine.field.pendulumPreludeL = null;
+        engine.field.pendulumPreludeR = null;
+        engine.field.pendulumSelectPending = false;
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onFieldChanged();
         });
@@ -499,7 +504,7 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
         for (int i = 0; i < count; i++) {
             ClientCard pcard = engine.field.getCard(p, deckLoc, top - i);
             if (pcard != null && (!engine.field.deckReversed || codes[i] != 0)) {
-                pcard.setCode(codes[i] & 0x7fffffff);
+                applyDrawCode(pcard, localDrawCode(p, codes[i]));
             }
         }
         // 2) 起手 N 张 / 单独抽卡动画：严格对齐 C++ L3542-3552 的逐张时序——每次从卡组顶取一张、
@@ -532,6 +537,11 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
     /**
      * 单张抽卡（onDraw 按 5 帧节拍调度调用，对齐 duelclient.cpp MSG_DRAW 循环体 L3543-3550）：
      * 从卡组顶移除 → 加入手卡 → 该卡从卡组位飞入 + 已有手卡重排让位（10 帧）→ 播放抽卡音效。
+     * <p>
+     * 对对手抽卡（p==1），务必将 handFlipT 显式置为 0f（背面朝下）。因对手抽卡的 code 已由服务器遮蔽为 0，
+     * 但若复用之前作为手牌的旧对象残留非零 code，渲染层仍会绘制卡面。故通过强制翻面进度回退到背面终态（0f），
+     * 即使 code 异常不为 0，handShowsFace 也会返回 false 而画卡背；同时确保代码读取的是本次收到的 masked code
+     *（而非对象可能持有的链备份 chain_code/displayCode）。
      */
     protected void drawOneCard(int p, int deckLoc, int handLoc, int[] codes, int idx) {
         int t = engine.field.getCardCount(p, deckLoc) - 1;
@@ -541,14 +551,23 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
             pcard = new ClientCard();
             pcard.owner = p;
             pcard.controler = p;
-            if (idx < codes.length) pcard.setCode(codes[idx] & 0x7fffffff);
         }
+        // 关键：立即写入本次收到的卡码（已含服务器的遮蔽处理：对手抽卡时为 0），防止复用卡组顶
+        // 旧对象时残留上一次的卡码、或经 chain_code 回退取值，造成信息泄露。必须在设置 handFlipT
+        // 之前执行，使卡码与翻面态一致。
+        if (idx < codes.length) applyDrawCode(pcard, localDrawCode(p, codes[idx]));
+        
         // 我方抽卡入手恒为正面（对齐 C++ gframe 我方手卡只按卡码贴卡面、从不走卡背）：从卡组顶
         // 取回的 ClientCard 对象可能残留此前作为手卡 / 洗切被置 0 的 handFlipT，若放任不管，
         // updateHandFlip 会以 0→1 逐帧推进，出现「背面入手→短暂停留→翻开」与原版不一致的观感。
         // 入手前直接把翻面进度吸附到正面终态，渲染线程永不看到其卡背态；code==0 时渲染层仍按卡码
         // 画卡背不会误露。仅对 p==0（我方视角）生效，对方抽卡维持遮蔽背面语义不变
-        if (p == 0) pcard.handFlipT = 1f;
+        if (p == 0) {
+            pcard.handFlipT = 1f;
+        } else {
+            // 对手的抽卡必须保持卡背：强制 backface 终态（0f）+ 禁止显示 code=0 时的 cardback
+            pcard.handFlipT = 0f;
+        }
         engine.field.addCard(p, handLoc, 0, pcard);
         for (ClientCard hc : engine.field.players[p].hand) {
             // 冻结待码的入手卡不参与让位重排，避免被提前拽离卡组顶坐标
@@ -558,6 +577,35 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onFieldChanged();
         });
+    }
+
+    /**
+     * 抽卡写码：遮蔽零码时把 chain_code 一并清零。setCode(0) 会把被顶掉的旧卡码备份进
+     * chain_code（ClientCard L186-192），而渲染层在卡飞行途中按 {@code code==0 ? chain_code}
+     * 回退取卡面（FieldCardRenderer L185，对齐 drawing.cpp L619-620）——复用卡组顶旧对象时
+     * 那条回退分支就能把别人的卡画出来。语义与 DeckHandMotionManager.setHandCode 一致：
+     * 遮蔽即遗忘，chain_code 只服务「已公开卡飞行中继续绘旧卡面」，从不服务遮蔽零码。
+     */
+    private static void applyDrawCode(ClientCard c, int newCode) {
+        c.setCode(newCode);
+        if (newCode == 0) c.chain_code = 0;
+    }
+
+    /**
+     * 本地视角下的抽卡卡码（对齐服务端 single_duel.cpp MSG_DRAW L1198-1204 的遮蔽语义、
+     * operations.cpp draw_command L404 的表侧判定）：MSG_DRAW 卡码 bit31 表示该卡是否表侧被抽
+     *（仅 EFFECT_PUBLIC 抽入的卡表侧）。里侧抽卡（bit31 未置位）属私有信息——实况局主机已在
+     * DuelAnalyzer 侧对对手把码清零，但 solo / 主机全量视图（DuelViewBroadcaster.sendDualViewAndRecord
+     * 的 solo 分支）会把对手抽卡真实码直接送达本地连接，而本端手卡渲染只按 {@code code != 0}
+     * 翻成正面（GameFieldMotionBase.updateHandFlip L617 与 FieldCardRenderer.handShowsFace），
+     * 于是出现「抽卡阶段常规抽卡 / 效果抽卡都把对方抽的卡亮出卡面」的泄露。故此处对对手（p==1）
+     * 的私有抽卡把码遮蔽为 0、令手卡保持卡背；本方抽卡（p==0）与公开抽卡（bit31 置位，如天变
+     * 地异的 public 抽卡）保留原码。检索类「卡组→手卡」不走本路径（经 MSG_CONFIRM_CARDS 揭示），
+     * 其展示不受影响——即「抽卡不展示、非抽卡把卡组卡加入手卡才展示」的口径。
+     */
+    private static int localDrawCode(int p, int rawCode) {
+        if (p == 1 && (rawCode & 0x80000000) == 0) return 0;
+        return rawCode & 0x7fffffff;
     }
 
     @Override

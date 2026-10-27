@@ -424,17 +424,28 @@ final class DuelAnalyzer extends DuelAnalyzerBase {
                     int cl = msg[body + 9] & 0xFF;
                     int cs = msg[body + 10] & 0xFF;
                     int cp = msg[body + 11] & 0xFF;
+                    int pp = msg[body + 7] & 0xFF;
                     boolean hide = EngineMessage.shouldHideFacedownCode(cp);
                     if ((cl & EngineMessage.LOCATION_ONFIELD) != 0) {
                         cp = EngineMessage.stripRevealFlag(msg, body + 8);
                     }
-                    // 效果将非抽卡入手的卡向对手公开卡码（PSCT：非抽卡入手需展示，客户端据此翻面确认）；
-                    // 正常抽卡走 MSG_DRAW 不经此分支，随后 MSG_SHUFFLE_HAND/refreshHand 会重新清零里侧手卡。
-                    boolean toHand = (cl & EngineMessage.LOCATION_HAND) != 0
-                            && (pl & EngineMessage.LOCATION_HAND) == 0;
+                    // 遮蔽基准对齐 single_duel.cpp L969-971：目标是卡组/手卡（非墓地/超量素材）的
+                    // 移动一律对对手清零卡码。「用卡的效果从卡组抽卡/随机堆顶入手」属私有信息，
+                    // 只有脚本显式公开的检索才由 MSG_CONFIRM_CARDS 通道把卡码送达双方；旧实现按
+                    // 「任意非手卡→手卡」豁免入手方向，使整个卡组入手都 broadcast 了真实卡码
+                    //（用户反馈的信息泄露）。
+                    // 例外（本端主机相对 C++ 的有意增强，不造成泄露）：来源已是公开区（墓地/除外/
+                    // 场上表侧/超量素材）的入手保留卡码，供对手端播「卡背→正面」确认动画——
+                    // 这些卡的身份本来就可查，隐藏它们只会丢失动画而换不到任何保密收益。
+                    boolean fromPublicZone = (pl & (OcgDuelEngine.LOCATION_GRAVE
+                            | OcgDuelEngine.LOCATION_REMOVED | EngineMessage.LOCATION_OVERLAY)) != 0
+                            || ((pl & EngineMessage.LOCATION_ONFIELD) != 0
+                            && (pp & EngineMessage.POS_FACEUP) != 0);
+                    boolean revealPublicToHand = (cl & EngineMessage.LOCATION_HAND) != 0 && fromPublicZone;
                     cursor = body + 16;
                     byte[] full = range(msg, start, cursor);
-                    if (!toHand && (cl & (OcgDuelEngine.LOCATION_GRAVE | EngineMessage.LOCATION_OVERLAY)) == 0
+                    if (!revealPublicToHand
+                            && (cl & (OcgDuelEngine.LOCATION_GRAVE | EngineMessage.LOCATION_OVERLAY)) == 0
                             && (((cl & (OcgDuelEngine.LOCATION_DECK | OcgDuelEngine.LOCATION_HAND)) != 0) || hide)) {
                         writeInt32(msg, body, 0);
                     }

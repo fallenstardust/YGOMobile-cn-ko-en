@@ -124,7 +124,7 @@ public class ClientCard {
     public float hsGatherX;
     /** 手卡翻面进度：1=正面、0=卡背、-1=未参与翻面；目标值恒由卡码决定（code!=0→1），updateHandFlip 每帧 0.2 靠拢（5 帧，对齐 MSG_SHUFFLE_HAND L2672 dRot 步进）。手卡走相机 billboard 不读 curRot*，只有本值驱动的 X 轴挤压+正/背面贴图切换才能真正翻面；效果入手时把对方手卡置 0 供其确认，洗切清零后自动翻回卡背。 */
     public float handFlipT = -1f;
-    /** 入手揭示持闸窗口内：本卡正处于「非抽卡入手向对手翻面确认」的展示期（DeckHandMotionManager.applyMoveToHandReveal 置位，展示结束即清除）。实况联机加入遮蔽式服务端时，MSG_MOVE 解除遮蔽带来的真实卡码会被紧随的手卡遮蔽刷新（MSG_UPDATE_DATA/MSG_UPDATE_CARD/MSG_SHUFFLE_HAND 零码块）打回 0，翻面确认半途变回卡背；持闸窗口内与回放态 preserveMaskedHandCode 同法保护，窗口结束后恢复正常遮蔽语义。 */
+    /** 入手揭示持闸窗口内：本卡正处于「非抽卡入手向对手翻面确认」的展示期（DeckHandMotionManager.applyMoveToHandReveal 置位，展示结束即清除）。揭示用的真实卡码来自公开来源入手的 MSG_MOVE 或随后的 MSG_CONFIRM_CARDS，而紧随的手卡遮蔽刷新（MSG_UPDATE_DATA/MSG_UPDATE_CARD/MSG_SHUFFLE_HAND 零码块）会把它打回 0，翻面确认半途变回卡背；持闸窗口内与回放态 preserveMaskedHandCode 同法保护，窗口结束后恢复正常遮蔽语义。 */
     public boolean revealHeld;
     /** 遮蔽入手冻结待码：客机加入遮蔽型服务器时，对方「卡组→手卡」的 MSG_MOVE 卡码为 0，而真实卡码由紧随其后的 MSG_CONFIRM_CARDS 送达。本标记的卡已入手但冻结在卡组顶坐标不动（不参与手牌重排/飞入），等写入卡码后由 applyMoveToHandReveal 直接以正面飞入手卡，消除「背面入手→翻开」两步观感；无确认消息时超时兜底释放照旧背面入位。 */
     public boolean pendingFaceupAdd;

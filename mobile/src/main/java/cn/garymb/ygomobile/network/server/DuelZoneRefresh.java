@@ -135,12 +135,11 @@ final class DuelZoneRefresh {
             return;
         }
         int position = EngineMessage.getPosition(blocks, 12);
-        // 手卡位置在本端口是里侧（POS_FACEDOWN），但“效果入手需向对手展示”已经由 MSG_MOVE
-        // 分支公开了卡码；紧随其后的这次 refreshSingle 若仍按里侧清零，会把刚解除的卡码
-        // 再次盖掉，对手侧永远拿不到入手卡的卡面 → 翻面确认无从渲染。故手卡不按里侧遮蔽。
-        // （C++ single_duel.cpp RefreshSingle L1586-1616 对非场上位置一律 hide，此处为有意增强）
-        boolean hide = (position & EngineMessage.POS_FACEDOWN) != 0
-                && (location & EngineMessage.LOCATION_HAND) == 0;
+        // 对齐 single_duel.cpp RefreshSingle L1600：非场上位置只要里侧表示一律遮蔽卡码（含手卡）。
+        // 手卡不能豁免：效果从卡组抽卡/随机入手的卡由 MSG_MOVE 清零后，若这里仍按全量下发，
+        // 对手会凭这次刷新拿到真实卡码并把该手卡画成正面（信息泄露）；
+        // 真正应公开的入手（检索确认、表侧加入手）由 MSG_CONFIRM_CARDS 或表侧姿态自然通过。
+        boolean hide = (position & EngineMessage.POS_FACEDOWN) != 0;
         if ((location & EngineMessage.LOCATION_ONFIELD) != 0) {
             hide = EngineMessage.shouldHideFacedownCode(position);
             EngineMessage.stripRevealFlag(blocks, 12);

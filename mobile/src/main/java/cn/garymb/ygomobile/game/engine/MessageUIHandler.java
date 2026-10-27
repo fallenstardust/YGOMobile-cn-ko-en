@@ -6,6 +6,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 import cn.garymb.ygomobile.audio.SoundManager;
+import cn.garymb.ygomobile.game.gamefield.ClientCard;
+import cn.garymb.ygomobile.game.gamefield.GameField;
 import cn.garymb.ygomobile.ui.dialogs.duel.DuelLogDialog;
 import ocgcore.DataManager;
 
@@ -197,6 +199,7 @@ public class MessageUIHandler {
 
     public void onSelectBattleCmd(ByteBuffer data) {
         if (engine.replayMode) return; // 回放：SELECT 询问已录制应答，不弹选择窗不发提示
+        engine.field.pendulumSelectPending = false; // 进入战斗指令 = 灵摆召唤流程已结束/取消
         engine.dataParser.parseBattleCmd(data);
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onSelectRequired(10, null);
@@ -205,6 +208,7 @@ public class MessageUIHandler {
 
     public void onSelectIdleCmd(ByteBuffer data) {
         if (engine.replayMode) return;
+        engine.field.pendulumSelectPending = false; // 回到待机指令 = 灵摆召唤流程已结束/取消
         engine.dataParser.parseIdleCmd(data);
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onSelectRequired(11, null);
@@ -246,6 +250,7 @@ public class MessageUIHandler {
 
     public void onSelectChain(ByteBuffer data) {
         if (engine.replayMode) return;
+        engine.field.pendulumSelectPending = false; // 连锁窗口 = 灵摆放置询问已结束/取消
         // 对齐 duelclient.cpp L2158-2163：存在"发动并作为连锁"项(EDESC_OPERATION=1)时用 556，否则 550
         boolean contiExist = false;
         try {
@@ -380,6 +385,8 @@ public class MessageUIHandler {
 
     public void onSelectUnselectCard(ByteBuffer data) {
         if (engine.replayMode) return;
+        // 问题②：检测本消息是否为灵摆召唤的手卡选怪兽阶段，置起 pendulumSelectPending 门控后续闪动动画
+        detectPendulumSelect(data);
         // duelclient.cpp L2022-2069：panelmode 遍历两批候选（头为 player/finishable/cancelable/min/max），仅非 panelmode 显示提示栏
         if (!engine.hintManager.selectCardPanelMode(data, 5, 2)) {
             String hint = engine.hintManager.selectRangeHint(data, 560, "选择卡片", 3);
@@ -388,5 +395,52 @@ public class MessageUIHandler {
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onSelectRequired(26, data);
         });
+    }
+
+    /**
+     * 检测本次 MSG_SELECT_UNSELECT_CARD 是否为灵摆召唤的"从手卡选怪兽"阶段
+     *（对齐 ocgcore operations.cpp PROC_G L3011-3093 的 UNSELECT_CARD→SELECT_PLACE 序列）：
+     * 候选卡含 LOCATION_HAND 且选择方两侧灵摆区有卡时置 pendulumSelectPending=true，
+     * 后续 MSG_SELECT_PLACE 据此门控灵摆闪动预演。
+     */
+    private void detectPendulumSelect(ByteBuffer data) {
+        GameField field = engine.field;
+        field.pendulumSelectPending = false;
+        if (data == null || data.remaining() < 6) return;
+        try {
+            ByteBuffer dup = data.duplicate();
+            dup.order(ByteOrder.LITTLE_ENDIAN);
+            int selectingPlayer = engine.localPlayer(dup.get() & 0xFF); // player
+            dup.get(); // finishable
+            dup.get(); // cancelable
+            dup.get(); // min
+            dup.get(); // max
+            int count1 = dup.get() & 0xFF;
+            boolean hasHand = false;
+            for (int i = 0; i < count1 && dup.remaining() >= 8; i++) {
+                dup.getInt(); // code
+                int ctrl = engine.localPlayer(dup.get() & 0xFF);
+                int loc = dup.get() & 0xFF;
+                dup.get(); // seq
+                dup.get(); // subseq
+                if ((loc & 0x02) != 0 && ctrl == selectingPlayer) {
+                    hasHand = true;
+                }
+            }
+            if (!hasHand) return;
+            // 检查两侧灵摆区是否有卡（MR4: szone 0/4，旧规则: szone 6/7）
+            int duelRule = field.dInfo.duelRule;
+            int leftSeq = duelRule >= 4 ? 0 : 6;
+            int rightSeq = duelRule >= 4 ? 4 : 7;
+            if (selectingPlayer < 0 || selectingPlayer > 1) return;
+            GameField.PlayerField pf = field.players[selectingPlayer];
+            if (pf == null) return;
+            ClientCard left = pf.spellZone.size() > leftSeq ? pf.spellZone.get(leftSeq) : null;
+            ClientCard right = pf.spellZone.size() > rightSeq ? pf.spellZone.get(rightSeq) : null;
+            if (left != null && left.code != 0 && right != null && right.code != 0) {
+                field.pendulumSelectPending = true;
+            }
+        } catch (Exception ignored) {
+        }
     }
 }

@@ -173,7 +173,15 @@ public class FieldCardRenderer {
         boolean front = isFrontFacing(view.mModel);
 
         int glow = pickGlowColor(c);
-        if (glow != 0) drawGlow(glow, alpha, front);
+        // is_highlighting（灵摆刻度闪动 / MSG_BECOME_TARGET）的青色改为围绕卡片的边缘光环：
+        // 旧实现用 drawGlow 画 1.10× 的整块同色底衬，卡面淡到近透明时会突兀地露出满屏蓝底；
+        // 光环只沿矩形边界发光、卡面以内透明，卡身闪没时仍余一圈青边（对齐 C++ drawing.cpp
+        // L646-651 的 is_highlighting 走独立描边材质 DrawSelectionLine 而非填充底框）。
+        // 亮度不随卡面淡出而取 max(alpha,0.85)：C++ 描边不受 curAlpha(dim) 影响，闪动才看得见
+        if (glow != 0) {
+            if (c.is_highlighting) drawHighlightGlow(glow, Math.max(alpha, 0.85f), front);
+            else drawGlow(glow, alpha, front);
+        }
         // 发动抬跳矩形边缘外发光（用户规格：围绕该卡矩形边缘的发光环随抬高亮起、
         // 回落恢复原状；颜色随卡种——怪兽 holo 橙/魔法荧光绿/陷阱荧光玫红）：
         // 强度 c.bounceGlow 由动画层每帧写入，与抬高量同一条正弦半周期曲线，严格同步
@@ -285,7 +293,7 @@ public class FieldCardRenderer {
         return 0.5f + 0.5f * (float) Math.sin((double) view.animTimeMs * 0.001);
     }
 
-    /** 本卡是否为应浮现卡图的「已公开卡码的场上里侧卡」（不含手卡/堆叠区/移动中卡片） */
+        // 本卡是否为应浮现卡图的「已公开卡码的场上里侧卡」（不含手卡/堆叠区/移动中卡片）：手卡严禁使用 displayCode()，只读 code。若对手抽卡的 code 被服务器遮蔽为 0，而对象残留旧 code（如从 reuse deck card 或 setCode(0) backup），此处的 isBreathRevealCard 对 location!=0x0C 一律 false，不会触发呼吸。
     private static boolean isBreathRevealCard(ClientCard c) {
         return (c.location & 0x0C) != 0 && !c.isFaceUp() && !c.isOverlayMaterial()
                 && !c.is_moving && c.displayCode() > 0;
@@ -386,6 +394,25 @@ public class FieldCardRenderer {
         float a = cardAlpha * (0.55f + 0.30f * (float) Math.sin(view.animTimeMs * 0.005));
         view.quad.drawQuadColor(view.mModelTmp, ((color >> 16) & 0xFF) / 255f,
                 ((color >> 8) & 0xFF) / 255f, (color & 0xFF) / 255f, a);
+    }
+
+    /**
+     * is_highlighting 的围绕卡片边缘的青色光环（取代旧整块 1.10× 同色底衬）：经
+     * GLQuadBatch.drawQuadRectEdgeGlow 以「卡片半边长=1」逐像素求到矩形边缘的距离——
+     * 边界处最亮、向外连续淡到全透，卡面以内不发光，故卡身淡到近透明时只余一圈青边、
+     * 不再露出满屏蓝底；深度偏移比常规 drawGlow 更深（-0.008），与抬跳光环同屏不共面 z-fighting；
+     * 背面朝向相机时偏移取反，保证光环恒落在卡片之下
+     */
+    private void drawHighlightGlow(int color, float cardAlpha, boolean front) {
+        System.arraycopy(view.mModel, 0, view.mModelTmp, 0, 16);
+        Matrix.translateM(view.mModelTmp, 0, view.mModelTmp, 0, 0f, 0f, front ? -0.008f : 0.008f);
+        // 晕带宽度（卡片半边长单位）固定 0.16；四边形放大倍率再留 0.06 余量使 alpha 在边界前已淡到零
+        float w = 0.16f;
+        float k = 1.0f + w + 0.06f;
+        Matrix.scaleM(view.mModelTmp, 0, view.mModelTmp, 0, k, k, 1f);
+        view.quad.drawQuadRectEdgeGlow(view.mModelTmp,
+                ((color >> 16) & 0xFF) / 255f, ((color >> 8) & 0xFF) / 255f, (color & 0xFF) / 255f,
+                cardAlpha, k, w);
     }
 
     /**

@@ -249,6 +249,13 @@ public class DuelEventHandler extends DuelEventHandlerBase {
     }
 
     @Override
+    public void onPlayerHint(int player, int hintType, int value) {
+        // duelclient.cpp MSG_PLAYER_HINT L4135-4166：本地座位的 CARD_QUESTION(谜题)描述提示
+        // 置/清「不可确认墓地」态，使谜题发动到效果处理完毕期间本端不能点击墓地弹 cmdmenudialog
+        engine.field.applyPlayerHint(engine.localPlayer(player & 1), hintType, value);
+    }
+
+    @Override
     public void onBecomeTarget(int count, ByteBuffer data) {
         if (data == null || count <= 0) return;
         // duelclient.cpp MSG_BECOME_TARGET L3493-3500：每条 4 字节，第 4 字节（subseq）读入即弃，

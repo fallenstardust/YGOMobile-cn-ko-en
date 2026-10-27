@@ -194,8 +194,9 @@ public class GameFieldMotion extends GameFieldMotionBase {
 
     /**
      * 卡片经效果入手的揭示：把<b>对方</b>手卡的翻面进度归零（卡背起手），随后 updateHandFlip
-     * 依服务端已解除遮蔽的卡码在 5 帧内翻到正面，供对手确认“这张卡是什么”；己方卡本就正面
-     *（不翻给对方看），flip=false 时不动翻面进度，展示仅由蚂蚁线高亮承担。
+     * 依本端已拿到的卡码（公开来源入手的 MSG_MOVE，或随后写码的 MSG_CONFIRM_CARDS）在 5 帧内
+     * 翻到正面，供确认“这张卡是什么”；私有入手（卡组抽卡/随机）在本端恒为零码不翻面，
+     * 己方卡本就正面（不翻给对方看），flip=false 时不动翻面进度，展示仅由蚂蚁线高亮承担。
      * 不占用 aniFrame / 关键帧：翻面是渲染级进度（见 ClientCard.handFlipT），与卡片飞入手牌的
      * is_moving 动画可并行，也不会打断它；洗切一律等引擎的 MSG_SHUFFLE_HAND，此处不合成。
      */
@@ -255,10 +256,11 @@ public class GameFieldMotion extends GameFieldMotionBase {
      * 场上里侧卡的确认揭示（对齐 duelclient.cpp MSG_CONFIRM_CARDS field_confirm 分支 L2580-2597
      * 的 dRot 翻开 + 停留段 is_highlighting + MoveCard 盖回）：从卡组 / 墓地 / 除外区 / 额外卡组
      * 直接里侧盖放到场上格子的卡，确认消息（MSG_CONFIRM_CARDS，本端服务器对非卡组来源双发不解
-     * 遮蔽，见 DuelAnalyzer L289-295）携真实卡码到达后，在本格原地把卡翻到面朝相机（rotX/rotY/rotZ
-     * → 0，守备盖放顺带扶正横卡）露出卡面供双方确认，停留段后由调用方 {@code moveCardAnimated}
-     * 依新姿态目标转回卡背盖回（同 revealTopCardOut 的「翻回盖背」收尾）。起点取卡片当前姿态，
-     * 对表侧卡调用为无害（目标 rotY=0 即其表侧本态）。
+     * 遮蔽，见 DuelAnalyzer L289-295）携真实卡码到达后，在本格原地按 C++ 的 dRot 轴向把卡翻开露出
+     * 卡面供双方确认（MZONE 里侧攻击与 SZONE 绕 Y 轴转 π 竖着翻开；MZONE 里侧守备绕 X 轴转 π，
+     * 面朝相机但保持横置——对齐 duelclient.cpp L2584-2587，不得把横卡扶正），停留段后由调用方
+     * {@code moveCardAnimated} 依新姿态目标转回卡背盖回（同 revealTopCardOut 的「翻回盖背」收尾）。
+     * 起点取卡片当前姿态，对表侧卡调用为无害（其恒为 FaceUp 走 else 分支 rotY→0 即表侧本态）。
      * <p>抬高 loc[2]+0.03 使翻开段凸于格底板，避免里侧落位 Z（怪兽格含素材堆 0.02+0.01n、
      * 魔陷格 0.01）与卡面共面被深度剔除；调用方随后的 moveCardAnimated 回写权威 Z。
      */
@@ -284,11 +286,20 @@ public class GameFieldMotion extends GameFieldMotionBase {
         pcard.animFromRotX = pcard.curRotX;
         pcard.animFromRotY = pcard.curRotY;
         pcard.animFromRotZ = pcard.curRotZ;
-        // 三轴全归零 → 卡面正对相机：里侧盖放 rotY≈π（守备另带 rotZ=±π/2 横置），
-        // 归一化到起点附近取最短路径翻正，与 revealTopCardOut 的 rotY π→0 同理
-        pcard.animToRotX = normalizeAngleTarget(pcard.curRotX, 0f);
-        pcard.animToRotY = normalizeAngleTarget(pcard.curRotY, 0f);
-        pcard.animToRotZ = normalizeAngleTarget(pcard.curRotZ, 0f);
+        // 翻开轴向对齐 duelclient.cpp MSG_CONFIRM_CARDS field_confirm L2580-2597：只绕单轴转 π，
+        // 其余两轴保持当前值——里侧盖放 rotY≈π（守备另带 rotZ=±π/2 横置）：
+        // 怪兽区里侧守备（position==0x8）绕 X 轴转 π（C++ dRot=(π/5,0,0)），卡面朝向相机但
+        // 保持横置展示，绝不归零 rotZ 把横卡扶正（用户反馈：翻开确认被竖着展示）；
+        // 怪兽区里侧攻击（position==0x2，C++ dRot=(0,π/5,0)）与魔陷区（L2594 同）绕 Y 轴转 π 竖着翻开
+        if (pcard.location == 0x04 && pcard.position == 0x8) {
+            pcard.animToRotX = pcard.curRotX + (float) Math.PI;
+            pcard.animToRotY = normalizeAngleTarget(pcard.curRotY, pcard.curRotY);
+            pcard.animToRotZ = normalizeAngleTarget(pcard.curRotZ, pcard.curRotZ);
+        } else {
+            pcard.animToRotX = normalizeAngleTarget(pcard.curRotX, pcard.curRotX);
+            pcard.animToRotY = normalizeAngleTarget(pcard.curRotY, 0f);
+            pcard.animToRotZ = normalizeAngleTarget(pcard.curRotZ, pcard.curRotZ);
+        }
         pcard.animTotalFrame = frame;
         pcard.is_moving = true;
         pcard.aniFrame = frame;

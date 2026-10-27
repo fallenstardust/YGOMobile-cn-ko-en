@@ -356,6 +356,13 @@ abstract class GameFieldControllerBase implements GameFieldView.OnCardClickListe
     }
 
     void showCardCommandMenu(ClientCard card, float tapX, float tapY, boolean viewButton) {
+        // 谜题（CARD_QUESTION）发动至效果处理完毕期间禁止本端查墓（对齐 event_handler.cpp
+        // L1303/L1355 墓地 LOCATION_GRAVE 分支 `if(cant_check_grave) break;`）：本次点击卡位于墓地
+        //（0x10）且本端处于 cantCheckGrave 态时直接早退，不弹 cmdmenudialog、不刷新详情（等价 C++ 作废该次点击）
+        if (card != null && card.location == 0x10
+                && engine != null && engine.getField() != null && engine.getField().cantCheckGrave) {
+            return;
+        }
         if (cmdMenuDialog == null) {
             cmdMenuDialog = new CmdMenuDialog(activity);
         }
