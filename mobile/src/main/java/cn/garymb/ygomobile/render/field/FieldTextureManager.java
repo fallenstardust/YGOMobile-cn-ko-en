@@ -22,9 +22,8 @@ import java.util.concurrent.Executors;
 /**
  * 纹理管理（多线程：工作线程解码 → GL 线程上传），由 GameFieldView 的「纹理」分栏拆出。
  * <p>
- * 独占 GL 纹理缓存（{@code textures}）、去重请求集（{@code requested}）、解码失败限频重试状态
- * （{@code texRetryTime}/{@code texRetries}）、上传队列（{@code pendingUploads}）与单线程解码池
- * （{@code texExecutor}）。卡图/场地/场地魔法/卡背等通用纹理由本类直接提供；图标/数字/阶段标签等
+ * 独占 GL 纹理缓存（{@code textures}）、去重请求集（{@code requested}）、上传队列
+ * （{@code pendingUploads}）与单线程解码池（{@code texExecutor}）。卡图/场地/场地魔法/卡背等通用纹理由本类直接提供；图标/数字/阶段标签等
  * 派生纹理的 obtain* 随各自 renderer，复用本类暴露的缓存访问点与 {@link #texExecutor()}/
  * {@link #offerUpload} 完成同样的异步上传（同包包级私有直连）。
  */
@@ -34,14 +33,15 @@ public final class FieldTextureManager {
 
     private final HashMap<Long, Integer> textures = new HashMap<>();
     private final Set<Long> requested = Collections.newSetFromMap(new ConcurrentHashMap<Long, Boolean>());
-    // 解码失败重试状态（仅 GL 线程访问）：上次请求时间 + 已尝试次数
-    private final HashMap<Long, Long> texRetryTime = new HashMap<>();
-    private final HashMap<Long, Integer> texRetries = new HashMap<>();
+    // 请求去重靠 requested 集合（每个纹理键只会排入一次解码任务，任务必定给出卡图或 unknown），
+    // 原先的「限频重试 + 尝试次数」状态已无用：解码结论不再靠时序猜
     private final ConcurrentLinkedQueue<PendingUpload> pendingUploads = new ConcurrentLinkedQueue<>();
     private ExecutorService texExecutor = Executors.newSingleThreadExecutor();
 
     private static final long COVER_SELF_KEY = -1L;
     private static final long COVER_OPP_KEY = -2L;
+    /** unknown.jpg 纹理的专用缓存键（负数键与 COVER_* 同一命名空间，避开真实卡码） */
+    private static final long UNKNOWN_KEY = -3L;
 
     public static class PendingUpload {
         final long key;
@@ -181,14 +181,29 @@ public final class FieldTextureManager {
 
     /**
      * 卡图纹理统一入口（TextureLoader 全源解码 + LRU 缓存）：
-     * ① GL 纹理缓存命中 → 直接返回；
-     * ② TextureLoader 位图缓存命中（已被预读/之前解码过）→ GL 线程同步上传，零占位帧；
-     * ③ 均未命中 → 触发 TextureLoader 异步解码，限频等待，连续 3 次落空才永久回退 unknown
+     * ① 卡码为 0（未公开/被遮蔽）→ 返回 -1，由渲染层兜底画卡背；
+     * ② 卡表查无此码 → 立即同步返回 unknown 纹理（不等异步、不先上灰色）；
+     * ③ GL 纹理缓存命中 → 直接返回；
+     * ④ TextureLoader 位图缓存命中（已被预读/之前解码过）→ GL 线程同步上传，零占位帧；
+     * ⑤ 均未命中 → 工作线程做一次确定性查找，有图即上传、无图直接落 unknown（不再多次重试）
      */
     int obtainTexture(int code, int mode, int scale) {
+        // code<=0 是「未公开/被遮蔽」的卡（对手手卡、暗盖、卡组）而不是「查无此码」：
+        // 给它贴 unknown 会把卡背位变成一张朝上的卡面，改变遮蔽语义
+        if (code <= 0) return -1;
         long key = texKey(code, mode, scale);
         Integer id = textures.get(key);
         if (id != null) return id;
+        // 卡表不认得该码：本帧直接落 unknown（用户反馈的「先灰一阵、几秒后才 unknown」
+        // 就是旧实现按 2000ms 限频重试 3 次才落地造成的）
+        if (isUnknownToCardTable(code)) {
+            int unk = obtainUnknown();
+            if (unk > 0) {
+                textures.put(key, unk);
+                return unk;
+            }
+            return -1;
+        }
         try {
             Bitmap cached = TextureLoader.get().getCardBitmap(code & 0xFFFFFFFFL);
             if (cached != null && !cached.isRecycled()) {
@@ -205,29 +220,61 @@ public final class FieldTextureManager {
             }
         } catch (Throwable ignored) {
         }
-        long now = view.animTimeMs;
-        Long last = texRetryTime.get(key);
-        if (last != null && now - last < 2000L) return -1;
-        texRetryTime.put(key, now);
-        int attempts = texRetries.containsKey(key) ? texRetries.get(key) + 1 : 1;
-        texRetries.put(key, attempts);
-        requestTexture(key, code, mode, scale, attempts >= 3);
+        requestTexture(key, code, mode, scale);
         return -1;
     }
 
     /**
-     * 兜底任务：卡图解码已统一收口到 TextureLoader.getCardBitmap（内部全源查找 + 去重），
-     * 本任务只负责在重试窗口后检查结果；lastChance=true 仍缺失时才上传 unknown 终止重试。
+     * 卡表是否认得该码。判据与 {@code ReplayCodeMapper.cardTableHas} / CardDetailPanel 一致
+     *（真卡必有非零 type 位），但**不能**直接调 {@code CardManager.getCard}：它对查不到的码
+     * 会 new 存根并 put 回内部 SparseArray，而本方法在 GL 渲染线程每帧可能被调，与卡表
+     * 加载线程并发写同一非线程安全容器会写坏它，故只走 indexOfKey/valueAt 只读路径。
+     * 卡表未加载完（条目数 0）时不作判定，防决斗刚开场把全部卡误显 unknown。
      */
-    private void requestTexture(final long key, final int code, final int mode,
-                                final int scale, final boolean lastChance) {
+    private static boolean isUnknownToCardTable(int code) {
+        try {
+            ocgcore.CardManager cm = ocgcore.DataManager.get().getCardManager();
+            if (cm == null || cm.getCount() == 0) return false;
+            android.util.SparseArray<ocgcore.data.Card> table = cm.getAllCards();
+            int idx = table.indexOfKey(code);
+            if (idx < 0) return true;
+            ocgcore.data.Card c = table.valueAt(idx);
+            return c == null || c.Type == 0;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /** unknown.jpg 纹理：首次使用时在 GL 线程同步解码上传并永久缓存（后续帧直接命中） */
+    private int obtainUnknown() {
+        Integer cached = textures.get(UNKNOWN_KEY);
+        if (cached != null) return cached;
+        try {
+            Bitmap u = TextureLoader.get().getUnknownCard();
+            if (u != null && !u.isRecycled()) {
+                int id = uploadBitmap(u.copy(Bitmap.Config.ARGB_8888, false));
+                if (id > 0) {
+                    textures.put(UNKNOWN_KEY, id);
+                    return id;
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return -1;
+    }
+
+    /**
+     * 解码任务：在工作线程同步查一次图源（{@code getCardBitmapSync} 给出确定答案），
+     * 有图上传卡图、确实无图才上传 unknown，因此每个纹理键只需请求一次。
+     */
+    private void requestTexture(final long key, final int code, final int mode, final int scale) {
         if (!requested.add(key)) return;
         try {
             texExecutor().execute(() -> {
                 Bitmap bmp = null;
                 boolean owned = false;
                 try {
-                    Bitmap base = TextureLoader.get().getCardBitmap(code & 0xFFFFFFFFL);
+                    Bitmap base = TextureLoader.get().getCardBitmapSync(code & 0xFFFFFFFFL);
                     if (base != null && !base.isRecycled()) {
                         if (mode == 0) {
                             bmp = base;          // 共享缓存位图：上传但不回收
@@ -240,7 +287,7 @@ public final class FieldTextureManager {
                 }
                 if (bmp != null) {
                     pendingUploads.offer(new PendingUpload(key, bmp, owned));
-                } else if (lastChance) {
+                } else {
                     Bitmap u = null;
                     try {
                         u = TextureLoader.get().getUnknownCard();
@@ -250,9 +297,6 @@ public final class FieldTextureManager {
                             ? u.copy(Bitmap.Config.ARGB_8888, false)
                             : makeSolidBitmap(YGOUtil.c(R.color.tex_missing_gray));
                     pendingUploads.offer(new PendingUpload(key, bmp, true));
-                } else {
-                    // 尚未到最后一次：释放请求标记，等限频窗口过后重试
-                    requested.remove(key);
                 }
             });
         } catch (Throwable t) {
@@ -343,8 +387,6 @@ public final class FieldTextureManager {
     public void clearAll() {
         textures.clear();
         requested.clear();
-        texRetryTime.clear();
-        texRetries.clear();
     }
 
     /**

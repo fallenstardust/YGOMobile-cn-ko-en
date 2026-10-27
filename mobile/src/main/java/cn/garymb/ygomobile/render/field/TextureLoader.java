@@ -618,6 +618,28 @@ public class TextureLoader {
         return null;
     }
 
+    /**
+     * 同步取卡图（仅供纹理工作线程调用）：缓存未命中时直接在当前线程做全源查找+解码，
+     * 一次调用即给出确定答案——返回 null 就说明确实没有这张卡的图源。
+     * <p>
+     * 与 {@link #getCardBitmap} 的区别：后者未命中只是把解码排进另一个线程并返回 null，
+     * 调用方无法区分「还没解完」和「根本没有图」，只能靠重试次数猜测何时回落 unknown；
+     * 猜早了正常卡图会被 unknown 永久占位，猜晚了缺失卡要灰好几种帧才显 unknown。
+     */
+    public Bitmap getCardBitmapSync(long code) {
+        if (code <= 0) return null;
+        String key = "card_" + code;
+        Bitmap cached = bitmapCache.get(key);
+        if (cached != null && !cached.isRecycled()) return cached;
+        Bitmap bmp = decodeCardBitmap(code);
+        if (bmp != null) {
+            bitmapCache.put(key, bmp);
+            Runnable cb = onCardLoadedListener;
+            if (cb != null) cb.run();
+        }
+        return bmp;
+    }
+
     /** 卡图解码：直接走 ImageLoader 全源字节（与 bindImage 同源），ARGB_8888 + 256px 降采样 */
     private Bitmap decodeCardBitmap(long code) {
         byte[] data;
