@@ -43,6 +43,15 @@ public class FirstOrSecondDialog {
     private View contentView;
     private OnSelectListener selectListener;
     private boolean showing;
+    /**
+     * 当前正在监听尺寸变化的锚视图与对应监听器（对齐 RPSDialog 自愈机制）：
+     * 纯单人模式跳过猜拳直接选先后攻，show() 可能撞上 layout_game_right 由整屏宽
+     * （大厅聊天态）收缩到决斗区宽的过渡宽度帧，按当时的瞬时宽算出的居中坐标会偏。
+     * 弹窗展示期间监听锚视图尺寸变化，一发现宽/高变了就用新尺寸重算居中坐标并 update，
+     * 保证横竖屏、过渡宽度下弹窗始终在 layout_game_right 正中央。dismiss 时摘除。
+     */
+    private View anchorWatching;
+    private View.OnLayoutChangeListener anchorSizeWatcher;
 
     public FirstOrSecondDialog(Context context) {
         this.context = context;
@@ -125,11 +134,13 @@ public class FirstOrSecondDialog {
     }
 
     /**
-     * 水平、垂直均在 layout_game_right 实际区域内居中（对齐 game.cpp wFTSelect 屏幕居中语义）
+     * 水平、垂直均在 layout_game_right 实际区域内居中（对齐 game.cpp wFTSelect 屏幕居中语义）；
+     * 同时挂上锚视图尺寸监听，过渡宽度收敛后自动按新尺寸重居中。
      */
     private void showAtFieldCenter(View gameRight) {
         int[] pos = computeCenterPosition(gameRight);
         popupWindow.showAtLocation(gameRight, Gravity.NO_GRAVITY, pos[0], pos[1]);
+        attachAnchorSizeWatcher(gameRight);
     }
 
     /**
@@ -193,9 +204,44 @@ public class FirstOrSecondDialog {
     private void doReposition(View gameRight) {
         int[] pos = computeCenterPosition(gameRight);
         popupWindow.update(pos[0], pos[1], -1, -1);
+        // 旋转重建后锚视图为新实例，将尺寸监听器迁移到新视图
+        attachAnchorSizeWatcher(gameRight);
+    }
+
+    /**
+     * 在锚视图上挂一个尺寸变化监听：任何原因导致 layout_game_right 的宽高变化（包括纯单人
+     * 模式下 card_detail_panel 从 GONE 恢复后的重布、横竖屏切换），都会重新解算居中坐标，
+     * 保证弹窗在 layout_game_right 中始终居中。同一锚视图重复调用不会叠加监听。
+     */
+    private void attachAnchorSizeWatcher(View gameRight) {
+        if (anchorWatching == gameRight) return;
+        detachAnchorSizeWatcher();
+        if (gameRight == null) return;
+        anchorSizeWatcher = (v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+            int newW = right - left;
+            int oldW = oldRight - oldLeft;
+            int newH = bottom - top;
+            int oldH = oldBottom - oldTop;
+            if ((newW != oldW || newH != oldH)
+                    && popupWindow != null && popupWindow.isShowing()) {
+                int[] pos = computeCenterPosition(v);
+                popupWindow.update(pos[0], pos[1], -1, -1);
+            }
+        };
+        gameRight.addOnLayoutChangeListener(anchorSizeWatcher);
+        anchorWatching = gameRight;
+    }
+
+    private void detachAnchorSizeWatcher() {
+        if (anchorWatching != null && anchorSizeWatcher != null) {
+            anchorWatching.removeOnLayoutChangeListener(anchorSizeWatcher);
+        }
+        anchorWatching = null;
+        anchorSizeWatcher = null;
     }
 
     public void dismiss() {
+        detachAnchorSizeWatcher();
         try {
             if (popupWindow != null && popupWindow.isShowing()) popupWindow.dismiss();
         } catch (Exception ignored) {

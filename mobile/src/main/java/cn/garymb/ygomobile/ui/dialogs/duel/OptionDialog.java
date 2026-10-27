@@ -109,6 +109,17 @@ public class OptionDialog {
     }
 
     /**
+     * 决斗结束 / 退出对战时关闭可能残留的选项弹窗（由 ShowDialogUtil.dismissOpenGameDialogs 调用）：
+     * MSG_SELECT_OPTION 的弹窗不可取消，若结束时仍在显示会残留遮挡返回界面，故统一主动关闭。
+     */
+    public static void dismissCurrent() {
+        if (current != null) {
+            current.dismiss();
+            current = null;
+        }
+    }
+
+    /**
      * 选项弹窗标题：系统字符串 555；消费 selectHint 避免残留影响后续选卡标题。
      * 用链式访问 activity.getEngine().getField().selectHint，无需导入 GameEngine/GameField。
      */

@@ -425,6 +425,9 @@ public class ShowDialogUtil {
         }
         rpsResultShown = false;
         lastHandSent = 0;
+        // 一并关闭选项弹窗与全部宣言类弹窗（属性/数字/种族/卡片），与退出对战同口径：
+        // 这些弹窗不可取消，决斗结束时若仍在显示会残留遮挡，故统一主动关闭
+        dismissAnnounceDialogs();
         // 连锁场上点击模式复位：关闭询问窗、退出命令上下文并清除高亮，避免脏状态残留到下一局
         YesOrNoDialog.dismissChainQuery();
         GameFieldController fieldController = fieldCtl();
@@ -434,13 +437,16 @@ public class ShowDialogUtil {
     }
 
     /**
-     * 退出对战（layout_game_right 隐藏）时关闭可能残留的宣言类对话框：
-     * 宣言属性 / 宣言数字 / 宣言种族（由 YGOProActivity hideGameUI 调用）。
-     * 各宣言弹窗的实例引用与去重已下沉至对应 ui.dialogs 静态工厂的 current，此处调用其 dismissCurrent()。
+     * 退出对战（layout_game_right 隐藏）/ 决斗结束时关闭可能残留的宣言类与选项类对话框：
+     * 选项 / 宣言属性 / 宣言数字 / 宣言种族 / 宣言卡片（由 YGOProActivity hideGameUI 与
+     * dismissOpenGameDialogs 调用）。
+     * 各弹窗的实例引用与去重已下沉至对应 ui.dialogs 静态工厂的 current，此处调用其 dismissCurrent()。
      */
     public void dismissAnnounceDialogs() {
+        OptionDialog.dismissCurrent();
         AnnounceAttributeDialog.dismissCurrent();
         AnnounceNumberDialog.dismissCurrent();
         AnnounceRaceDialog.dismissCurrent();
+        AnnounceCardDialog.dismissCurrent();
     }
 }

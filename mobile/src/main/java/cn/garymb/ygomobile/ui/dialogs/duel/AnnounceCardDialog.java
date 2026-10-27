@@ -113,6 +113,18 @@ public class AnnounceCardDialog {
     }
 
     /**
+     * 决斗结束 / 退出对战时关闭可能残留的宣言卡片弹窗（由 ShowDialogUtil 调用）：
+     * dismiss() 内部置 closingIntentionally 走正常关闭路径，不会被误关重弹逻辑重新弹出；
+     * 同时显式置 current=null，使重弹排队期的 current!=this 判定生效，彻底不再复活。
+     */
+    public static void dismissCurrent() {
+        if (current != null) {
+            current.dismiss();
+            current = null;
+        }
+    }
+
+    /**
      * 选择类标题：优先用 selectHint，消费后清零（链式访问，不导入 game 类）。
      */
     private static String selectTitleText(YGOProActivity activity, int defIndex, String defText) {
