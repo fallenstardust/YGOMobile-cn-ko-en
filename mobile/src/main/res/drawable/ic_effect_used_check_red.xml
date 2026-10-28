@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 卡片详情·对手已发动效果行首标记（用户规格：对手的卡用红色圆形打勾图标，与我方绿色
+     ic_effect_used_check 明显区分，同名卡双方标记不得视觉混淆）。
+     与绿版同尺寸同形状，仅圆底色改红 #F44336 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="12dp"
+    android:height="12dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#F44336"
+        android:pathData="M12,2C17.52,2 22,6.48 22,12C22,17.52 17.52,22 12,22C6.48,22 2,17.52 2,12C2,6.48 6.48,2 12,2Z" />
+    <path
+        android:pathData="M7,12.5L10.5,16L17,8.5"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

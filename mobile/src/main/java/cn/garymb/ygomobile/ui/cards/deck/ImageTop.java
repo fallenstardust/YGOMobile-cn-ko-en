@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.ui.cards.deck;
 
+import static cn.garymb.ygomobile.Constants.ASSET_ATTR_RACE;
 import static cn.garymb.ygomobile.Constants.ASSET_LIMIT_PNG;
 
 import android.content.Context;
@@ -12,12 +13,22 @@ public class ImageTop {
     public final Bitmap limit;
     public final Bitmap semiLimit;
     public final Bitmap credits;
+    public final Bitmap otOcg;
+    public final Bitmap otTcg;
+    public final Bitmap otSc;
 
     public ImageTop(Context context) {
-        this(BitmapUtil.getBitmapFormAssets(context, ASSET_LIMIT_PNG, 0, 0));
+        this(BitmapUtil.getBitmapFormAssets(context, ASSET_LIMIT_PNG, 0, 0),
+                BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "ot_ocg.png", 0, 0),
+                BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "ot_tcg.png", 0, 0),
+                BitmapUtil.getBitmapFormAssets(context, ASSET_ATTR_RACE + "ot_sc.png", 0, 0));
     }
 
     public ImageTop(Bitmap img) {
+        this(img, null, null, null);
+    }
+
+    public ImageTop(Bitmap img, Bitmap otOcg, Bitmap otTcg, Bitmap otSc) {
         if (img != null) {
             int width = img.getWidth();
             int height = img.getHeight();
@@ -31,6 +42,9 @@ public class ImageTop {
             semiLimit = null;
             credits = null;
         }
+        this.otOcg = otOcg;
+        this.otTcg = otTcg;
+        this.otSc = otSc;
         BitmapUtil.destroy(img);
     }
 
@@ -39,5 +53,8 @@ public class ImageTop {
         BitmapUtil.destroy(limit);
         BitmapUtil.destroy(semiLimit);
         BitmapUtil.destroy(credits);
+        BitmapUtil.destroy(otOcg);
+        BitmapUtil.destroy(otTcg);
+        BitmapUtil.destroy(otSc);
     }
 }

@@ -34,71 +34,13 @@ import ocgcore.data.Card;
 import ocgcore.data.LimitList;
 import ocgcore.enums.CardType;
 import ocgcore.enums.LimitType;
-
 /**
  * 在对应的recyclerview中添加了很多透明的item来“占位”，占位后便于根据“拖动卡片的位置”计算添加的卡片类型（是主卡组、额外卡组还是副卡组）
  */
-public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implements CardListProvider {
-    private final List<DeckItem> mItems = new ArrayList<>();
-    private final SparseArray<Integer> mCount = new SparseArray<>();
-    private final Context context;
-    private final LayoutInflater mLayoutInflater;
-    private final int Padding = 1;
-    private final RecyclerView recyclerView;
-    private final Random mRandom;
-    private final ImageLoader imageLoader;
-    private ImageTop mImageTop;
-    private TextView tv_deck_limit_num;
-    private int mMainCount;
-    private int mExtraCount;
-    private int mSideCount;
-    private int mMainMonsterCount;
-    private int mMainSpellCount;
-    private int mMainTrapCount;
-    private int mExtraFusionCount;
-    private int mExtraXyzCount;
-    private int mExtraSynchroCount;
-    private int mExtraLinkCount;
-    private int mSideMonsterCount;
-    private int mSideSpellCount;
-    private int mSideTrapCount;
-    private int mFullWidth;
-    private int mWidth;
-    private int mHeight;
-    private DeckViewHolder mHeadHolder;
-    private DeckItem mRemoveItem;
-    private int mRemoveIndex;
-    private LimitList mLimitList;//同时只能适用一种禁卡表，所以不管是常规禁限还是genesys禁限，只能使用一个
-    private boolean showHead = false;
-    private String mDeckMd5;
-    private DeckInfo mDeckInfo;
-    private String deckId = null;
-    private Integer userId = null;
+public class DeckAdapater extends DeckAdapaterBase {
 
     public DeckAdapater(Context context, RecyclerView recyclerView, ImageLoader imageLoader) {
-        this.context = context;
-        this.imageLoader = imageLoader;
-        this.recyclerView = recyclerView;
-        mLayoutInflater = LayoutInflater.from(context);
-        mRandom = new Random(System.currentTimeMillis() + SystemClock.elapsedRealtime());
-    }
-
-    public Context getContext() {
-        return context;
-    }
-
-    private void makeHeight() {
-        mFullWidth = recyclerView.getMeasuredWidth() - recyclerView.getPaddingRight() - recyclerView.getPaddingLeft();
-        mWidth = mFullWidth / Constants.DECK_WIDTH_COUNT - 2 * Padding;
-        mHeight = scaleHeight(mWidth);
-    }
-
-    private int scaleHeight(int width) {
-        return Math.round((float) width * ((float) Constants.CORE_SKIN_CARD_COVER_SIZE[1] / (float) Constants.CORE_SKIN_CARD_COVER_SIZE[0]));
-    }
-
-    public SparseArray<Integer> getCardCount() {
-        return mCount;
+        super(context, recyclerView, imageLoader);
     }
 
     /**
@@ -296,263 +238,6 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
         }
     }
 
-    public void unSort() {
-        if (mMainCount == 0) return;
-        for (int i = 0; i < mMainCount; i++) {
-            int index = mRandom.nextInt(mMainCount - i);
-            Collections.swap(mItems, DeckItem.MainStart + i, DeckItem.MainStart + i + index);
-        }
-        notifyItemRangeChanged(DeckItem.MainStart, DeckItem.MainStart + getMainCount());
-    }
-
-    private boolean comp(DeckItem d1, DeckItem d2) {
-        if (d1.getType() == d2.getType()) {
-            Card c1 = d1.getCardInfo();
-            Card c2 = d2.getCardInfo();
-            return CardSort.FULL_ASC.compare(c1, c2) > 0;
-        }
-        return (d1.getType().ordinal() - d2.getType().ordinal()) > 0;
-    }
-
-    private int sortMain() {
-        int len = getMainCount();
-        for (int i = 0; i < len - 1; i++) {
-            for (int j = 0; j < len - 1 - i; j++) {
-                DeckItem d1 = mItems.get(DeckItem.MainStart + j);
-                DeckItem d2 = mItems.get(DeckItem.MainStart + j + 1);
-                if (comp(d1, d2)) {
-                    DeckItem tmp = new DeckItem(d2);
-                    d2.set(d1);
-                    d1.set(tmp);
-                }
-            }
-        }
-        return len;
-    }
-
-    @Override
-    public int getCardsCount() {
-        return mMainCount + mExtraCount + mSideCount;
-    }
-
-    @Override
-    public @Nullable
-    Card getCard(int posotion) {
-        int count = mMainCount;
-        int index = 0;
-        if (posotion < count) {
-            index = DeckItem.MainStart + posotion;
-        } else {
-            count += mExtraCount;
-            if (posotion < count) {
-                index = DeckItem.ExtraStart + (posotion - mMainCount);
-            } else {
-                count += mSideCount;
-                if (posotion < count) {
-                    index = DeckItem.SideStart + (posotion - mMainCount - mExtraCount);
-                }
-            }
-        }
-        DeckItem deckItem = getItem(index);
-//        Log.d("CardDetail", "posotion=" + posotion + ",index=" + index+",main=" + mMainCount + ",extra=" + mExtraCount + ",side=" + mSideCount);
-        if (deckItem != null) {
-            return deckItem.getCardInfo();
-        }
-        return null;
-    }
-
-    public int getCardPosByView(int pos) {
-        //调整pos 前面的数量和当前的位置
-        int index;
-        if (pos < DeckItem.MainEnd) {
-            index = pos - DeckItem.MainStart;
-        } else if (pos < DeckItem.ExtraEnd) {
-            index = mMainCount + (pos - DeckItem.ExtraStart);
-        } else {
-            index = mMainCount + mExtraCount + (pos - DeckItem.SideStart);
-        }
-//        Log.d("CardDetail", "adapter " + pos + ",index=" + index + ",main=" + mMainCount + ",extra=" + mExtraCount + ",side=" + mSideCount);
-        return index;
-    }
-
-    private int sortExtra() {
-        int len = getExtraCount();
-        for (int i = 0; i < len - 1; i++) {
-            for (int j = 0; j < len - 1 - i; j++) {
-                DeckItem d1 = mItems.get(DeckItem.ExtraStart + j);
-                DeckItem d2 = mItems.get(DeckItem.ExtraStart + j + 1);
-                if (comp(d1, d2)) {
-//                    Log.d("kk", "swap extra:" + j + "->" + (j + 1));
-                    DeckItem tmp = new DeckItem(d2);
-                    d2.set(d1);
-                    d1.set(tmp);
-                }
-            }
-        }
-        return len;
-    }
-
-    private int sortSide() {
-        int len = getSideCount();
-        for (int i = 0; i < len - 1; i++) {
-            for (int j = 0; j < len - 1 - i; j++) {
-                DeckItem d1 = mItems.get(DeckItem.SideStart + j);
-                DeckItem d2 = mItems.get(DeckItem.SideStart + j + 1);
-                if (comp(d1, d2)) {
-                    DeckItem tmp = new DeckItem(d2);
-                    d2.set(d1);
-                    d1.set(tmp);
-                }
-            }
-        }
-        return len;
-    }
-
-    public void sort() {
-        int main = sortMain();
-        int extra = sortExtra();
-        int side = sortSide();
-        notifyItemRangeChanged(DeckItem.MainStart, DeckItem.MainStart + main);
-        notifyItemRangeChanged(DeckItem.ExtraStart, DeckItem.ExtraStart + extra);
-        notifyItemRangeChanged(DeckItem.SideStart, DeckItem.SideStart + side);
-    }
-
-    private void addCount(Card cardInfo, DeckItemType type) {
-        if (cardInfo == null) return;
-        Integer code = cardInfo.getGameCode();
-        Integer i = mCount.get(code);
-        if (i == null) {
-            mCount.put(code, 1);
-        } else {
-            mCount.put(code, i + 1);
-        }
-        switch (type) {
-            case MainCard:
-                mMainCount++;
-                if (cardInfo.isType(CardType.Monster)) {
-                    mMainMonsterCount++;
-                } else if (cardInfo.isType(CardType.Spell)) {
-                    mMainSpellCount++;
-                } else if (cardInfo.isType(CardType.Trap)) {
-                    mMainTrapCount++;
-                }
-                break;
-            case ExtraCard:
-                mExtraCount++;
-                if (cardInfo.isType(CardType.Fusion)) {
-                    mExtraFusionCount++;
-                } else if (cardInfo.isType(CardType.Synchro)) {
-                    mExtraSynchroCount++;
-                } else if (cardInfo.isType(CardType.Xyz)) {
-                    mExtraXyzCount++;
-                } else if (cardInfo.isType(CardType.Link)) {
-                    mExtraLinkCount++;
-                }
-                break;
-            case SideCard:
-                mSideCount++;
-                if (cardInfo.isType(CardType.Monster)) {
-                    mSideMonsterCount++;
-                } else if (cardInfo.isType(CardType.Spell)) {
-                    mSideSpellCount++;
-                } else if (cardInfo.isType(CardType.Trap)) {
-                    mSideTrapCount++;
-                }
-                break;
-        }
-    }
-
-    private void removeCount(Card cardInfo, DeckItemType type) {
-        if (cardInfo == null) return;
-        int code = cardInfo.getGameCode();
-        Integer i = mCount.get(code);
-        if (i == null) {
-            mCount.put(code, 0);
-        } else {
-            mCount.put(code, Math.max(0, i - 1));
-        }
-        switch (type) {
-            case MainCard:
-                mMainCount--;
-                if (cardInfo.isType(CardType.Monster)) {
-                    mMainMonsterCount--;
-                } else if (cardInfo.isType(CardType.Spell)) {
-                    mMainSpellCount--;
-                } else if (cardInfo.isType(CardType.Trap)) {
-                    mMainTrapCount--;
-                }
-                break;
-            case ExtraCard:
-                mExtraCount--;
-                if (cardInfo.isType(CardType.Fusion)) {
-                    mExtraFusionCount--;
-                } else if (cardInfo.isType(CardType.Synchro)) {
-                    mExtraSynchroCount--;
-                } else if (cardInfo.isType(CardType.Xyz)) {
-                    mExtraXyzCount--;
-                } else if (cardInfo.isType(CardType.Link)) {
-                    mExtraLinkCount--;
-                }
-                break;
-            case SideCard:
-                mSideCount--;
-                if (cardInfo.isType(CardType.Monster)) {
-                    mSideMonsterCount--;
-                } else if (cardInfo.isType(CardType.Spell)) {
-                    mSideSpellCount--;
-                } else if (cardInfo.isType(CardType.Trap)) {
-                    mSideTrapCount--;
-                }
-                break;
-        }
-    }
-
-    @Override
-    public long getItemId(int position) {
-        return position;
-    }
-
-    public DeckItem getItem(int position) {
-        return mItems.get(position);
-    }
-
-    public int getMainCount() {
-        return mMainCount;
-    }
-
-    public int getExtraCount() {
-        return mExtraCount;
-    }
-
-    public int getSideCount() {
-        return mSideCount;
-    }
-
-    public DeckInfo getDeckInfo() {
-        return mDeckInfo;
-    }
-
-    public LimitList getLimitList() {
-        return mLimitList;
-    }
-
-    public void setLimitList(LimitList limitList) {
-        if (limitList.getCreditLimits() != null) {
-            AppsSettings.get().setGenesysMode(1);
-        } else {
-            AppsSettings.get().setGenesysMode(0);
-        }
-        mLimitList = limitList;
-    }
-
-    public @Nullable
-    File getYdkFile() {
-        if (mDeckInfo != null) {
-            return mDeckInfo.source;
-        }
-        return null;
-    }
-
     public void setDeck(DeckInfo deckinfo, boolean isPack) {
         mDeckInfo = deckinfo;
         if (deckinfo != null) {
@@ -578,11 +263,7 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
         return DeckItemUtils.toDeck(mItems, file);
     }
 
-    private <T> int length(List<T> list) {
-        return list == null ? 0 : list.size();
-    }
-
-    private void loadData(DeckInfo deckInfo, boolean isPack) {
+    protected void loadData(DeckInfo deckInfo, boolean isPack) {
         deckId = null;
         userId = null;
         mCount.clear();
@@ -609,28 +290,6 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
         return !TextUtils.equals(mDeckMd5, md5);
     }
 
-    private String getString(int id, Object... args) {
-        return context.getString(id, args);
-    }
-
-    private String getMainString() {
-        return getString(R.string.deck_main, mMainCount, mMainMonsterCount, mMainSpellCount, mMainTrapCount);
-    }
-
-    private String getExtraString() {
-
-        return getString(R.string.deck_extra, mExtraCount, mExtraFusionCount, mExtraSynchroCount, mExtraXyzCount, mExtraLinkCount);
-    }
-
-    private String getSideString() {
-        return getString(R.string.deck_side, mSideCount, mSideMonsterCount, mSideSpellCount, mSideTrapCount);
-    }
-
-    public void addItem(DeckItem deckItem) {
-        addCount(deckItem.getCardInfo(), deckItem.getType());
-        mItems.add(deckItem);
-    }
-
     public void notifyItemChanged(Card card) {
         for (int i = 0; i < getItemCount(); i++) {
             DeckItem item = getItem(i);
@@ -639,59 +298,6 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
                 notifyItemChanged(i);
             }
         }
-    }
-
-    public void addItem(int pos, DeckItem deckItem) {
-        if (deckItem.getCardInfo() != null) {
-            if (pos >= DeckItem.MainStart && pos <= DeckItem.MainEnd) {
-                deckItem.setType(DeckItemType.MainCard);
-            } else if (pos >= DeckItem.ExtraStart && pos <= DeckItem.ExtraEnd) {
-                deckItem.setType(DeckItemType.ExtraCard);
-            } else if (pos >= DeckItem.SideStart && pos <= DeckItem.SideEnd) {
-                deckItem.setType(DeckItemType.SideCard);
-            }
-        }
-        synchronized (this) {
-            addCount(deckItem.getCardInfo(), deckItem.getType());
-            mItems.add(pos, deckItem);
-        }
-    }
-
-    public int getRemoveIndex() {
-        return mRemoveIndex;
-    }
-
-    public DeckItem getRemoveItem() {
-        return mRemoveItem;
-    }
-
-    public DeckItem removeItem(int pos) {
-        DeckItem deckItem = null;
-        synchronized (this) {
-            deckItem = mItems.remove(pos);
-            removeCount(deckItem.getCardInfo(), deckItem.getType());
-        }
-        mRemoveIndex = pos;
-        mRemoveItem = deckItem;
-        return deckItem;
-    }
-
-    public DeckViewHolder getHeadHolder() {
-        return mHeadHolder;
-    }
-
-    public int getItemHeight() {
-        return mHeight;
-    }
-
-    public void showHeadView() {
-        showHead = true;
-//        notifyItemChanged(DeckItem.HeadView);
-    }
-
-    public void hideHeadView() {
-        showHead = false;
-//        notifyItemChanged(DeckItem.HeadView);
     }
 
     @Override
@@ -811,13 +417,5 @@ public class DeckAdapater extends RecyclerView.Adapter<DeckViewHolder> implement
     @Override
     public int getItemCount() {
         return mItems.size();
-    }
-
-    public void setDeckId(String id) {
-        deckId = id;
-    }
-
-    public void setUserId(Integer id) {
-        userId = id;
     }
 }

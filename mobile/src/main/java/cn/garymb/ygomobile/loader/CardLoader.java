@@ -118,12 +118,21 @@ public class CardLoader implements ICardSearcher {
     @Override
     public @NonNull
     LimitList getLimitList() {
+        //每次按AppsSettings中最新保存的表名重新解析，保证Spinner切换后立即生效
+        LimitList last = mLimitManager.getLastLimit();
+        if (last != null) {
+            mLimitList = last;
+        }
         return mLimitList;
     }
 
     @Override
     public @NonNull
     LimitList getGenesysLimitList() {
+        LimitList last = mLimitManager.getLastGenesysLimit();
+        if (last != null) {
+            mGenesys_LimitList = last;
+        }
         return mGenesys_LimitList;
     }
 

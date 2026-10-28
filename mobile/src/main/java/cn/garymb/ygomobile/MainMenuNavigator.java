@@ -1,0 +1,255 @@
+package cn.garymb.ygomobile;
+
+import java.util.List;
+
+import cn.garymb.ygomobile.network.LanDiscoveryManager;
+import cn.garymb.ygomobile.ui.dialogs.lobby.CreateHostDialog;
+import cn.garymb.ygomobile.ui.dialogs.lobby.LanModeDialog;
+import cn.garymb.ygomobile.ui.dialogs.lobby.PlayerWaitingDialog;
+import cn.garymb.ygomobile.ui.dialogs.lobby.SingleModeDialog;
+
+/**
+ * 局域网主菜单导航协作类（由 YGOProActivity 按 // === 分栏拆分而来）：
+ * 承载 Main Menu 分栏下沉的三个对话框监听接口——{@link LanModeDialog.OnLanModeListener}、
+ * {@link CreateHostDialog.OnCreateHostListener}、{@link PlayerWaitingDialog.OnPlayerWaitingListener}——
+ * 的回调实现，以及建主/玩家等待对话框的导航入口 showCreateHost/showPlayerWaiting。
+ * 与门面同包，通过包级私有直连 YGOProActivity 的对话框字段、engine 与连接信息、UI 编排方法。
+ */
+class MainMenuNavigator implements
+        LanModeDialog.OnLanModeListener,
+        CreateHostDialog.OnCreateHostListener,
+        PlayerWaitingDialog.OnPlayerWaitingListener {
+
+    private final YGOProActivity activity;
+
+    MainMenuNavigator(YGOProActivity activity) {
+        this.activity = activity;
+    }
+
+    // === 局域网三对话框导航（LanModeDialog / CreateHostDialog） ===
+
+    @Override
+    public void onCreateHostRequested(String nickname) {
+        if (activity.lanModeDialog != null) activity.lanModeDialog.hideForNavigation();
+        showCreateHost(nickname);
+    }
+
+    @Override
+    public void onCreateHostConfirmed(int lflist, int cardAllowed, int modeIdx, int duelRule,
+                                      int startLP, int startHand, int drawCount, int timeLimit,
+                                      boolean noCheckDeck, boolean noShuffleDeck,
+                                      boolean soloMode,
+                                      String hostName, String password, String nickname) {
+        String roomName = (hostName != null && !hostName.isEmpty()) ? hostName : "Local Game";
+        String userName = (nickname != null && !nickname.isEmpty()) ? nickname : Constants.PlayerName;
+
+        String localIp = LanDiscoveryManager.getLocalIpAddress();
+        activity.saveLastConnectionInfo(userName, localIp != null ? localIp : "127.0.0.1", 7911, roomName,
+                password != null ? password : "");
+
+        activity.engine.setPlayerName(userName);
+        // cardAllowed 即协议 HostInfo.rule（卡片允许 0..5，对齐 duelclient.cpp cscg.info.rule），
+        // duelRule 为协议 HostInfo.duel_rule（1..5）；soloMode 编码到 mode bit4 (0x10)，
+        // 服务端 GameRoom.createGame 从 hostInfo.soloMode() 读取，同一连接归位 players[0]==players[1]
+        int modeWithSolo = soloMode ? (modeIdx | 0x10) : modeIdx;
+        activity.engine.startLocalServerWithSettings(lflist, cardAllowed, modeWithSolo, duelRule,
+                noCheckDeck, noShuffleDeck,
+                startLP, startHand, drawCount, timeLimit,
+                roomName, password != null ? password : "");
+
+        // 房主在建主时已掌握全部房间设置：立即预写入引擎房间信息缓存并置 hasJoinRoomInfoCache，
+        // 使 PlayerWaitingDialog 就绪即刷新房间设置显示（onPlayerWaitingShown 补发命中缓存），
+        // 无需等待 startLocalServerWithSettings 后台线程（含 500ms 引导延时）环回 connect→createGame→
+        // STOC_JOIN_GAME 才回填，消除建主后房间设置“慢一步才显示”的观感（对齐 gframe 进入
+        // wHostPrepare 即用已知设置刷新 stHostPrepRule）；随后环回 STOC_JOIN_GAME 回传相同值幂等覆盖。
+        activity.engine.gameLflist = lflist;
+        activity.engine.gameRule = cardAllowed;
+        activity.engine.gameMode = modeIdx; // store stripped duel mode locally (SINGLE/MATCH/TAG)
+        activity.engine.soloMode = soloMode; // early-enable solo UI (dual-deck pick) before loop-back
+        activity.engine.field.dInfo.duelRule = duelRule;
+        activity.engine.gameNoCheckDeck = noCheckDeck ? 1 : 0;
+        activity.engine.gameNoShuffleDeck = noShuffleDeck ? 1 : 0;
+        activity.engine.gameStartLp = startLP;
+        activity.engine.gameStartHand = startHand;
+        activity.engine.gameDrawCount = drawCount;
+        activity.engine.gameTimeLimit = timeLimit;
+        activity.engine.hasJoinRoomInfoCache = true;
+
+        if (activity.createHostDialog != null) activity.createHostDialog.hideForNavigation();
+        // LAN 建主入口（含勾选纯单人）与 SingleModeDialog 纯单人页同会置 engine.soloMode=true，
+        // 但退出等待的目标不同：LAN 建主（无论否勾选纯单人）退出后应回 LanModeDialog；
+        // 仅当来源为 SingleModeDialog 纯单人页时才回 MainMenuDialog，故此处主动置回 false 避免串道
+        activity.soloLaunchedFromSingleMode = false;
+        showPlayerWaiting(userName, modeIdx == 2);
+    }
+
+    @Override
+    public void onCancelCreate() {
+        if (activity.createHostDialog != null) activity.createHostDialog.hideForNavigation();
+        LanModeDialog.showLanModeDialog(activity);
+    }
+
+    @Override
+    public void onJoinGameRequested(String ip, String port, String password, String nickname) {
+        int portNum;
+        try {
+            portNum = Integer.parseInt(port);
+        } catch (NumberFormatException e) {
+            portNum = 7911;
+        }
+        String userName = (nickname != null && !nickname.isEmpty()) ? nickname : Constants.PlayerName;
+        activity.saveLastConnectionInfo(userName, ip, portNum, "", password);
+        activity.engine.setPlayerName(userName);
+        activity.engine.connectToServer(ip, portNum, false, "", password,
+                0, 0, 5, 8000, 5, 1, 0, false, false);
+
+        if (activity.lanModeDialog != null) activity.lanModeDialog.hideForNavigation();
+        showPlayerWaiting(userName, false);
+    }
+
+    // === PlayerWaitingDialog.OnPlayerWaitingListener ===
+
+    @Override
+    public void onPlayerWaitingReady() {
+        if (activity.engine != null) activity.engine.sendReady();
+    }
+
+    @Override
+    public void onPlayerWaitingNotReady() {
+        if (activity.engine != null) activity.engine.sendNotReady();
+    }
+
+    @Override
+    public void onPlayerWaitingToDuelist() {
+        if (activity.engine != null) activity.engine.sendToDuelist();
+    }
+
+    @Override
+    public void onPlayerWaitingToObserver() {
+        if (activity.engine != null) activity.engine.sendToObserver();
+    }
+
+    @Override
+    public void onExitWaiting() {
+        // 人机模式（从 SingleModeDialog 建主进入等待界面）退出后应回 SingleModeDialog，
+        // 而非 LanModeDialog；且不得出现 MainMenuDialog
+        final boolean botMode = activity.engine != null && activity.engine.isBotMode;
+        // 纯单人模式且本次建主来自 SingleModeDialog 纯单人页时，退出等待应直接回 MainMenuDialog，
+        // 而非 LanModeDialog；若同为 soloMode 但来源为 LanMode→CreateHostDialog 的纯单人勾选，
+        // 仍回落到 LanModeDialog，保证与原有 LAN建主退出行为一致
+        final boolean soloMode = activity.engine != null && activity.engine.soloMode;
+        final boolean soloFromSingleMode = soloMode && activity.soloLaunchedFromSingleMode;
+        // 先彻底释放等待界面（本弹窗退出即释放、不保留拖拽布局），抑制其 dismiss→restoreMainMenu 兜底，再断开连接；
+        // DISCONNECTED 的自动 returnToLanMain（会连带弹 LanMode/MainMenu）已被
+        // suppressNextDisconnectedReturn 抑制，返回导航由本入口独占
+        if (activity.playerWaitingDialog != null) {
+            activity.playerWaitingDialog.releaseOnExit();
+            activity.setPlayerWaitingDialog(null);
+        }
+        activity.hideGameUI();
+        if (activity.engine != null) {
+            activity.suppressNextDisconnectedReturn();
+            activity.engine.disconnect();
+            if (botMode) activity.engine.setBotMode(false);
+            if (soloMode) activity.engine.soloMode = false;
+        }
+        if (botMode) {
+            SingleModeDialog.showSingleModeDialog(activity);
+            return;
+        }
+        if (soloFromSingleMode) {
+            // 来自 SingleModeDialog 纯单人页：直接回 MainMenuDialog，不重开 SingleModeDialog（用户规格），
+            // 不回落 LanModeDialog；处理完毕将来源位清零，避免后续无关退出误命中此分支
+            activity.soloLaunchedFromSingleMode = false;
+            activity.getMainMenuDialog().restoreMainMenu();
+            return;
+        }
+        LanModeDialog.showLanModeDialog(activity);
+        if (activity.lanModeDialog != null) {
+            // 保留上一局主机密码：退出玩家等待重新显示局域网主界面时回填房间密码（用户规格，不清空）
+            activity.lanModeDialog.preFillConnectionFields(activity.lastJoinNickname, activity.lastJoinHost,
+                    String.valueOf(activity.lastJoinPort), activity.lastJoinPassword);
+        }
+    }
+
+    @Override
+    public void onPlayerWaitingDeckUpdate(List<Integer> main, List<Integer> extra, List<Integer> side) {
+        if (activity.engine != null) {
+            activity.engine.sendDeckUpdate(main, extra, side);
+        }
+    }
+
+    @Override
+    public void onStartGameRequested() {
+        if (activity.engine != null) {
+            activity.engine.sendStart();
+        }
+    }
+
+    @Override
+    public void onKickPlayerRequested(int pos) {
+        if (activity.engine != null) {
+            activity.engine.sendKick(pos);
+        }
+    }
+
+    @Override
+    public void onPlayerWaitingShown() {
+        activity.runOnUiThread(() -> {
+            activity.enterLobbyChatUI();
+            // 兼容时序竞态：STOC_JOIN_GAME 若在等待界面创建前到达（handleJoinGame 被丢弃），
+            // 界面就绪后用引擎缓存的房间信息补发房间规则显示（对齐 gframe 进入 wHostPrepare 即刷新 stHostPrepRule）
+            if (activity.engine != null && activity.engine.hasJoinRoomInfoCache
+                    && activity.playerWaitingDialog != null) {
+                activity.playerWaitingDialog.updateRoomInfo(activity.engine.gameLflist,
+                        activity.engine.gameRule, activity.engine.gameMode,
+                        activity.engine.field.dInfo.duelRule,
+                        activity.engine.gameNoCheckDeck, activity.engine.gameNoShuffleDeck,
+                        activity.engine.gameStartLp, activity.engine.gameStartHand,
+                        activity.engine.gameDrawCount, activity.engine.gameTimeLimit);
+            }
+        });
+    }
+
+    @Override
+    public void onSoloSeatDeckUpdated(int seat, String deckName, String deckPath) {
+        // Solo 席位卡组选定：缓存名称与路径到 engine，enterDuelingUI 时写回 GameTopInfo；
+        // match 换 side 时按路径载入对应席位卡组。当前处于大厅阶段时 topInfo 面板隐藏，无需即时刷新。
+        if (activity.engine == null) return;
+        if (seat < 0 || seat >= activity.engine.soloSeatDeckNames.length) return;
+        activity.engine.soloSeatDeckNames[seat] = deckName == null ? "" : deckName;
+        activity.engine.soloSeatDeckPaths[seat] = deckPath == null ? "" : deckPath;
+    }
+
+    // === 建主 / 玩家等待对话框显示入口 ===
+
+    private void showCreateHost(String nickname) {
+        if (activity.createHostDialog == null) {
+            activity.createHostDialog = new CreateHostDialog(activity, this);
+            // 点击外部/返回键意外关闭建主界面时回到局域网主界面
+            activity.createHostDialog.setOnDismissListener(() -> LanModeDialog.showLanModeDialog(activity));
+        }
+        activity.createHostDialog.setNickname(nickname);
+        if (activity.createHostDialog.canReshow()) {
+            activity.createHostDialog.reshow(activity.dialogContainer);
+        } else if (!activity.createHostDialog.isShowing()) {
+            activity.createHostDialog.show(activity.dialogContainer);
+        }
+    }
+
+    private void showPlayerWaiting(String nickname, boolean tagMode) {
+        if (activity.playerWaitingDialog != null) {
+            activity.playerWaitingDialog.hideForNavigation();
+        }
+        PlayerWaitingDialog dialog = new PlayerWaitingDialog(activity, this);
+        activity.setPlayerWaitingDialog(dialog);
+        dialog.setOnDismissListener(() -> activity.getMainMenuDialog().restoreMainMenu());
+        dialog.show(activity.dialogContainer);
+        String name = (nickname != null && !nickname.isEmpty()) ? nickname : Constants.PlayerName;
+        dialog.setPlayerName(0, name);
+        dialog.setTagPlayersVisible(tagMode);
+        // Solo mode: 建主时房主预先开关 “选择对方卡组” UI（非房主加入房间时 engine.soloMode
+        // 由 DuelStocHandler.onJoinGame 在 STOC_JOIN_GAME 回环中自动置位，下次重新打开时同步）
+        dialog.setSoloMode(activity.engine != null && activity.engine.soloMode);
+    }
+}

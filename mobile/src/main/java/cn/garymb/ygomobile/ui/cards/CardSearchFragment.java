@@ -402,7 +402,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
                 .setLabel("searchCardGuide")
                 .addGuidePage(
                         GuidePage.newInstance().setEverywhereCancelable(true)
-                                .setBackgroundColor(0xbc000000)
+                                .setBackgroundColor(YGOUtil.c(R.color.black_bc))
                                 .addHighLightWithOptions(layoutView.findViewById(R.id.btn_search), HighLight.Shape.CIRCLE, options)
                                 .setLayoutRes(R.layout.view_guide_home)
                                 .setOnLayoutInflatedListener((view, controller) -> {
@@ -414,7 +414,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
                 )
                 .addGuidePage(
                         GuidePage.newInstance().setEverywhereCancelable(true)
-                                .setBackgroundColor(0xbc000000)
+                                .setBackgroundColor(YGOUtil.c(R.color.black_bc))
                                 .addHighLightWithOptions(layoutView.findViewById(R.id.search_result_count), HighLight.Shape.CIRCLE, options)
                                 .setLayoutRes(R.layout.view_guide_home)
                                 .setOnLayoutInflatedListener((view, controller) -> {

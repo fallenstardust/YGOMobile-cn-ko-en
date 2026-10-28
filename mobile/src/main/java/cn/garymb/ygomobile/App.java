@@ -20,6 +20,7 @@ import java.util.List;
 
 import cn.garymb.ygomobile.bean.DeckType;
 import cn.garymb.ygomobile.bean.events.DeckFile;
+import cn.garymb.ygomobile.engine.NativeScriptBootstrap;
 import cn.garymb.ygomobile.ui.cards.deck.MyDeckItem;
 import cn.garymb.ygomobile.ui.cards.deck_square.DeckSquareApiUtil;
 import cn.garymb.ygomobile.ui.cards.deck_square.api_response.LoginToken;
@@ -52,6 +53,16 @@ public class App extends GameApplication {
             map.put(TbsCoreSettings.TBS_SETTINGS_USE_SPEEDY_CLASSLOADER, true);
             map.put(TbsCoreSettings.TBS_SETTINGS_USE_DEXLOADER_SERVICE, true);
             QbSdk.initTbsSettings(map);
+        }
+        // 决斗引擎预热再提前到进程诞生时刻（已在 CrashHandler.init 之后，挂线程钩子
+        // 可用）：脚本解压∥卡包物化→cdb 加载全部在子线程后台进行，用 Logo/主页/
+        // 资源检查/导航/建房/猜拳/选先后攻的全部自然耗时覆盖首次引导开销，使
+        // ServerDuel#startDuel 开局闸门即时通过、选完直接发牌。仅主进程预热
+        //（:game/:dexopt 等子进程不跑内置局域网服务器，无需引擎数据）；
+        // ensureEngineReady 同步幂等，与 YGOProActivity 启动预热/建主引导并发时
+        // 串行合并互不重复
+        if (!ProcessUtils.getCurrentProcessName(this).contains(":")) {
+            NativeScriptBootstrap.warmUpAsync("AppEngineWarmUp", "App启动-引擎预热");
         }
     }
 

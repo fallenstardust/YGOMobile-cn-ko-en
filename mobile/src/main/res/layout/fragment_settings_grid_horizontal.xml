@@ -244,9 +244,10 @@
                             android:textSize="12sp" />
 
                         <LinearLayout
-                            android:layout_width="wrap_content"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="10dp"
+                            android:layout_weight="1"
                             android:background="@drawable/selected_light"
                             android:gravity="center"
                             android:orientation="vertical"
@@ -254,7 +255,7 @@
 
                             <ImageView
                                 android:id="@+id/img_avatar_me"
-                                android:layout_width="48dp"
+                                android:layout_width="match_parent"
                                 android:layout_height="48dp"
                                 android:clickable="true"
                                 android:foreground="?android:attr/selectableItemBackground"
@@ -269,9 +270,10 @@
                         </LinearLayout>
 
                         <LinearLayout
-                            android:layout_width="wrap_content"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="6dp"
+                            android:layout_weight="1"
                             android:background="@drawable/selected_light"
                             android:gravity="center"
                             android:orientation="vertical"
@@ -279,7 +281,7 @@
 
                             <ImageView
                                 android:id="@+id/img_avatar_opponent"
-                                android:layout_width="48dp"
+                                android:layout_width="match_parent"
                                 android:layout_height="48dp"
                                 android:clickable="true"
                                 android:foreground="?android:attr/selectableItemBackground"
@@ -313,9 +315,10 @@
                             android:textSize="12sp" />
 
                         <LinearLayout
-                            android:layout_width="wrap_content"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="10dp"
+                            android:layout_weight="1"
                             android:background="@drawable/selected_light"
                             android:gravity="center"
                             android:orientation="vertical"
@@ -323,7 +326,7 @@
 
                             <ImageView
                                 android:id="@+id/img_cover1"
-                                android:layout_width="34dp"
+                                android:layout_width="match_parent"
                                 android:layout_height="48dp"
                                 android:clickable="true"
                                 android:foreground="?android:attr/selectableItemBackground"
@@ -338,9 +341,10 @@
                         </LinearLayout>
 
                         <LinearLayout
-                            android:layout_width="wrap_content"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="6dp"
+                            android:layout_weight="1"
                             android:background="@drawable/selected_light"
                             android:gravity="center"
                             android:orientation="vertical"
@@ -348,7 +352,7 @@
 
                             <ImageView
                                 android:id="@+id/img_cover2"
-                                android:layout_width="34dp"
+                                android:layout_width="match_parent"
                                 android:layout_height="48dp"
                                 android:clickable="true"
                                 android:foreground="?android:attr/selectableItemBackground"
@@ -382,9 +386,10 @@
                         android:textSize="12sp" />
 
                     <LinearLayout
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
+                        android:layout_weight="1"
                         android:background="@drawable/selected_light"
                         android:gravity="center"
                         android:orientation="vertical"
@@ -392,7 +397,7 @@
 
                         <ImageView
                             android:id="@+id/img_bg_game"
-                            android:layout_width="72dp"
+                            android:layout_width="match_parent"
                             android:layout_height="48dp"
                             android:clickable="true"
                             android:foreground="?android:attr/selectableItemBackground"
@@ -407,9 +412,10 @@
                     </LinearLayout>
 
                     <LinearLayout
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="6dp"
+                        android:layout_weight="1"
                         android:background="@drawable/selected_light"
                         android:gravity="center"
                         android:orientation="vertical"
@@ -417,7 +423,7 @@
 
                         <ImageView
                             android:id="@+id/img_bg_menu"
-                            android:layout_width="72dp"
+                            android:layout_width="match_parent"
                             android:layout_height="48dp"
                             android:clickable="true"
                             android:foreground="?android:attr/selectableItemBackground"
@@ -432,9 +438,10 @@
                     </LinearLayout>
 
                     <LinearLayout
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="6dp"
+                        android:layout_weight="1"
                         android:background="@drawable/selected_light"
                         android:gravity="center"
                         android:orientation="vertical"
@@ -442,7 +449,7 @@
 
                         <ImageView
                             android:id="@+id/img_bg_deck"
-                            android:layout_width="72dp"
+                            android:layout_width="match_parent"
                             android:layout_height="48dp"
                             android:clickable="true"
                             android:foreground="?android:attr/selectableItemBackground"
@@ -808,6 +815,50 @@
 
                         <Switch
                             android:id="@+id/switch_pendulum"
+                            style="@style/SettingsSwitch"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- 原生UI游戏模式开关 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:baselineAligned="false"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="3dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/dialogshort"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="6dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="@string/settings_native_game_mode"
+                            android:textColor="@color/item_title"
+                            android:textSize="10sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:gravity="center"
+                            android:text="@string/settings_native_game_mode_summary"
+                            android:textColor="@color/gray"
+                            android:textSize="8sp" />
+
+                        <Switch
+                            android:id="@+id/switch_native_game"
                             style="@style/SettingsSwitch"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"

@@ -18,12 +18,15 @@ import ocgcore.enums.LimitType;
 public class LimitList {
     // GeneSys: 主卡组少于该数量时不触发 extra_score 加成，与 C++ 端 DECK_MIN_SIZE 保持一致
     private static final int GENESYS_MIN_MAIN = 40;
+    private static final int LFLIST_HASH_SEED = 0x7dfcee6a;
     private String name = "?";
     private Integer credit_limits;//GeneSys模式特有的上限值
     // GeneSys: 由lflist.conf中的"$__extra_score__"行解析而来，
     // 表示主卡组超过40张后，每多一张卡可为积分上限提高的分数（小数）。未配置则为null/0。
     private Double extra_score;
     private Map<Integer, Integer> credits;//GeneSys模式特有的单张卡ID和其点数
+    private int lfHash = LFLIST_HASH_SEED;
+    private final Map<Integer, Integer> contentMap = new HashMap<>();
     /**
      * 0
      */
@@ -132,16 +135,39 @@ public class LimitList {
         this.name = name;
     }
 
+    public int getLfHash() {
+        return lfHash;
+    }
+
+    public void setLfHash(int hash) {
+        lfHash = hash;
+    }
+
+    private static int updateHash(int hash, int code, int count) {
+        return hash ^ ((code << 18) | (code >>> 14))
+                ^ ((code << (27 + count)) | (code >>> (5 - count)));
+    }
+
+    private void addContentCode(int code, int count) {
+        Integer old = contentMap.put(code, count);
+        if (old != null && old != count) {
+            lfHash = updateHash(lfHash, code, old);
+        }
+        lfHash = updateHash(lfHash, code, count);
+    }
+
     public void addSemiLimit(Integer id) {
         if (!semiLimit.contains(id)) {
             semiLimit.add(id);
         }
+        addContentCode(id, 2);
     }
 
     public void addLimit(Integer id) {
         if (!limit.contains(id)) {
             limit.add(id);
         }
+        addContentCode(id, 1);
     }
 
     public void addCreditLimit(Integer limit) {
@@ -163,6 +189,7 @@ public class LimitList {
         if (!forbidden.contains(id)) {
             forbidden.add(id);
         }
+        addContentCode(id, 0);
     }
 
     public List<Integer> getCodeList() {

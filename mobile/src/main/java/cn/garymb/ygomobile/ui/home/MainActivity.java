@@ -54,6 +54,10 @@ public class MainActivity extends HomeActivity implements BottomNavigationBar.On
     private GameUriManager mGameUriManager;
     private ImageUpdater mImageUpdater;
     private boolean enableStart;
+    /** 首次资源检查（ResCheckTask）是否已回调完成；完成前不处理外部 VIEW uri，
+     *  否则 HomeActivity.onCreate 里的 onNewIntent(getIntent()) 会先于资源复制起播一次，
+     *  checkRes 回调再播第二次——同一路录像被两个回放会话抢先加载（外部打开 yrp 卡顿/崩溃的源头） */
+    private boolean resCheckFinished;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,6 +91,7 @@ public class MainActivity extends HomeActivity implements BottomNavigationBar.On
             //加载收藏夹
             CardFavorites.get().load();
             enableStart = error >= 0;
+            resCheckFinished = true;
             if (isNew) {
                 if (!getGameUriManager().doIntent(getIntent())) {
                     //首先检查隐私政策是否同意，如果未同意则先显示隐私政策对话框
@@ -134,18 +139,25 @@ public class MainActivity extends HomeActivity implements BottomNavigationBar.On
     protected void onDestroy() {
         YGOStarter.onDestroy(this);
         super.onDestroy();
-        if (mResCheckTask.mReceiver != null)
-            mResCheckTask.unregisterMReceiver();
+        // RUN_WINDBOT 监听已改为 WindBotService 进程级常驻， MainActivity 销毁不再注销
     }
 
     @Override
     protected void onNewIntent(Intent intent) {
+        // 记录最新 intent：resCheckFinished 门控期间到达的外部 uri 不立即处理，
+        // 由 checkRes 回调统一经 getIntent()（即本 setIntent 后的最新 intent）派发一次
+        setIntent(intent);
         super.onNewIntent(intent);
         if (ACTION_RELOAD.equals(intent.getAction())) {
             checkResourceDownload((error, isNew) -> {
                 enableStart = error >= 0;
+                resCheckFinished = true;
                 getGameUriManager().doIntent(getIntent());
             });
+        } else if (!resCheckFinished) {
+            //外部选择通过本应用打开yrp/ydk文件，但资源检查尚未完成：
+            //暂存于 getIntent()，等 checkRes 回调后处理，避免回放先于 cards.cdb 复制/卡表加载启动
+            Log.i(Constants.TAG, "onNewIntent: uri deferred until res check finished");
         } else {//外部选择通过本应用打开ydk文件，会执行到这里
             getGameUriManager().doIntent(intent);
         }

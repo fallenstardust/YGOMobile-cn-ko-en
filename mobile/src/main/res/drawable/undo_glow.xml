@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  撤回图标的发光底（作为 iv_undo 的 background，图标本体留 padding 露出光晕）：
+  径向渐变椭圆，中心亮金向外淡出到全透明，配合 GameTopInfoManager 的闪动动画
+  形成「当前有可整段回退的动作」的呼吸式外发光提示。
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <gradient
+        android:centerColor="#66FFC107"
+        android:endColor="#00FFC107"
+        android:gradientRadius="50%p"
+        android:startColor="#CCFFF0B3"
+        android:type="radial" />
+</shape>

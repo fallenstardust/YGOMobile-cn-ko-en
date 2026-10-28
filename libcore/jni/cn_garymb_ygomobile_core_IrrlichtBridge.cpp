@@ -7,6 +7,8 @@
 #include <Android/CIrrDeviceAndroid.h>
 #include "../android/YGOGameOptions.h"
 #include "../Classes/gframe/game.h"
+#include "../Classes/gframe/netserver.h"
+#include "../Classes/gframe/data_manager.h"
 #include <android/log.h>
 
 using namespace irr;
@@ -247,6 +249,22 @@ JNIEXPORT void JNICALL Java_cn_garymb_ygomobile_core_IrrlichtBridge_nativeSetInp
 		ALOGD("setInputFix posX=%d, posY=%d", x, y);
 		ygo::mainGame->setPositionFix(core::position2di(x, y));
 	}
+}
+
+JNIEXPORT jboolean JNICALL Java_cn_garymb_ygomobile_core_IrrlichtBridge_nativeStartGameServer(
+		JNIEnv* env, jclass clazz, jint port) {
+	if (!ygo::NetServer::StartServer((unsigned short)port)) {
+		ALOGE("Failed to start NetServer on port %d", port);
+		return JNI_FALSE;
+	}
+	ALOGI("NetServer started on port %d", port);
+	return JNI_TRUE;
+}
+
+JNIEXPORT void JNICALL Java_cn_garymb_ygomobile_core_IrrlichtBridge_nativeStopGameServer(
+		JNIEnv* env, jclass clazz) {
+	ygo::NetServer::StopServer();
+	ALOGI("NetServer stopped");
 }
 
 static void* cancel_chain_thread(void* param) {

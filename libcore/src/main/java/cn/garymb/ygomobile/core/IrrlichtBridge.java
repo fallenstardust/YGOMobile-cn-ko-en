@@ -79,11 +79,17 @@ public final class IrrlichtBridge {
 
     private static native void nativeSetInputFix(long handle, int x, int y);
 
+    private static native boolean nativeStartGameServer(int port);
+
+    private static native void nativeStopGameServer();
+
     private static final boolean DEBUG = false;
 
     public static void setArgs(Intent intent, String[] args) {
         intent.putExtra(EXTRA_ARGV, args);
-        intent.putExtra(EXTRA_ARGV_TIME_OUT, (System.currentTimeMillis() + 15 * 1000));
+        // 超时窗口 15s→60s：外部打开录像时引擎预热/首帧初始化可能超过 15s，
+        // 超时后 getArgs 返回 null，-r 参数被静默丢弃→停在主菜单（用户感知“没反应”）
+        intent.putExtra(EXTRA_ARGV_TIME_OUT, (System.currentTimeMillis() + 60 * 1000));
     }
 
     public static String[] getArgs(Intent intent){
@@ -128,6 +134,14 @@ public final class IrrlichtBridge {
 
     public static void joinGame(ByteBuffer options, int length) {
         nativeJoinGame(sNativeHandle, options, length);
+    }
+
+    public static boolean startGameServer(int port) {
+        return nativeStartGameServer(port);
+    }
+
+    public static void stopGameServer() {
+        nativeStopGameServer();
     }
 
     public interface IrrlichtApplication {

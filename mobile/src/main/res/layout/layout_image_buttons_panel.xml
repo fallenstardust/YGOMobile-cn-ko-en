@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?><!-- 横屏侧边功能按钮列（设置/记录/音乐/加速/表情/聊天开关，用户规格）：
+     作为 layout_game_right 底部水平行的 <include> 直接承载在视图树内，是本布局唯一使用处
+     （竖屏不使用本布局，其按钮在 layout-port 底部按钮行）。
+     六按钮列是水平行最左侧一格，与 GameFieldView（setZOrderOnTop 的 GL 曲面）所在的 FrameLayout
+     同级并列于其左、不重叠，故普通 View 即恒可见（不被场图遮挡），且列底贴合 layout_game_right
+     下缘、聊天开关与同行聊天输入框底部同线等高。不再用独立 PopupWindow 浮层承载：浮层会盖在
+     所有可拖动 popup 窗口之上（拖动弹窗到按钮列上方反被遮挡），改回树内后弹窗作为独立窗口自然
+     覆盖本列，落在按钮区的触摸经 DraggablePopupHelper 的 decorView 兜底转发照常响应。
+     图标/显隐/点击由 CardDetailPanel 直接绑定本树内副本 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layout_image_buttons_panel"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:gravity="bottom"
+    android:orientation="vertical">
+
+    <ImageButton
+        android:id="@+id/btn_settings"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="5dp"
+        android:maxWidth="40dp"
+        android:maxHeight="40dp"
+        android:minWidth="30dp"
+        android:minHeight="30dp"
+        android:adjustViewBounds="true"
+        android:background="@drawable/btn_sci_fi_bg"
+        android:padding="4dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/setting" />
+
+    <ImageButton
+        android:id="@+id/btn_note"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="5dp"
+        android:maxWidth="40dp"
+        android:maxHeight="40dp"
+        android:minWidth="30dp"
+        android:minHeight="30dp"
+        android:adjustViewBounds="true"
+        android:background="@drawable/btn_sci_fi_bg"
+        android:padding="4dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_note" />
+
+    <ImageButton
+        android:id="@+id/btn_sound"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="5dp"
+        android:maxWidth="40dp"
+        android:maxHeight="40dp"
+        android:minWidth="30dp"
+        android:minHeight="30dp"
+        android:adjustViewBounds="true"
+        android:background="@drawable/btn_sci_fi_bg"
+        android:padding="4dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_volume_on" />
+
+    <ImageButton
+        android:id="@+id/btn_speed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="5dp"
+        android:maxWidth="40dp"
+        android:maxHeight="40dp"
+        android:minWidth="30dp"
+        android:minHeight="30dp"
+        android:adjustViewBounds="true"
+        android:background="@drawable/btn_sci_fi_bg"
+        android:padding="4dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_speed" />
+
+    <!-- 表情与聊天开关：与上方四按钮同列底部对齐（用户规格），不再单独弹性锚底 -->
+    <ImageButton
+        android:id="@+id/btn_emote"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="5dp"
+        android:adjustViewBounds="true"
+        android:background="@drawable/btn_sci_fi_bg"
+        android:maxWidth="40dp"
+        android:maxHeight="40dp"
+        android:minWidth="30dp"
+        android:minHeight="30dp"
+        android:padding="4dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_emoticon" />
+
+    <ImageButton
+        android:id="@+id/btn_chat"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:adjustViewBounds="true"
+        android:background="@drawable/btn_sci_fi_bg"
+        android:maxWidth="40dp"
+        android:maxHeight="40dp"
+        android:minWidth="30dp"
+        android:minHeight="30dp"
+        android:padding="4dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/rename" />
+</LinearLayout>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 大厅席位表情气泡外框（用户规格：player waiting 气泡外框逆时针旋转 90°，进游戏后决斗态
+     气泡仍用原始 bg_emote_bubble 上尖外框自动恢复）：把决斗态“尖角朝上”的 bg_emote_bubble
+     绕中心逆时针旋转 90°（fromDegrees=-90，Android 正角为顺时针，负角即逆时针）→ 尖角朝左，
+     指向其左侧的席位名。仅旋转外框背景，席位 ImageView 内的表情图仍以 fitCenter 正向显示。 -->
+<rotate xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/bg_emote_bubble"
+    android:fromDegrees="-90"
+    android:toDegrees="-90"
+    android:pivotX="50%"
+    android:pivotY="50%" />

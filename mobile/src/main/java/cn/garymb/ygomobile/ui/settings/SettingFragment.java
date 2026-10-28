@@ -14,6 +14,7 @@ import static cn.garymb.ygomobile.Constants.PREF_GAME_FONT;
 import static cn.garymb.ygomobile.Constants.PREF_IMMERSIVE_MODE;
 import static cn.garymb.ygomobile.Constants.PREF_KEEP_SCALE;
 import static cn.garymb.ygomobile.Constants.PREF_LOCK_SCREEN;
+import static cn.garymb.ygomobile.Constants.PREF_NATIVE_GAME_MODE;
 import static cn.garymb.ygomobile.Constants.PREF_OPENGL_VERSION;
 import static cn.garymb.ygomobile.Constants.PREF_PENDULUM_SCALE;
 import static cn.garymb.ygomobile.Constants.PREF_READ_EX;
@@ -101,46 +102,16 @@ import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
 
+
 /**
- * 设置页：由Preference体系迁移为宫格自定义布局，完全继承BaseFragemnt。
- * 所有偏好读写沿用原Constants键与AppsSettings的SharedPreferences，保证功能不变。
+ * Public entry of the split inheritance chain (SettingFragmentBase <- this).
+ * Keeps the original class name and public API: view creation/wiring,
+ * click & switch event handling, delete-expansion dialog, OpenGL/screen
+ * padding dialogs, the version upgrade check subsystem (handler,
+ * checkUpgrade, parseVersionJson, showBilibiliDialog), resource reset
+ * (updateImages), QQ group join and the fragment lifecycle callbacks.
  */
-public class SettingFragment extends BaseFragemnt implements View.OnClickListener {
-    private static final int TYPE_SETTING_GET_VERSION_OK = 0;
-    private static final int TYPE_SETTING_GET_VERSION_FAILED = 1;
-    public static String Version;
-    public static String Cache_link;
-
-    //皮肤图片预览类型
-    private static final int KIND_AVATAR_ME = 0;
-    private static final int KIND_AVATAR_OPPONENT = 1;
-    private static final int KIND_COVER1 = 2;
-    private static final int KIND_COVER2 = 3;
-    private static final int KIND_BG_GAME = 4;
-    private static final int KIND_BG_MENU = 5;
-    private static final int KIND_BG_DECK = 6;
-    //字体文件选择用途
-    private static final int PURPOSE_FONT = 100;
-
-    private AppsSettings mSettings;
-    private HomeActivity activity;
-    private SharedPreferences mSharedPreferences;
-    private int FailedCount;
-    private PrivacyPolicyCallback privacyPolicyCallback;
-    private boolean updatingUi = false;
-
-    private View rootView;
-    private Switch swReadEx, swDuelAssistant, swImmersive, swLockScreen, swAntiAlias, swPendulum;
-    private TextView tvVersionInfo, tvOpenGLValue, tvPaddingValue;
-    private TextView btnQualityLow, btnQualityHigh;
-    private final TextView[] langViews = new TextView[6];
-    private ImageView imgAvatarMe, imgAvatarOpponent, imgCover1, imgCover2, imgBgGame, imgBgMenu, imgBgDeck;
-    private ImageView imgScaleOriginal, imgScaleFull;
-
-    //文件/图片选择状态（替代原curPreference机制）
-    private CurImageInfo mCurImageInfo;
-    private int mPendingPurpose = -1;//REQUEST_CHOOSE_IMG选中后要刷新的预览类型
-    private int mFileChoosePurpose = -1;//REQUEST_CHOOSE_FILE的用途（字体选择）
+public class SettingFragment extends SettingFragmentBase implements View.OnClickListener {
 
     public SettingFragment() {
 
@@ -168,7 +139,7 @@ public class SettingFragment extends BaseFragemnt implements View.OnClickListene
         return view;
     }
 
-    private void initViews(View view) {
+    protected void initViews(View view) {
         //宫格按钮
         view.findViewById(R.id.cell_reset_res).setOnClickListener(this);
         view.findViewById(R.id.cell_check_update).setOnClickListener(this);
@@ -217,12 +188,15 @@ public class SettingFragment extends BaseFragemnt implements View.OnClickListene
         swLockScreen = view.findViewById(R.id.switch_lock_screen);
         swAntiAlias = view.findViewById(R.id.switch_font_antialias);
         swPendulum = view.findViewById(R.id.switch_pendulum);
+        swNativeGame = view.findViewById(R.id.switch_native_game);
+        llYgoproJniSettings = view.findViewById(R.id.ll_ygopro_jni_settings);
         swReadEx.setOnCheckedChangeListener(this::onSwitchChanged);
         swDuelAssistant.setOnCheckedChangeListener(this::onSwitchChanged);
         swImmersive.setOnCheckedChangeListener(this::onSwitchChanged);
         swLockScreen.setOnCheckedChangeListener(this::onSwitchChanged);
         swAntiAlias.setOnCheckedChangeListener(this::onSwitchChanged);
         swPendulum.setOnCheckedChangeListener(this::onSwitchChanged);
+        swNativeGame.setOnCheckedChangeListener(this::onSwitchChanged);
 
         //游戏图片质量：高/低两个按钮切换
         btnQualityLow = view.findViewById(R.id.btn_quality_low);
@@ -238,67 +212,6 @@ public class SettingFragment extends BaseFragemnt implements View.OnClickListene
             langViews[i].setOnClickListener(v -> changeDataLanguage(code));
         }
     }
-
-    /***
-     * 从偏好设置读取全部状态并刷新UI
-     */
-    private void syncUiState() {
-        updatingUi = true;
-        //版本信息与作者显示在检查更新宫格
-        tvVersionInfo.setText(SystemUtils.getVersionName(getContext()) + "(" + SystemUtils.getVersion(getContext()) + ")\n"
-                + YGOUtil.s(R.string.settings_about_author_pref) + " : " + YGOUtil.s(R.string.settings_author));
-        setSwitch(swReadEx, getPrefBool(PREF_READ_EX, Constants.DEF_PREF_READ_EX));
-        setSwitch(swDuelAssistant, mSettings.isServiceDuelAssistant());
-        updateScaleSelection(mSettings.isKeepScale());
-        setSwitch(swImmersive, mSettings.isImmerSiveMode());
-        updateQualitySelection(mSettings.getCardQuality() != 0);
-        setSwitch(swLockScreen, mSettings.isLockSreenOrientation());
-        setSwitch(swAntiAlias, mSettings.isFontAntiAlias());
-        setSwitch(swPendulum, mSettings.isPendulumScale());
-        //OpenGL与瀑布屏边距
-        String[] oglEntries = getResources().getStringArray(R.array.opengl_version);
-        int ogl = Constants.PREF_DEF_OPENGL_VERSION;
-        try {
-            ogl = Integer.parseInt(mSharedPreferences.getString(PREF_OPENGL_VERSION, "" + ogl));
-        } catch (Exception e) {
-            //忽略
-        }
-        tvOpenGLValue.setText(oglEntries.length > ogl ? oglEntries[ogl] : String.valueOf(ogl));
-        String[] padEntries = getResources().getStringArray(R.array.screen_top_bottom_desc);
-        String[] padValues = getResources().getStringArray(R.array.screen_top_bottom_value);
-        String padValue = mSharedPreferences.getString(PREF_WINDOW_TOP_BOTTOM, "" + Constants.DEF_PREF_WINDOW_TOP_BOTTOM);
-        int padIndex = 0;
-        for (int i = 0; i < padValues.length; i++) {
-            if (padValues[i].equals(padValue)) {
-                padIndex = i;
-                break;
-            }
-        }
-        tvPaddingValue.setText(padEntries.length > padIndex ? padEntries[padIndex] : padValue);
-        //语言选中态
-        updateLangSelection(mSettings.getDataLanguage());
-        updatingUi = false;
-    }
-
-    private void setSwitch(Switch sw, boolean checked) {
-        boolean old = updatingUi;
-        updatingUi = true;
-        sw.setChecked(checked);
-        updatingUi = old;
-    }
-
-    private boolean getPrefBool(String key, boolean def) {
-        return mSharedPreferences.getBoolean(key, def);
-    }
-
-    private void putPrefBool(String key, boolean value) {
-        mSharedPreferences.edit().putBoolean(key, value).apply();
-    }
-
-    private void putPrefString(String key, String value) {
-        mSharedPreferences.edit().putString(key, value).apply();
-    }
-
     @Override
     public void onClick(View v) {
         int id = v.getId();
@@ -313,7 +226,7 @@ public class SettingFragment extends BaseFragemnt implements View.OnClickListene
                     .loadUrl("file:///android_asset/changelog.html", Color.TRANSPARENT)
                     .show();
         } else if (id == R.id.cell_join_qq) {
-            String groupkey = "anEjPCDdhLgxtfLre-nT52G1Coye3LkK";
+            String groupkey = "7yPZyvF3VmNgZe3Lt6Ai9WlQOCFyhChS";
             joinQQGroup(groupkey);
         } else if (id == R.id.cell_bilibili) {
             Intent intent = new Intent(Intent.ACTION_VIEW);
@@ -417,48 +330,15 @@ public class SettingFragment extends BaseFragemnt implements View.OnClickListene
         } else if (id == R.id.switch_pendulum) {
             putPrefBool(PREF_PENDULUM_SCALE, checked);
             setPendlumScale(checked);
+        } else if (id == R.id.switch_native_game) {
+            putPrefBool(PREF_NATIVE_GAME_MODE, checked);
+            updateJniSettingsVisibility();
         }
     }
-
-    private void setSwitchChecked(Switch sw, boolean checked) {
-        if (sw == null) return;
-        setSwitch(sw, checked);
-    }
-
-    /**
-     * 原始比例开关：点击两张示意图切换，写入与原CheckBoxPreference相同的键
-     */
-    private void setKeepScale(boolean keepScale) {
-        mSettings.setKeepScale(keepScale);
-        updateScaleSelection(keepScale);
-    }
-
-    private void updateScaleSelection(boolean keepScale) {
-        if (imgScaleOriginal == null || imgScaleFull == null) return;
-        imgScaleOriginal.setSelected(keepScale);
-        imgScaleFull.setSelected(!keepScale);
-        imgScaleOriginal.setAlpha(keepScale ? 1f : 0.35f);
-        imgScaleFull.setAlpha(keepScale ? 0.35f : 1f);
-    }
-
-    /**
-     * 游戏图片质量：点击高/低按钮切换，写入与原ListPreference相同的int值（0=低 1=高）
-     */
-    private void setCardQuality(boolean high) {
-        mSettings.setCardQuality(high ? 1 : 0);
-        updateQualitySelection(high);
-    }
-
-    private void updateQualitySelection(boolean high) {
-        if (btnQualityLow == null || btnQualityHigh == null) return;
-        btnQualityLow.setBackgroundResource(high ? R.drawable.radius_p : R.drawable.radius);
-        btnQualityHigh.setBackgroundResource(high ? R.drawable.radius : R.drawable.radius_p);
-    }
-
     /**
      * 删除扩展卡包：弹窗列出已安装的ypk文件，长按对应名称删除（沿用原实现逻辑）
      */
-    private void showDeleteExpDialog() {
+    protected void showDeleteExpDialog() {
         File dir = mSettings.getExpansionsPath();
         File[] ypks = dir.listFiles();
         List<String> list = new ArrayList<>();
@@ -496,21 +376,9 @@ public class SettingFragment extends BaseFragemnt implements View.OnClickListene
         });
         dialog.show();
     }
-
-    /***
-     * 统一处理隐私政策拒绝的操作：取消服务决斗助手勾选并停止相关服务
-     */
-    private void handlePrivacyPolicyRejected() {
-        setSwitchChecked(swDuelAssistant, false);
-        // 更新共享偏好设置
-        AppsSettings.get().setServiceDuelAssistant(false);
-        // 停止服务
-        getContext().stopService(new Intent(getContext(), DuelAssistantService.class));
-    }
-
     // ==================== OpenGL / 屏幕边距 ====================
 
-    private void showOpenGLDialog() {
+    protected void showOpenGLDialog() {
         String[] entries = getResources().getStringArray(R.array.opengl_version);
         String[] values = getResources().getStringArray(R.array.opengl_version_value);
         int current = mSettings.getOpenglVersion();
@@ -525,7 +393,7 @@ public class SettingFragment extends BaseFragemnt implements View.OnClickListene
                 .show();
     }
 
-    private void showScreenPaddingDialog() {
+    protected void showScreenPaddingDialog() {
         String[] entries = getResources().getStringArray(R.array.screen_top_bottom_desc);
         String[] values = getResources().getStringArray(R.array.screen_top_bottom_value);
         String padValue = mSharedPreferences.getString(PREF_WINDOW_TOP_BOTTOM, "" + Constants.DEF_PREF_WINDOW_TOP_BOTTOM);
@@ -546,309 +414,6 @@ public class SettingFragment extends BaseFragemnt implements View.OnClickListene
                 .setNegativeButton(R.string.Cancel, null)
                 .show();
     }
-
-    // ==================== 资料语言 ====================
-
-    private void updateLangSelection(int code) {
-        if (rootView == null) return;
-        for (int i = 0; i < langViews.length; i++) {
-            if (langViews[i] != null) {
-                langViews[i].setBackgroundResource(i == code ? R.drawable.radius : R.drawable.radius_p);
-            }
-        }
-    }
-
-    private void changeDataLanguage(int code) {
-        if (mSettings.getDataLanguage() == code) return;
-        Dialog dlg = DialogPlus.show(getContext(), null, getString(R.string.message));
-        VUiKit.defer().when(() -> {
-            try {
-                AppsSettings.languageEnum lang = AppsSettings.languageEnum.values()[code];
-                if (lang == AppsSettings.languageEnum.Chinese) {
-                    mSettings.copyCnData();
-                } else if (lang == AppsSettings.languageEnum.Korean) {
-                    mSettings.copyKorData();
-                } else if (lang == AppsSettings.languageEnum.English) {
-                    mSettings.copyEnData();
-                } else if (lang == AppsSettings.languageEnum.Spanish) {
-                    mSettings.copyEsData();
-                } else if (lang == AppsSettings.languageEnum.Japanese) {
-                    mSettings.copyJpData();
-                } else if (lang == AppsSettings.languageEnum.Portuguese) {
-                    mSettings.copyPtData();
-                }
-                putPrefString(PREF_DATA_LANGUAGE, String.valueOf(code));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }).fail((e) -> {
-            dlg.dismiss();
-            Log.e(Constants.TAG, "change language failed " + e);
-            YGOUtil.showTextToast(R.string.loading_failed);
-        }).done((rs) -> {
-            dlg.dismiss();
-            YGOUtil.showTextToast(R.string.restart_app, Toast.LENGTH_LONG);
-            DataManager.get().load(true);
-            updateLangSelection(mSettings.getDataLanguage());
-        });
-    }
-
-    // ==================== 皮肤图片（头像/卡背/背景） ====================
-
-    private void refreshSkinPreviews() {
-        String skin = mSettings.getCoreSkinPath();
-        mSettings.setImage(skin + "/" + Constants.CORE_SKIN_AVATAR_ME, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1], imgAvatarMe);
-        mSettings.setImage(skin + "/" + Constants.CORE_SKIN_AVATAR_OPPONENT, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1], imgAvatarOpponent);
-        mSettings.setImage(skin + "/" + Constants.CORE_SKIN_COVER, CORE_SKIN_CARD_COVER_SIZE[0], CORE_SKIN_CARD_COVER_SIZE[1], imgCover1);
-        mSettings.setImage(skin + "/" + Constants.CORE_SKIN_COVER2, CORE_SKIN_CARD_COVER_SIZE[0], CORE_SKIN_CARD_COVER_SIZE[1], imgCover2);
-        mSettings.setImage(skin + "/" + Constants.CORE_SKIN_BG, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1], imgBgGame);
-        mSettings.setImage(skin + "/" + Constants.CORE_SKIN_BG_MENU, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1], imgBgMenu);
-        mSettings.setImage(skin + "/" + Constants.CORE_SKIN_BG_DECK, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1], imgBgDeck);
-    }
-
-    private void refreshPreviewByKind(int kind) {
-        String skin = mSettings.getCoreSkinPath();
-        switch (kind) {
-            case KIND_AVATAR_ME:
-                mSettings.setImage(skin + "/" + Constants.CORE_SKIN_AVATAR_ME, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1], imgAvatarMe);
-                break;
-            case KIND_AVATAR_OPPONENT:
-                mSettings.setImage(skin + "/" + Constants.CORE_SKIN_AVATAR_OPPONENT, CORE_SKIN_AVATAR_SIZE[0], CORE_SKIN_AVATAR_SIZE[1], imgAvatarOpponent);
-                break;
-            case KIND_COVER1:
-                mSettings.setImage(skin + "/" + Constants.CORE_SKIN_COVER, CORE_SKIN_CARD_COVER_SIZE[0], CORE_SKIN_CARD_COVER_SIZE[1], imgCover1);
-                break;
-            case KIND_COVER2:
-                mSettings.setImage(skin + "/" + Constants.CORE_SKIN_COVER2, CORE_SKIN_CARD_COVER_SIZE[0], CORE_SKIN_CARD_COVER_SIZE[1], imgCover2);
-                break;
-            case KIND_BG_GAME:
-                mSettings.setImage(skin + "/" + Constants.CORE_SKIN_BG, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1], imgBgGame);
-                break;
-            case KIND_BG_MENU:
-                mSettings.setImage(skin + "/" + Constants.CORE_SKIN_BG_MENU, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1], imgBgMenu);
-                break;
-            case KIND_BG_DECK:
-                mSettings.setImage(skin + "/" + Constants.CORE_SKIN_BG_DECK, CORE_SKIN_BG_SIZE[0], CORE_SKIN_BG_SIZE[1], imgBgDeck);
-                break;
-            default:
-                break;
-        }
-    }
-
-    private String outFileOfKind(int kind) {
-        String skin = mSettings.getCoreSkinPath();
-        switch (kind) {
-            case KIND_AVATAR_ME:
-                return new File(skin, Constants.CORE_SKIN_AVATAR_ME).getAbsolutePath();
-            case KIND_AVATAR_OPPONENT:
-                return new File(skin, Constants.CORE_SKIN_AVATAR_OPPONENT).getAbsolutePath();
-            case KIND_COVER1:
-                return new File(skin, Constants.CORE_SKIN_COVER).getAbsolutePath();
-            case KIND_COVER2:
-                return new File(skin, Constants.CORE_SKIN_COVER2).getAbsolutePath();
-            case KIND_BG_GAME:
-                return new File(skin, Constants.CORE_SKIN_BG).getAbsolutePath();
-            case KIND_BG_MENU:
-                return new File(skin, Constants.CORE_SKIN_BG_MENU).getAbsolutePath();
-            case KIND_BG_DECK:
-                return new File(skin, Constants.CORE_SKIN_BG_DECK).getAbsolutePath();
-            default:
-                return null;
-        }
-    }
-
-    private ImageView imageViewOfKind(int kind) {
-        switch (kind) {
-            case KIND_AVATAR_ME:
-                return imgAvatarMe;
-            case KIND_AVATAR_OPPONENT:
-                return imgAvatarOpponent;
-            case KIND_COVER1:
-                return imgCover1;
-            case KIND_COVER2:
-                return imgCover2;
-            case KIND_BG_GAME:
-                return imgBgGame;
-            case KIND_BG_MENU:
-                return imgBgMenu;
-            case KIND_BG_DECK:
-                return imgBgDeck;
-            default:
-                return null;
-        }
-    }
-
-    private void openImagePicker(int kind) {
-        String imagePath;
-        int[] size;
-        switch (kind) {
-            case KIND_AVATAR_ME:
-            case KIND_AVATAR_OPPONENT:
-                imagePath = mSettings.getAvatarPath();
-                size = CORE_SKIN_AVATAR_SIZE;
-                break;
-            case KIND_COVER1:
-            case KIND_COVER2:
-                imagePath = mSettings.getCoverPath();
-                size = CORE_SKIN_CARD_COVER_SIZE;
-                break;
-            default:
-                imagePath = mSettings.getBgPath();
-                size = CORE_SKIN_BG_SIZE;
-                break;
-        }
-        DialogloadImages(imageViewOfKind(kind), imagePath, size, outFileOfKind(kind), kind);
-    }
-
-    private void DialogloadImages(ImageView imageView, String imagePath, int[] itemWidth_itemHeight, String outFile, int kind) {
-        final DialogPlus dlg = new DialogPlus(getContext());
-        dlg.setContentView(R.layout.dialog_image_select);
-        dlg.setTitle(R.string.dialog_select_image);
-        dlg.show();
-        GridView vImgSel = dlg.bind(R.id.gridView);
-        ArrayList<ImageItem> items = new ArrayList<>();
-        // 先添加相册选择item，保证对话框即时弹出
-        items.add(new ImageItem("album_item", true));
-
-        // 设置适配器
-        DialogImageAdapter dialogImageAdapter = new DialogImageAdapter(dlg, getContext(), imageView, items, itemWidth_itemHeight, outFile, (outFilePath, title, width, height) -> {
-            // 相册入口：跳系统图片选择+裁剪，回调后刷新对应预览
-            showImageCropChooser(title, outFilePath, true, itemWidth_itemHeight[0], itemWidth_itemHeight[1], kind);
-        });
-        vImgSel.setAdapter(dialogImageAdapter);
-
-        // 本地图片过多时，目录扫描(listFiles)会阻塞主线程导致弹窗卡顿，改到后台线程执行，扫描完再回填
-        final ArrayList<ImageItem> scanned = new ArrayList<>();
-        VUiKit.defer().when(() -> {
-            File directory = new File(imagePath);
-            if (directory.isDirectory()) {
-                File[] files = directory.listFiles();
-                if (files != null) {
-                    for (File file : files) {
-                        String name = file.getName();
-                        if (file.isFile() && (name.endsWith(".jpg") || name.endsWith(".png"))) {
-                            scanned.add(new ImageItem(file.getAbsolutePath(), false));
-                        }
-                    }
-                }
-            }
-        }).done((re) -> dialogImageAdapter.addItems(scanned));
-    }
-
-    // ==================== 文件/图片选择（原PreferenceFragmentPlus逻辑） ====================
-
-    private void showFileChooser(int purpose, String type, String defPath, String title) {
-        mFileChoosePurpose = purpose;
-        Intent intent = FileActivity.getIntent(getActivity(), title, type, defPath, false, FileOpenType.SelectFile);
-        startActivityForResult(intent, REQUEST_CHOOSE_FILE);
-    }
-
-    protected void showFolderChooser(String defPath, String title) {
-        mFileChoosePurpose = -1;
-        Intent intent = FileActivity.getIntent(getActivity(), title, null, defPath, false, FileOpenType.SelectFolder);
-        startActivityForResult(intent, REQUEST_CHOOSE_FOLDER);
-    }
-
-    private void showImageCropChooser(String title, String outFile, boolean isJpeg, int width, int height, int kind) {
-        mCurImageInfo = new CurImageInfo();
-        mCurImageInfo.mOutFile = outFile;
-        mCurImageInfo.mJpeg = isJpeg;
-        mCurImageInfo.width = width;
-        mCurImageInfo.height = height;
-        mCurImageInfo.mCurTitle = title;
-        mPendingPurpose = kind;
-        ISListConfig config = new ISListConfig.Builder()
-                // 是否多选, 默认true
-                .multiSelect(false)
-                // 是否记住上次选中记录, 仅当multiSelect为true的时候配置，默认为true
-                .rememberSelected(false)
-                // "确定"按钮背景色
-                .btnBgColor(Color.BLACK)
-                // "确定"按钮文字颜色
-                .btnTextColor(Color.WHITE)
-                // 使用沉浸式状态栏
-                .statusBarColor(Color.parseColor("#11113d"))
-                // 返回图标ResId
-                .backResId(R.drawable.ic_back)
-                // 标题
-                .title(getString(R.string.images))
-                // 标题文字颜色
-                .titleColor(Color.WHITE)
-                // TitleBar背景色
-                .titleBgColor(Color.parseColor("#11113d"))
-                .needCrop(true)
-                // 裁剪大小。needCrop为true的时候配置
-                .cropSize(mCurImageInfo.width, mCurImageInfo.height, mCurImageInfo.width, mCurImageInfo.height)
-                // 第一个是否显示相机，默认true
-                .needCamera(false)
-                // 最大选择图片数量，默认9
-                .maxNum(1)
-                .build();
-
-        // 跳转到图片选择器
-        ISNav.getInstance().toListActivity(this, config, REQUEST_CHOOSE_IMG);
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_CHOOSE_IMG && resultCode == Activity.RESULT_OK && data != null) {
-            ArrayList<String> photos = data.getStringArrayListExtra(ISListActivity.INTENT_RESULT);
-            if (mCurImageInfo != null && photos != null && !photos.isEmpty()) {
-                String cachePath = photos.get(0);
-                try {
-                    FileUtils.copyFile(cachePath, mCurImageInfo.mOutFile);
-                    refreshPreviewByKind(mPendingPurpose);
-                } catch (IOException e) {
-                    YGOUtil.showTextToast(e + "", Toast.LENGTH_LONG);
-                }
-            }
-            mCurImageInfo = null;
-            mPendingPurpose = -1;
-        } else if (requestCode == REQUEST_CHOOSE_FILE) {
-            //选择文件
-            if (data != null) {
-                Uri uri = data.getData();
-                if (uri != null) {
-                    File file = new File(uri.getPath());
-                    if (file.exists()) {
-                        onChooseFileOk(file.getAbsolutePath());
-                        return;
-                    }
-                }
-            }
-            mFileChoosePurpose = -1;
-        } else if (requestCode == REQUEST_CHOOSE_FOLDER) {
-            //选择文件夹
-            if (data != null) {
-                Uri uri = data.getData();
-                if (uri != null) {
-                    File file = new File(uri.getPath());
-                    if (file.exists()) {
-                        onChooseFolderOk(file.getAbsolutePath());
-                        return;
-                    }
-                }
-            }
-            mFileChoosePurpose = -1;
-        }
-    }
-
-    private void onChooseFileOk(String file) {
-        if (mFileChoosePurpose == PURPOSE_FONT) {
-            //选择ttf字体：与旧实现一致，写入偏好键并同步字体路径
-            putPrefString(PREF_GAME_FONT, file);
-            mSettings.setFontPath(file);
-            YGOUtil.showTextToast(R.string.restart_app, Toast.LENGTH_LONG);
-        }
-        mFileChoosePurpose = -1;
-    }
-
-    private void onChooseFolderOk(String folder) {
-        //预留：游戏资源目录选择（当前界面无入口，与原注释掉的PREF_GAME_PATH项一致）
-        mFileChoosePurpose = -1;
-    }
-
     // ==================== 以下功能自旧实现平移 ====================
 
     @SuppressLint("HandlerLeak")
@@ -872,29 +437,6 @@ public class SettingFragment extends BaseFragemnt implements View.OnClickListene
 
         }
     };
-
-    private void setPendlumScale(boolean ok) {
-        if (Constants.DEBUG)
-            Log.i("kk", "setPendlumScale " + ok);
-        File dir = new File(mSettings.getResourcePath(), Constants.CORE_SKIN_PENDULUM_PATH);
-        if (ok) {
-            //rename
-            Dialog dlg = DialogPlus.show(getContext(), null, getString(R.string.coping_pendulum_image));
-            VUiKit.defer().when(() -> {
-                try {
-                    IOUtils.createFolder(dir);
-                    IOUtils.copyFilesFromAssets(getContext(), getDatapath(Constants.CORE_SKIN_PENDULUM_PATH),
-                            dir.getAbsolutePath(), false);
-                } catch (IOException e) {
-                }
-            }).done((re) -> {
-                dlg.dismiss();
-            });
-        } else {
-            IOUtils.delete(dir);
-        }
-    }
-
     public void updateImages() {
         DialogPlus dialog = DialogPlus.show(getContext(), null, getString(R.string.message));
         dialog.show();
@@ -1003,25 +545,7 @@ public class SettingFragment extends BaseFragemnt implements View.OnClickListene
             }
         });
     }
-
-    private void arrangeCodeList(String code) {
-        BufferedReader br = new BufferedReader(new StringReader(code));
-        try {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] words = line.trim().split("[ ]+");
-                activity.pre_code_list.add(Integer.valueOf(words[0]));
-                activity.released_code_list.add(Integer.valueOf(words[1]));
-
-            }
-        } catch (Exception e) {
-            Log.e(Constants.TAG, e + "");
-        } finally {
-
-        }
-    }
-
-    private void parseVersionJson(String jsonStr) {
+    protected void parseVersionJson(String jsonStr) {
         try {
             JSONObject json = new JSONObject(jsonStr);
             Version = json.optString("versionname");
@@ -1066,7 +590,7 @@ public class SettingFragment extends BaseFragemnt implements View.OnClickListene
         }
     }
 
-    private void showBilibiliDialog() {
+    protected void showBilibiliDialog() {
         DialogPlus dialog = new DialogPlus(getContext());
         Intent intent = new Intent(Intent.ACTION_VIEW);
         dialog.setMessage(R.string.Already_Lastest);
@@ -1082,21 +606,6 @@ public class SettingFragment extends BaseFragemnt implements View.OnClickListene
         });
         dialog.show();
     }
-
-    // 添加隐私政策回调接口
-    public interface PrivacyPolicyCallback {
-        void onPrivacyPolicyResult(boolean agreed);
-    }
-
-    // 添加事件监听类
-    public static class PrivacyPolicyAgreedEvent {
-        public boolean agreed;
-
-        public PrivacyPolicyAgreedEvent(boolean agreed) {
-            this.agreed = agreed;
-        }
-    }
-
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onPrivacyPolicyAgreed(PrivacyPolicyAgreedEvent event) {
         if (event.agreed) {

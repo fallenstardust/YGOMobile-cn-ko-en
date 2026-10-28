@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="StringFormatInvalid">
     <string name="action_settings">設定</string>
     <string name="action_game">AI対戦</string>
@@ -182,6 +182,7 @@
     <string name="donation">寄付</string>
     <string name="refresh">リフレッシュ</string>
     <string name="select_deck">デッキを選択</string>
+    <string name="solo_mode">ソロモード</string>
     <string name="quit_deck_tip">変更を破棄しますか？</string>
     <string name="deck_delete_text">デッキ削除</string>
     <string name="question_keep_cur_deck">現在のカードを残す？</string>
@@ -479,9 +480,9 @@
     <string name="cat_side">サイド</string>
     <string name="stat_usage_count">使用回数:</string>
     <string name="stat_user_count">使用者数:</string>
-    <string name="play_3">3枚投入：</string>
-    <string name="play_2">2枚投入：</string>
-    <string name="play_1">1枚投入：</string>
+    <string name="play_3">3枚入：</string>
+    <string name="play_2">2枚入：</string>
+    <string name="play_1">1枚入：</string>
     <string name="winrate_first">先攻勝率</string>
     <string name="winrate_second">後攻勝率</string>
     <string name="winrate_total">総合勝率</string>
@@ -510,4 +511,11 @@
     <string name="quality_high">高</string>
     <string name="settings_opengl_version">OpenGL バージョン</string>
     <string name="settings_screen_padding_summary">画面の余白</string>
+    <string name="settings_native_game_mode">ネイティブUIゲームモード</string>
+    <string name="settings_native_game_mode_summary">原版より多くの新機能</string>
+
+    <!-- System Strings for UI Localization (index 1740+) -->
+    <string name="spectator_skip_to_current">現在へ移動</string>
+    <string name="refresh_lan_button">LANを更新</string>
+    <string name="mode_single_duel_solo">ソロモード</string>
 </resources>

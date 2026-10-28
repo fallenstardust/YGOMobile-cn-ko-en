@@ -1,0 +1,177 @@
+package cn.garymb.ygomobile.network.server;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import cn.garymb.ygomobile.engine.OcgDuelEngine;
+
+/**
+ * 区域刷新（Refresh*）域实现（自 DuelAnalyzer 平移，逻辑零改）：Mzone/Szone/Hand/Grave/Extra/Single
+ * 各区的查询、暗置遮蔽与双视角发送。共享掩码常量与字节工具留在 {@link DuelAnalyzer}（同包 static 复用）。
+ */
+final class DuelZoneRefresh {
+
+    private final DuelAnalyzer analyzer;
+
+    DuelZoneRefresh(DuelAnalyzer analyzer) {
+        this.analyzer = analyzer;
+    }
+
+    void refreshMzone(int player) {
+        refreshMzone(player, DuelAnalyzer.REFRESH_MZONE_FLAG, 1);
+    }
+
+    void refreshMzone(int player, int flag, int useCache) {
+        refreshMaskedZone(player, OcgDuelEngine.LOCATION_MZONE, flag, useCache);
+    }
+
+    void refreshSzone(int player) {
+        refreshSzone(player, DuelAnalyzer.REFRESH_SZONE_FLAG, 1);
+    }
+
+    void refreshSzone(int player, int flag, int useCache) {
+        refreshMaskedZone(player, OcgDuelEngine.LOCATION_SZONE, flag, useCache);
+    }
+
+    /** Mzone/Szone 通用：遍历收集暗置段→先发本人→清零暗置段→发对手+观战。 */
+    private void refreshMaskedZone(int player, int location, int flag, int useCache) {
+        byte[] blocks = OcgDuelEngine.queryFieldCard(analyzer.pduel(), player, location, flag, useCache);
+        int len = blocks.length;
+        List<int[]> hidden = new ArrayList<>();
+        int qpos = 0;
+        int qlen = 0;
+        while (qlen < len && qpos + 4 <= len) {
+            int clen = DuelAnalyzer.readInt32(blocks, qpos);
+            qpos += 4;
+            qlen += clen;
+            if (clen <= EngineMessage.LEN_HEADER) {
+                continue;
+            }
+            int position = EngineMessage.getPosition(blocks, qpos + 8);
+            boolean hide = EngineMessage.shouldHideFacedownCode(position);
+            EngineMessage.stripRevealFlag(blocks, qpos + 8);
+            if (hide) {
+                hidden.add(new int[]{qpos, clen});
+            }
+            qpos += clen - 4;
+        }
+        byte[] full = updateDataPayload(player, location, blocks, len);
+        for (int[] seg : hidden) {
+            DuelAnalyzer.zeroRange(blocks, seg[0], seg[1] - 4);
+        }
+        byte[] masked = updateDataPayload(player, location, blocks, len);
+        analyzer.broadcaster.sendDualViewAndRecord(player, full, masked);
+    }
+
+    void refreshHand(int player) {
+        refreshHand(player, DuelAnalyzer.REFRESH_HAND_FLAG, 1);
+    }
+
+    void refreshHand(int player, int flag, int useCache) {
+        byte[] blocks = OcgDuelEngine.queryFieldCard(analyzer.pduel(), player, OcgDuelEngine.LOCATION_HAND, flag, useCache);
+        int len = blocks.length;
+        byte[] full = updateDataPayload(player, OcgDuelEngine.LOCATION_HAND, blocks, len);
+        int qpos = 0;
+        int qlen = 0;
+        while (qlen < len && qpos + 4 <= len) {
+            int slen = DuelAnalyzer.readInt32(blocks, qpos);
+            qpos += 4;
+            qlen += slen;
+            if (slen <= EngineMessage.LEN_HEADER) {
+                continue;
+            }
+            int position = EngineMessage.getPosition(blocks, qpos + 8);
+            if ((position & EngineMessage.POS_FACEUP) == 0) {
+                DuelAnalyzer.zeroRange(blocks, qpos, slen - 4);
+            }
+            qpos += slen - 4;
+        }
+        byte[] masked = updateDataPayload(player, OcgDuelEngine.LOCATION_HAND, blocks, len);
+        analyzer.broadcaster.sendDualViewAndRecord(player, full, masked);
+    }
+
+    void refreshGrave(int player) {
+        refreshGrave(player, DuelAnalyzer.REFRESH_GRAVE_FLAG, 1);
+    }
+
+    void refreshGrave(int player, int flag, int useCache) {
+        byte[] blocks = OcgDuelEngine.queryFieldCard(analyzer.pduel(), player, OcgDuelEngine.LOCATION_GRAVE, flag, useCache);
+        analyzer.broadcastMsg(updateDataPayload(player, OcgDuelEngine.LOCATION_GRAVE, blocks, blocks.length));
+    }
+
+    void refreshExtra(int player) {
+        refreshExtra(player, DuelAnalyzer.REFRESH_EXTRA_FLAG, 1);
+    }
+
+    void refreshExtra(int player, int flag, int useCache) {
+        byte[] blocks = OcgDuelEngine.queryFieldCard(analyzer.pduel(), player, OcgDuelEngine.LOCATION_EXTRA, flag, useCache);
+        analyzer.sendToPlayer(analyzer.room.players[player],
+                updateDataPayload(player, OcgDuelEngine.LOCATION_EXTRA, blocks, blocks.length));
+    }
+
+    /**
+     * 撤回重同步专用的额外卡组刷新：与 {@link #refreshExtra} 的「只发本人」不同，这里走
+     * {@link DuelViewBroadcaster#sendDualViewAndRecord} 双视角发送（本人全量、对手与观战收遮蔽版），
+     * 里侧段整块清零（含 flag，客户端 updateQuery 见 flag=0 即整块跳过、维持占位卡的里侧态）。
+     * <p>必须有这一步：{@code query_field_info} 的 reload 载荷对五个堆叠区只写张数、不写姿态也不写卡码，
+     * 客户端重建出的额外占位卡因此既不知哪几张在堆顶表侧、也无卡码；而额外卡组顶的表侧卡
+     * （灵摆怪兽等「以表侧表示回到额外卡组」的卡）是双方可见的公开信息，只发本人会让对手侧
+     * 在撤回后把它显示成卡背（用户反馈的「撤回上一步使额外卡组顶表侧灵摆变里侧」）。
+     * <p>实时流程仍用 {@link #refreshExtra}（遮蔽语义与逐帧录像序列不变），本方法只在重同步里出现。
+     */
+    void refreshExtraResync(int player, int flag, int useCache) {
+        refreshMaskedZone(player, OcgDuelEngine.LOCATION_EXTRA, flag, useCache);
+    }
+
+    void refreshSingle(int player, int location, int sequence) {
+        refreshSingle(player, location, sequence, DuelAnalyzer.REFRESH_SINGLE_FLAG);
+    }
+
+    void refreshSingle(int player, int location, int sequence, int flag) {
+        byte[] blocks = OcgDuelEngine.queryCard(analyzer.pduel(), player, location, sequence, flag, 0);
+        int len = blocks.length;
+        if (len <= EngineMessage.LEN_HEADER) {
+            analyzer.sendToPlayer(analyzer.room.players[player], updateCardPayload(player, location, sequence, blocks, len));
+            return;
+        }
+        int position = EngineMessage.getPosition(blocks, 12);
+        // 对齐 single_duel.cpp RefreshSingle L1600：非场上位置只要里侧表示一律遮蔽卡码（含手卡）。
+        // 手卡不能豁免：效果从卡组抽卡/随机入手的卡由 MSG_MOVE 清零后，若这里仍按全量下发，
+        // 对手会凭这次刷新拿到真实卡码并把该手卡画成正面（信息泄露）；
+        // 真正应公开的入手（检索确认、表侧加入手）由 MSG_CONFIRM_CARDS 或表侧姿态自然通过。
+        boolean hide = (position & EngineMessage.POS_FACEDOWN) != 0;
+        if ((location & EngineMessage.LOCATION_ONFIELD) != 0) {
+            hide = EngineMessage.shouldHideFacedownCode(position);
+            EngineMessage.stripRevealFlag(blocks, 12);
+        }
+        byte[] full = updateCardPayload(player, location, sequence, blocks, len);
+        int sendLen = len;
+        if (hide) {
+            DuelAnalyzer.writeInt32(blocks, 0, 16);
+            DuelAnalyzer.writeInt32(blocks, 4, DuelAnalyzer.QUERY_CODE_POSITION);
+            DuelAnalyzer.writeInt32(blocks, 8, 0); // 清零 code，保留 12..15 姿态
+            sendLen = 16;
+        }
+        byte[] masked = updateCardPayload(player, location, sequence, blocks, sendLen);
+        analyzer.broadcaster.sendDualViewAndRecord(player, full, masked);
+    }
+
+    static byte[] updateDataPayload(int player, int location, byte[] blocks, int len) {
+        byte[] d = new byte[len + DuelAnalyzer.MSG_HEADER_LEN];
+        d[0] = (byte) EngineMessage.MSG_UPDATE_DATA;
+        d[1] = (byte) player;
+        d[2] = (byte) location;
+        System.arraycopy(blocks, 0, d, DuelAnalyzer.MSG_HEADER_LEN, len);
+        return d;
+    }
+
+    static byte[] updateCardPayload(int player, int location, int sequence, byte[] blocks, int len) {
+        byte[] d = new byte[len + DuelAnalyzer.CARD_HEADER_LEN];
+        d[0] = (byte) EngineMessage.MSG_UPDATE_CARD;
+        d[1] = (byte) player;
+        d[2] = (byte) location;
+        d[3] = (byte) sequence;
+        System.arraycopy(blocks, 0, d, DuelAnalyzer.CARD_HEADER_LEN, len);
+        return d;
+    }
+}

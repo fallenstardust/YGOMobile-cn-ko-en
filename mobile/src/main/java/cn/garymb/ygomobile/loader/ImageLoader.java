@@ -108,18 +108,31 @@ public class ImageLoader implements Closeable {
 
     /**
      * 按卡号查找并读取卡图数据。
-     * 该方法由CardImageFetcher在Glide后台线程调用，请勿在主线程调用。
-     * 查找顺序与原逻辑一致：expansions下的zip/ypk -> pics/expansions/pics文件夹 -> pics.zip
+     * 该方法由CardImageFetcher在Glide后台线程调用，请勿在主线程调用；
+     * 亦供TextureLoader后台解码线程复用，保证GL卡图与bindImage同源同字节。
+     * <p>查找顺序与 cdb/script 统一优先级一致（见 NativeScriptBootstrap、
+     * AppsSettings#makeCdbList/#makeZipList）：expansions/pics 散文件 ＞ 卡包
+     * zip/ypk（按文件名字典序倒序，靠后名包优先）＞ pics.zip ＞ 主 pics/ 散文件
+     *（参考 image_manager.cpp GetImage 的 expansions 散文件优先、game.cpp 档案
+     * 先挂载者优先且后接物理目录）。
      */
     @Nullable
-    static byte[] findCardImageData(long code) {
+    public static byte[] findCardImageData(long code) {
         String name = Constants.CORE_IMAGE_PATH + "/" + code;
         String name_ex = Constants.CORE_EXPANSIONS_IMAGE_PATH + "/" + code;
-        //1.zips(包括ypk)
+        String resourcePath = AppsSettings.get().getResourcePath();
+        //1.expansions/pics散文件（最高优先级）
+        for (String ex : Constants.IMAGE_EX) {
+            byte[] data = readFile(new File(resourcePath, name_ex + ex));
+            if (data != null) {
+                return data;
+            }
+        }
+        //2.卡包档案（zip/ypk）倒序遍历：字典序靠后的包优先
         File[] files = AppsSettings.get().getExpansionFiles();
         if (files != null) {
-            for (File file : files) {
-                ZipFile zipFile = openZip(file);
+            for (int i = files.length - 1; i >= 0; i--) {
+                ZipFile zipFile = openZip(files[i]);
                 if (zipFile == null) {
                     continue;
                 }
@@ -129,28 +142,17 @@ public class ImageLoader implements Closeable {
                 }
             }
         }
-        //2.图片文件pics文件夹
-        String resourcePath = AppsSettings.get().getResourcePath();
-        for (String ex : Constants.IMAGE_EX) {
-            File file = new File(resourcePath, name + ex);
-            File file_ex = new File(resourcePath, name_ex + ex);
-            File target;
-            if (file_ex.exists()) {
-                target = file_ex;
-            } else if (file.exists()) {
-                target = file;
-            } else {
-                continue;
-            }
-            byte[] data = readFile(target);
+        //3.pics.zip（主资源）
+        ZipFile pics = openZip(new File(resourcePath, Constants.CORE_PICS_ZIP));
+        if (pics != null) {
+            byte[] data = readZipEntry(pics, name);
             if (data != null) {
                 return data;
             }
         }
-        //3.pics.zip
-        ZipFile pics = openZip(new File(resourcePath, Constants.CORE_PICS_ZIP));
-        if (pics != null) {
-            byte[] data = readZipEntry(pics, name);
+        //4.主 pics/ 散文件（最低优先级）
+        for (String ex : Constants.IMAGE_EX) {
+            byte[] data = readFile(new File(resourcePath, name + ex));
             if (data != null) {
                 return data;
             }
@@ -175,6 +177,51 @@ public class ImageLoader implements Closeable {
             //按未找到处理，由Glide显示error占位图
         } finally {
             IOUtils.close(inputStream);
+        }
+        return null;
+    }
+
+    /**
+     * 按场地魔法卡号查找场地背景图数据（image_manager.cpp GetTextureField 同源路径）：
+     * 与 {@link #findCardImageData} 同一统一优先级——expansions/pics/field 散文件 ＞
+     * 卡包 zip/ypk（倒序，靠后名包优先）＞ pics.zip ＞ 主 pics/field 散文件。
+     */
+    @Nullable
+    public static byte[] findFieldImageData(long code) {
+        String name = Constants.CORE_IMAGE_PATH + "/" + Constants.CORE_IMAGE_FIELD_PATH + "/" + code;
+        String name_ex = Constants.CORE_EXPANSIONS_IMAGE_PATH + "/" + Constants.CORE_IMAGE_FIELD_PATH + "/" + code;
+        String resourcePath = AppsSettings.get().getResourcePath();
+        for (String ex : Constants.IMAGE_EX) {
+            byte[] data = readFile(new File(resourcePath, name_ex + ex));
+            if (data != null) {
+                return data;
+            }
+        }
+        File[] files = AppsSettings.get().getExpansionFiles();
+        if (files != null) {
+            for (int i = files.length - 1; i >= 0; i--) {
+                ZipFile zipFile = openZip(files[i]);
+                if (zipFile == null) {
+                    continue;
+                }
+                byte[] data = readZipEntry(zipFile, name);
+                if (data != null) {
+                    return data;
+                }
+            }
+        }
+        ZipFile pics = openZip(new File(resourcePath, Constants.CORE_PICS_ZIP));
+        if (pics != null) {
+            byte[] data = readZipEntry(pics, name);
+            if (data != null) {
+                return data;
+            }
+        }
+        for (String ex : Constants.IMAGE_EX) {
+            byte[] data = readFile(new File(resourcePath, name + ex));
+            if (data != null) {
+                return data;
+            }
         }
         return null;
     }
@@ -209,13 +256,14 @@ public class ImageLoader implements Closeable {
 
     public File getImageFile(long code) {
         for (String ex : Constants.IMAGE_EX) {
-            File file = new File(AppsSettings.get().getResourcePath(), Constants.CORE_IMAGE_PATH + "/" + code + ex);
-            if (file.exists()) {
-                return file;
-            }
+            //expansions 散文件优先，与 findCardImageData 统一优先级一致
             File file_ex = new File(AppsSettings.get().getResourcePath(), Constants.CORE_EXPANSIONS_IMAGE_PATH + "/" + code + ex);
             if (file_ex.exists()) {
                 return file_ex;
+            }
+            File file = new File(AppsSettings.get().getResourcePath(), Constants.CORE_IMAGE_PATH + "/" + code + ex);
+            if (file.exists()) {
+                return file;
             }
         }
         return null;
