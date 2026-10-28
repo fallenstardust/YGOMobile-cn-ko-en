@@ -47,6 +47,9 @@ class DeckDropHandler {
 
         View searchRV = owner.cardSearcherManager.getSearchRecyclerView();
         if (target == searchRV) {
+            // 副卡组替换（isSiding）期间禁止把卡拖到卡组区之外删除：局间换副卡组只能在主/额外/副
+            // 三区之间调配，删卡会造成卡组不可逆减员；常规卡组编辑模式（非 siding）不受此限。
+            if (owner.isSiding) return;
             if (source != null) {
                 List<Card> list = getDeckList(source);
                 if (index >= 0 && index < list.size()) {
