@@ -540,10 +540,10 @@ abstract class GameFieldMotionBase {
 
     /**
      * 抬跳抬高高度：curZ 即卡片「抬高高度」轴（revealTopCardOut 用 loc[2]+0.06 抬高使揭示卡
-     * 凸出即同轴佐证）。原值 0.05 用户反馈视觉上不够明显，提到 0.15（与同区抖动 0.15/0.3
-     * 同量级、约为卡宽三分之一）后抬起/落回清晰可辨。
+     * 凸出即同轴佐证）。原值 0.05→0.15 后用户仍反馈不够明显，进一步提到 0.3（约卡宽三分之二，
+     * 抬到最高点在画面上明显脱开卡格浮起），抬起/落回更易辨识。
      */
-    public static final float BOUNCE_LIFT_Z = 0.15f;
+    public static final float BOUNCE_LIFT_Z = 0.3f;
     /** 抬跳总帧数（约 18 帧 ≈ 0.3 秒：正弦半周期拾起再落回，短暂不干扰后续操作） */
     protected static final int BOUNCE_FRAMES = 18;
 

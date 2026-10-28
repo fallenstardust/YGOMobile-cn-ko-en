@@ -56,6 +56,8 @@ public final class FieldHudRenderer {
     /** 攻守/等级数字尺寸 */
     private static final float STAT_SIZE_SCALE = 0.85f;
     private static final float STAT_SNUG_PX = 2f;
+    /** 非当前表示侧数值缩小一号的字号系数（攻击表示下的守备力 / 守备表示下的攻击力） */
+    private static final float SMALL_STAT_SCALE = 0.8f;
     /** 灵摆刻度/怪兽等级数字抬升系数（×字高 hpx）：把文字从「竖中心坐在顶角」上移到「底边坐在顶角」，
      *  使文字抬高到卡片矩形顶点外缘、与同角位的可发动绿点对齐。正交屏 y 向下，故沿顶角背离
      *  卡片中心的一侧偏移。 */
@@ -201,8 +203,16 @@ public final class FieldHudRenderer {
             for (int seq = 0; seq < mz.size(); seq++) {
                 ClientCard c;
                 try { c = mz.get(seq); } catch (Throwable e) { continue; }
-                if (c == null || !c.isFaceUp() || c.is_moving) continue;
-                drawMonsterStatTexts(p, seq, c);
+                if (c == null || c.is_moving) continue;
+                if (c.isFaceUp()) {
+                    drawMonsterStatTexts(p, seq, c);
+                } else if (c.displayCode() > 0 && hasStatText(c)) {
+                    // 用户规格：里侧守备表示的怪兽若卡码已公开（POS_REVEAL 解遮蔽 / 泡影类
+                    // MSG_POS_CHANGE 携真实码，经 displayCode() 取到），则同表侧一样显示那只怪兽
+                    // 在通讯中的攻击力/守备力文本；里侧卡仍不显示等级等其它文本（见
+                    // drawMonsterStatTexts 的 c.isFaceUp() 门控），且守备表示自然使攻击力缩小一号
+                    drawMonsterStatTexts(p, seq, c);
+                }
             }
             drawPendulumScaleText(f, p, mr4 ? 0 : 6, true);
             drawPendulumScaleText(f, p, mr4 ? 4 : 7, false);
@@ -243,24 +253,32 @@ public final class FieldHudRenderer {
         String[] parts;
         int[] colors;
         boolean[] boldFlags;
+        float[] scales;
         if (c.isLink()) {
             parts = new String[]{nz(c.atkString), "/", nz(c.linkString)};
             colors = new int[]{statValueColor(c.attack, c.baseAttack), HUD_WHITE, STAT_CYAN_LIGHT};
             boldFlags = new boolean[]{true, false, false};
+            scales = null;
         } else {
             parts = new String[]{nz(c.atkString), "/", nz(c.defString)};
             colors = new int[]{statValueColor(c.attack, c.baseAttack), HUD_WHITE,
                     statValueColor(c.defense, c.baseDefense)};
+            // 用户规格：攻击表示将守备力数字缩小一号、守备表示将攻击力数字缩小相同一号
+            //（与当前表示无关的那一侧数值降一级；分隔符 "/" 恒原字号）
             boldFlags = defense ? new boolean[]{false, false, true}
                                : new boolean[]{true, false, false};
+            scales = defense
+                    ? new float[]{SMALL_STAT_SCALE, 1f, 1f}
+                    : new float[]{1f, 1f, SMALL_STAT_SCALE};
         }
-        drawScreenText(edgeX, edgeY, parts, colors, boldFlags, hpx);
+        drawScreenText(edgeX, edgeY, parts, colors, boldFlags, scales, hpx);
 
         // 等级(L*/调律黄/阶级玫红)锚定攻击表示卡片矩形的角顶点（不随守备旋转移动）：
         // 我方=屏幕左上角 farL 左对齐向右延伸；对方=屏幕左下角 nearL 左对齐，
         // 与我方左上角镜像对应（用户规格，不再按对方卡 180° 倒置取屏幕右上角），
-        // 攻守表示均固定于此。
-        if (c.lvString != null && !c.lvString.isEmpty()) {
+        // 攻守表示均固定于此。仅表侧怪兽显示等级：里侧守备卡即便卡码已公开也只补攻守数值、
+        // 不显示等级（用户规格限定为攻击力/守备力文本）。
+        if (c.isFaceUp() && c.lvString != null && !c.lvString.isEmpty()) {
             float[] corner;
             int align;
             if (ours) {
@@ -319,6 +337,13 @@ public final class FieldHudRenderer {
                 new String[]{txt}, new int[]{HUD_WHITE}, hpx, align);
     }
 
+    /** 通讯是否已送达该卡的攻/守数值文本（里侧守备卡卡码公开后据此判定是否显数值；
+     *  二者均空时不显，避免只剩一个孤立的 "/"） */
+    private static boolean hasStatText(ClientCard c) {
+        return (c.atkString != null && !c.atkString.isEmpty())
+                || (c.defString != null && !c.defString.isEmpty());
+    }
+
     private void drawScreenNumber(float[] screenXY, String text, int color, float heightPx) {
         if (screenXY == null || text == null || text.isEmpty()) return;
         int tex = obtainNumberTexture(text, color);
@@ -365,10 +390,11 @@ public final class FieldHudRenderer {
         return p;
     }
 
-    /** 多段文字合成位图的宽高比（宽随文本增长、字高恒定），用于绘制时保持不拉伸 */
-    private static float statTextAspect(String[] parts, boolean[] boldFlags) {
+    /** 多段文字合成位图的宽高比（宽随文本增长、字高按逐段 scales 缩放），用于绘制时保持不拉伸 */
+    private static float statTextAspect(String[] parts, boolean[] boldFlags, float[] scales) {
         float tw = 0f;
         for (int i = 0; i < parts.length; i++) {
+            STAT_MEASURE_PAINT.setTextSize(STAT_TEXT_SIZE * partScale(scales, i));
             if (boldFlags != null && i < boldFlags.length && boldFlags[i])
                 STAT_MEASURE_PAINT.setFakeBoldText(true);
             else
@@ -376,17 +402,20 @@ public final class FieldHudRenderer {
             tw += STAT_MEASURE_PAINT.measureText(parts[i]);
         }
         STAT_MEASURE_PAINT.setFakeBoldText(true);
+        STAT_MEASURE_PAINT.setTextSize(STAT_TEXT_SIZE);
         int w = (int) Math.ceil(tw) + STAT_PAD_X * 2;
         if (w < STAT_BMP_H) w = STAT_BMP_H;
         return (float) w / (float) STAT_BMP_H;
     }
 
-    private int obtainStatTexture(String[] parts, int[] colors, boolean[] boldFlags) {
+    private int obtainStatTexture(String[] parts, int[] colors, boolean[] boldFlags, float[] scales) {
         FieldTextureManager tex = view.tex;
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < parts.length; i++) {
             sb.append(parts[i]).append('#').append(colors[i]);
             if (boldFlags != null && i < boldFlags.length && boldFlags[i]) sb.append('B');
+            if (scales != null && i < scales.length && scales[i] > 0f && scales[i] != 1f)
+                sb.append('S').append(scales[i]);
             sb.append('|');
         }
         String k = sb.toString();
@@ -395,7 +424,7 @@ public final class FieldHudRenderer {
             key = statLabelKeySeq--;
             statLabelKeys.put(k, key);
             try {
-                tex.offerUpload(new FieldTextureManager.PendingUpload(key, makeColoredTextBitmap(parts, colors, boldFlags), true));
+                tex.offerUpload(new FieldTextureManager.PendingUpload(key, makeColoredTextBitmap(parts, colors, boldFlags, scales), true));
             } catch (Throwable ignored) {
             }
         }
@@ -403,11 +432,17 @@ public final class FieldHudRenderer {
         return id != null ? id : -1;
     }
 
-    private static Bitmap makeColoredTextBitmap(String[] parts, int[] colors, boolean[] boldFlags) {
+    /** 逐段字号缩放系数（scales 为空或该项 ≤0 时取 1，保持原字号） */
+    private static float partScale(float[] scales, int i) {
+        return scales != null && i < scales.length && scales[i] > 0f ? scales[i] : 1f;
+    }
+
+    private static Bitmap makeColoredTextBitmap(String[] parts, int[] colors, boolean[] boldFlags, float[] scales) {
         Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
         p.setTextSize(STAT_TEXT_SIZE);
         float tw = 0f;
         for (int i = 0; i < parts.length; i++) {
+            p.setTextSize(STAT_TEXT_SIZE * partScale(scales, i));
             p.setFakeBoldText(boldFlags != null && i < boldFlags.length && boldFlags[i]);
             tw += p.measureText(parts[i]);
         }
@@ -418,11 +453,14 @@ public final class FieldHudRenderer {
         Canvas cv = new Canvas(bmp);
         p.setTextAlign(Paint.Align.LEFT);
         p.setShadowLayer(3f, 1f, 1f, SHADOW_BLACK);
+        // 基线恒按满字号粗体求解，缩小段与正常段共用同一基线（底部对齐，缩小数字视觉上像下标）
+        p.setTextSize(STAT_TEXT_SIZE);
         p.setFakeBoldText(true);
         float baseline = h / 2f - (p.ascent() + p.descent()) / 2f;
         float x = (w - tw) / 2f;
         for (int i = 0; i < parts.length; i++) {
             p.setColor(colors[i] | 0xFF000000);
+            p.setTextSize(STAT_TEXT_SIZE * partScale(scales, i));
             p.setFakeBoldText(boldFlags != null && i < boldFlags.length && boldFlags[i]);
             cv.drawText(parts[i], x, baseline, p);
             x += p.measureText(parts[i]);
@@ -430,12 +468,13 @@ public final class FieldHudRenderer {
         return bmp;
     }
 
-    /** 在屏幕点绘制多色分段文字：字高 heightPx，宽 = heightPx × 文本宽高比，整体居中于 (cx,cy) */
-    private void drawScreenText(float cx, float cy, String[] parts, int[] colors, boolean[] boldFlags, float heightPx) {
+    /** 在屏幕点绘制多色分段文字：字高 heightPx，宽 = heightPx × 文本宽高比，整体居中于 (cx,cy)；
+     *  scales 为逐段字号缩放（null=等号），使非当前表示侧的攻/守数值缩小一号 */
+    private void drawScreenText(float cx, float cy, String[] parts, int[] colors, boolean[] boldFlags, float[] scales, float heightPx) {
         if (parts == null || parts.length == 0) return;
-        int tex = obtainStatTexture(parts, colors, boldFlags);
+        int tex = obtainStatTexture(parts, colors, boldFlags, scales);
         if (tex <= 0) return;
-        float w = heightPx * statTextAspect(parts, boldFlags);
+        float w = heightPx * statTextAspect(parts, boldFlags, scales);
         view.quad.drawScreenQuadTex(cx, cy, w, heightPx, tex, 1f);
     }
 
@@ -446,9 +485,9 @@ public final class FieldHudRenderer {
     private void drawScreenTextAligned(float anchorX, float cy, String[] parts, int[] colors,
                                        float heightPx, int align) {
         if (parts == null || parts.length == 0) return;
-        int tex = obtainStatTexture(parts, colors, null);
+        int tex = obtainStatTexture(parts, colors, null, null);
         if (tex <= 0) return;
-        float w = heightPx * statTextAspect(parts, null);
+        float w = heightPx * statTextAspect(parts, null, null);
         float cx = anchorX;
         if (align == ALIGN_LEFT) cx = anchorX + w / 2f;
         else if (align == ALIGN_RIGHT) cx = anchorX - w / 2f;

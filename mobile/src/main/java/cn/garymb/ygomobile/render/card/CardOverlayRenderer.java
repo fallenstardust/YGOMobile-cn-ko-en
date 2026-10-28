@@ -85,6 +85,11 @@ public final class CardOverlayRenderer {
     // CommandDataParser 对 summonableCards 置位）时也显示绿点，与「特殊召唤」一致。
     private static final int HAND_DOT_MASK =
             GameEngine.COMMAND_ACTIVATE | GameEngine.COMMAND_SPSUMMON | GameEngine.COMMAND_SUMMON;
+    // 怪兽区额外纳入 COMMAND_REPOS（反转召唤）：里侧守备表示的怪兽点击可出 CmdMenuDialog 的
+    // 「反转召唤」按钮（CmdMenuDialogBase 以 COMMAND_REPOS 收集 SYS_FLIP）时，在其右上顶点显示
+    // 与手卡同款的呼吸点；反转召唤非「发动」（不含 COMMAND_ACTIVATE 位），按颜色规则走蓝色。
+    private static final int MONSTER_DOT_MASK =
+            GameEngine.COMMAND_ACTIVATE | GameEngine.COMMAND_SPSUMMON | GameEngine.COMMAND_REPOS;
     // 绿点尺寸：小圆点（程序化生成的圆点纹理），直径为固定世界尺寸，圆心正落在
     // 卡片自身朝向的右上角直角点上（局部坐标 (0.5,0.5)），比旧版内缩的方块更靠右上角。
     private static final long ACT_DOT_TEX_KEY = -57L;
@@ -233,7 +238,7 @@ public final class CardOverlayRenderer {
         boolean mr4 = f.dInfo.duelRule >= 4;
         for (int p = 0; p < 2; p++) {
             activatableDotList(f.players[p].hand, alpha, false, mr4, HAND_DOT_MASK);
-            activatableDotList(f.players[p].monsterZone, alpha, false, mr4, COMMAND_ACTIVATE_OR_SPSUMMON);
+            activatableDotList(f.players[p].monsterZone, alpha, false, mr4, MONSTER_DOT_MASK);
             activatableDotList(f.players[p].spellZone, alpha, true, mr4, COMMAND_ACTIVATE_OR_SPSUMMON);
         }
     }

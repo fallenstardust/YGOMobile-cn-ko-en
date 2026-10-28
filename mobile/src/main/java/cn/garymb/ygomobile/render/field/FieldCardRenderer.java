@@ -36,9 +36,10 @@ public class FieldCardRenderer {
     private static final int TYPE_SPELL = 0x2;
     private static final int TYPE_TRAP = 0x4;
 
-    // 发动抬跳时卡图峰值提亮量（用户规格：亮度只增加一点点、不要明显让卡图变白）：
-    // 乘法提亮峰值 +8%，强度随 bounceGlow 与抬高/边缘发光同一条正弦曲线同起同落
-    private static final float BOUNCE_BRIGHT_MAX = 0.08f;
+    // 发动抬跳时卡图峰值提亮量（用户规格：亮度需明显提高一些）：
+    // 乘法提亮峰值 +25%，强度随 bounceGlow 与抬高/边缘发光同一条正弦曲线同起同落，
+    // 抬到最高最亮、回落 bounceGlow 归 0 时乘数回到 1（精确恢复原亮度）
+    private static final float BOUNCE_BRIGHT_MAX = 0.25f;
 
     private final GameFieldView view;
 
@@ -245,8 +246,8 @@ public class FieldCardRenderer {
             // !front，全部由上方卡背分支消化
             int tex = obtainTexture(code, FieldGeometry.pendulumMode(c), FieldGeometry.pendulumScale(c));
             if (tex > 0) {
-                // 抬跳同步卡图微提亮（用户规格：与边缘发光同步的亮度增加再回到原亮度，
-                // 只一点点不变白）：乘法提亮峰值 +8%，峰值与抬高最高点对齐、两端回原亮度；
+                // 抬跳同步卡图提亮（用户规格：与边缘发光/抬高同步的亮度明显提高，峰值 +25%，
+                // 峰值与抬高最高点对齐、两端回原亮度）：乘法提亮不往白去；
                 // 非抬跳期走原入口不受影响
                 float bright = c.is_bounce ? 1f + BOUNCE_BRIGHT_MAX * c.bounceGlow : 1f;
                 if (bright > 1f) {
