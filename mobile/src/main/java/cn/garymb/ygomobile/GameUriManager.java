@@ -16,10 +16,12 @@ import static cn.garymb.ygomobile.utils.ServerUtil.loadServerInfoFromZipOrYpk;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
+import android.provider.OpenableColumns;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
@@ -46,6 +48,22 @@ import ocgcore.StringManager;
 
 
 public class GameUriManager {
+    /** 短时窗内同一个 VIEW uri 只处理一次：onCreate 前后台生命周期/多重 onNewIntent 可能重发同一 uri，
+     *  重复处理会复制同一录像并二次 startGame（singleTop 下变=二次 loadAndPlay，旧会话未收尾就重启引擎决斗） */
+    private static Uri lastViewUri;
+    private static long lastViewTime;
+
+    private static boolean isDuplicateView(Uri uri) {
+        long now = System.currentTimeMillis();
+        if (uri != null && uri.equals(lastViewUri) && now - lastViewTime < 5000) {
+            Log.w(Constants.TAG, "duplicate VIEW uri ignored: " + uri);
+            return true;
+        }
+        lastViewUri = uri;
+        lastViewTime = now;
+        return false;
+    }
+
     private final Activity activity;
     private LimitManager limitManager;
     private StringManager stringManager;
@@ -73,6 +91,9 @@ public class GameUriManager {
             }
         } else if (Intent.ACTION_VIEW.equals(intent.getAction())) {
             if (intent.getData() != null) {
+                if (isDuplicateView(intent.getData())) {
+                    return true;    // 当作已处理，不再 finish
+                }
                 doUri(intent.getData());
             } else {
                 activity.finish();
@@ -150,6 +171,37 @@ public class GameUriManager {
         return TextUtils.equals(deck, file.getParentFile().getAbsolutePath());
     }
 
+    /** 文件名是否带本应用可识别的资源扩展名（yrp/ydk/ypk/lua/conf） */
+    private static boolean hasKnownExt(String name) {
+        if (TextUtils.isEmpty(name)) {
+            return false;
+        }
+        String n = name.toLowerCase(Locale.US);
+        return n.endsWith(YDK_FILE_EX) || n.endsWith(YPK_FILE_EX) || n.endsWith(YRP_FILE_EX)
+                || n.endsWith(".lua") || n.endsWith(".conf");
+    }
+
+    /** content:// 的 uri.getPath() 常不含真实文件名/扩展名（QQ、微信等分享时落到 temp 分支
+     *  导致 yrp 不被识别），改从 MediaStore 查 DISPLAY_NAME */
+    private String queryDisplayName(Uri uri) {
+        Cursor cursor = null;
+        try {
+            cursor = getActivity().getContentResolver().query(uri,
+                    new String[]{OpenableColumns.DISPLAY_NAME}, null, null, null);
+            if (cursor != null && cursor.moveToFirst()) {
+                int idx = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                if (idx >= 0) {
+                    return cursor.getString(idx);
+                }
+            }
+        } catch (Throwable e) {
+            Log.w(Constants.TAG, "query DISPLAY_NAME " + uri, e);
+        } finally {
+            IOUtils.close(cursor);
+        }
+        return null;
+    }
+
     private File toLocalFile(Uri uri) {
         String path = uri.getPath();
         File remoteFile = null;
@@ -176,10 +228,17 @@ public class GameUriManager {
             }
         }
         String name = getPathName(path, false);
+        if ("content".equals(uri.getScheme()) && !hasKnownExt(name)) {
+            String display = queryDisplayName(uri);
+            if (hasKnownExt(display)) {
+                Log.i(Constants.TAG, "content uri name resolved: " + name + " -> " + display);
+                name = display;
+            }
+        }
         File local;
         if (name.toLowerCase(Locale.US).endsWith(YDK_FILE_EX)) {
             File dir = Constants.COPY_YDK_FILE ? new File(AppsSettings.get().getDeckDir()) : new File(getActivity().getApplicationInfo().dataDir, "cache");
-            local = getDeckFile(dir, getPathName(path, true));
+            local = getDeckFile(dir, hasKnownExt(name) ? getPathName(name, true) : getPathName(path, true));
         } else if (name.toLowerCase(Locale.US).endsWith(YPK_FILE_EX)) {
             String[] words = name.trim().split("[()（） ]+");
             File[] ypkList = AppsSettings.get().getExpansionFiles();

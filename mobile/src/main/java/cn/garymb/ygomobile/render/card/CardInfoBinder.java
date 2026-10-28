@@ -524,11 +524,8 @@ class CardInfoBinder {
      * 编号按文档序跨框全局连续——灵摆框段占 offset 0..p-1、怪兽框段从 offset p 起；
      * 灵摆卡恒按「段落文档序==offset」映射，非灵摆卡按「段首圆圈序号==offset」（此类卡
      * 圆圈序号即文档序），越界不标；卡面圆圈号保持官方逐框重启样式不影响映射。
-     * 上游现状脚本两套约定混用，故先查内置校准表 assets/effect_doc_map.txt
-     * （EffectDocMap，审计工具静态推定「现状编号→实际段落文档序」，仅收录与默认规则
-     * 不一致的高/中置信条目），查不到再回退默认映射——不改 cdb/script 即可消除现存错位
-     * （脚本全无 SetDescription 的段落无消息可标，校准表也救不了）。异画卡 Stringid 用
-     * 原卡号，uid>>>4 天然共享条目；hitDoc 超出当前语言段落数时校准失效回默认。
+     * 上游现状脚本两套约定混用，直接按上述默认映射处理（无校准表/逐卡特例）。异画卡 Stringid 用
+     * 原卡号，uid>>>4 天然共享条目。
      * 系统字符串 id（≤MAX_STRING_ID）无段序含义，仅走文本匹配。</li>
      * </ol>
      * 段落 = 段首效果标记行（换行符后的第一个 ①②③ 圆圈序号行；全文无圆圈序号的传统卡才认 ● 项目符行）
@@ -631,16 +628,12 @@ class CardInfoBinder {
                     }
                 }
             }
-            // ② 锚点映射兑底：先查校准表 EffectDocMap（现状脚本编号→实际段落，免改 cdb/script），
-            //    查不到再按统一原则默认映射；offset 落在辅助/适用效果等无对应段落的高序号时自然无命中
+            // ② 锚点映射兑底：按统一原则默认映射；offset 落在辅助/适用效果等无对应段落的高序号时自然无命中
             if (hits.isEmpty() && uid > DataManager.MAX_STRING_ID) {
                 int offset = (int) (uid & 0xf);
-                int hitDoc = EffectDocMap.getDoc(context, (int) (uid >>> 4), offset);
-                if (hitDoc > docIdx) hitDoc = -1;   // 当前语言分段数少于校准表推定段数（罕见异体文本）：校准失效回默认
-                if (hitDoc < 0) {
-                    for (int[] m : meta) {
-                        if (pendulum ? (m[0] == offset) : (m[1] == offset)) { hitDoc = m[0]; break; }
-                    }
+                int hitDoc = -1;
+                for (int[] m : meta) {
+                    if (pendulum ? (m[0] == offset) : (m[1] == offset)) { hitDoc = m[0]; break; }
                 }
                 if (hitDoc >= 0) {
                     for (int i = 0; i < lineCount; i++) {

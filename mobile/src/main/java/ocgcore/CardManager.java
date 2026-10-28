@@ -34,7 +34,9 @@ import ocgcore.data.Card;
 
 public class CardManager {
     private static int cdbNum = 0;
-    private final SparseArray<Card> cardDataHashMap = new SparseArray<>();
+    /** 卡表引用：loadCards 重建时整表替换（volatile 发布），并发读者要么看到完整旧表、
+     *  要么看到完整新表，不会读到 clear+逐项put 半途的空表/脏表（SparseArray 本身非线程安全） */
+    private volatile SparseArray<Card> cardDataHashMap = new SparseArray<>();
     private final String dbDir;
     private final String exDbPath;
     private static final String TAG = String.valueOf(CardManager.class);
@@ -124,11 +126,13 @@ public class CardManager {
         return fileList;
     }
 
-    public Card getCard(int code) {
+    public synchronized Card getCard(int code) {
         Card card = cardDataHashMap.get(code);
         if (card == null) {
+            // 未知卡缓存空壳（修复旧实现 new 两次导致返回对象与缓存对象不是同一个）；
+            // 下次 loadCards 整表替换时空壳自然被弃，不会永久污染真实卡数据
             card = new Card(code);
-            cardDataHashMap.put(code, new Card(code));
+            cardDataHashMap.put(code, card);
             return card;
         }
         return card;
@@ -153,8 +157,9 @@ public class CardManager {
      */
     @WorkerThread
     public void loadCards() {
-        cardDataHashMap.clear();
-        int count = readAllCards(AppsSettings.get().getDatabaseFile(), cardDataHashMap);
+        //先在全新表上完整构建，最后一次性发布：消除外部线程读到空表/半表的窗口
+        SparseArray<Card> map = new SparseArray<>();
+        int count = readAllCards(AppsSettings.get().getDatabaseFile(), map);
         Log.i(TAG, "load defualt cdb:" + count);
         if (!TextUtils.isEmpty(exDbPath)) {
             if (AppsSettings.get().isReadExpansions()) {
@@ -180,7 +185,7 @@ public class CardManager {
                                 Log.e("CardManager", "读取压缩包");
                                 try {
                                     for (File file1 : readZipCdb(file.getAbsolutePath())) {
-                                        count = readAllCards(file1, cardDataHashMap);
+                                        count = readAllCards(file1, map);
                                     }
                                 } catch (IOException e) {
                                     Log.e("CardManager", "读取压缩包错误" + e);
@@ -195,14 +200,14 @@ public class CardManager {
                         if (packed != null) {
                             Arrays.sort(packed, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
                             for (File file : packed) {
-                                count = readAllCards(file, cardDataHashMap);
+                                count = readAllCards(file, map);
                                 Log.i(TAG, "load " + count + " pack cdb:" + file);
                             }
                         }
                         //3.最后读 expansions 散 cdb（最高优先级，覆盖全部同名卡）
                         for (File file : files) {
                             if (file.getName().endsWith(".cdb")) {
-                                count = readAllCards(file, cardDataHashMap);
+                                count = readAllCards(file, map);
                                 Log.i(TAG, "load " + count + " cdb:" + file);
                             }
                         }
@@ -210,7 +215,10 @@ public class CardManager {
                 }
             }
         }
-        buildAliasCards();
+        synchronized (this) {
+            cardDataHashMap = map;   // volatile 整表发布（与 getCard 同一把锁，发布后别名计算期间无并发写）
+            buildAliasCards();
+        }
     }
 
     private void buildAliasCards() {

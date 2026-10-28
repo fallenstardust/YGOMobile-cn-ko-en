@@ -14,6 +14,7 @@ import java.util.List;
 
 import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.utils.CrashHandler;
+import ocgcore.DataManager;
 
 /** 录像回放播放器：加载录像→取消息→卡码归一→按节奏投喂 GameEngine 实况管线并做播控，场地/动画/音效/卡详等全部与联机观战同源渲染，本类不再自建渲染分支。 */
 public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
@@ -239,6 +240,11 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
 
     /** 后台线程解析录像并起投喂线程；startTurn &gt; 1 时先快进到该回合起点再正常播放（对齐 gframe「起始回合」）。 */
     public void loadAndPlay(String replayPath, int startTurn) {
+        // 留住旧会话线程：新建的 load 线程先限时等它们退出再开源建局，避免旧 load 仍在
+        // open()/startDuel()（可能卡在 ensureEngineReady 十几秒）时与新会话并发触碰
+        // 进程级 ocgcore 单例（外部重开同/不同录像时 native 崩溃的直接来源）
+        final Thread oldLoad = loadThread;
+        final Thread oldPump = pumpThread;
         stop();
         replayFilePath = replayPath;
         final long gen = sessionGen;      // 本次会话代数（stop 刚递增过）
@@ -255,14 +261,35 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         pendingReverse = false;
         displaySnapN.clear();
         ReplayCodeMapper.beginSession();
-        loadThread = new Thread(() -> load(replayPath, startTurn, gen), "ReplayLoad");
+        loadThread = new Thread(() -> {
+            joinQuietly(oldPump, 5000L);
+            joinQuietly(oldLoad, 5000L);
+            load(replayPath, startTurn, gen);
+        }, "ReplayLoad");
         loadThread.setDaemon(true);
         CrashHandler.getInstance().hookThread(loadThread, "回放-加载");
         loadThread.start();
     }
 
+    /** 限时等待旧会话线程退出（本方法在 worker 线程调用，不可在主线程用）；超时/中断都继续 */
+    private static void joinQuietly(Thread t, long timeoutMs) {
+        if (t == null || t == Thread.currentThread() || !t.isAlive()) return;
+        try {
+            t.join(timeoutMs);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        if (t.isAlive()) Log.w(TAG, "previous replay thread still alive after " + timeoutMs + "ms");
+    }
+
     private void load(String replayPath, int startTurn, long gen) {
         try {
+            // 等卡数据就绪：外部打开 yrp 时 YGOProActivity.loadData 的全量加载与回放线程并发
+            // 读卡表会错映射卡码（引擎重跑失步→“卡住”）/并发写坏卡表（越界崩溃）
+            if (!DataManager.get().awaitLoaded(20000L)) {
+                Log.w(TAG, "card data not ready within 20s, replay may mis-map card codes");
+            }
+            if (sessionGen != gen) return;    // 等待期间已被退出/重新点播作废：静默退出
             replayData = ReplayReader.loadReplay(replayPath);
             if (sessionGen != gen) return;    // 加载期间已被退出/重新点播作废：静默退出
             if (replayData == null) {
@@ -270,28 +297,36 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
                 return;
             }
             // 回放源选择：含 MSG 流（V2/V1）恒直接播流（脱离 ocgcore 可播）；仅无流旧格式或 REPLAY_MSG_GUEST_VIEW 遮蔽文件优先引擎重跑重现双方手卡，引擎不可用则退回播流（preserveMaskedHandCode 保正面）。
+            // 全程用局部引用 s，仅在会话仍有效时才发布到 source 字段：避免 stop() 跨线程关闭
+            // 本线程尚在 open() 的源，也避免会话作废时泄漏已创建的 pduel
             boolean sourceOpened = false;
+            ReplaySource s;
             if (replayData.msgFrames != null || replayData.msgBuffer != null) {
                 if (replayData.hasFlag(ReplayReader.REPLAY_MSG_GUEST_VIEW)) {
                     ReplaySource engineSource = new EngineReplaySource(this);
                     if (engineSource.open()) {
-                        source = engineSource;
+                        s = engineSource;
                         sourceOpened = true;    // 已开过源，不得二次 open（startDuel 重复重建会泄漏 pduel）
                     } else {
                         closeSourceQuietly(engineSource);
-                        source = new MsgStreamReplaySource(this);
+                        s = new MsgStreamReplaySource(this);
                     }
                 } else {
-                    source = new MsgStreamReplaySource(this);
+                    s = new MsgStreamReplaySource(this);
                 }
             } else {
-                source = new EngineReplaySource(this);
+                s = new EngineReplaySource(this);
             }
-            if (!sourceOpened && !source.open()) {
-                fail(source.getLastError() == null ? "录像数据源初始化失败" : source.getLastError());
+            if (!sourceOpened && !s.open()) {
+                closeSourceQuietly(s);  // 开源失败也可能已创建 pduel（startDuel 中途失败），释放原生资源
+                fail(s.getLastError() == null ? "录像数据源初始化失败" : s.getLastError());
                 return;
             }
-            if (sessionGen != gen) return;    // 同上：开源自检期间会话已作废
+            if (sessionGen != gen) {    // 同上：开源自检期间会话已作废，关掉自己开的源后静默退出
+                closeSourceQuietly(s);
+                return;
+            }
+            source = s;
             totalSteps = computeTotalSteps();
             prepareDisplayDecks();
             chatFrameCount = ReplayChatTimeline.countChatFrames(replayData.msgFrames);

@@ -81,22 +81,57 @@ public class DataManager {
         return mCardManager;
     }
 
-    private boolean mInit;
+    /**
+     * 卡数据是否真正加载完成。旧实现在开始加载前就置 mInit=true，并发调用者（如回放线程）
+     * 会误判数据就绪，在 CardManager 清空/重建卡表的半途读到空壳卡；现在仅在全部加载
+     * 完成后置位，并用 loadLock 串行化整个加载过程（force 重加载期间等待者同样被阻）。
+     */
+    private volatile boolean mLoaded;
+    private final Object loadLock = new Object();
 
     public void load(boolean force) {
         //LogUtil.i("webCrawler", "DataManager load data");
-        boolean needLoad = false;
-        synchronized (this) {
-            if (!mInit || force) {
-                needLoad = true;
+        synchronized (loadLock) {
+            if (mLoaded && !force) {
+                return;
             }
-            mInit = true;
-        }
-        if (needLoad) {
+            mLoaded = false;    // force 重载：加载期间就绪标志回落，等待者不会读到半途卡表
             mStringManager.load();
             mPackManager.load();
             mLimitManager.load();
             mCardManager.loadCards();
+            mLoaded = true;
+            loadLock.notifyAll();
+        }
+    }
+
+    /** 卡数据是否已完成一次加载（force 重载期间为 false） */
+    public boolean isDataLoaded() {
+        return mLoaded;
+    }
+
+    /**
+     * 等待卡数据就绪（回放/引擎线程在读卡前调用，避免与 ResCheckTask、DataLoad 线程的
+     * 全量加载并发）。本方法不触发加载，只等待其它线程的 load() 完成。
+     *
+     * @return true=已就绪；false=超时仍未就绪（调用方自行降级继续，不阻断流程）
+     */
+    public boolean awaitLoaded(long timeoutMs) {
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        synchronized (loadLock) {
+            while (!mLoaded) {
+                long remain = deadline - System.currentTimeMillis();
+                if (remain <= 0) {
+                    return false;
+                }
+                try {
+                    loadLock.wait(Math.min(remain, 500L));
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return mLoaded;
+                }
+            }
+            return true;
         }
     }
 

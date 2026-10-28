@@ -64,6 +64,10 @@ final class EngineReplaySource extends ReplaySource {
             (player, location) -> Integer.MAX_VALUE;
 
     private long pduel;
+    /** pduel 跨线程互斥：投喂线程的 process/查询/响应喂回与主线程 stop()→close()→endDuel
+     *  可能交叉——ocgcore 决斗对象无内部锁，end_duel 与 process 并发即 use-after-free
+     *  native 崩溃（外部重复打开录像时崩溃回首页的直接来源之一） */
+    private final Object duelLock = new Object();
     /** 响应记录流游标（uniform 模式消息区全部为 [uint8 len][response] 记录） */
     private ByteBuffer responses;
     /** 响应记录区快照，rewind（undo/restart 重跑）时回到起点 */
@@ -117,6 +121,11 @@ final class EngineReplaySource extends ReplaySource {
 
     /** 重建决斗（对齐 ReplayMode::StartDuel）：seed/卡组/参数取录像头，本身不产消息 */
     private boolean startDuel() {
+        // 全程持锁：建局期间（create_duel/new_card/start_duel）不允许另一线程 endDuel 释放 pduel
+        synchronized (duelLock) { return startDuelLocked(); }
+    }
+
+    private boolean startDuelLocked() {
         fatal = false;
         synthQueue.clear();
         capturedFrames.clear();
@@ -220,6 +229,11 @@ final class EngineReplaySource extends ReplaySource {
      */
     @Override
     boolean refill() {
+        // 引擎推进段整体互斥：避免主线程 stop() 在 process 仍使用 pduel 时 endDuel
+        synchronized (duelLock) { return refillLocked(); }
+    }
+
+    private boolean refillLocked() {
         if (pduel == 0L || fatal) return false;
         int idleSpins = 0;
         while (player.isPumpAlive() && !fatal) {
@@ -368,8 +382,11 @@ final class EngineReplaySource extends ReplaySource {
      * 入队，紧随触发消息投喂实况管线（管线侧经 parseUpdateData→updateQuery 生成卡面数值文本）。
      */
     private void refreshZone(int enginePlayer, int location, int flag) {
-        if (pduel == 0L) return;
-        byte[] blocks = OcgDuelEngine.queryFieldCard(pduel, enginePlayer, location, flag, 0);
+        byte[] blocks;
+        synchronized (duelLock) {
+            if (pduel == 0L) return;
+            blocks = OcgDuelEngine.queryFieldCard(pduel, enginePlayer, location, flag, 0);
+        }
         if (blocks.length == 0) return;
         byte[] body = new byte[blocks.length + 2];
         body[0] = (byte) enginePlayer;
@@ -382,8 +399,11 @@ final class EngineReplaySource extends ReplaySource {
 
     /** ReplayRefreshSingle 等价：query_card 单块包成合成 UPDATE_CARD（[p][loc][seq][块]） */
     private void refreshSingle(int enginePlayer, int location, int sequence) {
-        if (pduel == 0L) return;
-        byte[] block = OcgDuelEngine.queryCard(pduel, enginePlayer, location, sequence, FLAG_FIELD, 0);
+        byte[] block;
+        synchronized (duelLock) {
+            if (pduel == 0L) return;
+            block = OcgDuelEngine.queryCard(pduel, enginePlayer, location, sequence, FLAG_FIELD, 0);
+        }
         if (block.length == 0) return;
         byte[] body = new byte[block.length + 3];
         body[0] = (byte) enginePlayer;
@@ -412,7 +432,10 @@ final class EngineReplaySource extends ReplaySource {
         if (len > rp.remaining()) len = rp.remaining();
         byte[] resb = new byte[RESPONSE_BUF_LEN];
         rp.get(resb, 0, len);
-        OcgDuelEngine.setResponseB(pduel, resb);
+        synchronized (duelLock) {
+            if (pduel == 0L) return;
+            OcgDuelEngine.setResponseB(pduel, resb);
+        }
     }
 
     /** 追加一条转码帧：[消息号][体副本]，与 LAN 录制 YrpWriter.writeMessage 的单帧一消息同构 */
@@ -463,9 +486,11 @@ final class EngineReplaySource extends ReplaySource {
     }
 
     private void endDuel() {
-        if (pduel != 0L) {
-            OcgDuelEngine.endDuel(pduel);
-            pduel = 0L;
+        synchronized (duelLock) {
+            if (pduel != 0L) {
+                OcgDuelEngine.endDuel(pduel);
+                pduel = 0L;
+            }
         }
     }
 }
