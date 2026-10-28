@@ -512,25 +512,20 @@ class CardInfoBinder {
     private static final String USED_MARK_PREFIX = "\u00A0 ";
 
     /**
-     * 在关键词高亮结果上叠加「已发动效果」标记（用户规格：不改 cards.cdb，让描述里每个
-     * 效果段落都能对应到引擎）。refs 为发动引用集（descHints 合成记录 + 账本 Activation，
-     * 每条携 完整字符串 id × 半场 × 发动回合），每个 id 两级定位：
+     * 在关键词高亮结果上叠加「已发动效果」标记（上游 cdb/script 已整改为文档序：效果发动
+     * 经 MSG_CHAINING 下发的描述串=code*16+段落文档序，低 4 位序号即「序号文本数组」下标）。
+     * refs 为发动引用集（descHints 合成记录 + 账本 Activation），卡码型 id 直接按
+     * offset==段落文档序命中，不再做 str 文本匹配（cdb str 保留原文本、不含段落全文）：
      * <ol>
-     * <li>文本相等匹配：id 经 DataManager.getDesc 取 str1~16/系统字符串文本，归一化后与
-     * 归一化段落行全等才命中。实测本仓库 cdb 的 str 多为「特殊召唤」类短碎片，故严禁
-     * contains 包含匹配（碎片会蹭中错误段落），相等匹配仅作 str 规范库的加成路径。</li>
-     * <li>锚点映射：卡码型 id 低 4 位 offset 即脚本 aux.Stringid(code, n) 的编号。
-     * 统一原则（用户定稿，不做逐卡特例/兼容分支）：带序号段落共 n 个、灵摆框段落 p 个，
-     * 编号按文档序跨框全局连续——灵摆框段占 offset 0..p-1、怪兽框段从 offset p 起；
-     * 灵摆卡恒按「段落文档序==offset」映射，非灵摆卡按「段首圆圈序号==offset」（此类卡
-     * 圆圈序号即文档序），越界不标；卡面圆圈号保持官方逐框重启样式不影响映射。
-     * 上游现状脚本两套约定混用，直接按上述默认映射处理（无校准表/逐卡特例）。异画卡 Stringid 用
-     * 原卡号，uid>>>4 天然共享条目。
-     * 系统字符串 id（≤MAX_STRING_ID）无段序含义，仅走文本匹配。</li>
+     * <li>序号文本数组原则（用户规格2）：卡面带序号段落共 n 个、灵摆框段 p 个，文档序
+     * 跨框全局连续——下标 0..p-1 为灵摆框段、p..n-1 为怪兽框段，offset 直指对应段。</li>
+     * <li>分框分割原则（用户规格3，灵摆怪兽卡）：灵摆框段从第 1 条含「【」或「[」行的
+     * 下一行开始，到第 2 条含「【」或「[」行的上一行结束（第 2 条标题行上方出现分隔线时
+     * 以分隔线为界再往上一行）；第 2 条标题行及其下方不再属灵摆框，其下一行起为怪兽效果段。
+     * 标题行与分隔线自身不归入任何段（邻段置灰不连带）。</li>
      * </ol>
      * 段落 = 段首效果标记行（换行符后的第一个 ①②③ 圆圈序号行；全文无圆圈序号的传统卡才认 ● 项目符行）
-     * 起、到下一标记行前止，其间的续行/●行等所有行归该段整段置灰；两类框标题行（含半角 `[` 或
-     * 全角 `【` 且含灵摆/怪兽关键词的短行）与两框之间的分隔线不归入任何段（邻段置灰不连带）。打勾图标只插段首。
+     * 起、到下一标记行前止，其间的续行/●行等所有行归该段整段置灰。打勾图标只插段首。
      * 段落自末向首逆序处理：插入前缀只影响其后偏移，未处理段的原始
      * 行下标仍有效。在后台线程执行，不触碰视图。
      */
@@ -554,35 +549,28 @@ class CardInfoBinder {
         for (int k = 0; k < lineCount && !hasCircled; k++) {
             hasCircled = leadingCircledIndex(desc.substring(lines.get(k)[0], lines.get(k)[1]).trim()) >= 0;
         }
-        // 段落归属扫描：框标题行/分隔线切换灵摆框/怪兽框状态但自身不归任何段（paraOf=-1）；
-        // 圆圈/项目符行开启新段落（docIdx 全文连续），并记录 {docIdx, anchor, box}：anchor=段首圆圈序号
-        // 或全文项目符序位（非灵摆卡即 offset）；
-        // 首段之前的背景文本行（含“这个卡名的①②效果…”行）与框标题行/分隔线 paraOf=-1 不参与映射
+        // 段落归属扫描（用户规格3·分框原则）：含「【」或「[」且非圆圈序号开头的行为框标题行——
+        // 第1条起为灵摆框、第2条起为怪兽框；标题行与分隔线自身不归任何段（paraOf=-1，
+        // 邻段被标记也不连带置灰；第2条标题行上方的分隔线天然成为灵摆框上界）。
+        // 圆圈/项目符行开启新段落，docIdx 全文连续即「序号文本数组」下标（灵摆 0..p-1、
+        // 怪兽 p..n-1，用户规格2），meta 记录 {docIdx, anchor}：anchor=段首圆圈序号或项目符序位；
+        // 首段之前的背景文本行（含“这个卡名的①②效果…”行）与标题行/分隔线 paraOf=-1 不参与映射
         int[] paraOf = new int[lineCount];
-        String[] normLines = new String[lineCount];
         List<int[]> meta = new ArrayList<>();
         int docIdx = -1, para = -1, bulletSeq = 0;
-        boolean inPend = false, inMon = false, pendulumSeen = false;
         for (int i = 0; i < lineCount; i++) {
             String raw = desc.substring(lines.get(i)[0], lines.get(i)[1]);
-            normLines[i] = normalizeEffectLine(raw);
             String trimmed = raw.trim();
-            // 用户规格：两类框标题行与分隔线都不属于任何效果段（邻段被标记也不连带置灰）
             if (isDividerLine(trimmed)) {
                 paraOf[i] = -1;
                 continue;
             }
-            boolean boxMarker = false;
-            if (isPendulumBoxMarkerLine(trimmed)) {
-                inPend = true; inMon = false; pendulumSeen = true; boxMarker = true;
-            } else if (isMonsterBoxMarkerLine(trimmed)) {
-                inPend = false; inMon = true; boxMarker = true;
-            }
-            if (boxMarker) {
+            int circled = leadingCircledIndex(trimmed);
+            // 框标题行判据（用户规格3）：整行含 【 或 [ 即算，圆圈序号开头行除外（那是效果段）
+            if (circled < 0 && (trimmed.indexOf('【') >= 0 || trimmed.indexOf('[') >= 0)) {
                 paraOf[i] = -1;
                 continue;
             }
-            int circled = leadingCircledIndex(trimmed);
             int anchor;
             if (circled >= 0) {
                 anchor = circled;
@@ -595,53 +583,34 @@ class CardInfoBinder {
             if (anchor >= 0) {
                 docIdx++;
                 para = docIdx;
-                meta.add(new int[]{docIdx, anchor, inPend ? 1 : (inMon ? 2 : 0)});
+                meta.add(new int[]{docIdx, anchor});
             }
             paraOf[i] = para;
         }
         // 段落→段首圆圈序号：per-duel 条款判定时需要知道限制句中序号与本段的对应关系
         int[] paraAnchor = new int[docIdx + 1];
         for (int[] m : meta) paraAnchor[m[0]] = m[1];
-        int monCount = 0, pendCount = 0;
-        for (int[] m : meta) {
-            if (m[2] == 1) pendCount++;
-            else if (m[2] == 2) monCount++;
-        }
-        // 灵摆分框仅在两框都有段落时启用；否则退回全文锚点映射（含只有单框标记的异常文本）
-        boolean pendulum = pendulumSeen && pendCount > 0 && monCount > 0;
         // 标记位域：0=未标 1=对方发动(红勾) 2=我方发动(绿勾)，同段落双方命中时绿优先
         int[] mark = new int[lineCount];
         final int nowTurn = EffectActivationLedger.getCurrentTurn();
         for (EffectRef ref : refs) {
             long uid = ref.id & 0xFFFFFFFFL;
-            // ① 文本全等匹配（str 规范的库最权威，不依赖编号约定假设）；str 行首带不带
-            //    圆圈序号+冒号均可命中 desc 段首行（规范 B：str 填段落全文）
-            List<int[]> hits = new ArrayList<>();
-            String norm = normalizeEffectLine(DataManager.get().getDesc(ref.id, ""));
-            if (!norm.isEmpty()) {
-                String normCore = stripCircledPrefix(norm);
-                for (int i = 0; i < lineCount; i++) {
-                    if (norm.equals(normLines[i])
-                            || (!normCore.isEmpty()
-                            && normCore.equals(stripCircledPrefix(normLines[i])))) {
-                        hits.add(new int[]{paraOf[i], i});
-                    }
-                }
-            }
-            // ② 锚点映射兑底：按统一原则默认映射；offset 落在辅助/适用效果等无对应段落的高序号时自然无命中
-            if (hits.isEmpty() && uid > DataManager.MAX_STRING_ID) {
-                int offset = (int) (uid & 0xf);
-                int hitDoc = -1;
-                for (int[] m : meta) {
-                    if (pendulum ? (m[0] == offset) : (m[1] == offset)) { hitDoc = m[0]; break; }
-                }
-                if (hitDoc >= 0) {
+            // offset 直指（用户规格：上游已整改为文档序编号）：系统字符串 id（≤MAX_STRING_ID）
+            // 无段序含义不标；卡码型 id 低 4 位=段落文档序下标，命中 meta.docIdx 即标整段，
+            // 越界（辅助/适用效果预留的 ≥n 让位槽）自然无命中。异画卡 Stringid 用原卡号，
+            // uid>>>4 天然共享条目
+            if (uid <= DataManager.MAX_STRING_ID) continue;
+            int offset = (int) (uid & 0xf);
+            List<int[]> hits = new ArrayList<>(1);
+            for (int[] m : meta) {
+                if (m[0] == offset) {
                     for (int i = 0; i < lineCount; i++) {
-                        if (paraOf[i] == hitDoc) {
-                            hits.add(new int[]{hitDoc, i});
+                        if (paraOf[i] == offset) {
+                            hits.add(new int[]{offset, i});
                             break;
                         }
                     }
+                    break;
                 }
             }
             if (hits.isEmpty()) continue;
@@ -879,53 +848,10 @@ class CardInfoBinder {
     }
 
     /**
-     * 灵摆框标题行（多语言，实测 assets 6 套 cards.cdb）：中「←6 【灵摆】 6→/【灵摆】」、
-     * 英「[ Pendulum Effect ]」、西「【Efecto de Péndulo】」、葡「[ Pendulum Effect ]/
-     * 【Efeito Pêndulo】」、韩「【펜듈럼 효과】」、日「【Ｐスケール：青６／赤６】(兼作灵摆框首行，
-     * 日文无独立 Ｐ効果 标题)」。判据（用户归纳）：行含 [ 或 【 且含灵摆关键词的短行。
-     * 圆圈序号开头的效果行（如“①：此卡①的灵摆效果…”）不算。
+     * 分隔线（用户规格：同框标题行一样不归入任何段落）：整行由横线/短横类字符组成，
+     * 如英/葡「----------------------------------------」、西「━━━━━━━━…」；
+     * 第2条框标题行上方的分隔线即灵摆框上界（用户规格3「再往上一行」）
      */
-    private static boolean isPendulumBoxMarkerLine(String trimmed) {
-        return isBoxMarkerLine(trimmed, PENDULUM_TITLE_KEYWORDS);
-    }
-
-    /**
-     * 怪兽框标题行（多语言）：中「【怪兽效果】/【怪兽描述】」、英/葡「[ Monster Effect ]」、
-     * 西「【Efecto de Monstruo】」、葡「【Efeito de Monstro】」、韩「【몬스터 효과】」、
-     * 日「【モンスター効果】」。判据同灵摆框标题行。
-     */
-    private static boolean isMonsterBoxMarkerLine(String trimmed) {
-        return isBoxMarkerLine(trimmed, MONSTER_TITLE_KEYWORDS);
-    }
-
-    /** 框标题行关键词（拉丁部分一律小写，匹配前对行做 toLowerCase；CJK/假名/谚文不受大小写影响） */
-    private static final String[] PENDULUM_TITLE_KEYWORDS = {
-            "灵摆", "靈擺", "pendulum", "펜듈럼",
-            "péndulo", "pêndulo",                       // 西 / 葡（含尖音符变体）
-            "ｐスケール", "pスケール", "ｐ効果", "p効果" // 日文框首行/Ｐ効果标题
-    };
-    private static final String[] MONSTER_TITLE_KEYWORDS = {
-            "怪兽", "怪獸",                                   // 简/繁（覆盖【怪兽效果】与【怪兽描述】变体）
-            "monster",                                        // 英/葡 [ Monster Effect ]
-            "몬스터", "モンスター",                        // 韩 / 日
-            "monstruo", "monstro"                             // 西 / 葡
-    };
-
-    private static boolean isBoxMarkerLine(String trimmed, String... keywords) {
-        // 段首圆圈行优先当效果段处理，不当框标记
-        if (trimmed.isEmpty() || leadingCircledIndex(trimmed) >= 0) return false;
-        // 用户判据：框标题行必含 [ 或 【 两种方括号之一，且为短行（效果段长句不算）
-        if (trimmed.length() > 24) return false;
-        if (trimmed.indexOf('[') < 0 && trimmed.indexOf('【') < 0) return false;
-        String low = trimmed.toLowerCase(java.util.Locale.ROOT);
-        for (String k : keywords) {
-            if (low.contains(k)) return true;
-        }
-        return false;
-    }
-
-    /** 分隔线（用户规格：同框标题行一样不归入任何段落）：整行由横线/短横类字符组成，
-     * 如英/葡「----------------------------------------」、西「━━━━━━━━━━…」 */
     private static boolean isDividerLine(String trimmed) {
         if (trimmed.isEmpty()) return false;
         for (int i = 0; i < trimmed.length(); i++) {
@@ -937,37 +863,6 @@ class CardInfoBinder {
             return false;
         }
         return true;
-    }
-
-    /** 效果行归一化：去行首项目符号（cdb 描述行常见 ●/◆/- 等前缀，脚本 str 文本不含）与全部空白 */
-    private static String normalizeEffectLine(String s) {
-        String t = s.trim();
-        while (!t.isEmpty() && isBulletChar(t.charAt(0))) {
-            t = t.substring(1).trim();
-        }
-        StringBuilder sb = new StringBuilder(t.length());
-        for (int i = 0; i < t.length(); i++) {
-            char c = t.charAt(i);
-            if (c == ' ' || c == '\t' || c == '\r' || c == '\n'
-                    || c == '　' || c == '\u00A0') continue;
-            sb.append(c);
-        }
-        return sb.toString();
-    }
-
-    /** 段落匹配增强：反复剥去行首圆圈序号及其后紧跟的冒号/句点/分号。cdb 惯例 str 不含段首
-     *  ①：前缀而 desc 段首行含，不归一则全等匹配落空退回编号启发；剥后两侧均无序号时仍相等，
-     *  不会把不同序号段误判为同一段（序号差异只剩这一处前缀的卡才会两侧同时命中） */
-    private static String stripCircledPrefix(String s) {
-        String t = s;
-        while (!t.isEmpty() && t.charAt(0) >= '\u2460' && t.charAt(0) <= '\u2473') {
-            t = t.substring(1);
-            if (!t.isEmpty() && (t.charAt(0) == ':' || t.charAt(0) == '：'
-                    || t.charAt(0) == '.' || t.charAt(0) == ';' || t.charAt(0) == '；')) {
-                t = t.substring(1);
-            }
-        }
-        return t;
     }
 
     private static boolean isBulletChar(char c) {
