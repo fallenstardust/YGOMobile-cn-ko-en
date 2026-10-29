@@ -124,6 +124,9 @@ public class CommandDataParser {
         }
         engine.showM2 = data.remaining() >= 1 && (data.get() & 0xFF) != 0;
         engine.showEP = data.remaining() >= 1 && (data.get() & 0xFF) != 0;
+        // 用户新规格3：战斗指令登记完成，卡详正展示相关卡时即时刷新可发动背景呼吸段
+        //（与开段 clearCommandFlags 的刷新经 40ms 防抖合并，不会以中间态重绑）
+        cn.garymb.ygomobile.render.card.CardDetailPanel.refreshCardDetailMarks();
     }
 
     public void parseIdleCmd(ByteBuffer data) {
@@ -259,11 +262,13 @@ public class CommandDataParser {
         engine.showBP = data.remaining() >= 1 && (data.get() & 0xFF) != 0;
         engine.showEP = data.remaining() >= 1 && (data.get() & 0xFF) != 0;
         engine.showShuffle = data.remaining() >= 1 && (data.get() & 0xFF) != 0;
+        // 用户新规格3：主阶指令登记完成，卡详正展示相关卡时即时刷新可发动背景呼吸段
+        cn.garymb.ygomobile.render.card.CardDetailPanel.refreshCardDetailMarks();
     }
 
     /** 可发动选项入列（即卡片出现呼吸绿点/conti_act 动画的同一时刻）登记效果段落序号：
      *  判据与 CardOverlayRenderer 角位呼吸点同源（COMMAND_ACTIVATE 置位或 conti 项），点击带点
-     *  的卡即由卡详对可发动效果段落做文字外发光，无需等命令菜单出现「发动」按钮；
+     *  的卡即由卡详对可发动效果段落做背景色呼吸，无需等命令菜单出现「发动」按钮；
      *  conti 项（flag=EDESC_OPERATION）报文不 masking 卡码，用置入卡上的 chain_code 对齐卡详码 */
     private static void registerCommandEffect(ClientCard card, int maskedCode, int desc, int flag) {
         if ((flag & 0x1) != 0) {

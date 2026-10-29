@@ -142,6 +142,10 @@ class ChainSelectController {
             chainItems.add(new YesOrNoDialog.CardChainItem(code, ctrl, loc, seq));
         }
 
+        // 用户新规格3：连锁项登记完成即刷新展示中的卡详（可发动背景呼吸段）；
+        // 随后的自动放弃/自动连锁路径会 clearChainSelect 再触发一次，经防抖收敛为终态
+        CardDetailPanel.refreshCardDetailMarks();
+
         AppsSettings settings = AppsSettings.get();
         CardDetailPanel p = util.panel();
         // 左侧面板时点按钮三态（对齐 gframe mainGame->ignore_chain / always_chain / chain_when_avail）
@@ -245,6 +249,8 @@ class ChainSelectController {
         e.activatableCards.clear();
         // 连锁询问清理同时收起可发动效果发光登记（菜单构建时登记，随询问存续）
         cn.garymb.ygomobile.game.gamefield.EffectActivatableHints.clear();
+        // 登记过期同步收起展示中卡详的可发动背景呼吸段（用户新规格3）
+        CardDetailPanel.refreshCardDetailMarks();
     }
 
     /**

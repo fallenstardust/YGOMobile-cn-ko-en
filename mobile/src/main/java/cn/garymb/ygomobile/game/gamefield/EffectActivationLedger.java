@@ -24,14 +24,16 @@ import ocgcore.data.Card;
  * 「决斗中只能使用1次」类限制由 CardInfoBinder 渲染时按 cdb 描述文本条款判定，
  * 命中则跨回合持续标记，直到胜负（MSG_WIN）/新一局（MSG_START）整体清空。
  * <p>线程模型：引擎派发线程写（record/setCurrentTurn）、UI/后台绑定线程读；
- * ConcurrentHashMap + CopyOnWrite 集合 + volatile 回合号，无需外部同步。
+ * ConcurrentHashMap + CopyOnWrite 集合 + volatile 回合号，无需外部同步；
+ * 撤回回退（dropBeyond）沿追加日志剪除后缀条目，与 record 共用 LOG 监视器串行。
  */
 public final class EffectActivationLedger {
 
-    /** 单条发动记录：效果段落锚点 offset + 发动半场（本地索引 0=我方 1=对方）+ 发动回合号 */
+    /** 单条发动记录：效果段落锚点 offset + 发动半场（本地索引 0=我方 1=对方）+ 发动回合号。
+     *  side 非 final：视角互换就地翻转（保持对象身份，使 {@link #LOG} 里的引用仍可精确剪除） */
     public static final class Activation {
         public final int offset;
-        public final int side;
+        public int side;
         public final int turn;
 
         Activation(int offset, int side, int turn) {
@@ -55,6 +57,16 @@ public final class EffectActivationLedger {
 
     private static final ConcurrentHashMap<Integer, Set<Activation>> BY_CODE = new ConcurrentHashMap<>();
 
+    /** 追加日志：每次 {@link #record} 调用一条（含本码与 alias 镜像两个集合的实际新增项），
+     *  与服务端静默重放统计的「有效效果发动」条数同序对齐；撤回时按服务端告知的保留条数
+     *  从尾部剪除被回退段登记的条目（用户新规格：区分是否本次撤回导致效果回退为未使用） */
+    private static final class LoggedAdds {
+        final int[] codes;
+        final Activation[] acts;
+        LoggedAdds(int[] codes, Activation[] acts) { this.codes = codes; this.acts = acts; }
+    }
+    private static final java.util.ArrayList<LoggedAdds> LOG = new java.util.ArrayList<>();
+
     /** 当前回合号（MSG_NEW_TURN 的 field.turnCount 快照；MSG_START/撤回重同步一并校正） */
     private static volatile int currentTurn = 0;
 
@@ -65,22 +77,36 @@ public final class EffectActivationLedger {
     public static void record(int code, int descRaw, int side, int turn) {
         long uid = descRaw & 0xFFFFFFFFL;
         if (code <= 0 || uid <= DataManager.MAX_STRING_ID) return;
-        addCode(code, new Activation((int) (uid & 0xf), side, turn));
+        int offset = (int) (uid & 0xf);
         // alias 镜像：发动的异画卡与其的本卡（或反之）共用同一效果段落编号，两码都要能查到
         Card c = DataManager.get().getCardManager().getCard(code);
-        if (c != null && c.Alias > 0 && c.Alias != code) {
-            addCode(c.Alias, new Activation((int) (uid & 0xf), side, turn));
+        boolean mirror = c != null && c.Alias > 0 && c.Alias != code;
+        synchronized (LOG) {
+            int n = mirror ? 2 : 1;
+            int[] codes = new int[n];
+            Activation[] acts = new Activation[n];
+            codes[0] = code;
+            acts[0] = new Activation(offset, side, turn);
+            addCode(code, acts[0]);
+            if (mirror) {
+                codes[1] = c.Alias;
+                acts[1] = new Activation(offset, side, turn);
+                addCode(c.Alias, acts[1]);
+            }
+            // 每条 record() 调用占一行日志（即使等值去重未新增也记录，与发动事件计数同长），
+            // 剪除时只移除集合中确实持有的本对象（按对象身份扫描）
+            LOG.add(new LoggedAdds(codes, acts));
         }
     }
 
-    private static void addCode(int code, Activation act) {
+    private static boolean addCode(int code, Activation act) {
         Set<Activation> s = BY_CODE.get(code);
         if (s == null) {
             s = new CopyOnWriteArraySet<>();
             Set<Activation> prev = BY_CODE.putIfAbsent(code, s);
             if (prev != null) s = prev;
         }
-        s.add(act);
+        return s.add(act);
     }
 
     /** 本卡码（含 alias 并集）的发动记录；side 传 0/1 只取该半场，传 -1 取双方（无归属信息的
@@ -115,6 +141,37 @@ public final class EffectActivationLedger {
     /** 新一局开始 / 回放从头重播（MSG_START）与胜负（MSG_WIN）清零 */
     public static void clear() {
         BY_CODE.clear();
+        synchronized (LOG) {
+            LOG.clear();
+        }
+    }
+
+    /** 撤回回退（用户新规格）：服务端静默重放按开局 seed 重算出回退后局面里的
+     *  「有效效果发动」条数（同 record 判据：code>0 且 desc>MAX_STRING_ID），随 STOC_UNDO_ACK
+     *  下发；账本把超出该条数的尾部条目剪除——被本次撤回抹掉的发动恢复未使用态（常规文本），
+     *  保留前缀内的条目继续显示绿/红勾+置灰。条数大于现有日志（观战中途加入等旧服务端短
+     *  载荷为 -1 时不经本方法）时自然空转，不会错删。 */
+    public static void dropBeyond(int keptEvents) {
+        synchronized (LOG) {
+            while (LOG.size() > keptEvents && !LOG.isEmpty()) {
+                LoggedAdds e = LOG.remove(LOG.size() - 1);
+                for (int i = 0; i < e.codes.length; i++) {
+                    Set<Activation> s = BY_CODE.get(e.codes[i]);
+                    if (!(s instanceof CopyOnWriteArraySet)) continue;
+                    final Activation victim = e.acts[i];
+                    // 按对象身份移除：同 卡码×半场×回合×offset 的等值但不同实例条目（更早的
+                    // 同笔发动）不得被误删——victim 未被集合持有（等值去重）时本行空转
+                    CopyOnWriteArraySet<Activation> cs = (CopyOnWriteArraySet<Activation>) s;
+                    for (Activation a : cs) {
+                        if (a == victim) {
+                            cs.remove(a);
+                            break;
+                        }
+                    }
+                    if (cs.isEmpty()) BY_CODE.remove(e.codes[i], cs);
+                }
+            }
+        }
     }
 
     /** 视角互换（观战/单人自动翻转/回放「切换视角」，用户规格3）：side 语义是“屏幕第几侧
@@ -122,12 +179,12 @@ public final class EffectActivationLedger {
      *  否则正在展示卡的绿/红勾会与半场事实相反。与 duelIsFirst 翻转/field.swapField 同批次
      *  调用（DuelViewpointManager.performSpectatorSwap 与 ReplayPlayer.performSwapField） */
     public static void swapSides() {
-        for (java.util.Map.Entry<Integer, Set<Activation>> e : BY_CODE.entrySet()) {
-            Set<Activation> flipped = new CopyOnWriteArraySet<>();
-            for (Activation a : e.getValue()) {
-                flipped.add(new Activation(a.offset, 1 - a.side, a.turn));
+        // 就地翻转存储对象的 side（不新建实例）：追加日志里的引用仍指向同一对象，
+        // 后续撤回 dropBeyond 仍可按对象身份精确剪除
+        for (Set<Activation> s : BY_CODE.values()) {
+            for (Activation a : s) {
+                a.side = 1 - a.side;
             }
-            e.setValue(flipped);
         }
     }
 }

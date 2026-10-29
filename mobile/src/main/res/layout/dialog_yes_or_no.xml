@@ -48,17 +48,29 @@
             android:layout_gravity="center"
             android:orientation="horizontal">
 
-            <!-- Card image area for card name display -->
-            <ImageView
-                android:id="@+id/iv_yes_no_card_image"
-                android:layout_width="30dp"
-                android:layout_height="43dp"
-                android:layout_gravity="center"
-                android:layout_marginEnd="2dp"
-                android:padding="1dp"
-                android:scaleType="fitCenter"
-                android:adjustViewBounds="true"
-                android:background="@drawable/ygopro_deck_background"/>
+            <!-- 卡图堆栈（用户规格：message 中出现多个卡名时全部显示卡图，横向排列并每张压住
+                 前一张的 1/3，之后才轮到消息文本）：首张为布局常驻的 iv_yes_no_card_image（协议
+                 主卡），其余由 YesOrNoDialogBase#buildMentionedCardStack 以负 marginStart 动态追加，
+                 后追加者在 LinearLayout 绘制序中位于上层，天然压在前一张之上 -->
+            <LinearLayout
+                android:id="@+id/ll_yes_no_card_stack"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:clipChildren="false"
+                android:orientation="horizontal"
+                android:visibility="gone">
+
+                <ImageView
+                    android:id="@+id/iv_yes_no_card_image"
+                    android:layout_width="30dp"
+                    android:layout_height="43dp"
+                    android:layout_gravity="center_vertical"
+                    android:padding="1dp"
+                    android:scaleType="fitCenter"
+                    android:adjustViewBounds="true"
+                    android:background="@drawable/ygopro_deck_background"/>
+            </LinearLayout>
 
             <!-- Default message content -->
             <ScrollView

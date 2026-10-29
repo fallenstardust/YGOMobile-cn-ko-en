@@ -5,6 +5,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -744,6 +745,17 @@ abstract class CmdMenuDialogBase {
         // 修复（用户规格：聊天输入框与输入法显示在所有弹窗前面）：菜单窗口压到键盘之下，
         // 菜单弹出期间点底部聊天输入框时键盘仍可盖在菜单之上并正常敲击
         cn.garymb.ygomobile.utils.DraggablePopupHelper.applyImeLayeringFix(popupWindow);
+        // 卡片选中态取消观察（用户规格：点卡片以外的任意位置即取消选中）：命令菜单不走
+        // DraggablePopupHelper 全屏包装，其自身按钮的手势既不经 Activity 派发点也不经包装层，
+        // 故在此挂同一登记/结算；仅观察不改派发（一律返回 false），菜单项点击照旧生效
+        popupWindow.setTouchInterceptor((v, ev) -> {
+            if (ev.getActionMasked() == MotionEvent.ACTION_DOWN) {
+                GameFieldController.onOutsideGestureDown();
+            } else {
+                GameFieldController.onOutsideGestureUp(activity, ev.getActionMasked());
+            }
+            return false;
+        });
         // 菜单隐藏后恢复决斗场阶段按钮；非菜单项触发的关闭同时收起卡片状态标签
         popupWindow.setOnDismissListener(() -> {
             activity.notifyGameDialogHidden(this);

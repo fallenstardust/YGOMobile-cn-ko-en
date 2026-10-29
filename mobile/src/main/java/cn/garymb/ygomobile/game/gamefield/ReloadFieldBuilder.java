@@ -28,6 +28,13 @@ public class ReloadFieldBuilder {
         // 隐藏卡不下发卡码（新建 ClientCard code=0 背面占位，与 C++ CreateCard 一致）。
         if (data == null) return;
         final GameField field = engine.field;
+        // 撤回（undo）重同步前快照当回合持续态标注：HINT_ZONE 无效格玫瑰呼吸（hintZoneMask）与
+        // MSG_FIELD_DISABLED 白 X（disabledField）本应存活到回合结束（仅 MSG_NEW_TURN 清），
+        // 而撤回链路无通讯重放，field.clear() 会把它们抹掉——同回合撤回后在下面恢复；
+        // 回合数变化（跨回合 reload）则不恢复，保持回合结束的既有清除语义
+        final int prevHintZone = field.hintZoneMask;
+        final long prevDisabled = field.disabledField;
+        final int prevTurn = field.turnCount;
         field.clear();
         if (data.remaining() < 1) {
             Log.w(TAG, "onReloadField: truncated payload");
@@ -154,6 +161,12 @@ public class ReloadFieldBuilder {
         // 撤回（CTOS_UNDO）重同步：field.clear() 已把回合数/阶段归零，而 MSG_RELOAD_FIELD 本身
         // 不携这两项，故从 STOC_UNDO_ACK 暂存值回填（非撤回触发的 reload 不会有 latch，行为不变）
         final boolean undoResync = engine.applyUndoResync(field);
+        if (undoResync && prevTurn > 0 && field.turnCount == prevTurn) {
+            // 同回合撤回：恢复被 clear() 抹掉的无效格标注与变色，FieldBoardRenderer 的
+            // 玫瑰呼吸/白 X 动画随即继续显示（animTime 相位连续，无需额外重建）
+            field.hintZoneMask = prevHintZone;
+            field.disabledField = prevDisabled;
+        }
         engine.mainHandler.post(() -> {
             if (engine.listener != null) {
                 engine.listener.onFieldChanged();

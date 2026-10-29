@@ -40,6 +40,7 @@ import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.game.engine.GameEngine;
 import cn.garymb.ygomobile.game.gamefield.ClientCard;
+import cn.garymb.ygomobile.game.gamefield.EffectActivatableHints;
 import cn.garymb.ygomobile.game.gamefield.GameField;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.render.card.CardDetailPanel;
@@ -104,6 +105,17 @@ abstract class YesOrNoDialogBase {
     // 是否启用左右互换「是/否」按钮位置（用户规格）
     protected boolean swapButtonPositions = false;
 
+    // MSG_SELECT_EFFECTYN 被询问卡（askedEffectValid 时有效，用户规格：诱发效果被询问时
+    // 卡角呼吸绿点 + 点卡/点询问窗卡图出对应序号段落发光）：归属半场与区域坐标快照，
+    // 供 resolveActivatableClientCard 在 activatableCards/chainCards 都查不到时按坐标取卡
+    private boolean askedEffectValid;
+    private int askedCode;
+    private int askedSide;
+    private int askedLocation;
+    private int askedSequence;
+    /** 置入 field.effectYnAsking 的场卡引用：dismiss 时仅当仍为本窗所置才摘除（防新询问已接力） */
+    private ClientCard askedCard;
+
     public interface OnDismissListener {
         void onDismiss();
     }
@@ -163,20 +175,6 @@ abstract class YesOrNoDialogBase {
     }
 
     /**
-     * 扫描文本首个 "[...]"，若括号内文字是某张卡的名字则返回其卡码，否则 0。
-     * 用于攻击宣言/直接攻击等连锁询问：这些时点没有 MSG_CHAINING，field.currentChain.code 为 0，
-     * 攻击者卡名只存在于 event_string 的 [XXX] 中，据此回退取攻击者卡图。
-     */
-    protected static int firstBracketedCardCode(String text) {
-        if (text == null) return 0;
-        int i = text.indexOf('[');
-        if (i < 0) return 0;
-        int j = text.indexOf(']', i + 1);
-        if (j <= i + 1) return 0;
-        return cardCodeByName(text.substring(i + 1, j));
-    }
-
-    /**
      * 通用着色：扫描文本中每一处 "[...]"，若方括号内的文字恰好是某张卡的名字，
      * 则按卡片类型给该卡名着色（只染名称本身，不含方括号）。
      * 位置名/计数器名等匹配不到卡片的名字不着色，天然被排除。用于覆盖所有 YesOrNoDialog
@@ -233,6 +231,120 @@ abstract class YesOrNoDialogBase {
         return message.toString().contains(card.Name);
     }
 
+    /** 询问窗左侧卡图堆栈的卡数上限（用户规格：message 出现多个卡名时全部出卡图）：卡图宽
+     *  30dp、相邻重叠 1/3，4 张合计 90dp；再多会把消息文本挤到不足两行宽 */
+    protected static final int MAX_MENTIONED_CARD_IMAGES = 4;
+    /** 相邻卡图的叠压比例：后一张压住前一张宽度的 1/3（用户规格） */
+    protected static final float CARD_STACK_OVERLAP_RATIO = 1f / 3f;
+    /** 堆栈卡图基准宽（dp）与宽高比：布局解析失败时的兜底换算基准，与 dialog_yes_or_no 一致 */
+    protected static final float STACK_CARD_WIDTH_DP = 30f;
+    protected static final float STACK_CARD_HEIGHT_RATIO = 43f / 30f;
+
+    /**
+     * message 中出现的全部卡名对应卡码，按出现顺序去重、上限
+     * {@link #MAX_MENTIONED_CARD_IMAGES}：
+     * <ol>
+     * <li>协议下发的本询问主卡（{@code cardCode>0} 且其卡名确实出现在文本里）排在最前；</li>
+     * <li>其余取文本里每个 {@code "[XXX]"} 括号内容按卡名解析到的卡码。</li>
+     * </ol>
+     * 连锁/发动询问的文本常同时含被连锁卡与发动卡等多个卡名（event_string 与询问语拼接、
+     * 或一条效果文提及多卡），旧实现只解析首个括号，故左侧永远只出第一个卡名的那张图
+     * （用户反馈），现按本列表逐张出图。攻击宣言/直接攻击等时点没有 MSG_CHAINING
+     * （{@code cardCode=0}）时，同样按括号卡名回退解析，与旧 firstBracketedCardCode 同语义
+     * 但覆盖文本里的全部括号而非仅首个。
+     */
+    protected List<Integer> mentionedCardCodes() {
+        List<Integer> codes = new ArrayList<>();
+        if (cardCode > 0 && cardNameInMessage(cardCode)) codes.add(cardCode);
+        String text = message != null ? message.toString() : null;
+        if (text == null) return codes;
+        int i = text.indexOf('[');
+        while (i >= 0 && codes.size() < MAX_MENTIONED_CARD_IMAGES) {
+            int j = text.indexOf(']', i + 1);
+            if (j <= i + 1) {
+                i = text.indexOf('[', i + 1);
+                continue;
+            }
+            // 位置名/计数器名等匹配不到卡名的括号返回 0，天然被排除（与卡名着色同一口径）
+            int code = cardCodeByName(text.substring(i + 1, j));
+            if (code > 0 && !containsMaskedCode(codes, code)) codes.add(code);
+            i = text.indexOf('[', j + 1);
+        }
+        return codes;
+    }
+
+    /** 卡码是否已在列表中（按去掉暗码位后的原码比对，避免同一张卡重复出一张图） */
+    protected static boolean containsMaskedCode(List<Integer> codes, int code) {
+        int masked = code & 0x7fffffff;
+        for (int i = 0, n = codes.size(); i < n; i++) {
+            if ((codes.get(i) & 0x7fffffff) == masked) return true;
+        }
+        return false;
+    }
+
+    /**
+     * 构建消息行左侧卡图堆栈（用户规格：多个卡名时全部显示卡图，横向排列、每张压住前一张
+     * 的 1/3，再显示 message 文本）：
+     * <ul>
+     * <li>首张沿用布局常驻的 {@code iv_yes_no_card_image}（协议主卡，或按旧口径从文本首个
+     * 卡名回退解析出的那张），尺寸/背景/点击行为与旧单卡图完全一致；</li>
+     * <li>其余按同一尺寸动态追加，{@code marginStart = -卡宽/3} 实现叠压；LinearLayout 按
+     * 子视图序绘制，后追加者天然盖在前一张之上；</li>
+     * <li>无任何卡名时整个容器隐藏（旧实现只隐单张图，容器留着仍占一列空白）。</li>
+     * </ul>
+     * 同一 root 反复显示时只摘除动态追加项，常驻首张留在原位复用。
+     *
+     * @param stack 卡图堆栈容器（{@code ll_yes_no_card_stack}）
+     * @return 是否显示了卡图
+     */
+    protected boolean buildMentionedCardStack(LinearLayout stack) {
+        if (stack == null) return false;
+        List<Integer> codes = mentionedCardCodes();
+        View first = stack.getChildCount() > 0 ? stack.getChildAt(0) : null;
+        if (!(first instanceof ImageView)) {
+            // 布局常驻首张缺失或被换成非 ImageView（理论不应发生）：整堆不显示，
+            // 避免主卡卡图无处安放而只列出退而追加的那几张
+            stack.setVisibility(View.GONE);
+            return false;
+        }
+        if (codes.isEmpty()) {
+            stack.setVisibility(View.GONE);
+            bindCardDetailClick(first, 0);   // 清掉可能残留的上一次卡码，隐藏态不可点
+            return false;
+        }
+        stack.setVisibility(View.VISIBLE);
+        while (stack.getChildCount() > 1) stack.removeViewAt(stack.getChildCount() - 1);
+        LinearLayout.LayoutParams base = (LinearLayout.LayoutParams) first.getLayoutParams();
+        int cardW = base != null && base.width > 0
+                ? base.width : DialogScale.dpToPx(context, STACK_CARD_WIDTH_DP);
+        int cardH = base != null && base.height > 0
+                ? base.height : Math.round(cardW * STACK_CARD_HEIGHT_RATIO);
+        int overlap = Math.round(cardW * CARD_STACK_OVERLAP_RATIO);
+        int pad = Math.round(context.getResources().getDisplayMetrics().density);
+        ImageLoader loader = new ImageLoader();
+        bindStackCardImage(loader, (ImageView) first, codes.get(0));
+        for (int i = 1, n = codes.size(); i < n; i++) {
+            ImageView iv = new ImageView(DialogScale.wrap(context));
+            iv.setPadding(pad, pad, pad, pad);
+            iv.setBackgroundResource(R.drawable.ygopro_deck_background);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(cardW, cardH);
+            lp.gravity = Gravity.CENTER_VERTICAL;
+            lp.leftMargin = -overlap;   // 横向压住前一张的 1/3
+            iv.setLayoutParams(lp);
+            bindStackCardImage(loader, iv, codes.get(i));
+            stack.addView(iv);
+        }
+        return true;
+    }
+
+    /** 堆栈中单张卡图：按卡码绑图并接上「点击进卡片详情」（与旧单卡图行为一致） */
+    private void bindStackCardImage(ImageLoader loader, ImageView iv, int code) {
+        iv.setVisibility(View.VISIBLE);
+        iv.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        loader.bindImage(iv, code, ImageLoader.Type.small);
+        bindCardDetailClick(iv, code);
+    }
+
     /**
      * 为卡片图像绑定点击：点击后在卡片详情面板显示该卡详情（供 iv_yes_no_card_image
      * 与连锁卡片项复用）。仅当宿主为 YGOProActivity 且卡码有效时可点；否则置不可点。
@@ -264,15 +376,71 @@ abstract class YesOrNoDialogBase {
         });
     }
 
+    /** EFFECT_YN 询问窗展示后调用（用户规格）：①把被询问效果的段落文档序（desc 低 4 位）
+     *  登记进 {@link EffectActivatableHints}，使点场上该卡/点询问窗卡图展示的卡详能发光；
+     *  ②场卡存在时置 field.effectYnAsking，CardOverlayRenderer 据此在卡矩形角位强制绘
+     *  呼吸绿点（不写 cmdFlag，避免点卡误弹命令菜单打断应答）；③留存归属坐标供卡图点击
+     *  取卡/合成临时卡。protocolControler 为报文 c 字段的协议 seat，经 localPlayer 折本地半场 */
+    void setAskedEffectCard(int protocolControler, int code, int location, int sequence, int desc) {
+        if (!(context instanceof YGOProActivity)) return;
+        GameEngine engine = ((YGOProActivity) context).getEngine();
+        if (engine == null || code <= 0) return;
+        int side = engine.localPlayer(protocolControler & 1);
+        askedEffectValid = true;
+        askedCode = code;
+        askedSide = side;
+        askedLocation = location & 0x7f;
+        askedSequence = sequence;
+        EffectActivatableHints.register(code & 0x7fffffff, side, desc);
+        GameField field = engine.getField();
+        if (field != null) {
+            askedCard = field.getCard(side, askedLocation, sequence);
+            if (askedCard != null) field.effectYnAsking = askedCard;
+        }
+        // 用户新规格3：询问登记即刷新展示中的卡详，正点着这张卡时不经重新点击就能看到
+        // 对应序号段的背景呼吸高亮（新规格2：询问卡/连锁卡带点即可点出同款呼吸）
+        CardDetailPanel.refreshCardDetailMarks();
+    }
+
+    /** 询问窗 dismiss 统一清理：摸掉本窗置入的角位绿点引用（归属判定：新询问窗弹窗前
+     *  先关旧窗再置新卡，若已被新窗接力则不得误摘）；登记簿不在此清，随下一条
+     *  命令/连锁询问的 clearCommandFlags 统一过期，保证答「是」进入连锁挑选时段落仍发光 */
+    void clearAskedEffectCard() {
+        if (!askedEffectValid) return;
+        askedEffectValid = false;
+        if (!(context instanceof YGOProActivity)) return;
+        GameEngine engine = ((YGOProActivity) context).getEngine();
+        GameField field = engine != null ? engine.getField() : null;
+        if (field != null && askedCard != null && field.effectYnAsking == askedCard) {
+            field.effectYnAsking = null;
+        }
+        askedCard = null;
+    }
+
     /** 询问窗卡码对应的可发动实体卡：优先按本连锁询问入列的 activatableCards 条目查
      *  （含 chain 专属条目与 conti 待处理项），退而按场地坐标取场卡；均无则合成携带
      *  归属半场（本地 controler）与区域坐标的临时卡，使按卡码展示的详情也能命中
-     *  登记簿对应半场的发光条目（我方绿/对方橙） */
+     *  登记簿对应半场的呼吸条目（双方同色 holo_blue_bright，半场仅作查询隔离） */
     private ClientCard resolveActivatableClientCard(int code) {
         int masked = code & 0x7fffffff;
         if (masked <= 0 || !(context instanceof YGOProActivity)) return null;
         GameEngine engine = ((YGOProActivity) context).getEngine();
         if (engine == null) return null;
+        // EFFECT_YN 询问卡（用户规格：点被询问的卡/询问窗卡图都要出对应序号发光）：
+        // 优先按本窗留存坐标取场上实体卡，取不到（overlay/卡组遮蔽）合成带归属半场的临时卡
+        if (askedEffectValid && masked == (askedCode & 0x7fffffff)) {
+            GameField askedField = engine.getField();
+            ClientCard cc = askedField == null ? null
+                    : askedField.getCard(askedSide, askedLocation, askedSequence);
+            if (cc != null) return cc;
+            ClientCard tmp = new ClientCard();
+            tmp.code = askedCode;
+            tmp.controler = askedSide;
+            tmp.location = askedLocation;
+            tmp.sequence = askedSequence;
+            tmp.position = 0x1;
+            return tmp;
+        }
         for (GameEngine.CmdCardInfo info : engine.activatableCards) {
             if (info.card != null && (info.code & 0x7fffffff) == masked
                     && (info.flag & 0x1) == 0) {

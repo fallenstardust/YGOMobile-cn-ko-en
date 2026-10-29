@@ -22,6 +22,10 @@ class UndoClientCoordinator {
     volatile int undoResyncTurn = -1;
     volatile int undoResyncPlayer = -1;
     volatile int undoResyncPhase = -1;
+    /** 待消费的「回退后重放前缀内有效效果发动」条数（STOC_UNDO_ACK 尾部新字段）：
+     *  随 reload 落地时把发动账本超出该条数的后缀剪除（被撤回抹掉的使用过的效果恢复
+     *  未使用态）；-1 = 旧服务端短载荷/无 latch，跳过账本回退。 */
+    volatile int undoResyncChainEvents = -1;
 
     // === 应答代次屏障字段 ===
 
@@ -67,9 +71,10 @@ class UndoClientCoordinator {
 
     // === STOC_UNDO_ACK 处理 ===
 
-    void onUndoAck(int result, int turn, int currentPlayer, int phase) {
+    void onUndoAck(int result, int turn, int currentPlayer, int phase, int chainEvents) {
         if (result == YGOProtocol.UNDO_ACK_DENIED) {
             undoResyncTurn = -1;
+            undoResyncChainEvents = -1;
             boolean droppedWhileArmed = undoBarrierDropped;
             releaseUndoResponseBarrier();
             if (droppedWhileArmed) restorePendingQuestionUi();
@@ -88,6 +93,7 @@ class UndoClientCoordinator {
         undoResyncTurn = turn;
         undoResyncPlayer = currentPlayer;
         undoResyncPhase = phase;
+        undoResyncChainEvents = chainEvents;
         postUndoHint(result == YGOProtocol.UNDO_ACK_REBUILT
                 ? "撤回失败：已按原局面重建并重同步" : "已撤回上一步操作");
         if (engine.listener != null) engine.listener.onUndoResync();
@@ -108,6 +114,14 @@ class UndoClientCoordinator {
         field.turnCount = turn;
         // 撤回重同步回到历史回合：发动标记的「本回合」基准随之校正，并刷新正在展示的卡详
         cn.garymb.ygomobile.game.gamefield.EffectActivationLedger.setCurrentTurn(turn);
+        // 发动账本回退（用户新规格）：服务端重放前缀里只有 kept 条有效发动，账本尾部超出
+        // 的部分属于被回退的那一段——剪除后「使用过→未使用」的卡即时恢复常规效果文本；
+        // 保留前缀内的条目继续标记本回合/决斗已使用；旧服务端短载荷（-1）不回退
+        int chainEvents = undoResyncChainEvents;
+        undoResyncChainEvents = -1;
+        if (chainEvents >= 0) {
+            cn.garymb.ygomobile.game.gamefield.EffectActivationLedger.dropBeyond(chainEvents);
+        }
         cn.garymb.ygomobile.render.card.CardDetailPanel.refreshCardDetailMarks();
         if (undoResyncPlayer >= 0) {
             field.currentPlayer = engine.localPlayer(undoResyncPlayer & 1);
@@ -125,6 +139,7 @@ class UndoClientCoordinator {
         undoResyncTurn = -1;
         undoResyncPlayer = -1;
         undoResyncPhase = -1;
+        undoResyncChainEvents = -1;
         releaseUndoResponseBarrier();
         engine.undoBlockedUntilNewAction = false;
     }
@@ -168,14 +183,22 @@ class UndoClientCoordinator {
         engine.mainHandler.removeCallbacks(undoBarrierFailsafe);
     }
 
-    void restorePendingQuestionUi() {
+    /**
+     * 按留存的最近询问快照重派发那一条待答询问（撤回被拒/超时、屏障期间丢弃过应答、
+     * MSG_RETRY 兜底共用）：各选择类工厂据此重建完全相同的待答窗，并重建选择上下文。
+     *
+     * @return 是否真的重派发了（无快照可重派发时返回 false，调用方需改走「恢复旧窗实例」
+     *         等其它恢复路径，否则询问永久不可见无法应答）
+     */
+    boolean restorePendingQuestionUi() {
         int type = lastQuestionType;
         byte[] body = lastQuestionBody;
-        if (type < 0 || body == null) return;
+        if (type < 0 || body == null) return false;
         ByteBuffer buf = ByteBuffer.wrap(body);
         buf.order(ByteOrder.LITTLE_ENDIAN);
         engine.pendingMsgs.offer(() -> engine.dispatchGameMsg(type, buf));
         engine.drainPendingMsgs();
+        return true;
     }
 
     boolean isResponseBlocked() {

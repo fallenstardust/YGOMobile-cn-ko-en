@@ -164,6 +164,66 @@ public class GameFieldController extends GameFieldControllerBase {
         select.abortSelectSessions();
     }
 
+    // === 卡片点击选中态的手势级取消（用户规格）===
+
+    /**
+     * 本次手势的「落在决斗场之外」候选：各非决斗场派发点（Activity 派发点与弹窗包装层）在
+     * ACTION_DOWN 登记；主线程单点读写，volatile 仅为防 JIT 提升旧读。
+     */
+    private static volatile boolean sOutsideCandidate;
+    /** 决斗场视图是否接住了本次手势的按下：其自身拾取已按命中卡片/空格决定选中态，外部不得再取消 */
+    private static volatile boolean sFieldGotDown;
+
+    /** 决斗场视图收到按下（控制器 OnTouchListener 的 ACTION_DOWN）：本手势归决斗场自己处理 */
+    public static void notifyFieldViewDown() {
+        sFieldGotDown = true;
+    }
+
+    /**
+     * 「卡片以外」的派发点（Activity.dispatchTouchEvent 与弹窗包装层 DragFrameLayout 都经此，
+     * 后者接管的下按事件不经 Activity 派发点，需双挂同一逻辑，与聊天输入框失焦同口径）登记
+     * 本次手势为取消候选；结算见 {@link #onOutsideGestureUp}。
+     */
+    public static void onOutsideGestureDown() {
+        sOutsideCandidate = true;
+        sFieldGotDown = false;
+    }
+
+    /**
+     * 手势落定（抬手/被取消）时结算：本次手势没进决斗场才真正取消卡片选中态并收起状态气泡。
+     * <p>之所以不在按下瞬间就取消：点卡片时 DOWN 会把选中态抹掉、抬手拾取又重新置起，手卡
+     * 抬升补间（{@code FieldCardRenderer.updateHandLift}，约 83ms 走完）会先降后升形成抖动；
+     * 而决斗场内的点击无论命中卡片还是空白，拾取已自行置位/清空选中态，外部再插手反而多余。
+     */
+    public static void onOutsideGestureUp(android.app.Activity act, int action) {
+        if (action != android.view.MotionEvent.ACTION_UP
+                && action != android.view.MotionEvent.ACTION_CANCEL) {
+            return;
+        }
+        boolean candidate = sOutsideCandidate;
+        boolean fieldGot = sFieldGotDown;
+        sOutsideCandidate = false;
+        sFieldGotDown = false;
+        if (!candidate || fieldGot) return;
+        // 经公开 getter 取控制器（fieldCtl 字段为包级私有，不在同包的本类无法直读）
+        GameFieldController ctl = act instanceof YGOProActivity
+                ? ((YGOProActivity) act).getFieldCtl() : null;
+        if (ctl != null) ctl.cancelCardClickSelection();
+    }
+
+    /**
+     * 取消卡片被选中状态（用户规格）：金色呼吸外框、手卡抬升（降回与其他手卡同高的常规位置）、
+     * 关联图标标记与卡片状态气泡一并收起。
+     */
+    public void cancelCardClickSelection() {
+        GameFieldView view = viewController != null ? viewController.getView() : null;
+        if (view != null) {
+            view.clearClickSelection();
+            viewController.invalidate();
+        }
+        hideFieldStatusTip();
+    }
+
     public void hide() {
         // 决斗/回放离场即释放场面：清空 GameField 数据，下次进入不再残留上一场卡片局面
         //（showMainMenu/returnToLanMain/quitReplay 等入口均只在非决斗中状态触达本方法）

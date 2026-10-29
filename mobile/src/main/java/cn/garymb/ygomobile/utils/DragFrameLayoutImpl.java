@@ -39,6 +39,7 @@ import java.util.List;
 
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.game.chat.ChatInputUI;
+import cn.garymb.ygomobile.game.gamefield.GameFieldController;
 import cn.garymb.ygomobile.lite.R;
 
 import static cn.garymb.ygomobile.utils.DraggablePopupHelperBase.DragFrameLayout;
@@ -399,6 +400,15 @@ class DragFrameLayoutImpl extends DragFrameLayoutBase {
         @Override
         public boolean dispatchTouchEvent(MotionEvent ev) {
             final int action = ev.getActionMasked();
+            // 卡片选中态与状态气泡的取消观察（用户规格：点弹窗自身的按钮/其它弹窗/其它按钮
+            // 都要取消被选中的卡）：本层接管的手势不经 Activity.dispatchTouchEvent，故在此
+            // 双挂同一登记/结算——登记为「落在决斗场之外」候选，手势落定时若决斗场并未接住
+            // 本次按下即取消选中（收起金色呼吸外框、手卡降回常规高度并收起状态气泡）
+            if (action == MotionEvent.ACTION_DOWN) {
+                GameFieldController.onOutsideGestureDown();
+            } else {
+                GameFieldController.onOutsideGestureUp(resolveActivity(getContext()), action);
+            }
             if (action == MotionEvent.ACTION_DOWN) {
                 if (gestureTarget != null) {
                     // 极端情况下上一手势未收到 UP/CANCEL：先结束它再重新判定

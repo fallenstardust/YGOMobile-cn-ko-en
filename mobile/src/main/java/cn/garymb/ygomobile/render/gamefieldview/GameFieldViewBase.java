@@ -284,6 +284,18 @@ abstract class GameFieldViewBase extends GLSurfaceView implements GLSurfaceView.
         requestRender();
     }
 
+    /**
+     * 取消「点击卡片」产生的全部选中视觉（用户规格：点其它按钮/聊天输入框/其它弹窗等
+     * 卡片以外的位置即取消选中）：除金色呼吸外框与手卡抬升所需的选中三元组外，一并解除
+     * 点击时联动的装备/对象/连锁对象图标标记（{@code applyShowMarks} 留下的红色光晕），
+     * 否则只清外框而图标残留，看起来仍像处于被选中态。不触及通讯选择态
+     * （field.selectedCards 与蚂蚁线），那些由各自的应答会话管理。
+     */
+    public void clearClickSelection() {
+        clearSelection();
+        applyShowMarks(null);
+    }
+
     /** 当前选中（移动端语义=点击，对位桌面悬停 hovered_card）并联动展示关联图标的卡片 */
     volatile ClientCard markedCard;
 

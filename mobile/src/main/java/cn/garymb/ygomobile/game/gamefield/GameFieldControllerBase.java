@@ -36,6 +36,7 @@ import cn.garymb.ygomobile.render.spec.SpecEffectOverlay;
 import cn.garymb.ygomobile.render.field.TextureLoader;
 import cn.garymb.ygomobile.ui.dialogs.duel.CardSelectDialog;
 import cn.garymb.ygomobile.ui.dialogs.duel.CmdMenuDialog;
+import cn.garymb.ygomobile.utils.ImePopupAdjuster;
 import ocgcore.enums.DuelPhase;
 
 
@@ -131,14 +132,63 @@ abstract class GameFieldControllerBase implements GameFieldView.OnCardClickListe
         final View.OnLayoutChangeListener insetListener = (v, l, t, r, b, ol, ot, or, ob) -> {
             updateCameraTopInset();
             updateCameraBottomInset();
-            // 血条/HUD 重布局（旋转、折叠屏）后，覆盖层提示带按新的 HUD 底边重定位
-            if (hintShown) pushHintToOverlay(shownHintText);
+            // 血条/HUD/输入框重布局（旋转、折叠屏、输入法升降）后，把血条下方各带（聊天行/
+            // 弹幕带/提示带）按新的实测血条位置重锚
+            repinHudBands();
         };
         if (layoutTopInfo != null) layoutTopInfo.addOnLayoutChangeListener(insetListener);
         // 提示栏已迁至覆盖层，layout_chat_messages 塌缩为 0 高不再参与上锚线，无需监听其布局变化
         View stack = activity.findViewById(R.id.layout_top_stack);
         if (stack != null) stack.addOnLayoutChangeListener(insetListener);
         if (etChatInput != null) etChatInput.addOnLayoutChangeListener(insetListener);
+    }
+
+    // === 血条下方各带的重锚（聊天输入框降回静置位后归位，用户规格）===
+
+    /** 重锚落定等待的轮询间隔与上限：键盘收起动画约 300ms，输入框实测上沿落定前不采信新锚点 */
+    protected static final long REPIN_RETRY_MS = 120L;
+    protected static final int REPIN_MAX_RETRIES = 8;
+    /** 本次重锚触发已用去的落定等待轮数 */
+    protected int repinRetries;
+    /** 落定等待中的重锚任务（先 remove 再 post，多个触发点只保留一轮排队） */
+    protected final Runnable repinBandsTask = this::doRepinHudBands;
+
+    /**
+     * 触发一次血条下方各带重锚（HUD/输入框布局变化与输入法收起事件都经此）：复位等待轮数后
+     * 先解一次，未落定则由 {@link #doRepinHudBands()} 自行续排。
+     */
+    public void repinHudBands() {
+        repinRetries = 0;
+        mainHandler.removeCallbacks(repinBandsTask);
+        doRepinHudBands();
+    }
+
+    /**
+     * 把血条下方各带重锚到当前实测血条位置（用户反馈：抬键盘期间发出的聊天顶在屏幕顶端显示，
+     * 输入框降回、血条回到原处后不回位）。
+     * <p>仅当聊天输入框已几何落在静置位才执行：否则（仍抬高或键盘动画途中）按
+     * {@link #REPIN_RETRY_MS} 追加有限轮等待——把被键盘压缩的中间态采成锚点正是“再不回位”的
+     * 成因，宁可多等几轮也不采错值；抬高期间覆盖层自行沿用静置锚点，本方法不参与。
+     * <p>各带仅在错位在位时重建（覆盖层 {@code getBandTop} 比对），不会随每次布局变化重排。
+     */
+    protected void doRepinHudBands() {
+        if (!ImePopupAdjuster.isChatInputAtRest()) {
+            if (repinRetries < REPIN_MAX_RETRIES) {
+                repinRetries++;
+                mainHandler.removeCallbacks(repinBandsTask);
+                mainHandler.postDelayed(repinBandsTask, REPIN_RETRY_MS);
+            }
+            return;
+        }
+        repinRetries = 0;
+        // 提示带锚点也随时回灌（与是否正在显示无关）：抬高期间第一条提示才有静置基准可用
+        SpecEffectOverlay overlay = activity.getSpecOverlay();
+        if (overlay != null) {
+            overlay.rememberBandAnchor(SpecEffectOverlay.BAND_HINT, hintBandRectInWindow()[1]);
+        }
+        if (chat != null) chat.repinFieldBands();
+        // 提示带：抬高期间无静置锚点时可能落在临时锚点上，降回后按新的 HUD 底边重下发
+        if (hintShown) pushHintToOverlay(shownHintText);
     }
 
     /**

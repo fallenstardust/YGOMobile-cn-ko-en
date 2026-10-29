@@ -47,7 +47,8 @@
 
     <!-- ===== 决斗界面集中调色板（原 Java 侧硬编码 ARGB 字面量统一入资源，便于全局微调） ===== -->
     <!-- 可发动呼吸提示点（CardOverlayRenderer）：含发动→荧光绿，仅其他命令→荧光蓝；
-         卡详可发动效果段落发光（CardInfoBinder TextGlowSpan）：我方→neon_green，对方→neon_orange -->
+         卡详可发动效果段落背景呼吸（CardInfoBinder EffectBgBreathSpan）：双方同用
+         holo_green_bright 向外渐变透明晕染 10%↔30% 交替 -->
     <color name="neon_green">#39FF14</color>
     <color name="neon_blue">#00BFFF</color>
     <color name="neon_orange">#FF8000</color>

@@ -342,6 +342,9 @@ public class GameEngine {
         activatableCards.clear();
         // 可发动效果段落登记与命令列表同生命周期：新询问到达前清空，防上一询问的发动项发光残留
         EffectActivatableHints.clear();
+        // EFFECT_YN 询问卡角呼吸绿点同样随询问/命令段清除（正常由询问窗 dismiss 自清，
+        // 此处为撤回重同步/决斗结束等不经 dismiss 路径的兜底）
+        field.effectYnAsking = null;
         attackableCards.clear();
         summonableCards.clear();
         spsummonableCards.clear();
@@ -375,6 +378,9 @@ public class GameEngine {
                 if (c != null) c.clearCmdFlag();
             }
         }
+        // 用户新规格3：登记簿清空后展示中的卡详即时收起过期的可发动背景呼吸段
+        //（解析型调用方随后登记完成会再触发一次，经 binder 40ms 防抖合并为一次重绑）
+        cn.garymb.ygomobile.render.card.CardDetailPanel.refreshCardDetailMarks();
     }
 
     /** 复位区域发动提示 / conti_act 标志（解析 idle/battle 前清空，防上一选择脏标志；连锁路径不经此方法） */
@@ -504,7 +510,7 @@ public class GameEngine {
 
     public boolean canUndo() { return undoCoord.canUndo(); }
 
-    public void onUndoAck(int result, int turn, int currentPlayer, int phase) { undoCoord.onUndoAck(result, turn, currentPlayer, phase); }
+    public void onUndoAck(int result, int turn, int currentPlayer, int phase, int chainEvents) { undoCoord.onUndoAck(result, turn, currentPlayer, phase, chainEvents); }
 
     public boolean applyUndoResync(GameField field) { return undoCoord.applyUndoResync(field); }
 
@@ -524,6 +530,17 @@ public class GameEngine {
     public void resetAskWatchdog() { askWatchdog.resetAskWatchdog(); }
 
     public boolean isUndoPromptActive() { return undoCoord.isUndoPromptActive(); }
+
+    /**
+     * 按留存的最近询问快照重派发待答询问（实现见 UndoClientCoordinator）：界面侧撤回被拒时，
+     * 点击撤回瞬间被收口的选择/宣言/选项类弹窗没有实例快照可原地恢复，只能靠本路重建。
+     *
+     * @return 是否真的重派发了（无快照时 false，调用方需改走恢复旧窗实例的路径）
+     */
+    public boolean restorePendingQuestionUi() { return undoCoord.restorePendingQuestionUi(); }
+
+    /** 本端是否仍有一条尚未应答的询问（实现见 AskWatchdog）：撤回被拒时据此判断可否重派发 */
+    public boolean isQuestionPending() { return askWatchdog.isQuestionPending(); }
 
     /** 是否 tag 双人模式（gameMode == MODE_TAG） */
     public boolean isTagMode() {

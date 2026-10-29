@@ -236,15 +236,19 @@ public final class CardOverlayRenderer {
         float dy = (float) Math.sin((double) view.animTimeMs * ACT_DOT_BREATH_RAD_PER_MS);
         float alpha = 0.55f + 0.45f * dy;
         boolean mr4 = f.dInfo.duelRule >= 4;
+        // EFFECT_YN 询问中的卡（用户规格：诱发效果被询问是否发动时角位也显示呼吸绿点）：
+        // 不依赖 cmdFlag（询问窗展示时置入、应答/dismiss 清除），同批同相位呼吸
+        ClientCard ynAsking = f.effectYnAsking;
         for (int p = 0; p < 2; p++) {
-            activatableDotList(f.players[p].hand, alpha, false, mr4, HAND_DOT_MASK);
-            activatableDotList(f.players[p].monsterZone, alpha, false, mr4, MONSTER_DOT_MASK);
-            activatableDotList(f.players[p].spellZone, alpha, true, mr4, COMMAND_ACTIVATE_OR_SPSUMMON);
+            activatableDotList(f.players[p].hand, alpha, false, mr4, HAND_DOT_MASK, ynAsking);
+            activatableDotList(f.players[p].monsterZone, alpha, false, mr4, MONSTER_DOT_MASK, ynAsking);
+            activatableDotList(f.players[p].spellZone, alpha, true, mr4, COMMAND_ACTIVATE_OR_SPSUMMON, ynAsking);
         }
     }
 
     private void activatableDotList(List<ClientCard> list, float alpha,
-                                    boolean spellZone, boolean mr4, int mask) {
+                                    boolean spellZone, boolean mr4, int mask,
+                                    ClientCard ynAsking) {
         if (list == null) return;
         try {
             for (int i = 0, n = list.size(); i < n; i++) {
@@ -255,8 +259,9 @@ public final class CardOverlayRenderer {
                     continue;
                 }
                 if (c == null || c.is_moving) continue;
-                if ((c.cmdFlag & mask) == 0) continue;
-                drawActivatableDot(c, alpha, spellZone, mr4);
+                boolean ynDot = ynAsking != null && c == ynAsking;
+                if (!ynDot && (c.cmdFlag & mask) == 0) continue;
+                drawActivatableDot(c, alpha, spellZone, mr4, ynDot);
             }
         } catch (Throwable ignored) {
         }
@@ -268,11 +273,11 @@ public final class CardOverlayRenderer {
      *  卡片局部空间非等比（CARD_W×CARD_H），按 1/CARD_W、1/CARD_H 反向缩放 x/y 使屏幕上呈正圆；
      *  抬升沿世界 +z（相机恒在上方）而非卡片局部 +z，保证盖放/竖立卡不被卡面遮挡。 */
     private void drawActivatableDot(ClientCard c, float alpha,
-                                    boolean spellZone, boolean mr4) {
+                                    boolean spellZone, boolean mr4, boolean forceActivate) {
         // 颜色按菜单内容细致区分（用户规格）：cmdFlag 含 COMMAND_ACTIVATE 时点击菜单必出
         // 「发动」（buildCardCommandMenu 以该位收集 activateList），绿点；不含发动而有
-        // 「召唤/特殊召唤」等其他按钮时蓝点
-        boolean hasActivate = (c.cmdFlag & GameEngine.COMMAND_ACTIVATE) != 0;
+        // 「召唤/特殊召唤」等其他按钮时蓝点；EFFECT_YN 询问卡不经 cmdFlag（forceActivate）恒绿
+        boolean hasActivate = forceActivate || (c.cmdFlag & GameEngine.COMMAND_ACTIVATE) != 0;
         int tex = obtainActivatableDotTexture(hasActivate);
         if (tex <= 0) return;
         final float[] m = dotModel;

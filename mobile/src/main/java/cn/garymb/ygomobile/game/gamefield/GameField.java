@@ -168,6 +168,12 @@ public class GameField {
     public long disabledField;
     /** HINT_ZONE 通讯（duelclient.cpp L1529-1572）展开出的被标注魔陷格集，位布局与 disabledField 同构（本地视角：seat0 MZ bits0-6 / SZ bits8-15，seat1 高 16 位）；仅接受无效类效果的 SZ 位来位——无限泡影类脚本效果处理成功时 Duel.Hint(HINT_ZONE, tp, 0x1<<(seq+8)) 宣告自身所在列的 SZONE 位，本端把它标到同列两张魔陷格——同侧 SZONE 格（同 seq）与对侧镜像 SZONE 格（4-seq，aux.GetColumn 同式）；仅主列 seq 0-4（额外怪兽列无魔陷对应格）。MZ 位（bit0-6/16-22）为封锁格子类卡片（封锁龙/黄金国亡灵 等，效果伴随 MSG_FIELD_DISABLED 白 X）的怪兽纵列宣告，桌面端只对掩码位瞬时高亮 40 帧、从不扩张魔陷格；本端若同样展开会出现「白 X 同纵列魔陷格错误显示泡影标注」的误报，故不产生持久标注。效果携 RESET_PHASE+PHASE_END，故下一个 MSG_NEW_TURN 清除。 */
     public int hintZoneMask;
+    /** MSG_SELECT_EFFECTYN 询问中的卡（用户规格：诱发效果被询问是否发动时，该卡矩形角上
+     *  显示与可发动同款的绿色呼吸点）：由询问窗展示时置入、dismiss/新询问到达时清除。
+     *  不写 cmdFlag——COMMAND_ACTIVATE 置位会让点卡路由（GameFieldController）误弹命令菜单，
+     *  而询问期间点该卡应直接出卡详发光；渲染侧（CardOverlayRenderer）按本引用强制绘绿点。
+     *  GL 线程读、UI 线程写，volatile 保证可见性 */
+    public volatile ClientCard effectYnAsking;
     public boolean deckReversed;
     /** 本次灵摆召唤预演已闪动的两侧刻度卡：同批逐张放置询问（ocgcore special_summon
      *  每张怪兽各发一条 MSG_SELECT_PLACE）只在首次闪动，刻度对象未换期间不重复；
@@ -327,6 +333,7 @@ public class GameField {
         contiAct = false;
         disabledField = 0;
         hintZoneMask = 0;
+        effectYnAsking = null;
         deckReversed = false;
         pendulumPreludeL = null;
         pendulumPreludeR = null;

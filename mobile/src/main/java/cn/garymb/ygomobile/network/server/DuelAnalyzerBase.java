@@ -79,6 +79,11 @@ abstract class DuelAnalyzerBase implements YGOProtocol {
     /** 最后一条 MSG_NEW_TURN 的协议侧玩家索引 / 最后一条 MSG_NEW_PHASE 的阶段值。 */
     int silentTurnPlayer;
     int silentPhase;
+    /** 静默重放期间统计的「有效效果发动」条数（MSG_CHAINING 且 code>0、desc>MAX_STRING_ID，
+     *  与客户端 EffectActivationLedger.record 的登记判据同口径）：STOC_UNDO_ACK 携回，
+     *  客户端据此把回退后缀之外的发动账本条目剪除（被本次撤回抹掉的使用过的效果恢复未使用）。
+     *  由 {@link UndoQuestionGuard#beginSilentReplay()} 复位。 */
+    int silentChainEvents;
 
     /** 当前挂起询问是否为「行动宣言」询问（IDLECMD/BATTLECMD）：撤回以此为锚点整段回退，由 {@link ServerDuel#getResponse} 消费后清零。 */
     int pendingActionQuestion;

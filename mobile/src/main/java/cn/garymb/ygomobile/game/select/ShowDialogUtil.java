@@ -411,10 +411,14 @@ public class ShowDialogUtil {
     // === 决斗结果 / 结束 ===
 
     /**
-     * 连接断开 / 决斗结束时统一关闭所有可能残留的选择类对话框，
-     * 避免遗留弹窗遮挡重新显示的局域网主界面（由 YGOProActivity returnToLanMain 调用）
+     * 连接断开 / 决斗结束 / 点击撤回瞬间统一关闭全部可能残留的选择类对话框，
+     * 避免遗留弹窗遮挡重新显示的局域网主界面（由 YGOProActivity returnToLanMain 与
+     * closeDuelUiForUndo 调用）。
+     *
+     * @return 本次是否真的关掉了询问窗（YesOrNoDialog）之外的应答类弹窗：调用方（撤回）
+     *         据此决定被拒时是「按询问快照重派发重建」还是「恢复询问窗旧实例」
      */
-    public void dismissOpenGameDialogs() {
+    public boolean dismissOpenGameDialogs() {
         if (handSelectDialog != null) {
             handSelectDialog.dismiss();
             handSelectDialog = null;
@@ -425,28 +429,33 @@ public class ShowDialogUtil {
         }
         rpsResultShown = false;
         lastHandSent = 0;
-        // 一并关闭选项弹窗与全部宣言类弹窗（属性/数字/种族/卡片），与退出对战同口径：
-        // 这些弹窗不可取消，决斗结束时若仍在显示会残留遮挡，故统一主动关闭
-        dismissAnnounceDialogs();
+        // 一并关闭选项弹窗与全部宣言/表示形式弹窗（选项/属性/数字/种族/卡片/形式），与退出对战同口径：
+        // 这些弹窗不可取消，决斗结束或撤回时若仍在显示会残留遮挡，且按钮已发不出应答，故统一主动关闭
+        boolean closed = dismissAnnounceDialogs();
         // 连锁场上点击模式复位：关闭询问窗、退出命令上下文并清除高亮，避免脏状态残留到下一局
         YesOrNoDialog.dismissChainQuery();
         GameFieldController fieldController = fieldCtl();
         if (fieldController != null) fieldController.endChainCommand();
         clearChainSelect();
-        panel().dismissOpenDialogs();
+        closed |= panel().dismissOpenDialogs();
+        return closed;
     }
 
     /**
-     * 退出对战（layout_game_right 隐藏）/ 决斗结束时关闭可能残留的宣言类与选项类对话框：
-     * 选项 / 宣言属性 / 宣言数字 / 宣言种族 / 宣言卡片（由 YGOProActivity hideGameUI 与
-     * dismissOpenGameDialogs 调用）。
+     * 退出对战（layout_game_right 隐藏）/ 决斗结束 / 撤回瞬间关闭可能残留的宣言类与选项类对话框：
+     * 选项 / 宣言属性 / 宣言数字 / 宣言种族 / 宣言卡片 / 表示形式（由 YGOProActivity hideGameUI、
+     * dismissOpenGameDialogs 与 closeDuelUiForUndo 调用）。
      * 各弹窗的实例引用与去重已下沉至对应 ui.dialogs 静态工厂的 current，此处调用其 dismissCurrent()。
+     *
+     * @return 六个弹窗中是否至少关掉了个在显窗
      */
-    public void dismissAnnounceDialogs() {
-        OptionDialog.dismissCurrent();
-        AnnounceAttributeDialog.dismissCurrent();
-        AnnounceNumberDialog.dismissCurrent();
-        AnnounceRaceDialog.dismissCurrent();
-        AnnounceCardDialog.dismissCurrent();
+    public boolean dismissAnnounceDialogs() {
+        boolean closed = OptionDialog.dismissCurrent();
+        closed |= AnnounceAttributeDialog.dismissCurrent();
+        closed |= AnnounceNumberDialog.dismissCurrent();
+        closed |= AnnounceRaceDialog.dismissCurrent();
+        closed |= AnnounceCardDialog.dismissCurrent();
+        closed |= PosSelectDialog.dismissCurrent();
+        return closed;
     }
 }

@@ -22,10 +22,12 @@ import ocgcore.data.Card;
  * 异画与本卡共用效果脚本，登记时按卡码镜像写入其 alias，查询按 卡码+alias 并集。
  * <p>双方均登记：主阶/战斗指令（MSG_SELECT_IDLE_CMD / MSG_SELECT_BATTLE_CMD）为全桌广播，
  * 对方轮的报文同样经 CommandDataParser 解析入列，其条目落在半场 1；连锁询问按收信方下发，
- * 谁收到谁的条目。卡详据此着色：展示卡自身半场可发动→荧光绿，对方半场可发动→荧光橙。
+ * 谁收到谁的条目。卡详据此把对应序号段铺背景色呼吸高亮（用户新规格：双方同用
+ * holo_blue_bright 透明度 50%↔20% 循环，不再按半场分前景色；登记半场仅作查询隔离）。
  * <p>生命周期：随命令询问存续——GameEngine.clearCommandFlags（新 idle/battle 询问解析前、
  * 连锁询问进入前、决斗结束清场、撤回重同步）与 ChainSelectController.clearChainSelect
- *（连锁应答/清理，与绿点消失同步）一并清空。
+ *（连锁应答/清理，与绿点消失同步）一并清空；登记/清空后均调
+ * {@code CardDetailPanel.refreshCardDetailMarks} 即时刷新展示中的卡详（用户新规格3）。
  * <p>线程模型：引擎派发线程写（命令解析入列）、UI/后台绑定线程读；与账本同款并发安全容器。
  */
 public final class EffectActivatableHints {

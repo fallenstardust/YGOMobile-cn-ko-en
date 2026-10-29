@@ -29,7 +29,7 @@ public class MsgDispatchGate {
         data.order(ByteOrder.LITTLE_ENDIAN);
         // 询问自愈：收到挂给本席位的询问或「等对方」提示即证明服务端仍在正常推进对局
         if (AskWatchdog.isAskOrWaitingMessage(msgType)) {
-            engine.askWatchdog.notifyAskReceived();
+            engine.askWatchdog.notifyAskReceived(msgType);
         }
         // 对齐 duelclient.cpp L1298-1303：除 MSG_RETRY 外每条消息均缓存一份快照，供 RETRY（无效应答）后重放重建选择 UI（服务端不会重发原 SELECT）
         if (msgType != GameMessage.Retry.value()) {
@@ -39,9 +39,11 @@ public class MsgDispatchGate {
             engine.lastGameMsgType = msgType;
             engine.lastGameMsgBody = body;
             engine.retryReplayCount = 0;
-            // 单独留存最近一条询问（MSG_SELECT_* = 10..26）快照：撤回被拒/超时时据此重派发询问
-            if (msgType >= GameMessage.SelectBattleCmd.value()
-                    && msgType <= GameMessage.SelectUnselectCard.value()) {
+            // 单独留存最近一条需本端应答的询问（MSG_SELECT_* = 10..26 与宣言类
+            // MSG_ANNOUNCE_* = 140..143）快照：撤回被拒/超时时据此重派发重建同一张待答弹窗。
+            // 宣言类一并留存是因为它们同样只能靠弹窗应答，撤回瞬间被收口后若无快照可重建
+            // 就再也无法应答（与 AskWatchdog.isAnswerableQuestion 同一口径）
+            if (AskWatchdog.isAnswerableQuestion(msgType)) {
                 engine.undoCoord.lastQuestionType = msgType;
                 engine.undoCoord.lastQuestionBody = body;
             }

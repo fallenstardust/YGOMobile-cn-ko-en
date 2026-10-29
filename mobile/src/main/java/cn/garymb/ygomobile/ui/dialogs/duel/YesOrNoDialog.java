@@ -244,9 +244,10 @@ public class YesOrNoDialog extends YesOrNoDialogBase {
         Button btnPositive = root.findViewById(R.id.btn_yes_no_positive);
         Button btnNegative = root.findViewById(R.id.btn_yes_no_negative);
 
-        // 卡片图片（dialog_yes_or_no 新结构：iv_yes_no_card_image 直接作为消息行左侧子视图）
+        // 卡图堆栈（dialog_yes_or_no 结构：ll_yes_no_card_stack 直接作为消息行左侧子视图，
+        // 首张 iv_yes_no_card_image 常驻、其余按 message 中的卡名动态叠压追加）
         LinearLayout contentRow = (LinearLayout) scrollView.getParent();
-        ImageView cardImageView = root.findViewById(R.id.iv_yes_no_card_image);
+        LinearLayout cardStack = root.findViewById(R.id.ll_yes_no_card_stack);
 
         // 连锁卡片横向列表（ll_chain_card_list 位于 hsv_yes_no_chain_cards 内，同行消息区右侧）
         HorizontalScrollView chainCardsScrollView = root.findViewById(R.id.hsv_yes_no_chain_cards);
@@ -262,20 +263,11 @@ public class YesOrNoDialog extends YesOrNoDialogBase {
 
         // ── Content area ─────────────────────────────────────────
         boolean hasChainCards = chainCards != null && !chainCards.isEmpty();
-        // 攻击宣言/直接攻击等连锁询问：cardCode 可能为 0（无 MSG_CHAINING），
-        // 回退按消息文本首个 [XXX] 卡名解析攻击者卡码，使左侧仍显示其卡图
-        int effectiveCardCode = cardCode > 0 ? cardCode : firstBracketedCardCode(
-                message != null ? message.toString() : null);
-        boolean showCardImage = effectiveCardCode > 0 && cardNameInMessage(effectiveCardCode);
-        if (showCardImage) {
-            cardImageView.setVisibility(View.VISIBLE);
-            new ImageLoader().bindImage(cardImageView, effectiveCardCode, ImageLoader.Type.small);
-            bindCardDetailClick(cardImageView, effectiveCardCode);
-        } else {
-            cardImageView.setVisibility(View.GONE);
-            bindCardDetailClick(cardImageView, 0);
-        }
-                
+        // 左侧卡图（用户规格）：message 中出现多个卡名时全部出图，横向排列且每张压住前一张
+        // 的 1/3，之后才显示消息文本；无卡名时整个堆栈隐藏。攻击宣言/直接攻击等时点没有
+        // MSG_CHAINING（cardCode=0），堆栈内按文本里的 [XXX] 卡名逐个回退解析，故左侧仍出图。
+        buildMentionedCardStack(cardStack);
+
         tvMessage.setText(colorizeBracketedCardNames(message));
         if (messageBgColor != 0) {
             tvMessage.setBackgroundColor(messageBgColor);
@@ -392,6 +384,9 @@ public class YesOrNoDialog extends YesOrNoDialogBase {
         popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
         popupWindow.setOnDismissListener(() -> {
             sShowingDialogs.remove(this);
+            // EFFECT_YN 询问窗关闭（应答/被新询问接力关闭/决斗结束）：摸掉本窗置入的
+            // 卡角呼吸绿点引用，绿点与询问同存续
+            clearAskedEffectCard();
             // 对话框隐藏后恢复决斗场阶段按钮
             if (context instanceof YGOProActivity) {
                 ((YGOProActivity) context).notifyGameDialogHidden(this);
@@ -494,20 +489,21 @@ public class YesOrNoDialog extends YesOrNoDialogBase {
                         ? R.color.holo_blue_bright : R.color.holo_orange_bright));
     }
     /** 是/否确认弹窗（MSG_SELECT_YESNO / MSG_SELECT_EFFECTYN）：是=1 否=0 */
-    public static void showYesNoQuery(YGOProActivity activity, String message) {
-        showYesNoQuery(activity, message, 0, null, -1);
+    public static YesOrNoDialog showYesNoQuery(YGOProActivity activity, String message) {
+        return showYesNoQuery(activity, message, 0, null, -1);
     }
 
     /** 是/否确认弹窗（可带卡名着色）：cardCode>0 且 cardName 非空时按卡片类型着色 */
-    public static void showYesNoQuery(YGOProActivity activity, String message, int cardCode, String cardName) {
-        showYesNoQuery(activity, message, cardCode, cardName, -1);
+    public static YesOrNoDialog showYesNoQuery(YGOProActivity activity, String message, int cardCode, String cardName) {
+        return showYesNoQuery(activity, message, cardCode, cardName, -1);
     }
 
     /**
      * 是/否确认弹窗：selectingPlayer 为协议 selecting_player（被询问 seat，0/1），
      * 仅纯单人模式据此加「询问-玩家名」标题提示；传 -1 表示不加。
+     * 返回建好的窗实例供 EFFECT_YN 工厂追加被询问卡登记（setAskedEffectCard）。
      */
-    public static void showYesNoQuery(YGOProActivity activity, String message, int cardCode,
+    public static YesOrNoDialog showYesNoQuery(YGOProActivity activity, String message, int cardCode,
                                       String cardName, int selectingPlayer) {
         // 单窗询问：弹新询问窗前关闭仍在显示的全部旧询问窗（含上一条连锁询问的残留窗），
         // 保证同屏至多一个询问，纯单人模式按协议顺序先当前回合玩家、后对方逐个询问
@@ -532,6 +528,7 @@ public class YesOrNoDialog extends YesOrNoDialogBase {
         panel(activity).hideCancelOrFinishButton();
         applySoloAskHint(activity, dialog, selectingPlayer);
         dialog.show();
+        return dialog;
     }
 
     /**
@@ -568,7 +565,7 @@ public class YesOrNoDialog extends YesOrNoDialogBase {
         }
         int selectingPlayer = data.get() & 0xFF; // selecting_player
         int code = data.getInt();
-        data.get();                        // c（控制者）
+        int controller = data.get() & 0xFF;      // c（发动卡控制者，协议 seat）
         int location = data.get() & 0xFF;  // l
         int sequence = data.get() & 0xFF;  // s
         data.get();                        // flag
@@ -596,7 +593,10 @@ public class YesOrNoDialog extends YesOrNoDialogBase {
             String raw = dm.getDesc(desc, "");
             message = raw.isEmpty() ? "是否发动「" + cardName + "」的效果？" : raw;
         }
-        showYesNoQuery(activity, message, code, cardName, selectingPlayer);
+        showYesNoQuery(activity, message, code, cardName, selectingPlayer)
+                // 用户规格：诱发效果被询问是否发动时，被询问的卡角显示呼吸绿点，
+                // 点该卡或点本窗卡图都出对应序号段落发光（登记段落文档序+留存归属坐标）
+                .setAskedEffectCard(controller, code, location, sequence, desc);
     }
 
     /** SIDE 换卡组：列出卡组目录下的 .ydk 供选择，选中后交 ShowDialogUtil 载入并发送 */
@@ -632,7 +632,8 @@ public class YesOrNoDialog extends YesOrNoDialogBase {
     /**
      * 连锁是/否询问窗（对齐 gframe wQuery + stQMessage）：不再罗列可发动卡片按钮，改由场上高亮卡片承载点击发动。
      * 「是」进入场上点击模式，「否」放弃连锁；chainQueryDialog 保留引用以支持「取消操作」重新弹出。
-     * cardCode>0 且询问文本（event_string）含该卡名时，消息行左侧 iv_yes_no_card_image 显示发动中的卡片图案；
+     * cardCode>0 或询问文本（event_string）含卡名时，消息行左侧 ll_yes_no_card_stack 按卡名
+     * 出现顺序叠压显示全部卡图（每张压住前一张的 1/3）；
      * chainItems 非空时右侧 ll_chain_card_list 横向展示可以连锁的卡片。
      */
     public static void showChainQuery(YGOProActivity activity, String queryText,

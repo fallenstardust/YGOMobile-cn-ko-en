@@ -318,12 +318,13 @@ public class DuelStocHandler implements DuelClient.ClientListener {
     }
 
     @Override
-    public void onUndoResult(int result, int turn, int currentPlayer, int phase) {
-        // ACK 不进动画闸门（它不是对局消息），直接把回退后的回合/阶段 latch 到引擎，
-        // 由随后的 MSG_RELOAD_FIELD 落地时消费（reload 不带回合号，也不重发 MSG_START）
+    public void onUndoResult(int result, int turn, int currentPlayer, int phase, int chainEvents) {
+        // ACK 不进动画闸门（它不是对局消息），直接把回退后的回合/阶段与重放前缀内的
+        // 有效发动条数 latch 到引擎，由随后的 MSG_RELOAD_FIELD 落地时消费（reload 不带
+        // 回合号，也不重发 MSG_START）；chainEvents 供发动账本回退，旧服务端短载荷为 -1
         Log.i(TAG, "Undo ack: result=" + result + " turn=" + turn + " player=" + currentPlayer
-                + " phase=0x" + Integer.toHexString(phase));
-        engine.onUndoAck(result, turn, currentPlayer, phase);
+                + " phase=0x" + Integer.toHexString(phase) + " chainEvents=" + chainEvents);
+        engine.onUndoAck(result, turn, currentPlayer, phase, chainEvents);
     }
 
     @Override

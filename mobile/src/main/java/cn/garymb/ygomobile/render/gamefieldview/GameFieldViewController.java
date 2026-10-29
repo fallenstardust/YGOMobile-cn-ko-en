@@ -8,6 +8,7 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import cn.garymb.ygomobile.game.gamefield.GameField;
+import cn.garymb.ygomobile.game.gamefield.GameFieldController;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 
@@ -80,6 +81,12 @@ public class GameFieldViewController
         });
         fieldView.setOnTouchListener((v, event) -> {
             int action = event.getActionMasked();
+            if (action == MotionEvent.ACTION_DOWN) {
+                // 本手势由决斗场自己接住：选中态的置位/清空交给 handleTap 的拾取结果，
+                // 外部派发点（Activity / 弹窗包装层）手势落定时不再补取消（用户规格：只有
+                // 点到卡片以外的其它 UI 才取消选中），也避免点手卡时先降后升的抬升抖动
+                GameFieldController.notifyFieldViewDown();
+            }
             if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL)
                 fieldView.dispatchPhaseButtonPressEnd();
             return gestureDetector.onTouchEvent(event);

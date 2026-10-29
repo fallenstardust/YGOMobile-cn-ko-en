@@ -3,17 +3,22 @@ package cn.garymb.ygomobile.render.card;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.LinearGradient;
+import android.graphics.Paint;
+import android.graphics.Shader;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.Layout;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.TextPaint;
 import android.text.method.LinkMovementMethod;
-import android.text.style.CharacterStyle;
 import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.ImageSpan;
+import android.text.style.LineBackgroundSpan;
 import android.util.SparseArray;
 import android.view.View;
 import android.widget.ImageView;
@@ -168,6 +173,7 @@ class CardInfoBinder {
 
     /** 面板隐藏时由 CardDetailPanel.hide() 调用：收起关键词卡片列表弹窗并清理当前卡引用 */
     void dismissKeywordListDialog() {
+        stopGlowBreath();
         dismissKeywordDialog();
         currentDisplayCard = null;
         lastShownClientCard = null;
@@ -183,6 +189,7 @@ class CardInfoBinder {
     }
 
     void showDefault() {
+        stopGlowBreath();
         currentCardCode = -1;
         currentDisplayCard = null;
         lastShownClientCard = null;
@@ -235,6 +242,14 @@ class CardInfoBinder {
             showDefault();
             return;
         }
+        // 用户规格：详情正在展示该卡时重复点击不重新绑定（保持滚动位置与现状），
+        // 同卡码+同半场即命中；换卡/换码才重走绑定。标记即时刷新走 refreshShownMarks
+        // 不经此门，登记簿/账本变化仍能即时落到展示中的卡详
+        if (layout != null && layout.getVisibility() == View.VISIBLE
+                && currentDisplayCard != null && code == currentCardCode
+                && displayedSide == (clientCard.controler == 1 ? 1 : 0)) {
+            return;
+        }
 
         Card cardData = DataManager.get().getCardManager().getCard(code);
         if (cardData == null) {
@@ -267,7 +282,8 @@ class CardInfoBinder {
         List<Integer> oppGlow = Collections.emptyList();
         if (clientCard != null) {
             // 主阶/战斗指令为全桌广播，对方轮的 SELECT 也收得到：登记簿已含对方半场条目，
-            // 双半场各取一份，着色时我方绿、对方橙（用户规格）
+            // 双半场各取一份，命中段铺同款背景呼吸（新规格：不再按半场分色，
+            // 分半场仅作查询隔离）
             ourGlow = EffectActivatableHints.offsetsFor(code, cardData.Alias, 0);
             oppGlow = EffectActivatableHints.offsetsFor(code, cardData.Alias, 1);
         }
@@ -307,8 +323,8 @@ class CardInfoBinder {
                 ? lastShownClientCard : null;
         displayedSide = shown != null ? (shown.controler == 1 ? 1 : 0) : -1;
         sActiveBinder = this;
-        // 可发动效果发光仅走 ClientCard 展示态路径（场卡/列表临时卡）：卡组编辑态与
-        // 纯卡表展示（shown==null）不发光，防过期询问脏染与无归属误发光；双半场各取一份
+        // 可发动效果背景呼吸仅走 ClientCard 展示态路径（场卡/列表临时卡）：卡组编辑态与
+        // 纯卡表展示（shown==null）不呼吸，防过期询问脏染与无归属误呼吸；双半场各取一份
         List<Integer> ourGlow = Collections.emptyList();
         List<Integer> oppGlow = Collections.emptyList();
         if (shown != null && deckCardListHandler == null) {
@@ -349,10 +365,12 @@ class CardInfoBinder {
 
     /** 释放资源 */
     void onDestroy() {
+        stopGlowBreath();
         executorService.shutdown();
     }
 
     void showUnknownCard() {
+        stopGlowBreath();
         currentCardCode = -1;
         currentDisplayCard = null;
         lastShownClientCard = null;
@@ -489,6 +507,14 @@ class CardInfoBinder {
 
     private void bindCardDesc(Card cardData, List<EffectRef> effectRefs,
                               List<Integer> ourGlowOffsets, List<Integer> oppGlowOffsets) {
+        bindCardDesc(cardData, effectRefs, ourGlowOffsets, oppGlowOffsets, true);
+    }
+
+    /** plainFirst：首屏立即铺纯文本可读；标记刷新路径（用户规格3）传 false，
+     *  旧标记文本保留到新结果就绪再一次性替换，避免命令到达/登记簿变化时闪白 */
+    private void bindCardDesc(Card cardData, List<EffectRef> effectRefs,
+                              List<Integer> ourGlowOffsets, List<Integer> oppGlowOffsets,
+                              boolean plainFirst) {
         if (tvCardDesc == null) return;
         // 记录当前展示的卡，供关键词 queryable 判定（唯一命中即当前卡自身则视为不可查）
         currentDisplayCard = cardData;
@@ -501,14 +527,14 @@ class CardInfoBinder {
         // 后台遍历快照避免与写入交叉；纯卡表展示传空列表则整段标记逻辑短路
         final List<EffectRef> usedIds = effectRefs == null || effectRefs.isEmpty()
                 ? Collections.<EffectRef>emptyList() : new ArrayList<>(effectRefs);
-        // 可发动效果段落文档序快照（同不受后台任务期间命令清空影响，空集即不发光）；
-        // 我方/对方两份分开传递，着色时我方绿、对方橙（用户规格）
+        // 可发动效果段落文档序快照（同不受后台任务期间命令清空影响，空集即不呼吸）；
+        // 我方/对方两份分开传递，同款背景呼吸、仅查询与分块归属区分半场
         final List<Integer> ourGlow = ourGlowOffsets == null || ourGlowOffsets.isEmpty()
                 ? Collections.<Integer>emptyList() : new ArrayList<>(ourGlowOffsets);
         final List<Integer> oppGlow = oppGlowOffsets == null || oppGlowOffsets.isEmpty()
                 ? Collections.<Integer>emptyList() : new ArrayList<>(oppGlowOffsets);
-        // 纯文本立即显示（描述先可读，不等待任何扫描）
-        tvCardDesc.setText(desc);
+        // 纯文本立即显示（描述先可读，不等待任何扫描）；刷新态保留旧标记文本不铺纯文本
+        if (plainFirst) tvCardDesc.setText(desc);
         // 关键词解析 + 高亮 spannable 构建 + queryable 判定（缓存未命中为全卡表扫描）+
         // 关联卡片计算一律在后台线程执行：此前在主线程逐关键词做全表扫描，连续点卡时
         // 主线程被反复阻塞（表现为点卡无响应“卡死”），且与后台线程并发读写普通 HashMap
@@ -525,6 +551,11 @@ class CardInfoBinder {
                 if (gen != bindGen || tvCardDesc == null) return;
                 tvCardDesc.setText(marked);
                 tvCardDesc.setMovementMethod(LinkMovementMethod.getInstance());
+                // 背景呼吸驱动环（新规格1/2）：EffectBgBreathSpan 的相位按 uptimeMillis 现算，
+                // 而 TextView 缓存 Layout、单纯 invalidate 不重跑 updateDrawState，须按帧
+                // 重 setText 重建；本文无呼吸段则停环防无谓重绘（showDefault 等入口已各自停）
+                if (ourGlow.isEmpty() && oppGlow.isEmpty()) stopGlowBreath();
+                else startGlowBreath();
                 spanStringList.clear();
                 spanStringList.addAll(keywords);
                 lastRelatedCards = related;
@@ -682,19 +713,18 @@ class CardInfoBinder {
         // 块首插打勾前缀、整块铺灰
         int i = lineCount - 1;
         while (i >= 0) {
-            // 可发动发光块先于 mark==0 短路判定（发光段不再写 mark，若放在短路之后将成为
-            // 永不执行的死代码——此前「任何模式都不发光」的根因）：整段铺 TextGlowSpan
-            // （setShadowLayer 外发光），不插前缀不置灰，与已发动块同款自下而上处理互不干扰；
-            // 着色按归属半场：我方绿、对方橙，同段双方都可发动时绿优先（同已发动绿优先口径）
+            // 可发动背景呼吸块先于 mark==0 短路判定（呼吸段不再写 mark，若放在短路之后将成为
+            // 永不执行的死代码——此前「任何模式都不发光」的根因）：整段铺 EffectBgBreathSpan
+            // （holo_blue_bright 背景 50%↔20% 透明度呼吸，用户新规格：文字外发光不够明显），
+            // 不插前缀不置灰，与已发动块同款自下而上处理互不干扰；glowSide 仅用于同段归属
+            // 分块合并（双方同段都可发动时合为一块），不再按半场分色
             int gi = paraOf[i];
             if (gi >= 0 && glowSide[i] != 0) {
                 int g = i;
                 while (g - 1 >= 0 && glowSide[g - 1] == glowSide[i] && paraOf[g - 1] == gi) g--;
                 int gs = lines.get(g)[0], ge = lines.get(i)[1];
                 if (gs < ge) {
-                    sb.setSpan(new TextGlowSpan(glowSide[i] == 2
-                                    ? COLOR_ACTIVATABLE_GLOW : COLOR_ACTIVATABLE_GLOW_OPP),
-                            gs, ge,
+                    sb.setSpan(new EffectBgBreathSpan(COLOR_ACTIVATABLE_BG), gs, ge,
                             SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
                 }
                 i = g - 1;
@@ -747,13 +777,14 @@ class CardInfoBinder {
                 SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
     }
 
-    /** 可发动效果段落发光颜色：与卡片角位呼吸绿点同源（colors.xml neon_green 荧光绿）；
-     *  对方半场另用荧光橙（neon_orange），与己方可发动绿色区分归属（用户规格） */
-    private static final int COLOR_ACTIVATABLE_GLOW = YGOUtil.c(R.color.neon_green);
-    private static final int COLOR_ACTIVATABLE_GLOW_OPP = YGOUtil.c(R.color.neon_orange);
+    /** 可发动效果段落背景呼吸基色（用户新规格：柔和向外渐变透明的荧光绿晕染，不再按
+     *  半场分色；询问卡是否发动/是否连锁带呼吸点的卡与命令绿点同源登记，
+     *  点击同样命中本色呼吸段） */
+    private static final int COLOR_ACTIVATABLE_BG = YGOUtil.c(R.color.holo_green_bright);
 
-    /** 把某半场可发动的效果段落文档序整段记入发光归属数组（1=对方 2=我方，同段双发取
-     *  较大值即绿优先）；只认序号段落（paraOf>=0），背景/限制行不参与 */
+    /** 把某半场可发动的效果段落文档序整段记入呼吸归属数组（1=对方 2=我方，同段双发取
+     *  较大值）；归属值不再决定颜色（双方同款背景呼吸），仅用于呼吸块合并判定；
+     *  只认序号段落（paraOf>=0），背景/限制行不参与 */
     private static void markGlowParagraphs(int[] glowSide, int[] paraOf, int lineCount,
                                            List<Integer> offsets, int val) {
         if (offsets == null || offsets.isEmpty()) return;
@@ -764,15 +795,86 @@ class CardInfoBinder {
         }
     }
 
-    /** 文字外发光 span：setShadowLayer 零偏移荧光色阴影环绕字形（与 FieldHudRenderer/SciFiRenderer
-     *  发光文字同款机制），只改绘制状态不改文字尺寸，与已有前景/点击 span 叠加共存 */
-    private static final class TextGlowSpan extends CharacterStyle {
-        private final int color;
-        TextGlowSpan(int color) { this.color = color; }
+    /** 背景呼吸角速度：比卡角呼吸绿点
+     *  （CardOverlayRenderer.ACT_DOT_BREATH_RAD_PER_MS=0.006）慢 2 倍的正弦，周期≈2.1s */
+    private static final double GLOW_BREATH_RAD_PER_MS = 0.003;
+    /** 呼吸驱动帧间隔：周期≈2.1s 下 50ms/帧足够平滑，非呼吸期不跑帧 */
+    private static final long GLOW_BREATH_FRAME_MS = 50L;
+
+    /** 可发动效果段落背景呼吸 span（用户新规格2：取代硬边 bgColor 矩形——直角背景不好看，
+     *  改画柔和向外渐变透明的 holo_green_bright 晕染，透明度 10%(0x1A)↔30%(0x4D) 交替）：
+     *  实现 {@link LineBackgroundSpan}，逐行拿 Layout 给的段落左/右界与本行字符区间，按 span
+     *  在行内的子段坐标画两端渐隐的胶囊圆角矩形（水平 LinearGradient 外缘 8% 并透，圆角半径
+     *  取行高一半，无直角）；相位取 uptimeMillis 现算，由 {@link #glowBreathTick} 周期性重
+     *  setText 驱动刷新（TextView 缓存 Layout，单纯 invalidate 不会重跑绘背景）；只铺在 span
+     *  命中的行段上，与高亮词前景 span/下划线/点击 span 叠加共存 */
+    private static final class EffectBgBreathSpan implements LineBackgroundSpan {
+        private final int rgb;
+        private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        EffectBgBreathSpan(int argb) { this.rgb = argb & 0x00FFFFFF; }
         @Override
-        public void updateDrawState(TextPaint tp) {
-            tp.setShadowLayer(10f, 0f, 0f, color);
+        public void drawBackground(Canvas c, Paint p, int left, int right, int top, int bottom,
+                                   int baseline, CharSequence text, int start, int end, int lnum) {
+            if (!(text instanceof Layout)) return;
+            CharSequence buf = ((Layout) text).getText();
+            if (!(buf instanceof android.text.Spanned)) return;
+            android.text.Spanned sp = (android.text.Spanned) buf;
+            int ss = sp.getSpanStart(this), se = sp.getSpanEnd(this);
+            if (ss < 0 || se <= ss) return;
+            int s = Math.max(start, ss), e = Math.min(end, se);
+            if (s >= e) return;
+            float sx, ex;
+            try {
+                Layout l = (Layout) text;
+                sx = l.getPrimaryHorizontal(s);
+                ex = l.getPrimaryHorizontal(Math.min(e, end > s ? e - 1 : e));
+                if (ex > sx + 0.5f) {
+                    // 末字符右缘：再加一个字宽估计，不超出本行右界
+                    ex = Math.min(ex + (end > s ? p.measureText(buf.subSequence(e - 1, e).toString()) : 0f), right);
+                }
+            } catch (IndexOutOfBoundsException bad) {
+                sx = left;
+                ex = right;
+            }
+            if (ex <= sx) { sx = left; ex = right; }
+            float p0 = 0.5f + 0.5f * (float) Math.sin(
+                    (double) android.os.SystemClock.uptimeMillis() * GLOW_BREATH_RAD_PER_MS);
+            int a = (int) (0x1A + 0x33 * p0); // alpha ≈10%..30% 随相位循环
+            float pad = (bottom - top) * 0.10f;
+            float y0 = top - pad, y1 = bottom + pad;
+            float rad = Math.min((y1 - y0) * 0.5f, (ex - sx) * 0.5f);
+            paint.setShader(new LinearGradient(sx, 0f, ex, 0f,
+                    new int[]{rgb, (a << 24) | rgb, (a << 24) | rgb, rgb},
+                    new float[]{0f, 0.10f, 0.90f, 1f}, Shader.TileMode.CLAMP));
+            c.drawRoundRect(sx, y0, ex, y1, rad, rad, paint);
+            paint.setShader(null);
         }
+    }
+
+    /** 呼吸驱动环：呼吸段存在时每 50ms 重建一次文本（span 集合原样携带，重走
+     *  updateDrawState 刷新相位）；呼吸段过期（命令清空/换卡/切卡详）时自动停环，
+     *  不留持续重绘开销 */
+    private final Runnable glowBreathTick = new Runnable() {
+        @Override
+        public void run() {
+            if (tvCardDesc == null) return;
+            CharSequence t = tvCardDesc.getText();
+            if (!(t instanceof android.text.Spanned)
+                    || ((android.text.Spanned) t).getSpans(0, t.length(), EffectBgBreathSpan.class).length == 0) {
+                return;
+            }
+            tvCardDesc.setText(new SpannableStringBuilder(t));
+            mainHandler.postDelayed(this, GLOW_BREATH_FRAME_MS);
+        }
+    };
+
+    private void startGlowBreath() {
+        mainHandler.removeCallbacks(glowBreathTick);
+        mainHandler.post(glowBreathTick);
+    }
+
+    private void stopGlowBreath() {
+        mainHandler.removeCallbacks(glowBreathTick);
     }
 
     /** 命中的是效果段内任意行（含续行）则整段标记；背景文本（para -1）仅标记该行。
@@ -895,26 +997,28 @@ class CardInfoBinder {
         }
     }
 
-    /** 引擎派发线程在发动登记/回合轮转/开局胜负清零后回调（经 CardDetailPanel.refreshCardDetailMarks
-     *  进入）：主线程重绑正在展示卡的描述标记（用户规格1：本回合发动无需重新点卡即时刷新） */
+    /** 引擎派发线程在发动登记/回合轮转/开局胜负清零、可发动登记簿登记/清空后回调
+     *  （经 CardDetailPanel.refreshCardDetailMarks 进入）：主线程重绑正在展示卡的描述
+     *  标记（用户规格1：本回合发动无需重新点卡即时刷新；新规格3：可发动段落出现/过期
+     *  同样即时刷新） */
     static void notifyLedgerChanged() {
         final CardInfoBinder b = sActiveBinder;
         if (b == null) return;
-        b.mainHandler.post(b::refreshShownMarks);
+        b.mainHandler.post(b::scheduleMarksRefresh);
     }
 
-    /** 效果发动专用的门控刷新（用户规格2：不同卡码的卡发动不打扰面板）：仅当发动卡与
+    /** 效果发动/登记专用的门控刷新（用户规格2：不同卡码的卡发动不打扰面板）：仅当相关卡码与
      *  正在展示卡同码、或互为异画/同名 alias（两码共用效果段落与账本镜像）时才重绑 */
     static void notifyLedgerChanged(int activatedCode) {
         final CardInfoBinder b = sActiveBinder;
         if (b == null) return;
         b.mainHandler.post(() -> {
-            if (b.affectsShownCard(activatedCode)) b.refreshShownMarks();
+            if (b.affectsShownCard(activatedCode)) b.scheduleMarksRefresh();
         });
     }
 
-    /** 视角切换回调（观战/单人自动翻转/回放交换，用户规格3）：账本 side 语义已随视角
-     *  整体对调（EffectActivationLedger.swapSides）、场卡 controler 已由 swapField 重算，
+    /** 视角切换回调（观战/单人自动翻转/回放交换，用户规格3）：账本与登记簿的 side 语义已随视角
+     *  整体对调（swapSides）、场卡 controler 已由 swapField 重算，
      *  展示卡半场取绑定态快照翻转后无条件重绑，绿/红勾随双方互换 */
     static void notifyViewpointSwapped() {
         final CardInfoBinder b = sActiveBinder;
@@ -923,6 +1027,16 @@ class CardInfoBinder {
             if (b.displayedSide >= 0) b.displayedSide = 1 - b.displayedSide;
             b.refreshShownMarks();
         });
+    }
+
+    /** 标记刷新防抖：同一引擎消息段内「先清后登」（clearCommandFlags → 命令解析逐段登记）会
+     *  多次触发刷新，40ms 内合并为一次——既不以「已清空未登记」的中间态重绑闪断呼吸，
+     *  又避免每条命令双份后台重建开销 */
+    private final Runnable marksRefreshTick = this::refreshShownMarks;
+
+    private void scheduleMarksRefresh() {
+        mainHandler.removeCallbacks(marksRefreshTick);
+        mainHandler.postDelayed(marksRefreshTick, 40L);
     }
 
     /** 发动卡码是否与正在展示卡相关：同码直接相关；异画卡与本卡共用效果段落编号和
@@ -945,12 +1059,16 @@ class CardInfoBinder {
         if (deckCardListHandler != null || currentDisplayCard == null || currentCardCode <= 0) return;
         ClientCard cc = lastShownClientCard != null && lastShownClientCard.displayCode() == currentCardCode
                 ? lastShownClientCard : null;
+        // plainFirst=false（新规格3）：刷新期间保留旧标记文本，新结果就绪后一次性替换，
+        // 命令到达/登记簿清空都不闪白；可发动呼吸仍只走 ClientCard 展示态路径（与
+        // showCard 首显同款 cc 门控）：纯卡表展示无归属，不过期询问脏染
         bindCardDesc(currentDisplayCard,
                 collectEffectRefs(currentCardCode, currentDisplayCard, displayedSide, cc),
                 cc != null ? EffectActivatableHints.offsetsFor(currentCardCode, currentDisplayCard.Alias, 0)
                         : Collections.<Integer>emptyList(),
                 cc != null ? EffectActivatableHints.offsetsFor(currentCardCode, currentDisplayCard.Alias, 1)
-                        : Collections.<Integer>emptyList());
+                        : Collections.<Integer>emptyList(),
+                false);
     }
 
     /**

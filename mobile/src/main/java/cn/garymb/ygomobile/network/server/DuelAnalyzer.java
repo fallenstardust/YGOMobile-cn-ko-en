@@ -558,6 +558,18 @@ final class DuelAnalyzer extends DuelAnalyzerBase {
                     break;
                 }
                 case EngineMessage.MSG_CHAINING: {
+                    // 静默重放同步统计「有效效果发动」条数（判据与客户端 EffectActivationLedger.record
+                    // 一致：code>0 且 desc>MAX_STRING_ID 才登记账本），撤回 ACK 携回供客户端把回退
+                    // 后缀之外的发动账本条目剪除——被撤回抹掉的「使用过的效果」即时恢复未使用态。
+                    // 体布局（GameMessageParser.Chaining）：code(4)@body，pcc/pcl/pcs/subs/cc/cl/cs(各1)，
+                    // desc(4)@body+11，ct(1)；body = start+1（msg[start] 为消息类型字节）
+                    if (silent) {
+                        int chCode = readInt32(msg, cursor);
+                        int chDesc = readInt32(msg, cursor + 11);
+                        if (chCode > 0 && (chDesc & 0xFFFFFFFFL) > ocgcore.DataManager.MAX_STRING_ID) {
+                            silentChainEvents++;
+                        }
+                    }
                     cursor += 16;
                     liveChainActive = true;
                     broadcastMsg(range(msg, start, cursor));
