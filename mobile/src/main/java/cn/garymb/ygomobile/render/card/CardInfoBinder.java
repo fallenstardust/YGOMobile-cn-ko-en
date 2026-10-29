@@ -803,40 +803,76 @@ class CardInfoBinder {
 
     /** 可发动效果段落背景呼吸 span（用户新规格2：取代硬边 bgColor 矩形——直角背景不好看，
      *  改画柔和向外渐变透明的 holo_green_bright 晕染，透明度 10%(0x1A)↔30%(0x4D) 交替）：
-     *  实现 {@link LineBackgroundSpan}，逐行拿 Layout 给的段落左/右界与本行字符区间，按 span
-     *  在行内的子段坐标画两端渐隐的胶囊圆角矩形（水平 LinearGradient 外缘 8% 并透，圆角半径
-     *  取行高一半，无直角）；相位取 uptimeMillis 现算，由 {@link #glowBreathTick} 周期性重
-     *  setText 驱动刷新（TextView 缓存 Layout，单纯 invalidate 不会重跑绘背景）；只铺在 span
-     *  命中的行段上，与高亮词前景 span/下划线/点击 span 叠加共存 */
+     *  实现 {@link LineBackgroundSpan}，按 span 在行内的子段坐标画两端渐隐的胶囊圆角矩形
+     *  （水平 LinearGradient 外缘渐透，圆角半径取行高一半，无直角）。
+     *  <p>平台签名差异（看不见的根因）：API 35 起接口只有带 baseline 的 11 参方法且 StaticLayout
+     *  传入的 text 为原始文本 CharSequence（不再是旧版的 Layout 自身）；旧运行时（API<35）接口
+     *  则只有 10 参抽象方法——只实现其中一个会分别在新版不绘制（instanceof Layout 早退）/旧版
+     *  AbstractMethodError，故两个重载都写并共享同一段自适应绘制逻辑（10 参版在 compileSdk 35
+     *  下不存在不可标 @Override，靠运行时签名分派）。旧版 Layout 路径用 getPrimaryHorizontal 取
+     *  字级 x；新版原文本路径拿不到 Layout，退回整行 left..right 胶囊（呼吸段按整段铺设，实际
+     *  贴合）；相位取 uptimeMillis 现算，由 {@link #glowBreathTick} 周期性重 setText 驱动刷新
+     *  （TextView 缓存 Layout，单纯 invalidate 不会重跑绘背景）；与高亮词前景 span/下划线/点击
+     *  span 叠加共存 */
     private static final class EffectBgBreathSpan implements LineBackgroundSpan {
         private final int rgb;
         private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         EffectBgBreathSpan(int argb) { this.rgb = argb & 0x00FFFFFF; }
+
+        /** API 35+ 新签名（compileSdk 35 接口中唯一的抽象方法） */
         @Override
         public void drawBackground(Canvas c, Paint p, int left, int right, int top, int bottom,
                                    int baseline, CharSequence text, int start, int end, int lnum) {
-            if (!(text instanceof Layout)) return;
-            CharSequence buf = ((Layout) text).getText();
+            drawBreath(c, p, left, right, top, bottom, text, start, end);
+        }
+
+        /** API<35 旧签名：该运行时接口只有这个 10 参抽象方法；在 compileSdk 35 上非接口方法，
+         *  故不加 @Override，按方法签名参与虚分派，旧机 StaticLayout 调用时命中本方法 */
+        public void drawBackground(Canvas c, Paint p, int left, int right, int top, int bottom,
+                                   CharSequence text, int start, int end, int lnum) {
+            drawBreath(c, p, left, right, top, bottom, text, start, end);
+        }
+
+        private void drawBreath(Canvas c, Paint p, int left, int right, int top, int bottom,
+                                CharSequence text, int start, int end) {
+            // 旧版传入的是 Layout 自身（可取字级水平坐标）；API 35+ 传入原始文本
+            Layout layout = (text instanceof Layout) ? (Layout) text : null;
+            CharSequence buf = layout != null ? layout.getText() : text;
             if (!(buf instanceof android.text.Spanned)) return;
             android.text.Spanned sp = (android.text.Spanned) buf;
             int ss = sp.getSpanStart(this), se = sp.getSpanEnd(this);
-            if (ss < 0 || se <= ss) return;
-            int s = Math.max(start, ss), e = Math.min(end, se);
+            int s, e;
+            if (ss >= 0 && se > ss) {
+                s = Math.max(start, ss);
+                e = Math.min(end, se);
+            } else {
+                // 查不到自身区间（平台副本异常等边角）：drawBackground 被调到本行本身即说明
+                // span 与该行相交，按整行区间铺设，不让定位失败导致整体不可见
+                s = start;
+                e = end;
+            }
             if (s >= e) return;
             float sx, ex;
-            try {
-                Layout l = (Layout) text;
-                sx = l.getPrimaryHorizontal(s);
-                ex = l.getPrimaryHorizontal(Math.min(e, end > s ? e - 1 : e));
-                if (ex > sx + 0.5f) {
-                    // 末字符右缘：再加一个字宽估计，不超出本行右界
-                    ex = Math.min(ex + (end > s ? p.measureText(buf.subSequence(e - 1, e).toString()) : 0f), right);
+            if (layout != null) {
+                sx = left;
+                ex = right;
+                try {
+                    float xs = layout.getPrimaryHorizontal(s);
+                    float xe = layout.getPrimaryHorizontal(Math.max(s, e - 1));
+                    if (xe > xs + 0.5f) {
+                        // 末字符右缘：再加一个字宽估计，不超出本行右界
+                        xe = Math.min(xe + p.measureText(buf.subSequence(Math.max(s, e - 1), e).toString()), right);
+                    }
+                    if (xe > xs) { sx = xs; ex = xe; }
+                } catch (RuntimeException bad) {
+                    sx = left;
+                    ex = right;
                 }
-            } catch (IndexOutOfBoundsException bad) {
+            } else {
                 sx = left;
                 ex = right;
             }
-            if (ex <= sx) { sx = left; ex = right; }
+            if (ex <= sx) return;
             float p0 = 0.5f + 0.5f * (float) Math.sin(
                     (double) android.os.SystemClock.uptimeMillis() * GLOW_BREATH_RAD_PER_MS);
             int a = (int) (0x1A + 0x33 * p0); // alpha ≈10%..30% 随相位循环
@@ -851,8 +887,8 @@ class CardInfoBinder {
         }
     }
 
-    /** 呼吸驱动环：呼吸段存在时每 50ms 重建一次文本（span 集合原样携带，重走
-     *  updateDrawState 刷新相位）；呼吸段过期（命令清空/换卡/切卡详）时自动停环，
+    /** 呼吸驱动环：呼吸段存在时每 50ms 重建一次文本（span 集合原样携带，Layout 重建重跑
+     *  绘背景刷新相位）；呼吸段过期（命令清空/换卡/切卡详）时自动停环，
      *  不留持续重绘开销 */
     private final Runnable glowBreathTick = new Runnable() {
         @Override
