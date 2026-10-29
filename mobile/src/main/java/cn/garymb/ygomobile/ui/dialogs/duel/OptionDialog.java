@@ -109,14 +109,16 @@ public class OptionDialog {
     }
 
     /**
-     * 决斗结束 / 退出对战时关闭可能残留的选项弹窗（由 ShowDialogUtil.dismissOpenGameDialogs 调用）：
+     * 决斗结束 / 退出对战 / 撤回瞬间关闭可能残留的选项弹窗（由 ShowDialogUtil.dismissOpenGameDialogs 调用）：
      * MSG_SELECT_OPTION 的弹窗不可取消，若结束时仍在显示会残留遮挡返回界面，故统一主动关闭。
+     *
+     * @return 本次是否真的关闭了一个在显弹窗（撤回路径据此判断需不需按询问快照重建）
      */
-    public static void dismissCurrent() {
-        if (current != null) {
-            current.dismiss();
-            current = null;
-        }
+    public static boolean dismissCurrent() {
+        if (current == null) return false;
+        current.dismiss();
+        current = null;
+        return true;
     }
 
     /**

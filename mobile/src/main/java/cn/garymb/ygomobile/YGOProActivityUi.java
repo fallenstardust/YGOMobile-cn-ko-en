@@ -377,6 +377,10 @@ abstract class YGOProActivityUi extends YGOProActivityBase {
      * 抬手时 onCardClick 会以新代际重新排期展示，不受本次收起影响（需求：点屏上任意
      * 不产出新气泡的位置即隐藏旧气泡）。
      * <p>
+     * 卡片选中态同步取消（用户规格）：同一次按下还登记「落在决斗场之外」候选，抬手时若
+     * 决斗场并未接住本次按下（即点的是其它按钮/聊天输入框/被弹窗层接管的位置），就取消金色
+     * 呼吸外框与手卡抬升并收起气泡；决斗场内的点击由自己的拾取结果决定，外部不插手。
+     * <p>
      * 聊天输入框失焦（用户规格）：按下点不在输入框上时取消其焦点并收起输入法，避免光标
      * 一直闪动、输入法已隐藏而焦点仍在输入框时再点输入框唤不起输入法；弹窗包装层转发
      * 进来的触摸不经本派发点，由 DragFrameLayout 的按下归属判定处调同一方法补齐。
@@ -384,6 +388,9 @@ abstract class YGOProActivityUi extends YGOProActivityBase {
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
         boolean down = ev.getActionMasked() == MotionEvent.ACTION_DOWN;
+        // 取消候选必须在事件下发之前登记：决斗场视图的 OnTouchListener 在同一次派发中
+        // 会把本手势改判为「决斗场自己接住」，届时抬手结算不再取消
+        if (down) GameFieldController.onOutsideGestureDown();
         if (fieldCtl != null) {
             fieldCtl.onFieldTouchForChat(ev);
             if (down) fieldCtl.hideFieldStatusTip();
@@ -391,7 +398,9 @@ abstract class YGOProActivityUi extends YGOProActivityBase {
         if (down) {
             ChatInputUI.clearFocusIfTouchedOutside(this, ev.getRawX(), ev.getRawY());
         }
-        return super.dispatchTouchEvent(ev);
+        boolean handled = super.dispatchTouchEvent(ev);
+        GameFieldController.onOutsideGestureUp(this, ev.getActionMasked());
+        return handled;
     }
     /**
      * 决斗/回放开场：局域网主界面与建主界面仅隐藏（hideForNavigation 保留 reshow 复用态，

@@ -73,12 +73,16 @@ public class AnnounceRaceDialog {
         dialog.show();
     }
 
-    /** 退出对战时关闭可能残留的宣言种族弹窗（由 ShowDialogUtil.dismissAnnounceDialogs 调用） */
-    public static void dismissCurrent() {
-        if (current != null) {
-            current.dismiss();
-            current = null;
-        }
+    /**
+     * 退出对战/撤回瞬间关闭可能残留的宣言种族弹窗（由 ShowDialogUtil.dismissAnnounceDialogs 调用）。
+     *
+     * @return 本次是否真的关闭了一个在显弹窗（撤回路径据此判断需不需按询问快照重建）
+     */
+    public static boolean dismissCurrent() {
+        if (current == null) return false;
+        current.dismiss();
+        current = null;
+        return true;
     }
 
     /**

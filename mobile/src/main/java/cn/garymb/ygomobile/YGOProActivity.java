@@ -305,24 +305,80 @@ public class YGOProActivity extends YGOProActivityEngine {
         // undoHiddenDialogs：撤回被拒（onUndoDenied）且询问未被重派时逐个恢复，
         // 撤回被接受（onUndoResync）时快照作废，服务端重同步后会重新挂回新询问
         undoHiddenDialogs.clear();
+        // 连锁询问现场备份：下面的收口会连静态引用与必发标志一起作废，被拒恢复时要回灌
+        undoChainQueryBackup = YesOrNoDialog.getChainQueryDialog();
+        undoChainForcedBackup = YesOrNoDialog.isChainForcedMode();
         for (YesOrNoDialog d : YesOrNoDialog.snapshotShowingDialogs()) {
             undoHiddenDialogs.add(d);
             d.dismiss();
         }
+        // 用户规格：duel 相关的其余弹窗（选卡/确认/选项/宣言/表示形式/命令菜单）此刻一并自动隐藏。
+        // 点击瞬间引擎已布防撤回应答代次屏障，这些窗上的按钮再点也发不出应答（被丢弃），与其
+        // 留个“看起来能点、点了没反应”的旧窗遮住回退后的新局面，不如按撤回成功时的同一口径立即
+        // 收口；确实收口过应答窗时记下方志，被拒时据此重建（见 EngineCallbackDelegate.onUndoDenied）
+        undoClosedQuestionDialog = closeDuelUiForUndo();
         engine.sendUndo();
+    }
+
+    /**
+     * 撤回相关的一刀切收口（点击撤回瞬间与撤回成功重同步前共用）：关闭选卡/确认/展示/选项/
+     * 宣言/表示形式等全部 duel 弹窗，并作废其选择上下文与进行中的交互会话（这些状态由已被
+     * 撤销的询问建立，任其存活则下一次卡片/格子点击会拿旧询问的编码去应答新局面 → 非法应答
+     * → MSG_RETRY 风暴），同时取消卡片点击选中态与状态气泡。
+     * <p>不发出任何应答，也不依赖弹窗实例可重建（询问窗自身的快照恢复另由 undoHiddenDialogs 负责）。
+     *
+     * @return 本次是否真的关掉了询问窗之外的应答类弹窗
+     */
+    public boolean closeDuelUiForUndo() {
+        boolean closedOther = false;
+        if (dialogUtil != null) closedOther = dialogUtil.dismissOpenGameDialogs();
+        if (cardDetailPanel != null) {
+            // 与 dismissOpenGameDialogs 内部的同一方去重关闭（已关时仅返回 false）：保留原有
+            // 双重收口调用点，避免撤回链上因 dialogUtil 未就绪而漏关
+            closedOther |= cardDetailPanel.dismissOpenDialogs();
+            // 面板的选择上下文必须一并作废：「取消操作 / 完成选择」按钮按 currentSelectType 直接
+            // 编码应答，撤回后新询问已到达，误触这个旧按钮就是把一份旧询问的答复打到新局面上
+            cardDetailPanel.setSelectType(-1);
+            cardDetailPanel.hideCancelOrFinishButton();
+            cardDetailPanel.setCurrentDialog(null);
+            cardDetailPanel.setCardSelectDialog(null);
+            cardDetailPanel.setCardDisplayDialog(null);
+        }
+        // 连锁必发标志与询问窗静态引用作废：否则「取消操作」会被吞掉，或去 show 一个已死弹窗
+        YesOrNoDialog.setChainForcedMode(false);
+        YesOrNoDialog.setChainQueryDialog(null);
+        if (fieldCtl != null) {
+            fieldCtl.abortPendingSelectSessions();
+            fieldCtl.clearSelectionVisuals();
+            // 撤回后局面已变：旧的卡片点击选中态（金色呼吸外框/手卡抬升）与状态气泡一并收起
+            fieldCtl.cancelCardClickSelection();
+            fieldCtl.invalidate();
+        }
+        return closedOther;
     }
 
     /** 撤回被拒且询问未被屏障路径重派：恢复点击撤回时隐藏的询问弹窗，避免待答询问永久不可见 */
     public void restoreUndoHiddenDialogs() {
+        boolean chainRestored = false;
         for (YesOrNoDialog d : undoHiddenDialogs) {
             if (!d.isShowing()) d.show();
+            if (d == undoChainQueryBackup) chainRestored = true;
         }
         undoHiddenDialogs.clear();
+        // 恢复出的确是那张连锁询问窗：静态引用与必发标志原样回灌，「取消操作」继续可用
+        if (chainRestored) {
+            YesOrNoDialog.setChainQueryDialog(undoChainQueryBackup);
+            YesOrNoDialog.setChainForcedMode(undoChainForcedBackup);
+        }
+        undoChainQueryBackup = null;
     }
 
-    /** 撤回被接受或询问已按新询问重派：隐藏快照作废，不得再恢复旧窗 */
+    /** 撤回被接受或询问已按新询问重派：隐藏快照、连锁现场备份与「收口过其它应答弹窗」标志一并作废 */
     public void clearUndoHiddenDialogs() {
         undoHiddenDialogs.clear();
+        undoClosedQuestionDialog = false;
+        undoChainQueryBackup = null;
+        undoChainForcedBackup = false;
     }
 }
 

@@ -297,6 +297,8 @@ final class UndoQuestionGuard implements YGOProtocol {
         analyzer.silentTurnCount = 0;
         analyzer.silentTurnPlayer = 0;
         analyzer.silentPhase = 0;
+        // 发动账本同步计数复位：重放前缀里有几条有效发动，撤回后客户端账本就该保留几条
+        analyzer.silentChainEvents = 0;
         analyzer.silent = true;
     }
 

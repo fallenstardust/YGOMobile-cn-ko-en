@@ -253,27 +253,7 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
     public void onUndoResync() {
         // 撤回被接受：点击撤回时即时隐藏的询问弹窗快照作废——被撤销的询问已不存在，服务端重同步后会重新挂回回退点的询问并弹窗，旧窗不得再恢复
         activity.clearUndoHiddenDialogs();
-        activity.runOnUiThread(() -> {
-            if (activity.dialogUtil != null) activity.dialogUtil.dismissOpenGameDialogs();
-            if (activity.cardDetailPanel != null) activity.cardDetailPanel.dismissOpenDialogs();
-            // 连锁必发标志：旧强制连锁询问遗留它会使「取消操作」被吞掉（handleChainCancel 直接 return）
-            YesOrNoDialog.setChainForcedMode(false);
-            // 连锁询问窗静态引用作废：被撤销的那次询问的窗体已被 dismiss，但静态引用还在，handleChainCancel 会把它当成“还挂着”而去 show 一个已死弹窗，或直接放弃处理使取消无效
-            YesOrNoDialog.setChainQueryDialog(null);
-            if (activity.cardDetailPanel != null) {
-                // 面板的选择上下文必须一并作废：「取消操作 / 完成选择」按钮按 currentSelectType 直接编码应答（case 16 连锁→ -1、case 15/20/23/26 → confirm/‑1），撤回后新询问已到达、应答屏障已放行，此时误触这个旧按钮就是把一份旧询问的答复打到新局面上，连锁项与引擎期望对不上 → retry 风暴或直接走偏，决斗再也推不下去
-                activity.cardDetailPanel.setSelectType(-1);
-                activity.cardDetailPanel.hideCancelOrFinishButton();
-                activity.cardDetailPanel.setCurrentDialog(null);
-                activity.cardDetailPanel.setCardSelectDialog(null);
-                activity.cardDetailPanel.setCardDisplayDialog(null);
-            }
-            if (activity.fieldCtl != null) {
-                activity.fieldCtl.abortPendingSelectSessions();
-                activity.fieldCtl.clearSelectionVisuals();
-                activity.fieldCtl.invalidate();
-            }
-        });
+        activity.runOnUiThread(activity::closeDuelUiForUndo);
     }
 
     /** 撤回被服务端拒绝（STOC_UNDO_ACK = DENIED）：待答询问仍是回退前那一条；屏障期间丢弃过应答时询问已按新询问重新派发显示（restorePendingQuestionUi），旧快照必须作废，未丢弃时恢复点击撤回瞬间隐藏的询问弹窗，否则询问永久不可见无法应答 */
@@ -282,9 +262,22 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
         activity.runOnUiThread(() -> {
             if (questionRedelivered) {
                 activity.clearUndoHiddenDialogs();
-            } else {
-                activity.restoreUndoHiddenDialogs();
+                return;
             }
+            // 点击撤回瞬间已把询问窗之外的选卡/确认/选项/宣言/表示形式窗按同一口径收口
+            //（用户规格：这些窗的按钮已被应答屏障吞掉，留着只会遮挡回退后的新局面）；这类窗
+            // 没有可原地恢复的实例快照，被拒时只能按留存的最近询问快照重派发，由同一组静态
+            // 工厂重建那张待答窗；重派发成功即作废询问窗旧快照（否则同一条询问叠出两个窗），
+            // 无快照可重派发时退回恢复询问窗旧实例，避免待答询问永久不可见。
+            // isQuestionPending 为双重闸门：收口过应答窗却已无待答询问（罕见的交错时序）时
+            // 不重派发，以免把已答完的旧询问弹回界面造成误答
+            if (activity.consumeUndoClosedQuestionDialog()
+                    && activity.engine != null && activity.engine.isQuestionPending()
+                    && activity.engine.restorePendingQuestionUi()) {
+                activity.clearUndoHiddenDialogs();
+                return;
+            }
+            activity.restoreUndoHiddenDialogs();
         });
     }
 

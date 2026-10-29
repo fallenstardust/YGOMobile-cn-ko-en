@@ -26,6 +26,7 @@ import android.widget.TextView;
 import java.nio.ByteBuffer;
 
 import cn.garymb.ygomobile.YGOProActivity;
+import cn.garymb.ygomobile.game.gamefield.GameFieldController;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.utils.ImePopupAdjuster;
@@ -131,6 +132,21 @@ public class PosSelectDialog {
         return this;
     }
 
+    /**
+     * 决斗结束 / 退出对战 / 撤回瞬间关闭可能残留的表示形式选择弹窗（由
+     * ShowDialogUtil.dismissAnnounceDialogs 调用）：与宣言/选项弹窗同为不可取消的
+     * 应答窗，残留则遮挡新界面且按钮已发不出应答。此前没有任何路径关闭它，
+     * 决斗结束/退出对战时会在界面上留下旧的形式选择窗，本次一并纳管。
+     *
+     * @return 本次是否真的关闭了一个在显弹窗（撤回路径据此判断需不需按询问快照重建）
+     */
+    public static boolean dismissCurrent() {
+        if (current == null) return false;
+        current.dismiss();
+        current = null;
+        return true;
+    }
+
     public boolean isShowing() {
         return showing && popupWindow != null && popupWindow.isShowing();
     }
@@ -167,6 +183,16 @@ public class PosSelectDialog {
         popupWindow.setTouchable(true);
         popupWindow.setTouchInterceptor((v, event) -> {
             // 双保险：吞掉 ACTION_OUTSIDE，防止任何窗口外触摸事件进入
+            // 卡片选中态取消观察（用户规格：点卡片以外的任意位置即取消选中）：表示形式选择窗
+            // 不走 DraggablePopupHelper 全屏包装，其自身按钮的手势不经 Activity 派发点与包装层，
+            // 故在此挂同一登记/结算（仅观察，不影响下面的 OUTSIDE 吞掉与自身按钮点击）
+            if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+                GameFieldController.onOutsideGestureDown();
+            } else {
+                GameFieldController.onOutsideGestureUp(
+                        context instanceof Activity ? (Activity) context : null,
+                        event.getActionMasked());
+            }
             if (event.getAction() == MotionEvent.ACTION_OUTSIDE) return true;
             return false;
         });

@@ -97,7 +97,8 @@ final class ServerDuel extends ServerDuelBase {
                     + analyzer.silentTurnCount + " player=" + analyzer.silentTurnPlayer
                     + " phase=" + Integer.toHexString(analyzer.silentPhase));
             sendUndoAckToAll(UNDO_ACK_OK, analyzer.silentTurnCount,
-                    analyzer.silentTurnPlayer, analyzer.silentPhase);
+                    analyzer.silentTurnPlayer, analyzer.silentPhase,
+                    analyzer.silentChainEvents);
             analyzer.resyncAfterUndo(OcgDuelEngine.queryFieldInfo(pduel));
             scheduleUndoQuestionHang();
             sendUndoStateToAll();
@@ -113,7 +114,8 @@ final class ServerDuel extends ServerDuelBase {
         room.timeElapsed = te;
         if (rebuildAndReplay(undoSteps.size())) {
             sendUndoAckToAll(UNDO_ACK_REBUILT, analyzer.silentTurnCount,
-                    analyzer.silentTurnPlayer, analyzer.silentPhase);
+                    analyzer.silentTurnPlayer, analyzer.silentPhase,
+                    analyzer.silentChainEvents);
             analyzer.resyncAfterUndo(OcgDuelEngine.queryFieldInfo(pduel));
             scheduleUndoQuestionHang();
             sendUndoStateToAll();
@@ -227,13 +229,13 @@ final class ServerDuel extends ServerDuelBase {
 
     protected void denyUndo(ServerConnection requester) {
         if (requester != null) {
-            requester.send(STOC_UNDO_ACK, undoAckPayload(UNDO_ACK_DENIED, 0, 0, 0));
+            requester.send(STOC_UNDO_ACK, undoAckPayload(UNDO_ACK_DENIED, 0, 0, 0, 0));
         }
     }
 
-    /** 把撤回结果推给全体在场连接（solo 下一个连接占两席位，按连接身份去重）。 */
-    protected void sendUndoAckToAll(int result, int turn, int player, int phase) {
-        byte[] ack = undoAckPayload(result, turn, player, phase);
+    /** 把撤回结果推给全体在场连接（solo 一条连接占两席位，按连接身份去重）。 */
+    protected void sendUndoAckToAll(int result, int turn, int player, int phase, int chainEvents) {
+        byte[] ack = undoAckPayload(result, turn, player, phase, chainEvents);
         ServerConnection p0 = room.players[0];
         ServerConnection p1 = room.players[1];
         if (p0 != null) {
@@ -247,13 +249,17 @@ final class ServerDuel extends ServerDuelBase {
         }
     }
 
-    /** STOC_UNDO_ACK 载荷：{@code [result(1B)][turn(1B)][currentPlayer(1B)][phase(u16 LE)]}。 */
-    protected static byte[] undoAckPayload(int result, int turn, int player, int phase) {
-        ByteBuffer b = ByteBuffer.allocate(5).order(ByteOrder.LITTLE_ENDIAN);
+    /** STOC_UNDO_ACK 载荷：{@code [result(1B)][turn(1B)][currentPlayer(1B)][phase(u16 LE)][chainEvents(i32 LE)]}。
+     *  chainEvents = 回退后重放前缀内的「有效效果发动」条数（与客户端 EffectActivationLedger
+     *  登记同口径），客户端把账本超出该条数的后缀条目剪除（撤回连带回退已使用效果标记）；
+     *  拒绝态无重放，5=无后续重同步语义不变。 */
+    protected static byte[] undoAckPayload(int result, int turn, int player, int phase, int chainEvents) {
+        ByteBuffer b = ByteBuffer.allocate(9).order(ByteOrder.LITTLE_ENDIAN);
         b.put((byte) result);
         b.put((byte) turn);
         b.put((byte) player);
         b.putShort((short) phase);
+        b.putInt(chainEvents);
         return b.array();
     }
 

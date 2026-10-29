@@ -139,6 +139,29 @@ public abstract class YGOProActivityBase extends AppCompatActivity {
     protected final List<YesOrNoDialog> undoHiddenDialogs = new ArrayList<>();
 
     /**
+     * 点击撤回瞬间是否除询问窗外还收口了其它应答类弹窗（选卡/确认/选项/宣言/表示形式）：
+     * 这类窗没有可原地恢复的实例快照（弹完即只留静态 current 引用），被拒时只能按最近询问
+     * 快照重派发重建；未被收口时维持旧的「恢复询问窗实例」路径，不重派发以免把已答完的旧询问
+     * 弹回。标志随 clearUndoHiddenDialogs 一并作废，consumeUndoClosedQuestionDialog 读后复位。
+     */
+    protected boolean undoClosedQuestionDialog;
+
+    /**
+     * 点击撤回瞬间被作废的连锁询问现场备份：连锁窗静态引用（handleChainCancel 据此重新弹出）
+     * 与强制连锁标志（决定「取消操作」是否允许）。撤回被拒恢复询问窗时必须一并回灌，否则
+     * 连锁询问窗虽然重新可见，却因静态引用为空而使「取消操作」认不到自己那张窗。
+     */
+    protected YesOrNoDialog undoChainQueryBackup;
+    protected boolean undoChainForcedBackup;
+
+    /** 取用并复位「撤回瞬间收口过其它应答弹窗」标志（撤回被拒的恢复路径判定用） */
+    public boolean consumeUndoClosedQuestionDialog() {
+        boolean closed = undoClosedQuestionDialog;
+        undoClosedQuestionDialog = false;
+        return closed;
+    }
+
+    /**
      * 当前正在显示的投降确认对话框：显示期间（直至其消失）忽略投降按钮的重复点击，
      * 避免玩家多次点击弹出多个投降确认对话框（用户规格，竖屏/横屏按钮共用本入口）
      */
