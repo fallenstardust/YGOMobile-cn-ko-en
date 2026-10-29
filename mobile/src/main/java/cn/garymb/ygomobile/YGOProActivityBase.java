@@ -263,6 +263,10 @@ public abstract class YGOProActivityBase extends AppCompatActivity {
             @Override
             public void onImeHidden() {
                 ImePopupAdjuster.notifyImeHidden();
+                // 输入法收起：把血条下方各带（双方聊天行/弹幕带/提示带）重锚回正在落定的血条位置
+                //（未落定时由本调用自行按轮等待，不采压缩中间态），消除抬键盘期间发出的记录
+                // 顶在屏幕顶部、降回后不回位的问题（用户反馈）
+                if (fieldCtl != null) fieldCtl.repinHudBands();
             }
         });
         // 提早把聊天输入框登记进联动工具：静置期采样其屏幕上沿基准，供玩家等待弹窗

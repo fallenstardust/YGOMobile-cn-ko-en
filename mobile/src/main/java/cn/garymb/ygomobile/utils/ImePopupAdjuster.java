@@ -264,4 +264,29 @@ public final class ImePopupAdjuster extends ImePopupAdjusterMid {
     public static boolean isImeUp() {
         return sImeUp;
     }
+
+    /**
+     * 聊天输入框当前是否真被输入法抬高（几何锁存态：实测上沿比静置基准上移超过判定阈值才算
+     * 抬高，动画途中的中间值不参与翻转）。供血条下方的聊天/弹幕/提示带锁定锚点——用户规格：
+     * 抬键盘时只有对话框与输入框让位，血条下方的聊天记录一律留在原位不跟着上移。
+     */
+    public static boolean isChatInputLifted() {
+        return sChatLiftState;
+    }
+
+    /**
+     * 聊天输入框此刻是否已几何落在静置位（供血条下方各带重锚）：未处于抬高锁存态、实测上沿
+     * 不低于静置基准才算落定——{@link #isChatInputLifted()} 是状态机锁存值，键盘收起后要到
+     * 下一轮落定解算才翻转，而带锚点需立即按新布局重算，故本方法直接量几何而不走锁存态；
+     * 反过来，键盘弹起动画途中锁存态仍为假而输入框已被顶高，本方法同样返回假，不会把被窗口
+     * 压缩的中间态当成基准采下（用户反馈：抬键盘时发出的聊天滞留在屏幕顶部不再回位）。
+     * 基准尚未建立（首次键盘弹出前）或输入框不可测时按静置处理，不阻塞常规重锚。
+     */
+    public static boolean isChatInputAtRest() {
+        if (sChatLiftState) return false;
+        View chat = sChatInput == null ? null : sChatInput.get();
+        if (chat == null || sChatRestTop <= 0) return true;
+        int top = measureChatTop();
+        return top <= 0 || top >= sChatRestTop - sChatLiftTriggerPx;
+    }
 }

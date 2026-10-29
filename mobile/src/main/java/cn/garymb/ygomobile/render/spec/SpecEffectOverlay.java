@@ -19,6 +19,7 @@ import android.widget.TextView;
 import java.util.ArrayDeque;
 
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.utils.ImePopupAdjuster;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
 
@@ -95,6 +96,24 @@ public class SpecEffectOverlay {
     private Runnable actionTextCloser;
     /** layout_game_right 窗口坐标区域（画布特效与动作消息文本的共同基准） */
     private int regionLeft, regionTop, regionW, regionH;
+    /**
+     * 血条下方各带的静置期锚点（键为 {@code BAND_*}，值为窗口坐标带顶）：只由
+     * {@link ImePopupAdjuster#isChatInputAtRest()} 为真时的实测值写入，输入法抬高聊天
+     * 输入框期间一律沿用此缓存，使聊天/弹幕/提示带不随窗口被键盘压缩而整体上移（用户规格）
+     */
+    private final android.util.SparseIntArray bandTopLatch = new android.util.SparseIntArray();
+    /**
+     * 本次抬高周期内的临时锚点：仅在静置缓存缺失（抬高期间才出现的第一条聊天/提示）时
+     * 使用，作用是让后续同周期内的带顶不再逐轮漂移；绝不写入 {@link #bandTopLatch}，
+     * 否则被键盘压缩的锚点会被当成静置基准永久保留，输入框降回后记录就再也回不到血条下
+     *（用户反馈的「滞留在屏幕顶部」根因）
+     */
+    private final android.util.SparseIntArray bandTopLiftPin = new android.util.SparseIntArray();
+    /** 血条下方各带编号（公开供 HUD 侧比较当前锚点后决定是否重锚，见 {@link #getBandTop}） */
+    public static final int BAND_SELF_CHAT = 1;
+    public static final int BAND_OPP_CHAT = 2;
+    public static final int BAND_DANMAKU = 3;
+    public static final int BAND_HINT = 4;
     private float speed = 1f;
     /** 特效请求队列：保证动画串行播放——上一段完全结束后再播下一段 */
     private final ArrayDeque<EffectRequest> queue = new ArrayDeque<>();
@@ -462,7 +481,10 @@ public class SpecEffectOverlay {
             return;
         }
         try {
-            window.showAtLocation(decor, Gravity.NO_GRAVITY, 0, 0);
+            // 锚点一律写明为屏幕左上角：NO_GRAVITY 下窗口框由父帧（Activity 内容帧）推导，
+            // 输入法弹起把父帧底边压缩时本层可能被重排上移，表现为血条下方聊天记录被抬到
+            // 屏幕顶部；写明 TOP|START 后父帧底边变化不影响本层顶缘（用户规格：聊天不随输入法抬升）
+            window.showAtLocation(decor, Gravity.TOP | Gravity.START, 0, 0);
         } catch (Exception ignored) {
             // 显示失败同样下一帧重试一次（obtainView 每次触发都会再走 showWindow 入口）
             decor.post(this::showWindow);
@@ -482,6 +504,12 @@ public class SpecEffectOverlay {
         if (gr == null || gr.getWidth() <= 0 || gr.getHeight() <= 0) return;
         int[] loc = new int[2];
         gr.getLocationInWindow(loc);
+        // 区域宽度变化 = 旋转/分屏（输入法压缩只动高度）：旧的静置锚点与抬升临时锚点都不再适用，
+        // 清空待按新布局重采
+        if (regionW != gr.getWidth()) {
+            bandTopLatch.clear();
+            bandTopLiftPin.clear();
+        }
         regionLeft = loc[0];
         regionTop = loc[1];
         regionW = gr.getWidth();
@@ -558,6 +586,74 @@ public class SpecEffectOverlay {
     // ==================== 弹幕宿主（观战发言 / 系统消息，drawspec 层） ====================
 
     /**
+     * 带顶锚点按输入法状态取用（用户规格：血条下方的聊天记录不随聊天输入框抬高而上移）：
+     * <ul>
+     * <li>输入框已几何落在静置位：按实测算出的带顶下发并记入静置缓存（下次抬键盘沿用它）；</li>
+     * <li>输入框被抬高（或键盘动画途中）：一律只用静置缓存，不把压缩后的实测值写回缓存；
+     *  缓存缺失时仅拿本次实测值作临时锚点（同一抬升周期内不再逐轮漂移），输入框降回后由
+     *  {@link #getBandTop} 比较→ HUD 侧重锚修正；</li>
+     * <li>键盘动画途中且无缓存：照实测下发，但不写缓存（窗口尚未落定，不能当基准）。</li>
+     * </ul>
+     *
+     * @param band     带号（{@code BAND_*}）
+     * @param wantTop  本次按实测算出的带顶（窗口坐标）
+     * @return 实际下发的带顶
+     */
+    private int pinBandTop(int band, int wantTop) {
+        int safe = Math.max(0, wantTop);
+        if (ImePopupAdjuster.isChatInputAtRest()) {
+            if (safe > 0) {
+                bandTopLatch.put(band, safe);
+                bandTopLiftPin.delete(band);
+            }
+            return safe;
+        }
+        int latched = bandTopLatch.get(band, 0);
+        if (latched > 0) return latched;
+        if (!ImePopupAdjuster.isChatInputLifted()) return safe;
+        int pin = bandTopLiftPin.get(band, 0);
+        if (pin > 0) return pin;
+        if (safe > 0) bandTopLiftPin.put(band, safe);
+        return safe;
+    }
+
+    /**
+     * 该带当前实际下发的带顶（窗口坐标）；带未创建/参数不可得返回 -1。供 HUD 侧在聊天输入框
+     * 降回静置位后比较「实测血条底边与当前锚点是否已一致」，一致则跳过重建（见重锚路径）。
+     */
+    public int getBandTop(int band) {
+        View layer = bandLayer(band);
+        if (layer == null) return -1;
+        ViewGroup.LayoutParams raw = layer.getLayoutParams();
+        return raw instanceof FrameLayout.LayoutParams
+                ? ((FrameLayout.LayoutParams) raw).topMargin : -1;
+    }
+
+    /**
+     * 只记录静置锚点、不动任何带也不创建窗口：HUD 侧在输入框落定回位后随时回灌（即使当时
+     * 并无在屏聊天/弹幕/提示），使下一次抬键盘期间新出现的第一条记录也有正确的静置基准可用，
+     * 而不是退回到被键盘压缩后的实测值（用户反馈的「顶在屏幕顶端」）。
+     * 非静置期（仍抬高或键盘动画途中）一律不采信，不污染已有基准。
+     */
+    public void rememberBandAnchor(int band, int topPx) {
+        if (topPx <= 0) return;
+        if (!ImePopupAdjuster.isChatInputAtRest()) return;
+        bandTopLatch.put(band, topPx);
+        bandTopLiftPin.delete(band);
+    }
+
+    /** 带号到宿主容器视图 */
+    private View bandLayer(int band) {
+        switch (band) {
+            case BAND_SELF_CHAT: return selfChatLayer;
+            case BAND_OPP_CHAT: return oppChatLayer;
+            case BAND_DANMAKU: return danmakuLayer;
+            case BAND_HINT: return hintHost;
+            default: return null;
+        }
+    }
+
+    /**
      * 返回弹幕宿主容器（PopupWindow 层，显示在 GL 曲面之上）：按调用方给定的带顶
      * 窗口坐标 bandTopPx（双方 LP 血条底边）全屏宽定位；bandTopPx<0 时回退 layout_game_right
      * 区域顶边，高度 bandHeightPx 由调用方按「行数 × 行高」给定。
@@ -570,7 +666,7 @@ public class SpecEffectOverlay {
         updateRegion();
         FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) danmakuLayer.getLayoutParams();
         lp.leftMargin = 0;
-        lp.topMargin = Math.max(0, bandTopPx >= 0 ? bandTopPx : regionTop);
+        lp.topMargin = pinBandTop(BAND_DANMAKU, bandTopPx >= 0 ? bandTopPx : regionTop);
         lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
         lp.height = Math.max(1, bandHeightPx);
         danmakuLayer.setLayoutParams(lp);
@@ -597,7 +693,7 @@ public class SpecEffectOverlay {
         if (layer == null) return null;
         FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) layer.getLayoutParams();
         lp.leftMargin = Math.max(0, leftPx);
-        lp.topMargin = Math.max(0, topPx);
+        lp.topMargin = pinBandTop(selfSide ? BAND_SELF_CHAT : BAND_OPP_CHAT, topPx);
         lp.width = Math.max(1, widthPx);
         lp.height = FrameLayout.LayoutParams.WRAP_CONTENT;
         layer.setLayoutParams(lp);
@@ -629,7 +725,7 @@ public class SpecEffectOverlay {
         obtainView();
         FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) hintHost.getLayoutParams();
         lp.leftMargin = Math.max(0, leftPx);
-        lp.topMargin = Math.max(0, topPx);
+        lp.topMargin = pinBandTop(BAND_HINT, topPx);
         lp.width = widthPx > 0 ? widthPx : ViewGroup.LayoutParams.MATCH_PARENT;
         lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
         hintHost.setLayoutParams(lp);

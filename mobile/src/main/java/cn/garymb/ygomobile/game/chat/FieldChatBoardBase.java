@@ -385,6 +385,52 @@ abstract class FieldChatBoardBase {
         // lines 已含全部在屏消息（pending 与 lines 同源），全量重挂后清 pending 防重复补挂
         (selfSide ? myChatPending : opChatPending).clear();
     }
+
+    /**
+     * 聊天输入框降回静置位、双方血条回到原处后，把血条下方各带重锚到当前实测血条位置
+     *（用户反馈：抬键盘期间发出的聊天会顶在屏幕顶端显示，输入框降回后位置不回位）。
+     * <p>两步：① 无论有无在屏内容先把实测锚点回灌为静置基准（否则抬高期间第一条记录无基准
+     * 可用，只能退回到被键盘压缩的实测值）；② 仅将真正错位的带重建到当前位置，带顶与实测
+     * 一致时直接跳过，避免每次 HUD/输入框布局变化都整列重建聊天行或重排弹幕带。
+     * 大厅聊天模式下不处理（其列表挂在视图树 layout_danmaku 内，随布局自然回位）。
+     */
+    public void repinFieldBands() {
+        if (lobbyChatMode || ctl.topInfoManager == null) return;
+        SpecEffectOverlay overlay = ctl.activity.getSpecOverlay();
+        if (overlay == null) return;
+        int[] me = ctl.topInfoManager.getLpBarRectInWindow(0);
+        int[] op = ctl.topInfoManager.getLpBarRectInWindow(1);
+        boolean meOk = me != null && me[2] > 0 && me[3] > 0;
+        boolean opOk = op != null && op[2] > 0 && op[3] > 0;
+        if (meOk) {
+            overlay.rememberBandAnchor(SpecEffectOverlay.BAND_SELF_CHAT, me[1] + me[3]);
+            overlay.rememberBandAnchor(SpecEffectOverlay.BAND_DANMAKU, me[1]);
+        }
+        if (opOk) {
+            overlay.rememberBandAnchor(SpecEffectOverlay.BAND_OPP_CHAT, op[1] + op[3]);
+        }
+        if (meOk && !myChatLines.isEmpty()
+                && overlay.getBandTop(SpecEffectOverlay.BAND_SELF_CHAT) != me[1] + me[3]) {
+            // 整列重挂：容器移到新锚点同时保留同一数据源的旧→新行序（旋转回灌同源）
+            relayoutSideChatRows(true, 0);
+        }
+        if (opOk && !opChatLines.isEmpty()
+                && overlay.getBandTop(SpecEffectOverlay.BAND_OPP_CHAT) != op[1] + op[3]) {
+            relayoutSideChatRows(false, 0);
+        }
+        repinDanmakuBand(overlay, me);
+    }
+
+    /** 重锚系统/观战弹幕带（带顶锚我方血条顶边，与 pumpDanmakuGroup 同一口径） */
+    private void repinDanmakuBand(SpecEffectOverlay overlay, int[] bar) {
+        if (danmakuViews.isEmpty() || bar == null || bar[2] <= 0 || bar[3] <= 0) return;
+        if (overlay.getBandTop(SpecEffectOverlay.BAND_DANMAKU) == bar[1]) return;
+        int bandHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                DANMAKU_ROW_HEIGHT_DP * DANMAKU_MAX_ROWS,
+                ctl.activity.getResources().getDisplayMetrics());
+        // 只重设带的位置与尺寸（只改 topMargin）：在屏弹幕 TextView 的 translationX 与动画不受影响
+        overlay.obtainDanmakuLayer(bandHeight, bar[1]);
+    }
     protected static <T> void swapListContent(LinkedList<T> a, LinkedList<T> b) {
         java.util.List<T> tmp = new ArrayList<>(a);
         a.clear();
