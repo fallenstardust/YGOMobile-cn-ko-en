@@ -39,6 +39,7 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.game.engine.GameEngine;
+import cn.garymb.ygomobile.game.gamefield.ClientCard;
 import cn.garymb.ygomobile.game.gamefield.GameField;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.render.card.CardDetailPanel;
@@ -235,6 +236,10 @@ abstract class YesOrNoDialogBase {
     /**
      * 为卡片图像绑定点击：点击后在卡片详情面板显示该卡详情（供 iv_yes_no_card_image
      * 与连锁卡片项复用）。仅当宿主为 YGOProActivity 且卡码有效时可点；否则置不可点。
+     * <p>经 ClientCard 展示态路径显示（用户规格：询问窗卡图/可发动卡列表项点击的卡详
+     * 也要带可发动效果发光）：连锁项自带 (controler, location, sequence)，按场上实体取卡；
+     * 取不到（overlay/卡组遮蔽等）时按卡码合成临时卡（同 CardSelectController.showCardInfoFromItem
+     * 口径）；仍无则退回纯卡表展示（不发光，与关键词查卡同语义）。
      */
     protected void bindCardDetailClick(View view, final int code) {
         if (view == null) return;
@@ -245,11 +250,57 @@ abstract class YesOrNoDialogBase {
         }
         view.setClickable(true);
         view.setOnClickListener(v -> {
+            CardDetailPanel panel = ((YGOProActivity) context).getCardDetailPanel();
+            if (panel == null) return;
+            ClientCard cc = resolveActivatableClientCard(code);
+            if (cc != null) {
+                panel.showCard(cc);
+                return;
+            }
             Card card = DataManager.get().getCardManager().getCard(code & 0x7fffffff);
             if (card != null) {
-                ((YGOProActivity) context).getCardDetailPanel().showCard(card);
+                panel.showCard(card);
             }
         });
+    }
+
+    /** 询问窗卡码对应的可发动实体卡：优先按本连锁询问入列的 activatableCards 条目查
+     *  （含 chain 专属条目与 conti 待处理项），退而按场地坐标取场卡；均无则合成携带
+     *  归属半场（本地 controler）与区域坐标的临时卡，使按卡码展示的详情也能命中
+     *  登记簿对应半场的发光条目（我方绿/对方橙） */
+    private ClientCard resolveActivatableClientCard(int code) {
+        int masked = code & 0x7fffffff;
+        if (masked <= 0 || !(context instanceof YGOProActivity)) return null;
+        GameEngine engine = ((YGOProActivity) context).getEngine();
+        if (engine == null) return null;
+        for (GameEngine.CmdCardInfo info : engine.activatableCards) {
+            if (info.card != null && (info.code & 0x7fffffff) == masked
+                    && (info.flag & 0x1) == 0) {
+                return info.card;
+            }
+        }
+        GameField field = engine.getField();
+        for (CardChainItem item : chainCardsSafe()) {
+            if ((item.code & 0x7fffffff) != masked) continue;
+            int loc = item.location & 0x7f;
+            if ((item.location & 0x80) != 0 || field == null) continue;
+            ClientCard cc = field.getCard(engine.localPlayer(item.controler & 1), loc, item.sequence);
+            if (cc != null && (cc.displayCode() & 0x7fffffff) == masked) return cc;
+            // 卡组/额外等遮蔽区场卡码可能为 0 或未同步：按报码合成临时卡仍取坐标归属
+            ClientCard tmp = new ClientCard();
+            tmp.code = item.code;
+            tmp.controler = engine.localPlayer(item.controler & 1);
+            tmp.location = loc;
+            tmp.sequence = item.sequence;
+            tmp.position = 0x1;
+            return tmp;
+        }
+        return null;
+    }
+
+    /** chainCards 安全快照：null/空集统一返空列表，免循环内判空 */
+    private List<CardChainItem> chainCardsSafe() {
+        return chainCards != null ? chainCards : java.util.Collections.<CardChainItem>emptyList();
     }
 
     /**

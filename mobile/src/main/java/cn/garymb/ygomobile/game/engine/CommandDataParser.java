@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.game.engine;
 import cn.garymb.ygomobile.game.gamefield.ClientCard;
+import cn.garymb.ygomobile.game.gamefield.EffectActivatableHints;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -105,6 +106,7 @@ public class CommandDataParser {
                     }
                 }
                 engine.activatableCards.add(new GameEngine.CmdCardInfo(card, code, desc, flag, i));
+                registerCommandEffect(card, code, desc, flag);
             }
         }
         count = data.get() & 0xFF;
@@ -250,11 +252,24 @@ public class CommandDataParser {
                     }
                 }
                 engine.activatableCards.add(new GameEngine.CmdCardInfo(card, code, desc, flag, i));
+                registerCommandEffect(card, code, desc, flag);
             }
         }
 
         engine.showBP = data.remaining() >= 1 && (data.get() & 0xFF) != 0;
         engine.showEP = data.remaining() >= 1 && (data.get() & 0xFF) != 0;
         engine.showShuffle = data.remaining() >= 1 && (data.get() & 0xFF) != 0;
+    }
+
+    /** 可发动选项入列（即卡片出现呼吸绿点/conti_act 动画的同一时刻）登记效果段落序号：
+     *  判据与 CardOverlayRenderer 角位呼吸点同源（COMMAND_ACTIVATE 置位或 conti 项），点击带点
+     *  的卡即由卡详对可发动效果段落做文字外发光，无需等命令菜单出现「发动」按钮；
+     *  conti 项（flag=EDESC_OPERATION）报文不 masking 卡码，用置入卡上的 chain_code 对齐卡详码 */
+    private static void registerCommandEffect(ClientCard card, int maskedCode, int desc, int flag) {
+        if ((flag & 0x1) != 0) {
+            EffectActivatableHints.register(card.chain_code, card.controler == 1 ? 1 : 0, desc);
+        } else {
+            EffectActivatableHints.register(maskedCode, card.controler == 1 ? 1 : 0, desc);
+        }
     }
 }

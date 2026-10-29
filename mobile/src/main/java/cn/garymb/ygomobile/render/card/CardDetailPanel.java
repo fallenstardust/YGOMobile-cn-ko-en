@@ -49,9 +49,11 @@ public class CardDetailPanel extends CardDetailPanelMid {
     }
 
     /** 视角切换统一入口（观战切视角/单人模式自动翻转/回放交换，用户规格3）：
-     *  发动账本的半场归属随视角整体对调，展示中已标记卡的绿/红勾同步互换 */
+     *  发动账本与可发动登记的半场归属随视角整体对调，展示中卡的绿/红勾与
+     *  绿/橙发光同步互换（纯单人逐回合自动翻转下不翻转会使自己方的可发动条目被记到对面） */
     public static void notifyViewpointSwapped() {
         EffectActivationLedger.swapSides();
+        cn.garymb.ygomobile.game.gamefield.EffectActivatableHints.swapSides();
         CardInfoBinder.notifyViewpointSwapped();
     }
 

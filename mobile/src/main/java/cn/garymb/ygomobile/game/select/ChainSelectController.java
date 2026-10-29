@@ -1,6 +1,7 @@
 package cn.garymb.ygomobile.game.select;
 import cn.garymb.ygomobile.game.gamefield.ClientCard;
 import cn.garymb.ygomobile.game.engine.GameEngine;
+import cn.garymb.ygomobile.game.gamefield.EffectActivatableHints;
 import cn.garymb.ygomobile.game.gamefield.GameField;
 import cn.garymb.ygomobile.game.gamefield.GameFieldController;
 
@@ -117,6 +118,10 @@ class ChainSelectController {
                     }
                     // conti 项同样进 engine 侧列表：点击中央堆叠「效果处理」时按协议索引 i 应答
                     e.activatableCards.add(new GameEngine.CmdCardInfo(card, code, desc, flag, i));
+                    // 可发动效果段落登记与蚂蚁线/呼吸点同刻（连锁项入列即登记）：非 conti 项
+                    // 用卡自身码（卡组项已经 setCode 明码），conti 项用置入的 chain_code 对齐卡详码
+                    EffectActivatableHints.register((conti ? card.chain_code : card.code) & 0x7fffffff,
+                            localCtrl == 1 ? 1 : 0, desc);
                 } else if (!conti) {
                     missingCard = true;
                     android.util.Log.w("ChainSelect", "chain entry card not found on field:"
@@ -238,6 +243,8 @@ class ChainSelectController {
             f.activatableCards.clear();
         }
         e.activatableCards.clear();
+        // 连锁询问清理同时收起可发动效果发光登记（菜单构建时登记，随询问存续）
+        cn.garymb.ygomobile.game.gamefield.EffectActivatableHints.clear();
     }
 
     /**

@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.game.engine;
 import cn.garymb.ygomobile.game.gamefield.ClientCard;
+import cn.garymb.ygomobile.game.gamefield.EffectActivatableHints;
 import cn.garymb.ygomobile.game.gamefield.GameField;
 import cn.garymb.ygomobile.game.replay.ReplayPlayer;
 
@@ -339,6 +340,8 @@ public class GameEngine {
 
     public void clearCommandFlags() {
         activatableCards.clear();
+        // 可发动效果段落登记与命令列表同生命周期：新询问到达前清空，防上一询问的发动项发光残留
+        EffectActivatableHints.clear();
         attackableCards.clear();
         summonableCards.clear();
         spsummonableCards.clear();

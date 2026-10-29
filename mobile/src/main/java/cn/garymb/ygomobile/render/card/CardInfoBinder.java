@@ -10,6 +10,7 @@ import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.TextPaint;
 import android.text.method.LinkMovementMethod;
+import android.text.style.CharacterStyle;
 import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.ImageSpan;
@@ -34,6 +35,7 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.game.deck.CardSearcherManager;
 import cn.garymb.ygomobile.game.gamefield.GameField;
 import cn.garymb.ygomobile.game.gamefield.ClientCard;
+import cn.garymb.ygomobile.game.gamefield.EffectActivatableHints;
 import cn.garymb.ygomobile.game.gamefield.EffectActivationLedger;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
@@ -261,7 +263,16 @@ class CardInfoBinder {
         lastShownClientCard = clientCard;
         displayedSide = clientCard.controler == 1 ? 1 : 0;
         sActiveBinder = this;
-        bindCardDesc(cardData, collectEffectRefs(code, cardData, displayedSide, clientCard));
+        List<Integer> ourGlow = Collections.emptyList();
+        List<Integer> oppGlow = Collections.emptyList();
+        if (clientCard != null) {
+            // 主阶/战斗指令为全桌广播，对方轮的 SELECT 也收得到：登记簿已含对方半场条目，
+            // 双半场各取一份，着色时我方绿、对方橙（用户规格）
+            ourGlow = EffectActivatableHints.offsetsFor(code, cardData.Alias, 0);
+            oppGlow = EffectActivatableHints.offsetsFor(code, cardData.Alias, 1);
+        }
+        bindCardDesc(cardData, collectEffectRefs(code, cardData, displayedSide, clientCard),
+                ourGlow, oppGlow);
 
         if (svCardDesc != null) {
             svCardDesc.fullScroll(ScrollView.FOCUS_UP);
@@ -296,8 +307,16 @@ class CardInfoBinder {
                 ? lastShownClientCard : null;
         displayedSide = shown != null ? (shown.controler == 1 ? 1 : 0) : -1;
         sActiveBinder = this;
+        // 可发动效果发光仅走 ClientCard 展示态路径（场卡/列表临时卡）：卡组编辑态与
+        // 纯卡表展示（shown==null）不发光，防过期询问脏染与无归属误发光；双半场各取一份
+        List<Integer> ourGlow = Collections.emptyList();
+        List<Integer> oppGlow = Collections.emptyList();
+        if (shown != null && deckCardListHandler == null) {
+            ourGlow = EffectActivatableHints.offsetsFor(card.Code, card.Alias, 0);
+            oppGlow = EffectActivatableHints.offsetsFor(card.Code, card.Alias, 1);
+        }
         bindCardDesc(card, deckCardListHandler != null ? Collections.<EffectRef>emptyList()
-                : collectEffectRefs(card.Code, card, displayedSide, shown));
+                : collectEffectRefs(card.Code, card, displayedSide, shown), ourGlow, oppGlow);
 
         if (svCardDesc != null) {
             svCardDesc.fullScroll(ScrollView.FOCUS_UP);
@@ -468,7 +487,8 @@ class CardInfoBinder {
         tvCardLevel.setVisibility(View.VISIBLE);
     }
 
-    private void bindCardDesc(Card cardData, List<EffectRef> effectRefs) {
+    private void bindCardDesc(Card cardData, List<EffectRef> effectRefs,
+                              List<Integer> ourGlowOffsets, List<Integer> oppGlowOffsets) {
         if (tvCardDesc == null) return;
         // 记录当前展示的卡，供关键词 queryable 判定（唯一命中即当前卡自身则视为不可查）
         currentDisplayCard = cardData;
@@ -481,6 +501,12 @@ class CardInfoBinder {
         // 后台遍历快照避免与写入交叉；纯卡表展示传空列表则整段标记逻辑短路
         final List<EffectRef> usedIds = effectRefs == null || effectRefs.isEmpty()
                 ? Collections.<EffectRef>emptyList() : new ArrayList<>(effectRefs);
+        // 可发动效果段落文档序快照（同不受后台任务期间命令清空影响，空集即不发光）；
+        // 我方/对方两份分开传递，着色时我方绿、对方橙（用户规格）
+        final List<Integer> ourGlow = ourGlowOffsets == null || ourGlowOffsets.isEmpty()
+                ? Collections.<Integer>emptyList() : new ArrayList<>(ourGlowOffsets);
+        final List<Integer> oppGlow = oppGlowOffsets == null || oppGlowOffsets.isEmpty()
+                ? Collections.<Integer>emptyList() : new ArrayList<>(oppGlowOffsets);
         // 纯文本立即显示（描述先可读，不等待任何扫描）
         tvCardDesc.setText(desc);
         // 关键词解析 + 高亮 spannable 构建 + queryable 判定（缓存未命中为全卡表扫描）+
@@ -492,7 +518,8 @@ class CardInfoBinder {
             if (gen != bindGen) return;
             List<String> keywords = new ArrayList<>();
             // 关键词高亮构建后再叠加已发动效果标记（命中行灰+绿勾，用户规格）
-            final CharSequence marked = markUsedEffects(buildStyledDesc(desc, card, keywords), desc, usedIds);
+            final CharSequence marked = markUsedEffects(buildStyledDesc(desc, card, keywords), desc,
+                    usedIds, ourGlow, oppGlow);
             List<Card> related = relatedCards(card, keywords);
             mainHandler.post(() -> {
                 if (gen != bindGen || tvCardDesc == null) return;
@@ -506,8 +533,9 @@ class CardInfoBinder {
         });
     }
 
-    /** 已发动效果行的显示色（用户规格：用过的效果行改灰色，未用行保持原色） */
-    private static final int COLOR_USED_EFFECT = YGOUtil.c(R.color.chat_color_gray);
+    /** 已发动效果行的显示色（用户规格：用过的效果行改灰色，未用行保持原色）；
+     *  grayDark(#A7A7A7) 比正文白字略暗、比旧 chat_color_gray 亮，置灰后文本仍易读 */
+    private static final int COLOR_USED_EFFECT = YGOUtil.c(R.color.grayDark);
     /** 行首插入的打勾前缀：首字符（不换行空格）由 ImageSpan 占位绘制绿圆对勾图标，次字符留间隙 */
     private static final String USED_MARK_PREFIX = "\u00A0 ";
 
@@ -531,8 +559,11 @@ class CardInfoBinder {
      * 段落自末向首逆序处理：插入前缀只影响其后偏移，未处理段的原始
      * 行下标仍有效。在后台线程执行，不触碰视图。
      */
-    private CharSequence markUsedEffects(CharSequence styled, String desc, List<EffectRef> refs) {
-        if (refs == null || refs.isEmpty() || desc.isEmpty()) return styled;
+    private CharSequence markUsedEffects(CharSequence styled, String desc, List<EffectRef> refs,
+                                         List<Integer> ourGlowOffsets, List<Integer> oppGlowOffsets) {
+        boolean hasGlow = (ourGlowOffsets != null && !ourGlowOffsets.isEmpty())
+                || (oppGlowOffsets != null && !oppGlowOffsets.isEmpty());
+        if ((refs == null || refs.isEmpty()) && !hasGlow || desc.isEmpty()) return styled;
         // 拆行：[start, end) 不含换行符
         List<int[]> lines = new ArrayList<>();
         int lineStart = 0;
@@ -640,12 +671,35 @@ class CardInfoBinder {
             int val = ref.side == 0 ? 2 : 1;
             for (int[] h : hits) markParagraph(mark, paraOf, h[1], val);
         }
+        // 通讯可发动效果段落（绿/黄呼吸点与 conti_act 动画同源数据：MSG_SELECT_* 选项 desc
+        // 低 4 位=段落文档序）：双半场各自记录归属（1=对方 2=我方），与已发动置灰互不影响
+        int[] glowSide = new int[lineCount];
+        markGlowParagraphs(glowSide, paraOf, lineCount, ourGlowOffsets, 2);
+        markGlowParagraphs(glowSide, paraOf, lineCount, oppGlowOffsets, 1);
         SpannableStringBuilder sb = new SpannableStringBuilder(styled);
         boolean iconAvailable = context != null;
         // 标记行按段聚成连续块自下而上处理：同段才合并成块（背景文本两相邻标记行不并），
         // 块首插打勾前缀、整块铺灰
         int i = lineCount - 1;
         while (i >= 0) {
+            // 可发动发光块先于 mark==0 短路判定（发光段不再写 mark，若放在短路之后将成为
+            // 永不执行的死代码——此前「任何模式都不发光」的根因）：整段铺 TextGlowSpan
+            // （setShadowLayer 外发光），不插前缀不置灰，与已发动块同款自下而上处理互不干扰；
+            // 着色按归属半场：我方绿、对方橙，同段双方都可发动时绿优先（同已发动绿优先口径）
+            int gi = paraOf[i];
+            if (gi >= 0 && glowSide[i] != 0) {
+                int g = i;
+                while (g - 1 >= 0 && glowSide[g - 1] == glowSide[i] && paraOf[g - 1] == gi) g--;
+                int gs = lines.get(g)[0], ge = lines.get(i)[1];
+                if (gs < ge) {
+                    sb.setSpan(new TextGlowSpan(glowSide[i] == 2
+                                    ? COLOR_ACTIVATABLE_GLOW : COLOR_ACTIVATABLE_GLOW_OPP),
+                            gs, ge,
+                            SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+                i = g - 1;
+                continue;
+            }
             if (mark[i] == 0) { i--; continue; }
             int paraId = paraOf[i];
             int j = i;
@@ -691,6 +745,34 @@ class CardInfoBinder {
     private static void markGray(SpannableStringBuilder sb, int start, int end) {
         sb.setSpan(new ForegroundColorSpan(COLOR_USED_EFFECT), start, end,
                 SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
+    }
+
+    /** 可发动效果段落发光颜色：与卡片角位呼吸绿点同源（colors.xml neon_green 荧光绿）；
+     *  对方半场另用荧光橙（neon_orange），与己方可发动绿色区分归属（用户规格） */
+    private static final int COLOR_ACTIVATABLE_GLOW = YGOUtil.c(R.color.neon_green);
+    private static final int COLOR_ACTIVATABLE_GLOW_OPP = YGOUtil.c(R.color.neon_orange);
+
+    /** 把某半场可发动的效果段落文档序整段记入发光归属数组（1=对方 2=我方，同段双发取
+     *  较大值即绿优先）；只认序号段落（paraOf>=0），背景/限制行不参与 */
+    private static void markGlowParagraphs(int[] glowSide, int[] paraOf, int lineCount,
+                                           List<Integer> offsets, int val) {
+        if (offsets == null || offsets.isEmpty()) return;
+        for (int off : offsets) {
+            for (int li = 0; li < lineCount; li++) {
+                if (paraOf[li] == off) glowSide[li] = Math.max(glowSide[li], val);
+            }
+        }
+    }
+
+    /** 文字外发光 span：setShadowLayer 零偏移荧光色阴影环绕字形（与 FieldHudRenderer/SciFiRenderer
+     *  发光文字同款机制），只改绘制状态不改文字尺寸，与已有前景/点击 span 叠加共存 */
+    private static final class TextGlowSpan extends CharacterStyle {
+        private final int color;
+        TextGlowSpan(int color) { this.color = color; }
+        @Override
+        public void updateDrawState(TextPaint tp) {
+            tp.setShadowLayer(10f, 0f, 0f, color);
+        }
     }
 
     /** 命中的是效果段内任意行（含续行）则整段标记；背景文本（para -1）仅标记该行。
@@ -863,7 +945,12 @@ class CardInfoBinder {
         if (deckCardListHandler != null || currentDisplayCard == null || currentCardCode <= 0) return;
         ClientCard cc = lastShownClientCard != null && lastShownClientCard.displayCode() == currentCardCode
                 ? lastShownClientCard : null;
-        bindCardDesc(currentDisplayCard, collectEffectRefs(currentCardCode, currentDisplayCard, displayedSide, cc));
+        bindCardDesc(currentDisplayCard,
+                collectEffectRefs(currentCardCode, currentDisplayCard, displayedSide, cc),
+                cc != null ? EffectActivatableHints.offsetsFor(currentCardCode, currentDisplayCard.Alias, 0)
+                        : Collections.<Integer>emptyList(),
+                cc != null ? EffectActivatableHints.offsetsFor(currentCardCode, currentDisplayCard.Alias, 1)
+                        : Collections.<Integer>emptyList());
     }
 
     /**
