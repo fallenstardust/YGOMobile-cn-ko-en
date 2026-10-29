@@ -522,7 +522,9 @@ class CardInfoBinder {
      * <li>分框分割原则（用户规格3，灵摆怪兽卡）：灵摆框段从第 1 条含「【」或「[」行的
      * 下一行开始，到第 2 条含「【」或「[」行的上一行结束（第 2 条标题行上方出现分隔线时
      * 以分隔线为界再往上一行）；第 2 条标题行及其下方不再属灵摆框，其下一行起为怪兽效果段。
-     * 标题行与分隔线自身不归入任何段（邻段置灰不连带）。</li>
+     * 标题行与分隔线自身不归入任何段（邻段置灰不连带），段也不得越过第 2 条标题行上方
+     * 的分隔线延续——怪兽框内仅序号行开头的文本参与段落划分，含①②③序号但非序号
+     * 开头的行不会因灵摆段渗染被误标。</li>
      * </ol>
      * 段落 = 段首效果标记行（换行符后的第一个 ①②③ 圆圈序号行；全文无圆圈序号的传统卡才认 ● 项目符行）
      * 起、到下一标记行前止，其间的续行/●行等所有行归该段整段置灰。打勾图标只插段首。
@@ -552,24 +554,41 @@ class CardInfoBinder {
         // 段落归属扫描（用户规格3·分框原则）：含「【」或「[」且非圆圈序号开头的行为框标题行——
         // 第1条起为灵摆框、第2条起为怪兽框；标题行与分隔线自身不归任何段（paraOf=-1，
         // 邻段被标记也不连带置灰；第2条标题行上方的分隔线天然成为灵摆框上界）。
+        // 段不跨框延续：框标题行与第 2 条标题行上方的分隔线关闭当前段（para=-1，
+        // 否则灵摆框最后一段会渗染到怪兽框内「含①②③序号但非序号开头」的文本行，被误标
+        // 为已使用的灵摆效果）。
         // 圆圈/项目符行开启新段落，docIdx 全文连续即「序号文本数组」下标（灵摆 0..p-1、
         // 怪兽 p..n-1，用户规格2），meta 记录 {docIdx, anchor}：anchor=段首圆圈序号或项目符序位；
         // 首段之前的背景文本行（含“这个卡名的①②效果…”行）与标题行/分隔线 paraOf=-1 不参与映射
         int[] paraOf = new int[lineCount];
         List<int[]> meta = new ArrayList<>();
         int docIdx = -1, para = -1, bulletSeq = 0;
+        int frameTitle = 0, firstTitleAt = -1, dividerPending = -1;
         for (int i = 0; i < lineCount; i++) {
             String raw = desc.substring(lines.get(i)[0], lines.get(i)[1]);
             String trimmed = raw.trim();
             if (isDividerLine(trimmed)) {
                 paraOf[i] = -1;
+                // 紧邻框标题行上方的分隔线同样是段落上界（用户规格3「以分隔线为界再往上一行」）
+                if (para >= 0 && dividerPending < 0) dividerPending = i;
                 continue;
             }
             int circled = leadingCircledIndex(trimmed);
-            // 框标题行判据（用户规格3）：整行含 【 或 [ 即算，圆圈序号开头行除外（那是效果段）
+            // 框标题行判据（用户规格3）：整行含 【 或 [ 即算，圆圈序号开头行除外（那是效果段）；
+            // 第 1 条起灵摆框、第 2 条起怪兽框；第 2 条标题行关闭当前段（灵摆序号文本截止在
+            // 其上一段），两条标题行都清空其上方待决分隔线
             if (circled < 0 && (trimmed.indexOf('【') >= 0 || trimmed.indexOf('[') >= 0)) {
                 paraOf[i] = -1;
+                frameTitle++;
+                if (frameTitle == 1) firstTitleAt = i;
+                if (frameTitle >= 2) para = -1;
+                dividerPending = -1;
                 continue;
+            }
+            // 第 2 条标题行上方的分隔线（灵摆框上界）：其下无上界时关闭当前段（同上规格）
+            if (dividerPending >= 0) {
+                if (frameTitle >= 2 && dividerPending > firstTitleAt) para = -1;
+                dividerPending = -1;
             }
             int anchor;
             if (circled >= 0) {
@@ -850,7 +869,8 @@ class CardInfoBinder {
     /**
      * 分隔线（用户规格：同框标题行一样不归入任何段落）：整行由横线/短横类字符组成，
      * 如英/葡「----------------------------------------」、西「━━━━━━━━…」；
-     * 第2条框标题行上方的分隔线即灵摆框上界（用户规格3「再往上一行」）
+     * 第2条框标题行上方的分隔线即灵摆框上界（用户规格3「再往上一行」，并关闭灵摆框末段
+     * 防其渗染到怪兽框文本）
      */
     private static boolean isDividerLine(String trimmed) {
         if (trimmed.isEmpty()) return false;
