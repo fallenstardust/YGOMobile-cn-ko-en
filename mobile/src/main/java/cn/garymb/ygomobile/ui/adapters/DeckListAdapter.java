@@ -16,6 +16,7 @@ import android.widget.TextView;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.listener.OnItemClickListener;
+import com.chad.library.adapter.base.viewholder.BaseViewHolder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -304,7 +305,7 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
     }
 }
 
-class DeckViewHolder extends com.chad.library.adapter.base.viewholder.BaseViewHolder {
+class DeckViewHolder extends BaseViewHolder {
     ImageView cardImage;
     ImageView prerelease_star;
     ImageView banned_mark;

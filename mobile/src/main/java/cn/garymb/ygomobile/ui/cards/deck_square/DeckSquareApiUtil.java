@@ -7,6 +7,7 @@ import com.google.gson.Gson;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -472,8 +473,8 @@ public class DeckSquareApiUtil {
                 if (localDeckName.equals(onLineDeckName) && localDeck.getDeckType().equals(onlineDeck.getDeckType())) {
                     // 时区校准：将两个时间戳都转换为系统默认时区的 Date 对象进行比较
                     // 这样可以确保在同一个时区下比较时间的先后
-                    java.util.Date onlineDate = new java.util.Date(onlineDeck.getDeckUpdateDate() - 28800000);
-                    java.util.Date localDate = new java.util.Date(localDeck.getUpdateTimestamp());
+                    Date onlineDate = new Date(onlineDeck.getDeckUpdateDate() - 28800000);
+                    Date localDate = new Date(localDeck.getUpdateTimestamp());
 
                     if (onlineDate.after(localDate)) {
                         // 在线卡组更新，需要下载到本地覆盖

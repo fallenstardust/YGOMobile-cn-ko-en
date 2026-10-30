@@ -66,6 +66,7 @@ import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.FullScreenUtils;
 import cn.garymb.ygomobile.utils.ImePopupAdjuster;
 import cn.garymb.ygomobile.utils.RightAlignedTiledDrawable;
+import ocgcore.data.Card;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
 
@@ -713,7 +714,7 @@ public abstract class YGOProActivityBase extends AppCompatActivity {
     }
     public String getCardDisplayName(int code) {
         if (code <= 0) return "???";
-        ocgcore.data.Card card = DataManager.get().getCardManager().getCard(code);
+        Card card = DataManager.get().getCardManager().getCard(code);
         if (card != null && card.Name != null) return card.Name;
         return "Card#" + code;
     }

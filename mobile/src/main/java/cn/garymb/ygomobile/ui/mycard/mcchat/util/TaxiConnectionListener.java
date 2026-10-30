@@ -9,6 +9,7 @@ import android.util.Log;
 
 import org.jivesoftware.smack.ConnectionListener;
 import org.jivesoftware.smack.XMPPConnection;
+import org.jivesoftware.smack.XMPPException;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -54,7 +55,7 @@ public class TaxiConnectionListener implements ConnectionListener {
         Log.e("TaxiConnectionListener", "连接关闭异常" + e);
         sm.setIsListener(false);
         
-        if (e instanceof org.jivesoftware.smack.XMPPException.StreamErrorException) {
+        if (e instanceof XMPPException.StreamErrorException) {
             Log.e("TaxiConnectionListener", "Stream error - likely authentication or protocol issue", e);
             return;
         }

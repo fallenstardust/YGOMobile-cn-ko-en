@@ -3,6 +3,7 @@ package cn.garymb.ygomobile.game.replay;
 import android.util.Log;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  * 引擎消息流切片器（与 {@code Classes/gframe/replay_mode.cpp::ReplayAnalyze} 的长度表同源，
@@ -255,7 +256,7 @@ public final class ReplayMessageSlicer {
      * 不改动传入 buf 的游标。
      */
     public static int countVisibleSteps(byte[] stream, ZoneBlocks zones) {
-        ByteBuffer buf = ByteBuffer.wrap(stream).order(java.nio.ByteOrder.LITTLE_ENDIAN);
+        ByteBuffer buf = ByteBuffer.wrap(stream).order(ByteOrder.LITTLE_ENDIAN);
         int visible = 0;
         while (buf.hasRemaining()) {
             int msgType = buf.get() & 0xFF;

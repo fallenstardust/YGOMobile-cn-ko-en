@@ -17,6 +17,7 @@ import cn.garymb.ygomobile.engine.LuaScriptEngine;
 import cn.garymb.ygomobile.network.DuelClient;
 import cn.garymb.ygomobile.network.DuelStocHandler;
 import cn.garymb.ygomobile.network.YGOProtocol;
+import cn.garymb.ygomobile.render.card.CardDetailPanel;
 
 /** 引擎统一门面：对外公共 API 不变；行为逻辑按 // === 分栏拆至同包协作类，构造注入并一行转发：DuelHintManager / SummonAnimationManager / DeckHandMotionManager / ConnectionManager / LobbyActions / GameActions / CommandDataParser / DuelEventHandler / GameMessageParser / ReplayPlayer / DuelStocHandler / UndoClientCoordinator / MsgFrameRecorder / AskWatchdog / MsgDispatchGate（消息串行闸门）/ DuelViewpointManager（对局视角）；本体仅留共享状态、状态机与命令状态。 */
 public class GameEngine {
@@ -380,7 +381,7 @@ public class GameEngine {
         }
         // 用户新规格3：登记簿清空后展示中的卡详即时收起过期的可发动背景呼吸段
         //（解析型调用方随后登记完成会再触发一次，经 binder 40ms 防抖合并为一次重绑）
-        cn.garymb.ygomobile.render.card.CardDetailPanel.refreshCardDetailMarks();
+        CardDetailPanel.refreshCardDetailMarks();
     }
 
     /** 复位区域发动提示 / conti_act 标志（解析 idle/battle 前清空，防上一选择脏标志；连锁路径不经此方法） */

@@ -109,6 +109,8 @@ public class ServerListAdapter extends BaseRecyclerAdapterPlus<ServerInfo, BaseV
     }
 
     @Override
+    // 注：本类继承 BaseRecyclerAdapterPlus，其嵌套类型 BaseViewHolder（RecyclerView.ViewHolder 子类）
+    // 在类体作用域内遮蔽了 import 的 chad BaseViewHolder，所以此处必须写全限定名
     protected void convert(@NonNull com.chad.library.adapter.base.viewholder.BaseViewHolder baseViewHolder, ServerInfo serverInfo) {
         int position = baseViewHolder.getAdapterPosition()
                 - getHeaderLayoutCount();

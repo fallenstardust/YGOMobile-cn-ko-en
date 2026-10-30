@@ -402,12 +402,11 @@
 
                     <!-- 关联卡片入口：参考 dialog_cardinfo 的 btn_related，点击后按当前卡的字段/卡名/描述
                      关键词聚合关联卡并在决斗态弹关键词列表、卡组编辑态填搜索结果列表；无关联卡时
-                     隐为 invisible（用户规格：不再 GONE，避免显隐牵动描述区高度）；图标原生 24dp
-                     缩小 1/3 为 16dp，取消按钮默认最小触控尺寸与内边距使实际显示尺寸就是 16dp -->
+                     隐为 invisible（用户规格：不再 GONE，避免显隐牵动描述区高度）； -->
                     <ImageButton
                         android:id="@+id/btn_related_cards"
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
                         android:layout_gravity="end"
                         android:src="@drawable/ic_related"
                         android:background="@drawable/list_item_bg"

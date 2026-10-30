@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Executors;
@@ -142,11 +143,11 @@ abstract class ServerDuelBase implements YGOProtocol {
 
         // no_shuffle 时保持卡组原序（引擎以 DUEL_PSEUDO_SHUFFLE 处理），否则服务端洗牌
         if (hi.noShuffleDeck == 0) {
-            java.util.Collections.shuffle(room.decks[0].main);
-            java.util.Collections.shuffle(room.decks[1].main);
+            Collections.shuffle(room.decks[0].main);
+            Collections.shuffle(room.decks[1].main);
             if (tag) {
-                java.util.Collections.shuffle(room.decks[2].main);
-                java.util.Collections.shuffle(room.decks[3].main);
+                Collections.shuffle(room.decks[2].main);
+                Collections.shuffle(room.decks[3].main);
             }
         }
         room.timeLimit[0] = hi.timeLimit;
@@ -343,7 +344,7 @@ abstract class ServerDuelBase implements YGOProtocol {
                 room.players[0].state = CTOS_UPDATE_DECK;
                 room.players[1].state = CTOS_UPDATE_DECK;
                 room.soloSideCount = 0;
-                java.util.Arrays.fill(room.soloSideFilled, false);
+                Arrays.fill(room.soloSideFilled, false);
                 room.players[0].send(STOC_CHANGE_SIDE, null);
                 // solo：同一连接不能一次叠两个换 side 编辑器，第二份由 updateDeck 提交后逐份引导
                 if (room.players[1] != room.players[0]) {

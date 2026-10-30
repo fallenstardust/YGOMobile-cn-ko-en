@@ -1,6 +1,7 @@
 package cn.garymb.ygomobile.game.engine;
 import cn.garymb.ygomobile.game.gamefield.ClientCard;
 
+import ocgcore.data.Card;
 import ocgcore.DataManager;
 
 import cn.garymb.ygomobile.audio.SoundManager;
@@ -61,7 +62,7 @@ public class SummonAnimationManager {
     public void onSpSummoning(int code, int ctrl, int loc, int seq) {
         // duelclient.cpp MSG_SPSUMMONING L3280-3285：衍生物（TYPE_TOKEN）放 token 音效；
         // 否则先试召唤主题歌，无对应曲目才回退特殊召唤音效
-        ocgcore.data.Card card = DataManager.get().getCardManager().getCard(code);
+        Card card = DataManager.get().getCardManager().getCard(code);
         if (card != null && (card.Type & TYPE_TOKEN) != 0) {
             engine.soundManager.playSoundEffect(SoundManager.SFX.TOKEN);
         } else if (!engine.soundManager.playChant(code)) {

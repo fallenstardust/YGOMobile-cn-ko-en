@@ -35,6 +35,7 @@ import java.util.List;
 
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.audio.SoundManager;
+import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.engine.NativeScriptBootstrap;
 import cn.garymb.ygomobile.game.chat.ChatInputUI;
 import cn.garymb.ygomobile.game.deck.DeckEditorManager;
@@ -162,7 +163,7 @@ abstract class YGOProActivityEngine extends YGOProActivityUi {
             }
         }
 
-        String[] args = cn.garymb.ygomobile.core.IrrlichtBridge.getArgs(intent);
+        String[] args = IrrlichtBridge.getArgs(intent);
         if (args != null && args.length > 0) {
             return handleArgs(args);
         }

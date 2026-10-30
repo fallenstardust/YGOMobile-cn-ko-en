@@ -98,13 +98,11 @@
                     </LinearLayout>
 
                     <!-- 关联卡片入口（与横屏 layout_card_detail_panel 同 ID）：点击后按当前卡的
-                     字段/卡名/描述关键词聚合关联卡，决斗态弹关键词列表、卡组编辑态填搜索结果列表；
-                     用户规格：默认 invisible 恒定占位（避免显隐牵动描述区高度），图标原生 24dp
-                     缩小 1/3 为 16dp，取消按钮默认最小触控尺寸与内边距使实际显示尺寸就是 16dp -->
+                     字段/卡名/描述关键词聚合关联卡，决斗态弹关键词列表、卡组编辑态填搜索结果列表； -->
                     <ImageButton
                         android:id="@+id/btn_related_cards"
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
                         android:layout_gravity="end"
                         android:background="@drawable/list_item_bg"
                         android:minWidth="0dp"

@@ -6,6 +6,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -13,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.tukaani.xz.LZMAInputStream;
 
 public class ReplayReader {
     private static final String TAG = "ReplayReader";
@@ -291,7 +293,7 @@ public class ReplayReader {
 
     private static byte[] lzmaDecompress(byte[] compressed, int expectedSize, byte[] props) {
         try {
-            return org.tukaani.xz.LZMAInputStream.class != null
+            return LZMAInputStream.class != null
                     ? lzmaDecompressTukaani(compressed, expectedSize, props)
                     : lzmaDecompressManual(compressed, expectedSize, props);
         } catch (NoClassDefFoundError e) {
@@ -308,7 +310,7 @@ public class ReplayReader {
                 dictSize |= (props[1 + i] & 0xFF) << (8 * i);
             }
 
-            org.tukaani.xz.LZMAInputStream lzmaIn = new org.tukaani.xz.LZMAInputStream(
+            LZMAInputStream lzmaIn = new LZMAInputStream(
                     bais, -1L, propsByte, dictSize);
 
             byte[] output = new byte[expectedSize];
@@ -337,7 +339,7 @@ public class ReplayReader {
         if (!dir.exists()) return names;
         File[] files = dir.listFiles((d, n) -> n.endsWith(".yrp"));
         if (files != null) {
-            java.util.Arrays.sort(files, (a, b) -> Long.compare(b.lastModified(), a.lastModified()));
+            Arrays.sort(files, (a, b) -> Long.compare(b.lastModified(), a.lastModified()));
             for (File f : files) {
                 names.add(f.getName());
             }
@@ -386,7 +388,7 @@ public class ReplayReader {
         }
         sb.append("!side\n");
         
-        try (java.io.FileWriter writer = new java.io.FileWriter(outputPath)) {
+        try (FileWriter writer = new FileWriter(outputPath)) {
             writer.write(sb.toString());
             return true;
         } catch (IOException e) {

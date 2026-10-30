@@ -126,7 +126,7 @@ public class OkhttpUtil {
         RequestBody requestBody = FormBody.create(MediaType.parse("application/json; charset=utf-8"), json);
         Request.Builder request = new Request.Builder().url(url);//请求的url
         if (TextUtils.isEmpty(json))
-            request.post(okhttp3.internal.Util.EMPTY_REQUEST);
+            request.post(Util.EMPTY_REQUEST);
         else
             request.post(requestBody);
         if (!TextUtils.isEmpty(cookie)) {
@@ -236,7 +236,7 @@ public class OkhttpUtil {
 
         Request.Builder request = new Request.Builder().url(url);//请求的url
         if (json == null || TextUtils.isEmpty(json)) {
-            request.post(okhttp3.internal.Util.EMPTY_REQUEST);
+            request.post(Util.EMPTY_REQUEST);
         } else {
             RequestBody requestBody = FormBody.create(MediaType.parse("application/json; charset=utf-8"), json);
             request.post(requestBody);

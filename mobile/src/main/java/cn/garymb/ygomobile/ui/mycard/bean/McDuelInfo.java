@@ -1,6 +1,7 @@
 package cn.garymb.ygomobile.ui.mycard.bean;
 
 import java.io.Serializable;
+import com.google.gson.annotations.SerializedName;
 
 /**
  * Create By feihua  On 2021/10/20
@@ -8,31 +9,31 @@ import java.io.Serializable;
 
 public class McDuelInfo implements Serializable {
     private Integer exp;
-    @com.google.gson.annotations.SerializedName("pt")
+    @SerializedName("pt")
     private Integer dp;
-    @com.google.gson.annotations.SerializedName("entertain_win")
+    @SerializedName("entertain_win")
     private Integer funWin;
-    @com.google.gson.annotations.SerializedName("entertain_lose")
+    @SerializedName("entertain_lose")
     private Integer funLose;
-    @com.google.gson.annotations.SerializedName("entertain_draw")
+    @SerializedName("entertain_draw")
     private Integer funDraw;
-    @com.google.gson.annotations.SerializedName("entertain_all")
+    @SerializedName("entertain_all")
     private Integer funAll;
-    @com.google.gson.annotations.SerializedName("entertain_wl_ratio")
+    @SerializedName("entertain_wl_ratio")
     private float funWinRratio;
-    @com.google.gson.annotations.SerializedName("exp_rank")
+    @SerializedName("exp_rank")
     private Integer funRank;
-    @com.google.gson.annotations.SerializedName("athletic_win")
+    @SerializedName("athletic_win")
     private Integer matchWin;
-    @com.google.gson.annotations.SerializedName("athletic_lose")
+    @SerializedName("athletic_lose")
     private Integer matchLose;
-    @com.google.gson.annotations.SerializedName("athletic_draw")
+    @SerializedName("athletic_draw")
     private Integer matchDraw;
-    @com.google.gson.annotations.SerializedName("athletic_all")
+    @SerializedName("athletic_all")
     private Integer matchAll;
-    @com.google.gson.annotations.SerializedName("athletic_wl_ratio")
+    @SerializedName("athletic_wl_ratio")
     private float matchWinRatio;
-    @com.google.gson.annotations.SerializedName("arena_rank")
+    @SerializedName("arena_rank")
     private Integer matchRank;
     public Integer getExp() {
         return exp;

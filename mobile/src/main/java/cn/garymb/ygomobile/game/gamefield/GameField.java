@@ -627,12 +627,12 @@ public class GameField {
     }
 
     /** 回放「上一步」逆向倒放：重算前抓取当前各显示卡的渲染位置快照（步骤 N 显示态），供投喂线程记录后于落点交主线程 applyReverseAnimation 逆向补间；委托 motion */
-    public java.util.List<ReplayPosSnap> collectDisplayPositions() {
+    public List<ReplayPosSnap> collectDisplayPositions() {
         return motion.collectDisplayPositions();
     }
 
     /** 回放「上一步」逆向倒放：重算落定后把发生位移的卡从步骤 N 显示位逆向补间回 N-1 落定位（仅改渲染层 cur*，不动模型字段），须在主线程调用；委托 motion */
-    public void applyReverseAnimation(java.util.List<ReplayPosSnap> snapN) {
+    public void applyReverseAnimation(List<ReplayPosSnap> snapN) {
         motion.applyReverseAnimation(snapN);
     }
 

@@ -20,6 +20,7 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
+import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 import com.google.gson.Gson;
@@ -295,7 +296,7 @@ public class UserDuelDetailAdapter {
 
         chartPtHistory.getAxisLeft().setTextColor(ContextCompat.getColor(context, R.color.grayLight));
         chartPtHistory.getAxisLeft().setGridColor(ContextCompat.getColor(context, R.color.klein_blue));
-        chartPtHistory.getAxisLeft().setValueFormatter(new com.github.mikephil.charting.formatter.ValueFormatter() {
+        chartPtHistory.getAxisLeft().setValueFormatter(new ValueFormatter() {
             @Override
             public String getFormattedValue(float value) {
                 return String.format(Locale.getDefault(), "%.0f", value);
@@ -336,7 +337,7 @@ public class UserDuelDetailAdapter {
         dataSet.setValueTextColor(ContextCompat.getColor(context, R.color.grayLight));
         dataSet.setValueTextSize(5f);
         dataSet.setDrawValues(true);
-        dataSet.setValueFormatter(new com.github.mikephil.charting.formatter.ValueFormatter() {
+        dataSet.setValueFormatter(new ValueFormatter() {
             @Override
             public String getFormattedValue(float value) {
                 return String.format(Locale.getDefault(), "%.0f", value);

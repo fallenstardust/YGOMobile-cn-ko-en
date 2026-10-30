@@ -5,6 +5,7 @@ import android.util.Log;
 import java.util.Arrays;
 
 import cn.garymb.ygomobile.engine.OcgDuelEngine;
+import ocgcore.DataManager;
 
 /**
  * 引擎消息解析器，移植 {@code gframe/single_duel.cpp}：逐条消费 ocgcore 消息流，按 is_host 遮蔽后广播 {@code STOC_GAME_MSG}；不持有决斗状态，均读写自宿主 {@link ServerDuel}。
@@ -566,7 +567,7 @@ final class DuelAnalyzer extends DuelAnalyzerBase {
                     if (silent) {
                         int chCode = readInt32(msg, cursor);
                         int chDesc = readInt32(msg, cursor + 11);
-                        if (chCode > 0 && (chDesc & 0xFFFFFFFFL) > ocgcore.DataManager.MAX_STRING_ID) {
+                        if (chCode > 0 && (chDesc & 0xFFFFFFFFL) > DataManager.MAX_STRING_ID) {
                             silentChainEvents++;
                         }
                     }

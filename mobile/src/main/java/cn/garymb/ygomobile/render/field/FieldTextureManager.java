@@ -18,6 +18,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import ocgcore.CardManager;
+import ocgcore.data.Card;
+import ocgcore.DataManager;
 
 /**
  * 纹理管理（多线程：工作线程解码 → GL 线程上传），由 GameFieldView 的「纹理」分栏拆出。
@@ -233,12 +236,12 @@ public final class FieldTextureManager {
      */
     private static boolean isUnknownToCardTable(int code) {
         try {
-            ocgcore.CardManager cm = ocgcore.DataManager.get().getCardManager();
+            CardManager cm = DataManager.get().getCardManager();
             if (cm == null || cm.getCount() == 0) return false;
-            android.util.SparseArray<ocgcore.data.Card> table = cm.getAllCards();
+            android.util.SparseArray<Card> table = cm.getAllCards();
             int idx = table.indexOfKey(code);
             if (idx < 0) return true;
-            ocgcore.data.Card c = table.valueAt(idx);
+            Card c = table.valueAt(idx);
             return c == null || c.Type == 0;
         } catch (Throwable t) {
             return false;

@@ -21,6 +21,8 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.function.Consumer;
+import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.YGOProActivity;
@@ -197,7 +199,7 @@ abstract class GameTopInfoManagerBase {
     /** 最近一次 applyTopInfoSize 解算出的 HUD 等比系数（f=面板高/基准高），供聊天输入框等游戏内 UI 同源缩放 */
     protected float hudScaleFactor = 1f;
     /** HUD 缩放系数观察者（layout_game_right 尺寸变化重解后同步回调） */
-    protected final java.util.List<java.util.function.Consumer<Float>> hudScaleObservers = new ArrayList<>();
+    protected final List<Consumer<Float>> hudScaleObservers = new ArrayList<>();
 
     /**
      * gameTopInfo 随 layout_game_right 尺寸等比缩放（横竖屏通用）：
@@ -275,7 +277,7 @@ abstract class GameTopInfoManagerBase {
         // 缓存系数并通知观察者（聊天输入框等随 HUD 同源等比例缩放）；
         // 遍历副本：观察者回调内可能触发 requestLayout 连带重入本方法
         hudScaleFactor = f;
-        for (java.util.function.Consumer<Float> obs :
+        for (Consumer<Float> obs :
                 new ArrayList<>(hudScaleObservers)) {
             obs.accept(f);
         }

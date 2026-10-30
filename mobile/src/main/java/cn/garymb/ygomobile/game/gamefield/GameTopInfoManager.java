@@ -1,4 +1,5 @@
 package cn.garymb.ygomobile.game.gamefield;
+import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.game.engine.GameEngine;
 
 import android.animation.ValueAnimator;
@@ -21,6 +22,7 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.function.Consumer;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.YGOProActivity;
@@ -106,7 +108,7 @@ public class GameTopInfoManager extends GameTopInfoManagerBase {
     }
 
     /** 注册 HUD 缩放系数变化监听；当前值由调用方自行 getHudScaleFactor 取用 */
-    public void addHudScaleObserver(java.util.function.Consumer<Float> observer) {
+    public void addHudScaleObserver(Consumer<Float> observer) {
         if (observer != null) hudScaleObservers.add(observer);
     }
 
@@ -114,7 +116,7 @@ public class GameTopInfoManager extends GameTopInfoManagerBase {
     public void reset() {
         stopTimer();
         stopUndoPulse();
-        setPlayerDisplay(0, cn.garymb.ygomobile.Constants.PlayerName, DEFAULT_LP_TEXT);
+        setPlayerDisplay(0, Constants.PlayerName, DEFAULT_LP_TEXT);
         setPlayerDisplay(1, "Opponent", DEFAULT_LP_TEXT);
         setTurnText(DEFAULT_TURN_TEXT);
         if (tvPlayerTime != null) tvPlayerTime.setVisibility(View.GONE);
@@ -144,7 +146,7 @@ public class GameTopInfoManager extends GameTopInfoManagerBase {
         GameEngine engine = activity.getEngine();
         int startLp = engine != null ? engine.getGameStartLp() : 0;
         if (startLp <= 0) startLp = DEFAULT_MAX_LP;
-        String myName = cn.garymb.ygomobile.Constants.PlayerName;
+        String myName = Constants.PlayerName;
         String oppName = "Opponent";
         if (engine != null) {
             // 统一取视角绑定显示名（对战方 STOC_DUEL_START bindViewNames、回放/残局由各自 runner

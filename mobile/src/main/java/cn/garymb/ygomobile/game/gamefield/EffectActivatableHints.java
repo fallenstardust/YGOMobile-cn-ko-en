@@ -3,6 +3,7 @@ package cn.garymb.ygomobile.game.gamefield;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -89,7 +90,7 @@ public final class EffectActivatableHints {
      *  否则 swapField 已翻转场卡 controler 而登记半场过期——自己方可发动条目被记到对面，
      *  点自己的卡查不到、点对方卡反而命中（发光颜色绿橙互换） */
     public static void swapSides() {
-        for (java.util.Map.Entry<Integer, Set<Integer>> e : new ArrayList<>(BY_CODE.entrySet())) {
+        for (Map.Entry<Integer, Set<Integer>> e : new ArrayList<>(BY_CODE.entrySet())) {
             int key = e.getKey();
             Set<Integer> offsets = e.getValue();
             if (offsets == null || offsets.isEmpty()) continue;

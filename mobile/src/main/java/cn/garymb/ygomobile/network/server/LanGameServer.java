@@ -2,6 +2,7 @@ package cn.garymb.ygomobile.network.server;
 
 import android.util.Log;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -381,7 +382,7 @@ public final class LanGameServer implements YGOProtocol {
         listening = false;
     }
 
-    private static void closeQuietly(java.io.Closeable c) {
+    private static void closeQuietly(Closeable c) {
         if (c != null) {
             try {
                 c.close();

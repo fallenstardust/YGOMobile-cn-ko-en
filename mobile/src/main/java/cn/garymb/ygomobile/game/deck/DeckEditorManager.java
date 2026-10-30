@@ -45,6 +45,7 @@ import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
+import cn.garymb.ygomobile.YGOProActivity;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
@@ -69,7 +70,7 @@ public class DeckEditorManager extends DeckEditorManagerMid implements CardDragH
         this.currentDeck = new DeckInfo();
         // 获取 SoundManager（对齐 C++ deck_con.cpp 中的音效调用）：须先于 dragHelper 赋值，
         // 供拖拽拾起/放置音效（CARD_PICK/CARD_DROP）使用
-        this.soundManager = ((cn.garymb.ygomobile.YGOProActivity) activity).getSoundManager();
+        this.soundManager = ((YGOProActivity) activity).getSoundManager();
         this.dragHelper = new CardDragHelper(activity, this, soundManager);
         this.cardSearcherManager = new CardSearcherManager(activity);
         this.gridLayout = new DeckGridLayoutApplier(this);

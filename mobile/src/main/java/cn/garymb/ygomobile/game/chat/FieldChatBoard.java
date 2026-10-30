@@ -18,6 +18,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -428,7 +429,7 @@ public class FieldChatBoard extends FieldChatBoardBase {
             if (body == null || body.length < 2) continue;
             int playerType = body[0] & 0xFF;
             String text = new String(body, 1, body.length - 1,
-                    java.nio.charset.StandardCharsets.UTF_8);
+                    StandardCharsets.UTF_8);
             if (text.isEmpty()) continue;
             DuelLogDialog.addChat(formatChatLogLine(playerType, text));
         }

@@ -432,7 +432,7 @@ abstract class FieldChatBoardBase {
         overlay.obtainDanmakuLayer(bandHeight, bar[1]);
     }
     protected static <T> void swapListContent(LinkedList<T> a, LinkedList<T> b) {
-        java.util.List<T> tmp = new ArrayList<>(a);
+        List<T> tmp = new ArrayList<>(a);
         a.clear();
         a.addAll(b);
         b.clear();

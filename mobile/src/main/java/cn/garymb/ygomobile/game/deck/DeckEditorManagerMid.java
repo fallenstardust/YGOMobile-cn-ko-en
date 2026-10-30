@@ -45,6 +45,7 @@ import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
+import cn.garymb.ygomobile.YGOProActivity;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
@@ -267,11 +268,11 @@ abstract class DeckEditorManagerMid extends DeckEditorManagerBase {
             Bitmap bmp = TextureLoader.get().getSettingsTexture();
             if (bmp != null) btnDeckSettings.setImageBitmap(bmp);
             btnDeckSettings.setOnClickListener(v ->
-                    ((cn.garymb.ygomobile.YGOProActivity) activity).showSettingsDialog());
+                    ((YGOProActivity) activity).showSettingsDialog());
         }
         if (btnDeckSound != null) {
             btnDeckSound.setOnClickListener(v -> {
-                ((cn.garymb.ygomobile.YGOProActivity) activity).toggleSoundMute();
+                ((YGOProActivity) activity).toggleSoundMute();
                 updateDeckSoundIcon();
             });
             updateDeckSoundIcon();

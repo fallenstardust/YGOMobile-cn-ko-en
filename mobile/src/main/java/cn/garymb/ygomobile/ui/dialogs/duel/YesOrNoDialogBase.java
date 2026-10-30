@@ -28,6 +28,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -468,7 +469,7 @@ abstract class YesOrNoDialogBase {
 
     /** chainCards 安全快照：null/空集统一返空列表，免循环内判空 */
     private List<CardChainItem> chainCardsSafe() {
-        return chainCards != null ? chainCards : java.util.Collections.<CardChainItem>emptyList();
+        return chainCards != null ? chainCards : Collections.<CardChainItem>emptyList();
     }
 
     /**

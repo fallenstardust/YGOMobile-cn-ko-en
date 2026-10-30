@@ -460,7 +460,7 @@ final class EngineReplaySource extends ReplaySource {
     }
 
     @Override
-    java.util.List<byte[]> capturedEngineFrames() {
+    List<byte[]> capturedEngineFrames() {
         return capturedFrames;
     }
 

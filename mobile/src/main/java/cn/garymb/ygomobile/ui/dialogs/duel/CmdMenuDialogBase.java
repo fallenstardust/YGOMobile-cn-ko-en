@@ -13,8 +13,11 @@ import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
+import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.game.engine.GameEngine;
 import cn.garymb.ygomobile.game.gamefield.GameField;
@@ -401,8 +404,8 @@ abstract class CmdMenuDialogBase {
     protected void showCmdList(ClientCard card, GameEngine engine, int cmdContext,
                              List<GameEngine.CmdCardInfo> infos, int mode) {
         // 按卡去重保序：gframe sort+unique 语义，同一卡多条命令只展示一次
-        java.util.Map<ClientCard, List<GameEngine.CmdCardInfo>> byCard =
-                new java.util.LinkedHashMap<>();
+        Map<ClientCard, List<GameEngine.CmdCardInfo>> byCard =
+                new LinkedHashMap<>();
         for (GameEngine.CmdCardInfo info : infos) {
             if (info.card == null) continue;
             List<GameEngine.CmdCardInfo> list = byCard.get(info.card);
@@ -414,7 +417,7 @@ abstract class CmdMenuDialogBase {
         }
         List<CardDisplayDialog.CardItem> items = new ArrayList<>();
         final List<List<GameEngine.CmdCardInfo>> cardIndices = new ArrayList<>();
-        for (java.util.Map.Entry<ClientCard, List<GameEngine.CmdCardInfo>> e : byCard.entrySet()) {
+        for (Map.Entry<ClientCard, List<GameEngine.CmdCardInfo>> e : byCard.entrySet()) {
             ClientCard c = e.getKey();
             int code = c.code;
             // 优先使用第一条记录的 code（如从额外卡组特殊召唤时由引擎指定码值）
@@ -440,8 +443,8 @@ abstract class CmdMenuDialogBase {
      */
     protected void showPileActivateList(ClientCard card, int cmdContext,
                                        List<GameEngine.CmdCardInfo> infos) {
-        java.util.Map<ClientCard, List<GameEngine.CmdCardInfo>> byCard =
-                new java.util.LinkedHashMap<>();
+        Map<ClientCard, List<GameEngine.CmdCardInfo>> byCard =
+                new LinkedHashMap<>();
         for (GameEngine.CmdCardInfo info : infos) {
             if (info.card == null) continue;
             List<GameEngine.CmdCardInfo> list = byCard.get(info.card);
@@ -453,7 +456,7 @@ abstract class CmdMenuDialogBase {
         }
         List<CardDisplayDialog.CardItem> items = new ArrayList<>();
         final List<List<GameEngine.CmdCardInfo>> cardEffects = new ArrayList<>();
-        for (java.util.Map.Entry<ClientCard, List<GameEngine.CmdCardInfo>> e : byCard.entrySet()) {
+        for (Map.Entry<ClientCard, List<GameEngine.CmdCardInfo>> e : byCard.entrySet()) {
             ClientCard c = e.getKey();
             int code = c.code;
             for (GameEngine.CmdCardInfo info : e.getValue()) {
@@ -744,7 +747,7 @@ abstract class CmdMenuDialogBase {
         // 命令菜单不走 DraggablePopupHelper 全屏包装，单独应用同一 Android 12+ 键盘分层
         // 修复（用户规格：聊天输入框与输入法显示在所有弹窗前面）：菜单窗口压到键盘之下，
         // 菜单弹出期间点底部聊天输入框时键盘仍可盖在菜单之上并正常敲击
-        cn.garymb.ygomobile.utils.DraggablePopupHelper.applyImeLayeringFix(popupWindow);
+        DraggablePopupHelper.applyImeLayeringFix(popupWindow);
         // 卡片选中态取消观察（用户规格：点卡片以外的任意位置即取消选中）：命令菜单不走
         // DraggablePopupHelper 全屏包装，其自身按钮的手势既不经 Activity 派发点也不经包装层，
         // 故在此挂同一登记/结算；仅观察不改派发（一律返回 false），菜单项点击照旧生效

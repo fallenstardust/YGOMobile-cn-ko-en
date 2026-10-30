@@ -116,6 +116,8 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
      * @param holder   ViewHolder对象，用于获取视图组件
      * @param position 当前菜单项在列表中的位置索引
      */
+    // 注：本类继承 BaseRecyclerAdapterPlus，其嵌套类型 BaseViewHolder（RecyclerView.ViewHolder 子类）
+    // 在类体作用域内遮蔽了 import 的 chad BaseViewHolder，所以这两处必须写全限定名
     public void bindMenu(com.chad.library.adapter.base.viewholder.BaseViewHolder holder, int position) {
         if (showAddButtons) {
             // 设置主卡组添加按钮的点击事件监听器

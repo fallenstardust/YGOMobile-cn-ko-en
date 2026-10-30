@@ -1,6 +1,7 @@
 package cn.garymb.ygomobile.game.engine;
 import cn.garymb.ygomobile.game.gamefield.ClientCard;
 import cn.garymb.ygomobile.game.gamefield.EffectActivatableHints;
+import cn.garymb.ygomobile.render.card.CardDetailPanel;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -126,7 +127,7 @@ public class CommandDataParser {
         engine.showEP = data.remaining() >= 1 && (data.get() & 0xFF) != 0;
         // 用户新规格3：战斗指令登记完成，卡详正展示相关卡时即时刷新可发动背景呼吸段
         //（与开段 clearCommandFlags 的刷新经 40ms 防抖合并，不会以中间态重绑）
-        cn.garymb.ygomobile.render.card.CardDetailPanel.refreshCardDetailMarks();
+        CardDetailPanel.refreshCardDetailMarks();
     }
 
     public void parseIdleCmd(ByteBuffer data) {
@@ -263,7 +264,7 @@ public class CommandDataParser {
         engine.showEP = data.remaining() >= 1 && (data.get() & 0xFF) != 0;
         engine.showShuffle = data.remaining() >= 1 && (data.get() & 0xFF) != 0;
         // 用户新规格3：主阶指令登记完成，卡详正展示相关卡时即时刷新可发动背景呼吸段
-        cn.garymb.ygomobile.render.card.CardDetailPanel.refreshCardDetailMarks();
+        CardDetailPanel.refreshCardDetailMarks();
     }
 
     /** 可发动选项入列（即卡片出现呼吸绿点/conti_act 动画的同一时刻）登记效果段落序号：

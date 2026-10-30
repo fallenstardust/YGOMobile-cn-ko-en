@@ -9,10 +9,12 @@ import android.util.Log;
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.audio.SoundManager;
+import cn.garymb.ygomobile.render.card.CardDetailPanel;
 import cn.garymb.ygomobile.utils.CrashHandler;
 import ocgcore.DataManager;
 
@@ -506,7 +508,7 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         if (isSkipping || body == null || body.length < 2) return;
         final int playerType = body[0] & 0xFF;
         final String text = new String(body, 1, body.length - 1,
-                java.nio.charset.StandardCharsets.UTF_8);
+                StandardCharsets.UTF_8);
         if (text.isEmpty()) return;
         Log.i(TAG, "replay chat dispatch: type=" + playerType + " len=" + text.length()
                 + (isSkipping ? " (skipped)" : ""));
@@ -597,7 +599,7 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         // 卡详已发动标记随视角翻转（用户规格3，与实况 performSpectatorSwap 同口径）：
         // 账本半场归属整体对调，展示中已标记卡的绿/红勾按新视角重绑；内部 post 主线程，
         // 投喂线程/主线程（暂停态直接交换）调用均安全
-        cn.garymb.ygomobile.render.card.CardDetailPanel.notifyViewpointSwapped();
+        CardDetailPanel.notifyViewpointSwapped();
         notifyPlayerInfo(0);      // 名字/LP 条/卡数按新视角重取
         notifyPlayerInfo(1);
         // 回合方高亮（LPBarFrame 彩色/灰色与名字色）随视角翻转重刷

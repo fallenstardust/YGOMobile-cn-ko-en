@@ -7,7 +7,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * YRP2（REPLAY_UNIFORM）录像写入器，{@code cn.garymb.ygomobile.game.replay.ReplayReader} 的写端对偶，
@@ -74,7 +77,7 @@ public final class YrpWriter {
     /** 逐条玩家响应记录段（[uint8 len][data]），MSG_RETRY 时由 removeData 回滚尾部。 */
     private final ByteArrayOutputStream responses = new ByteArrayOutputStream();
     /** 主机视角引擎 MSG 字节流（含服务端合成的 UPDATE 刷新消息），每次 writeMessage = 一帧。 */
-    private final java.util.List<byte[]> msgFrames = new java.util.ArrayList<>();
+    private final List<byte[]> msgFrames = new ArrayList<>();
 
     public YrpWriter(int[] seedSequence, int version, int flag, int startTime) {
         if (seedSequence == null || seedSequence.length != 8) {
@@ -162,7 +165,7 @@ public final class YrpWriter {
         if (text == null || text.isEmpty()) {
             return;
         }
-        byte[] utf = text.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        byte[] utf = text.getBytes(StandardCharsets.UTF_8);
         byte[] frame = new byte[utf.length + 2];
         frame[0] = (byte) REPLAY_CHAT_FRAME;
         frame[1] = (byte) playerType;

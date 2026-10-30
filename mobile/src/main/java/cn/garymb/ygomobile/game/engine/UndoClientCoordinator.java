@@ -1,4 +1,5 @@
 package cn.garymb.ygomobile.game.engine;
+import cn.garymb.ygomobile.game.gamefield.EffectActivationLedger;
 import cn.garymb.ygomobile.game.gamefield.GameField;
 
 import android.util.Log;
@@ -7,6 +8,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 import cn.garymb.ygomobile.network.YGOProtocol;
+import cn.garymb.ygomobile.render.card.CardDetailPanel;
 
 /**
  * 撤回（undo）客户端域实现（自 GameEngine 平移，逻辑零改）：CTOS_UNDO 发起、
@@ -113,16 +115,16 @@ class UndoClientCoordinator {
         undoResyncTurn = -1;
         field.turnCount = turn;
         // 撤回重同步回到历史回合：发动标记的「本回合」基准随之校正，并刷新正在展示的卡详
-        cn.garymb.ygomobile.game.gamefield.EffectActivationLedger.setCurrentTurn(turn);
+        EffectActivationLedger.setCurrentTurn(turn);
         // 发动账本回退（用户新规格）：服务端重放前缀里只有 kept 条有效发动，账本尾部超出
         // 的部分属于被回退的那一段——剪除后「使用过→未使用」的卡即时恢复常规效果文本；
         // 保留前缀内的条目继续标记本回合/决斗已使用；旧服务端短载荷（-1）不回退
         int chainEvents = undoResyncChainEvents;
         undoResyncChainEvents = -1;
         if (chainEvents >= 0) {
-            cn.garymb.ygomobile.game.gamefield.EffectActivationLedger.dropBeyond(chainEvents);
+            EffectActivationLedger.dropBeyond(chainEvents);
         }
-        cn.garymb.ygomobile.render.card.CardDetailPanel.refreshCardDetailMarks();
+        CardDetailPanel.refreshCardDetailMarks();
         if (undoResyncPlayer >= 0) {
             field.currentPlayer = engine.localPlayer(undoResyncPlayer & 1);
         }

@@ -21,6 +21,7 @@ import com.tencent.smtt.sdk.WebSettings;
 import com.tencent.smtt.sdk.WebView;
 
 import java.io.File;
+import java.net.URLDecoder;
 import java.text.MessageFormat;
 
 import cn.garymb.ygomobile.AppsSettings;
@@ -347,7 +348,7 @@ public class MyCardWebFragment extends BaseFragemnt {
                         }
 
                         // URL解码，将 %XX 形式的编码转换为中文字符
-                        return java.net.URLDecoder.decode(encodedText, "UTF-8");
+                        return URLDecoder.decode(encodedText, "UTF-8");
                     }
                 }
             } else {

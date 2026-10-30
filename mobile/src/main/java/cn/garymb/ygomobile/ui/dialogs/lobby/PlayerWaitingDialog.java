@@ -1,4 +1,5 @@
 package cn.garymb.ygomobile.ui.dialogs.lobby;
+import cn.garymb.ygomobile.game.engine.GameEngine;
 import cn.garymb.ygomobile.ui.dialogs.deck.DeckSelectorDialog;
 
 import android.content.Context;
@@ -235,7 +236,7 @@ public class PlayerWaitingDialog extends PlayerWaitingDialogMid {
             dialog.setOnDismissListener(() -> activity.getMainMenuDialog().restoreMainMenu());
             dialog.show(anchor);
             dialog.setPlayerName(0, playerName);
-            final cn.garymb.ygomobile.game.engine.GameEngine engine = activity.getEngine();
+            final GameEngine engine = activity.getEngine();
             dialog.setSoloMode(engine != null && engine.soloMode);
         });
     }

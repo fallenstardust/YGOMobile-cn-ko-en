@@ -4,6 +4,7 @@ import android.util.Log;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -546,7 +547,7 @@ abstract class GameRoomMid extends GameRoomBase {
             while (units > 0 && ((msg[units * 2 - 2] & 0xFF) | ((msg[units * 2 - 1] & 0xFF) << 8)) == 0) {
                 units--;
             }
-            String text = new String(msg, 0, units * 2, java.nio.charset.StandardCharsets.UTF_16LE);
+            String text = new String(msg, 0, units * 2, StandardCharsets.UTF_16LE);
             duel.replay.writeChatFrame(dp.type, text);
             // 录制验证落点：每条对局聊天录为 0xF1 伪帧均留痕，logcat 过滤 "GameRoom" 即可
             // 确认聊天已落盘；回放开场信息另标注文件内聊天帧总条数（ReplayPlayer.buildReplayInfo）

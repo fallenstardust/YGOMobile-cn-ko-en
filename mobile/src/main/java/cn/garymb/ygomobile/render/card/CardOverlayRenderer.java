@@ -1,4 +1,5 @@
 package cn.garymb.ygomobile.render.card;
+import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.render.field.FieldGeometry;
 import cn.garymb.ygomobile.render.field.FieldTextureManager;
 import cn.garymb.ygomobile.render.gamefieldview.GameFieldView;
@@ -416,7 +417,7 @@ public final class CardOverlayRenderer {
         if (!c.isFaceUp() || c.equipTarget != null) return;    // 对齐 drawing.cpp 表侧 & !equipTarget
         boolean gate;
         try {
-            gate = cn.garymb.ygomobile.AppsSettings.get().isPendulumScale();
+            gate = AppsSettings.get().isPendulumScale();
         } catch (Throwable e) {
             gate = false;
         }
@@ -464,7 +465,7 @@ public final class CardOverlayRenderer {
         // 对齐 drawing.cpp L878：仅当连锁数 > 1，或勾选「只有连锁1也显示连锁动画」(draw_single_chain) 时才显示
         try {
             if (chains.size() <= 1
-                    && cn.garymb.ygomobile.AppsSettings.get().getIntSettings("draw_single_chain", 0) != 1)
+                    && AppsSettings.get().getIntSettings("draw_single_chain", 0) != 1)
                 return;
         } catch (Throwable ignored) {
         }

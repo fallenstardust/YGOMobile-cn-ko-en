@@ -35,6 +35,8 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -269,8 +271,8 @@ public abstract class MycardFragmentAccount extends MycardFragmentBase {
             int size = duelRoomBQAdapter.getData().size();
             String title = YGOUtil.s(R.string.watch_duel) + "（" + size + "）";
 
-            if (getActivity() instanceof androidx.appcompat.app.AppCompatActivity) {
-                androidx.appcompat.app.AppCompatActivity appCompatActivity = (androidx.appcompat.app.AppCompatActivity) getActivity();
+            if (getActivity() instanceof AppCompatActivity) {
+                AppCompatActivity appCompatActivity = (AppCompatActivity) getActivity();
                 if (appCompatActivity.getSupportActionBar() != null) {
                     appCompatActivity.getSupportActionBar().setTitle(title);
                 }
@@ -440,7 +442,7 @@ public abstract class MycardFragmentAccount extends MycardFragmentBase {
 
         boolean isAdded = homeActivity.fragment_duel_arena.isAdded();
 
-        androidx.fragment.app.FragmentTransaction transaction = getChildFragmentManager().beginTransaction()
+        FragmentTransaction transaction = getChildFragmentManager().beginTransaction()
                 .setCustomAnimations(R.anim.push_in, R.anim.push_out,
                         R.anim.push_in, R.anim.push_out);
 

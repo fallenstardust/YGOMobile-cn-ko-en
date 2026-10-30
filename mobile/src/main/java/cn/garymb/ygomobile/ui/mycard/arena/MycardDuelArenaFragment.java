@@ -19,6 +19,7 @@ import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.mycard.MyCard;
+import cn.garymb.ygomobile.ui.mycard.MycardFragment;
 import cn.garymb.ygomobile.ui.mycard.MyCardWebFragment;
 import cn.garymb.ygomobile.utils.YGOUtil;
 
@@ -79,8 +80,8 @@ public class MycardDuelArenaFragment extends BaseFragemnt {
                     .commit();
             
             // 恢复萌卡论坛按钮状态
-            if (getParentFragment() instanceof cn.garymb.ygomobile.ui.mycard.MycardFragment) {
-                ((cn.garymb.ygomobile.ui.mycard.MycardFragment) getParentFragment())
+            if (getParentFragment() instanceof MycardFragment) {
+                ((MycardFragment) getParentFragment())
                         .updateToolBarButtonStatePublic(null);
             }
         } else {
@@ -109,8 +110,8 @@ public class MycardDuelArenaFragment extends BaseFragemnt {
             View parentView = getParentFragment().getView();
             if (parentView != null) {
                 View btnBbs = parentView.findViewById(R.id.btn_mycard_bbs);
-                if (getParentFragment() instanceof cn.garymb.ygomobile.ui.mycard.MycardFragment) {
-                    ((cn.garymb.ygomobile.ui.mycard.MycardFragment) getParentFragment())
+                if (getParentFragment() instanceof MycardFragment) {
+                    ((MycardFragment) getParentFragment())
                             .updateToolBarButtonStatePublic(btnBbs);
                 }
             }

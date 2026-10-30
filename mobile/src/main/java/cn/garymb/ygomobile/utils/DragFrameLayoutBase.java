@@ -34,6 +34,7 @@ import android.widget.TextView;
 import androidx.core.view.ScrollingView;
 import androidx.core.widget.NestedScrollView;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -93,7 +94,7 @@ abstract class DragFrameLayoutBase extends FrameLayout {
         protected boolean swapForPortrait = false;
         /** 居中区域（如 layout_game_right）的视图 id 与弱引用，旋转重建后按 id 重新解析新实例 */
         protected int centerRegionId = View.NO_ID;
-        protected java.lang.ref.WeakReference<View> centerRegionRef;
+        protected WeakReference<View> centerRegionRef;
         /** 停靠模式：true=内容贴区域左缘+垂直居中（{@link #dockPopupInRegionLeft}），
          *  false=区域居中（{@link #centerPopupInRegion}）；旋转重排按此标志重新定位 */
         protected boolean dockLeftInRegion = false;
@@ -192,7 +193,7 @@ abstract class DragFrameLayoutBase extends FrameLayout {
         void setCenterRegion(View region, boolean dockLeft) {
             if (region != null) {
                 this.centerRegionId = region.getId();
-                this.centerRegionRef = new java.lang.ref.WeakReference<>(region);
+                this.centerRegionRef = new WeakReference<>(region);
                 this.dockLeftInRegion = dockLeft;
             }
         }

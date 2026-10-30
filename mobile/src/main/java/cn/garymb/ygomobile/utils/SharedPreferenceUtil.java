@@ -16,6 +16,7 @@ import org.json.JSONException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.AppsSettings;
@@ -310,7 +311,7 @@ public class SharedPreferenceUtil {
         // 生成5位随机文本（字母和数字组合）
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         StringBuilder sb = new StringBuilder();
-        java.util.Random random = new java.util.Random();
+        Random random = new Random();
         for (int i = 0; i < 5; i++) {
             int index = random.nextInt(chars.length());
             sb.append(chars.charAt(index));

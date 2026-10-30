@@ -1,4 +1,5 @@
 package cn.garymb.ygomobile.render.card;
+import cn.garymb.ygomobile.game.gamefield.EffectActivatableHints;
 import cn.garymb.ygomobile.render.field.TextureLoader;
 
 import android.graphics.Bitmap;
@@ -53,7 +54,7 @@ public class CardDetailPanel extends CardDetailPanelMid {
      *  绿/橙发光同步互换（纯单人逐回合自动翻转下不翻转会使自己方的可发动条目被记到对面） */
     public static void notifyViewpointSwapped() {
         EffectActivationLedger.swapSides();
-        cn.garymb.ygomobile.game.gamefield.EffectActivatableHints.swapSides();
+        EffectActivatableHints.swapSides();
         CardInfoBinder.notifyViewpointSwapped();
     }
 

@@ -3,6 +3,7 @@ package cn.garymb.ygomobile;
 import android.util.Log;
 
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.List;
 
 import cn.garymb.ygomobile.game.engine.GameEngine;
@@ -10,6 +11,7 @@ import cn.garymb.ygomobile.game.gamefield.GameField;
 import cn.garymb.ygomobile.game.replay.ReplayMsgMerger;
 import cn.garymb.ygomobile.game.select.ShowDialogUtil;
 import cn.garymb.ygomobile.render.spec.SpecEffectOverlay;
+import cn.garymb.ygomobile.ui.dialogs.duel.CardDisplayDialog;
 import cn.garymb.ygomobile.ui.dialogs.duel.YesOrNoDialog;
 import ocgcore.enums.DuelPhase;
 
@@ -154,7 +156,7 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
         activity.runOnUiThread(() -> {
             activity.topInfoManager.updateCardCountDisplay(activity.engine.getField());
             // 堆叠区查看列表弹窗（观战/录像）即时刷新：任何 field 变化后重拉 supplier，将宿主区域最新状态同步到已开着的弹窗（如果有）
-            cn.garymb.ygomobile.ui.dialogs.duel.CardDisplayDialog.refreshLiveDialogs();
+            CardDisplayDialog.refreshLiveDialogs();
         });
     }
 
@@ -460,7 +462,7 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
         // 双兼容合并（读包线程顺序保证：本局全部 MSG 帧先于 STOC_REPLAY 入队）：取最早已完结的逐局录制段 FIFO 配对，把引擎 MSG 尾段并入原录像字节，产物 libygo（ocgcore+script 重跑）与 MsgStreamReplaySource（无引擎）均可播放；无本地段/已是 V2/合并失败时原样返回（见 ReplayMsgMerger）；客机/观战身份下逐局段是服务端遮蔽视角（对方暗区零码），置 GUEST_VIEW 位使回放侧优先引擎重跑恢复全量信息（公开双方手卡），无引擎时退回按流播放
         final byte[] merged = ReplayMsgMerger.appendMsgFrames(data,
                 activity.engine != null ? activity.engine.takeRecordedMsgSegment()
-                        : java.util.Collections.emptyList(),
+                        : Collections.emptyList(),
                 activity.engine != null && !activity.engine.isHost);
         activity.runOnUiThread(() -> {
             duelEnd.pendingReplays.add(merged);

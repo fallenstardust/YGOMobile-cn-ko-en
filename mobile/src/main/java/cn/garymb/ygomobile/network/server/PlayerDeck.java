@@ -3,7 +3,9 @@ package cn.garymb.ygomobile.network.server;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import cn.garymb.ygomobile.Constants;
 import ocgcore.DataManager;
@@ -91,7 +93,7 @@ final class PlayerDeck {
                 != o.main.size() + o.extra.size() + o.side.size()) {
             return false;
         }
-        java.util.Map<Integer, Integer> diff = new java.util.HashMap<>();
+        Map<Integer, Integer> diff = new HashMap<>();
         bump(diff, main, 1);
         bump(diff, extra, 1);
         bump(diff, side, 1);
@@ -106,7 +108,7 @@ final class PlayerDeck {
         return true;
     }
 
-    private static void bump(java.util.Map<Integer, Integer> m, List<Integer> codes, int delta) {
+    private static void bump(Map<Integer, Integer> m, List<Integer> codes, int delta) {
         for (int code : codes) {
             m.merge(code, delta, Integer::sum);
         }

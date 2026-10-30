@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.List;
 
 /**
  * 回放消息来源抽象：把「录像文件里自带的主机视角 MSG 流」与「旧格式重跑 ocgcore 现产生的
@@ -72,7 +73,7 @@ abstract class ReplaySource {
      * 含合成的 UPDATE_DATA/UPDATE_CARD 刷新帧）。播毕无错时 {@link ReplayPlayer} 据此把录像
      * 重建为带消息流的 V2 文件，此后回放该录像不再需要 ocgcore 重跑。纯消息流无需转码，返回 null。
      */
-    java.util.List<byte[]> capturedEngineFrames() {
+    List<byte[]> capturedEngineFrames() {
         return null;
     }
 

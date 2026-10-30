@@ -248,7 +248,7 @@ class ChainSelectController {
         }
         e.activatableCards.clear();
         // 连锁询问清理同时收起可发动效果发光登记（菜单构建时登记，随询问存续）
-        cn.garymb.ygomobile.game.gamefield.EffectActivatableHints.clear();
+        EffectActivatableHints.clear();
         // 登记过期同步收起展示中卡详的可发动背景呼吸段（用户新规格3）
         CardDetailPanel.refreshCardDetailMarks();
     }

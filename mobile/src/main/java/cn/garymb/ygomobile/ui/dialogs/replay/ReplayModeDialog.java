@@ -43,6 +43,7 @@ import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.Constants;
 import ocgcore.DataManager;
+import ocgcore.StringManager;
 
 public class ReplayModeDialog {
 
@@ -233,7 +234,7 @@ public class ReplayModeDialog {
 
     /** 界面文字统一复用 gframe 既有系统字符串（对齐 game.cpp wReplay），XML 中的中文仅作兜底 */
     private void setupLabels(View root) {
-        ocgcore.StringManager sm = DataManager.get().getStringManager();
+        StringManager sm = DataManager.get().getStringManager();
         TextView tvInfoTitle = root.findViewById(R.id.tv_replay_info_title);
         if (tvInfoTitle != null) tvInfoTitle.setText(sm.getSystemString(1349, "录像信息："));
         TextView tvStartTurn = root.findViewById(R.id.tv_start_turn_label);

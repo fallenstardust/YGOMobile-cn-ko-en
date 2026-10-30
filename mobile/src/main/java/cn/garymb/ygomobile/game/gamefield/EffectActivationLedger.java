@@ -65,7 +65,7 @@ public final class EffectActivationLedger {
         final Activation[] acts;
         LoggedAdds(int[] codes, Activation[] acts) { this.codes = codes; this.acts = acts; }
     }
-    private static final java.util.ArrayList<LoggedAdds> LOG = new java.util.ArrayList<>();
+    private static final ArrayList<LoggedAdds> LOG = new ArrayList<>();
 
     /** 当前回合号（MSG_NEW_TURN 的 field.turnCount 快照；MSG_START/撤回重同步一并校正） */
     private static volatile int currentTurn = 0;

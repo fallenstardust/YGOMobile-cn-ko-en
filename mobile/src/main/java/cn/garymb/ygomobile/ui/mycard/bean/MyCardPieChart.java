@@ -6,7 +6,9 @@ import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import cn.garymb.ygomobile.utils.OkhttpUtil;
 import okhttp3.Call;
@@ -19,7 +21,7 @@ public class MyCardPieChart extends ArrayList<MyCardPieChart.Item> {
     public static final String SOURCE_MYCARD_ATHLETIC = "mycard-athletic";
 
     public static void getDeckTypeAnalytics(String type, String source, OnMyCardPieChartListener listener) {
-        java.util.Map<String, Object> params = new java.util.HashMap<>();
+        Map<String, Object> params = new HashMap<>();
         params.put("type", type);
         params.put("source", source);
 

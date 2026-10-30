@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Set;
 
 import cn.garymb.ygomobile.AppsSettings;
+import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.game.engine.GameEngine;
@@ -440,12 +441,12 @@ public class YesOrNoDialog extends YesOrNoDialogBase {
                 // 对齐 C++ SoundManager::PlayDialogSound：询问/确认类（wQuery/wSurrender/
                 // wOptions/wAN* 等）弹 question 音效，纯消息类（wMessage）弹 info 音效
                 if (context instanceof YGOProActivity) {
-                    cn.garymb.ygomobile.audio.SoundManager sm =
+                    SoundManager sm =
                             ((YGOProActivity) context).getSoundManager();
                     if (sm != null) {
                         sm.playSoundEffect(type == TYPE_YES_NO
-                                ? cn.garymb.ygomobile.audio.SoundManager.SFX.QUESTION
-                                : cn.garymb.ygomobile.audio.SoundManager.SFX.INFO);
+                                ? SoundManager.SFX.QUESTION
+                                : SoundManager.SFX.INFO);
                     }
                 }
                 if (popupWindow.isShowing()) {

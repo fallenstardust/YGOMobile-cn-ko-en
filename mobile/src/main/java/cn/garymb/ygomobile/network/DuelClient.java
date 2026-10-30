@@ -4,11 +4,13 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -171,11 +173,11 @@ public class DuelClient implements YGOProtocol {
 
                 handlePacket(data);
             }
-        } catch (java.net.SocketException e) {
+        } catch (SocketException e) {
             if (running.get()) {
                 Log.w(TAG, "Connection aborted by remote: " + e.getMessage());
             }
-        } catch (java.io.EOFException e) {
+        } catch (EOFException e) {
             if (running.get()) {
                 Log.w(TAG, "Connection closed by remote (EOF)");
             }

@@ -24,7 +24,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
@@ -214,7 +216,7 @@ abstract class DeckSelectorDialogBase {
             File packDir = new File(packDirPath);
             File[] packYdks = packDir.listFiles(f -> f.isFile() && f.getName().toLowerCase().endsWith(".ydk"));
             if (packYdks != null) {
-                java.util.Arrays.sort(packYdks, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+                Arrays.sort(packYdks, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
                 for (File f : packYdks) {
                     String name = f.getName().replace(".ydk", "");
                     packCategory.deckList.add(new DeckSelectorUtil.DeckItem(name, f.getAbsolutePath()));
@@ -232,7 +234,7 @@ abstract class DeckSelectorDialogBase {
 
         Integer[] indices = new Integer[rawCategories.size()];
         for (int i = 0; i < indices.length; i++) indices[i] = i;
-        java.util.Arrays.sort(indices, (a, b) -> {
+        Arrays.sort(indices, (a, b) -> {
             int pa = sortPriorities.get(a);
             int pb = sortPriorities.get(b);
             if (pa != pb) return Integer.compare(pa, pb);
@@ -516,7 +518,7 @@ abstract class DeckSelectorDialogBase {
         for (File f : files) {
             if (f.isDirectory()) {
                 result.addAll(listYdkFilesRecursive(f));
-            } else if (f.getName().toLowerCase(java.util.Locale.US).endsWith(Constants.YDK_FILE_EX)) {
+            } else if (f.getName().toLowerCase(Locale.US).endsWith(Constants.YDK_FILE_EX)) {
                 result.add(f);
             }
         }

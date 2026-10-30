@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.Stack;
 import java.util.concurrent.ExecutorService;
@@ -969,7 +970,7 @@ class CardInfoBinder {
      *  即命中；有小句带序号时须含本段序号（如「①的效果1回合只能使用1次，②的效果在决斗
      *  中只能使用1次」只对②持续） */
     private static boolean lineMarksPerDuel(String line, char anchorCh) {
-        String low = line.toLowerCase(java.util.Locale.ROOT);
+        String low = line.toLowerCase(Locale.ROOT);
         boolean anyMark = false;
         for (String m : PER_DUEL_MARKS) {
             if (low.contains(m)) { anyMark = true; break; }
@@ -981,7 +982,7 @@ class CardInfoBinder {
         }
         if (!anyOnce) return false;
         for (String c : line.split("[，,、。．；;]")) {
-            String cl = c.toLowerCase(java.util.Locale.ROOT);
+            String cl = c.toLowerCase(Locale.ROOT);
             boolean hasMark = false;
             for (String m : PER_DUEL_MARKS) {
                 if (cl.contains(m)) { hasMark = true; break; }
