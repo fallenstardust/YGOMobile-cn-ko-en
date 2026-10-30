@@ -206,14 +206,13 @@ public interface Constants {
     String URL_MASTER_RULE_CN = "https://ocg-rule.readthedocs.io/";
     String WIKI_SEARCH_URL = "https://ygocdb.com/card/";
     String URL_HOME_VERSION = "https://ygom.top/ver_code.json";
-    String URL_HOME_VERSION_ALT = "https://cdn02.moecube.com:444/ygom-site/ver_code.txt";
     String URL_BILIBILI_DYNAMIC = "https://m.bilibili.com/space/16033444/";
+    String URL_HOME_VERSION_ALT = "https://cdn02.moecube.com:444/ygom-site/ver_code.txt";
     String URL_CARD_IMAGE_DOWNLOAD_LINK = "https://cdn02.moecube.com:444/ygomobile-images/";
     String URL_GENESYS_LFLIST_DOWNLOAD_LINK = "https://cdntx.moecube.com/ygopro-genesys/lflist.conf";
     String URL_CN_DATAVER = "https://cdn02.moecube.com:444/ygopro-super-pre/data/version.txt";
     String URL_PRE_CARD = "https://cdn02.moecube.com:444/ygopro-super-pre/data/test-release.json";
     String URL_SUPERPRE_CN_FILE = "https://cdn02.moecube.com:444/ygopro-super-pre/archive/ygopro-super-pre.ypk";
-    String URL_SUPERPRE_CN_FILE_ALT = "https://cdn02.moecube.com:444/ygopro-super-pre/archive/ygopro-super-pre.ypk";
     int PORT_Mycard_Super_Pre_Server = 888;
     String URL_Mycard_Super_Pre_Server = "mygo.superpre.pro";
     String URL_Mycard_Super_Pre_Server_2 = "mygo2.superpre.pro";

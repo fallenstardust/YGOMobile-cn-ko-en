@@ -42,11 +42,9 @@
     <string name="fetch_online_deck">透過網路取得線上卡組</string>
     <string name="fetch_ex_card">透過網路取得先行卡</string>
     <string name="ex_card_list_title">超先行服☆專用☆</string>
-    <string name="ex_card_log_title">更新日誌</string>
-    <string name="ex_card_report_title">回饋</string>
     <string name="ex_card_check_toast_message">未開啟擴充卡包會在該伺服器遇到未知卡，建議開啟擴充卡包後再進入</string>
     <string name="ex_card_check_toast_message_ii">未下載擴充卡包會在該伺服器遇到未知卡，建議下載擴充卡包後再進入</string>
-    <string name="ex_card_check_toast_message_iii">未取得到先行卡資訊，將跳轉233官網下載</string>
+    <string name="ex_card_check_toast_message_iii">未取得到先行卡資訊，請稍後重試</string>
 
     <!-- settings -->
     <string name="settings_about">關於</string>

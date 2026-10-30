@@ -40,11 +40,9 @@
     <string name="fetch_online_deck">Obtener decks online</string>
     <string name="fetch_ex_card">Obtener cartas pre-lanzadas</string>
     <string name="ex_card_list_title">Servidor exclusivo de cartas pre-lanzadas</string>
-    <string name="ex_card_log_title">Registro de actualizaciones</string>
-    <string name="ex_card_report_title">Comentarios</string>
     <string name="ex_card_check_toast_message">Las cartas pre-lanzadas no están activadas. Puedes encontrar cartas desconocidas en este servidor. Se recomienda activarlas antes de entrar.</string>
     <string name="ex_card_check_toast_message_ii">Las cartas pre-lanzadas no están descargadas. Puedes encontrar cartas desconocidas en este servidor. Se recomienda descargarlas antes de entrar.</string>
-    <string name="ex_card_check_toast_message_iii">No se obtuvieron las cartas pre-lanzadas. Redirigiendo al sitio web oficial.</string>
+    <string name="ex_card_check_toast_message_iii">No se obtuvieron las cartas pre-lanzadas. Inténtelo de nuevo más tarde.</string>
     <!-- settings -->
     <string name="settings_about">Acerca de</string>
     <string name="settings_about_sub_about">Acerca de</string>

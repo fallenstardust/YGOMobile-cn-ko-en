@@ -39,11 +39,9 @@
     <string name="string_help_text">O aplicativo atual não possui as permissões necessárias.\nToque em Configuração -> Permissões -> Habilite as permissões necessárias.</string>
     <string name="fetch_ex_card">Obtendo cartas pré-lançamento da web, por favor, aguarde...</string>
     <string name="ex_card_list_title">Lista de Cartas Pré-Lançamento</string>
-    <string name="ex_card_log_title">Registro de atualização</string>
-    <string name="ex_card_report_title">Reporte</string>
     <string name="ex_card_check_toast_message">Antes de se juntar a este servidor, verifique primeiro se \"Usar Expansões\" está habilitado na configuração</string>
     <string name="ex_card_check_toast_message_ii">Antes de se juntar a este servidor, baixe as expansões.</string>
-    <string name="ex_card_check_toast_message_iii">Erro ao obter a expansão das cartas, abrindo o site 233 para baixá-las.</string>
+    <string name="ex_card_check_toast_message_iii">Erro ao obter a expansão das cartas, tente novamente mais tarde.</string>
     <!-- settings -->
     <string name="settings_about">Sobre</string>
     <string name="settings_about_sub_about">Sobre</string>

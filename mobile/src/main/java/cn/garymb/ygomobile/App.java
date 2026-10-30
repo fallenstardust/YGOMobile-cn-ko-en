@@ -62,9 +62,9 @@ public class App extends GameApplication {
         //（:game/:dexopt 等子进程不跑内置局域网服务器，无需引擎数据）；
         // ensureEngineReady 同步幂等，与 YGOProActivity 启动预热/建主引导并发时
         // 串行合并互不重复
-        // TX 云（cdntx）固定节点近期因风控不稳定：打开 app 时异步查一次可用节点接口，
-        // 取返回列表的第一个主机用于替换下载 URL 里的 cdntx.moecube.com（仅主进程、
-        // 进程生命周期内一次，见 TxEndpoint）；查不到就沿用固定节点，不阻塞任何流程
+        // TX 云固定源站（cdntx.moecube.com / cdn02.moecube.com:444）近期因风控不稳定：打开 app
+        // 时异步查一次可用节点接口，取返回列表的第一个主机用于替换这两类源站（仅主进程、
+        // 进程生命周期内一次，见 TxEndpoint）；查不到或结果未回来就沿用原固定源站，不阻塞任何流程
         if (!ProcessUtils.getCurrentProcessName(this).contains(":")) {
             TxEndpoint.refreshAsync();
             NativeScriptBootstrap.warmUpAsync("AppEngineWarmUp", "App启动-引擎预热");

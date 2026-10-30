@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="StringFormatInvalid">
     <string name="action_settings">設定</string>
     <string name="action_game">AI対戦</string>
@@ -39,11 +39,9 @@
     <string name="string_help_text">権限が足りません。\n 設定-権限 をクリックして全部を通してください。</string>
     <string name="fetch_ex_card">ネットからカードをダウンロード</string>
     <string name="ex_card_list_title">超非公式☆専用☆</string>
-    <string name="ex_card_log_title">更新リスト</string>
-    <string name="ex_card_report_title">フィードバック</string>
     <string name="ex_card_check_toast_message">非公式パックをダウンロードしないとサーバー対戦ではUNKOWNカードをとして扱う、非公式パックを先にダウンロードしてください</string>
     <string name="ex_card_check_toast_message_ii">非公式パックをダウンロードしないとサーバー対戦ではUNKOWNカードをとして扱う、非公式パックを先にダウンロードしてください</string>
-    <string name="ex_card_check_toast_message_iii">非公式データを認識できません、２３３サイトからダウンロードします</string>
+    <string name="ex_card_check_toast_message_iii">非公式データを認識できません、時間をおいて再度お試しください</string>
 
     <!-- settings -->
     <string name="settings_about">ソフトについて</string>

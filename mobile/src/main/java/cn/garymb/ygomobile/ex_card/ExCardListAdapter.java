@@ -5,6 +5,8 @@ import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.widget.ImageView;
 
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
 import com.bumptech.glide.RequestBuilder;
 import com.bumptech.glide.signature.ObjectKey;
 import com.chad.library.adapter.base.BaseQuickAdapter;
@@ -18,24 +20,31 @@ import java.util.List;
 
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
-import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.OkhttpUtil;
 import cn.garymb.ygomobile.utils.ServerUtil;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
+import cn.garymb.ygomobile.utils.glide.HostAgnosticGlideUrl;
 import cn.garymb.ygomobile.utils.glide.StringSignature;
 import okhttp3.Response;
 
 public class ExCardListAdapter extends BaseQuickAdapter<ExCardData, BaseViewHolder> {
     private static final String TAG = ExCardListAdapter.class.getSimpleName();
 
+    /** 加载态由下拉刷新的转圈承担（不再弹模态 DialogPlus，拉不到数据时不会卡在页面）。 */
+    private SwipeRefreshLayout swipeRefreshLayout;
+
     public ExCardListAdapter(int layoutResId) {
         super(layoutResId);
     }
 
+    public void setSwipeRefreshLayout(SwipeRefreshLayout swipeRefreshLayout) {
+        this.swipeRefreshLayout = swipeRefreshLayout;
+    }
+
     public void loadData() {
-        final DialogPlus dialog_read_ex = DialogPlus.show(getContext(), null, getContext().getString(R.string.fetch_ex_card));
+        setRefreshing(true);
         VUiKit.defer().when(() -> {
             LogUtil.d(TAG, "start fetch");
             List<ExCardData> exCardDataList = null;
@@ -52,7 +61,9 @@ public class ExCardListAdapter extends BaseQuickAdapter<ExCardData, BaseViewHold
                 return null;
             }
 
-            if (exCardDataList.isEmpty()) {
+            if (exCardDataList == null || exCardDataList.isEmpty()) {
+                // gson 对非列表响应（错误页、空体）会返回 null，旧写法直接 .isEmpty() 会抛
+                // NPE；现按“无数据”收尾，转圈正常停止，用户可再次下拉重试
                 return null;
             } else {
                 return exCardDataList;
@@ -60,13 +71,7 @@ public class ExCardListAdapter extends BaseQuickAdapter<ExCardData, BaseViewHold
 
         }).fail((e) -> {
             Log.e(TAG,e+"");
-            if (dialog_read_ex.isShowing()) {//关闭异常
-                try {
-                    dialog_read_ex.dismiss();
-                } catch (Exception ex) {
-
-                }
-            }
+            setRefreshing(false);
             LogUtil.i(TAG, "webCrawler fail");
 
         }).done((exCardDataList) -> {
@@ -76,14 +81,15 @@ public class ExCardListAdapter extends BaseQuickAdapter<ExCardData, BaseViewHold
                 addData(exCardDataList);
                 notifyDataSetChanged();
             }
-            if (dialog_read_ex.isShowing()) {
-                try {
-                    dialog_read_ex.dismiss();
-                } catch (Exception ex) {
-                }
-            }
+            setRefreshing(false);
         });
 
+    }
+
+    private void setRefreshing(boolean refreshing) {
+        if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing() != refreshing) {
+            swipeRefreshLayout.setRefreshing(refreshing);
+        }
     }
 
     private static Boolean isMonster(List<String> list) {
@@ -111,8 +117,11 @@ public class ExCardListAdapter extends BaseQuickAdapter<ExCardData, BaseViewHold
                 || ServerUtil.exCardState == ServerUtil.ExCardState.UPDATED) {
             StringSignature signature = new StringSignature(ServerUtil.serverExCardVersion);
             ObjectKey key = new ObjectKey(ServerUtil.serverExCardVersion);
+            // picUrl 是服务端 JSON 直接给出的 cdntx 固定源站地址，Glide 自带 HTTP 栈、不经
+            // OkhttpUtil/DownloadUtil 的改写入口；用 HostAgnosticGlideUrl 让请求走可用节点、
+            // 而缓存键保持原始地址，避免节点列表换序时先行卡图全量重下
             RequestBuilder<Drawable> resource = GlideCompat.with(imageview.getContext()).
-                    load(item.getPicUrl())
+                    load(new HostAgnosticGlideUrl(item.getPicUrl()))
                     .signature(signature);
             resource.placeholder(R.drawable.unknown);
             resource.error(R.drawable.unknown);

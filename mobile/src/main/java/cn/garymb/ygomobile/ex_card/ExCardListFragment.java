@@ -19,6 +19,7 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -47,6 +48,7 @@ public class ExCardListFragment extends Fragment {
     private View layoutView;
     private ExCardListAdapter mExCardListAdapter;
     private RecyclerView mExCardListView;
+    private SwipeRefreshLayout srlRefresh;
     private TextView textDownload;
     private int FailedCount;
 
@@ -82,6 +84,12 @@ public class ExCardListFragment extends Fragment {
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(context);
         mExCardListView.setLayoutManager(linearLayoutManager);
         mExCardListView.setAdapter(mExCardListAdapter);
+        // 列表加载态交给下拉刷新：首次拉取失败只收起转圈，不再弹无法关闭的模态弹窗，
+        // 用户可下拉重试或直接离开/返回本页
+        srlRefresh = layoutView.findViewById(R.id.srl_ex_card);
+        srlRefresh.setColorSchemeColors(YGOUtil.c(R.color.colorAccent));
+        srlRefresh.setOnRefreshListener(mExCardListAdapter::loadData);
+        mExCardListAdapter.setSwipeRefreshLayout(srlRefresh);
         mExCardListAdapter.loadData();
         textDownload = layoutView.findViewById(R.id.text_download_precard);
 

@@ -5,14 +5,22 @@
     android:layout_height="match_parent">
 
 
-    <com.tubb.smrv.SwipeMenuRecyclerView
-        android:id="@+id/list_ex_card"
+    <!-- 列表加载中用下拉刷新自己的转圈提示，不弹模态 DialogPlus：拉不到数据时
+         页面仍可自由滚动/返回/再次下拉重试，不会被弹窗卡在当页 -->
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/srl_ex_card"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:divider="@android:color/transparent"
-        android:dividerHeight="4dp"
-        android:padding="5dp"
-        android:scrollbars="vertical" />
+        android:layout_height="match_parent">
+
+        <com.tubb.smrv.SwipeMenuRecyclerView
+            android:id="@+id/list_ex_card"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:divider="@android:color/transparent"
+            android:dividerHeight="4dp"
+            android:padding="5dp"
+            android:scrollbars="vertical" />
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     <!--    不知道为啥，android:focusableInTouchMode="true"就导致必须按两次linearylayout才触发点击事件
     有帖子说：
