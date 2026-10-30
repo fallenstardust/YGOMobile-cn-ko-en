@@ -113,7 +113,6 @@ public class ExCardListFragment extends Fragment {
             /* 查询不到版本号时，提示toast */
             textDownload.setText(R.string.Download);
             YGOUtil.showTextToast("error" + getString(R.string.ex_card_check_toast_message_iii));
-            //WebActivity.open(getActivity(), getString(R.string.ex_card_list_title), URL_YGO233_ADVANCE);
         } else if (ServerUtil.exCardState == ServerUtil.ExCardState.UNCHECKED) {
             //do nothing
             //状态UNCHECKED仅在app启动后调用哦你Create()之前短暂存在，所以该情况进行处理

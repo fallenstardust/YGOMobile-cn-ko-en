@@ -87,8 +87,9 @@ public class DownloadUtil {
      * @param listener     下载过程的监听器，用于接收下载成功、失败和进度更新等事件
      */
     public void download(final String url, final String destFileDir, final String destFileName, final OnDownloadListener listener) {
-        // 构建带 ETag 的请求
-        Request.Builder builder = new Request.Builder().url(url);
+        // 构建带 ETag 的请求（仅把请求地址里的 cdntx 固定节点换成查到的可用节点；
+        // ETag 仍以原始 url 为键，避免节点切换导致缓存键漂移）
+        Request.Builder builder = new Request.Builder().url(TxEndpoint.resolve(url));
 
         // 添加 If-None-Match 头部（如果有保存的 ETag）
         String savedETag = getSavedETag(url);
@@ -212,7 +213,7 @@ public class DownloadUtil {
     // Probe the remote file with HEAD first to learn its size, calculate the
     // 10MB ranges, and then request the file by byte ranges in sequence.
     private void downloadInChunks(final String url, final String destFileDir, final String destFileName, final OnDownloadListener listener) {
-        Request.Builder builder = new Request.Builder().head().url(url);
+        Request.Builder builder = new Request.Builder().head().url(TxEndpoint.resolve(url));
         Request request = builder.build();
         okHttpClient.newCall(request).enqueue(new Callback() {
             @Override
@@ -268,7 +269,7 @@ public class DownloadUtil {
         }
 
         final ChunkRange range = ranges.get(index);
-        Request.Builder builder = new Request.Builder().url(url);
+        Request.Builder builder = new Request.Builder().url(TxEndpoint.resolve(url));
         if (range.end >= 0) {
             builder.addHeader("Range", "bytes=" + range.start + "-" + range.end);
         }
@@ -321,7 +322,7 @@ public class DownloadUtil {
 
     // Fallback for servers or responses that do not support range requests.
     private void downloadSingleFile(final String url, final String destFileDir, final String destFileName, final OnDownloadListener listener) {
-        Request.Builder builder = new Request.Builder().url(url);
+        Request.Builder builder = new Request.Builder().url(TxEndpoint.resolve(url));
         Request request = builder.build();
         Call call = okHttpClient.newCall(request);
         call.enqueue(new Callback() {

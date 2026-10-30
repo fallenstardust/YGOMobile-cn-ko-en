@@ -31,9 +31,6 @@ public class ExPackageTabAdapter extends FragmentStatePagerAdapter {
             fragment = new ExCardListFragment();
         }
         /* 目前只显示一个tab，未来可能添加其他tab */
-//         else if (position == 1) {
-//            fragment = new ExCardLogFragment();
-//        }
         return fragment;
     }
 
@@ -49,9 +46,6 @@ public class ExPackageTabAdapter extends FragmentStatePagerAdapter {
 
             title = context.getString(R.string.ex_card_list_title);
         }
-//         else if (position == 1) {
-//            title = context.getString(R.string.ex_card_log_title);
-//        }
         return title;
     }
 }

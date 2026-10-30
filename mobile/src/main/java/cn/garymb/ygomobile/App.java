@@ -31,6 +31,7 @@ import cn.garymb.ygomobile.utils.CrashHandler;
 import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.ProcessUtils;
+import cn.garymb.ygomobile.utils.TxEndpoint;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
 
 public class App extends GameApplication {
@@ -61,7 +62,11 @@ public class App extends GameApplication {
         //（:game/:dexopt 等子进程不跑内置局域网服务器，无需引擎数据）；
         // ensureEngineReady 同步幂等，与 YGOProActivity 启动预热/建主引导并发时
         // 串行合并互不重复
+        // TX 云（cdntx）固定节点近期因风控不稳定：打开 app 时异步查一次可用节点接口，
+        // 取返回列表的第一个主机用于替换下载 URL 里的 cdntx.moecube.com（仅主进程、
+        // 进程生命周期内一次，见 TxEndpoint）；查不到就沿用固定节点，不阻塞任何流程
         if (!ProcessUtils.getCurrentProcessName(this).contains(":")) {
+            TxEndpoint.refreshAsync();
             NativeScriptBootstrap.warmUpAsync("AppEngineWarmUp", "App启动-引擎预热");
         }
     }

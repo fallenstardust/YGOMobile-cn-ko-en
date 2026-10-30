@@ -23,6 +23,7 @@ import com.ourygo.lib.duelassistant.util.Util;
 
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.App;
+import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.YGOStarter;
 import cn.garymb.ygomobile.bean.ServerInfo;
 import cn.garymb.ygomobile.lite.R;
@@ -117,7 +118,7 @@ public class YGOUtil {
      * @return 高清图url
      */
     public static String getCardImageDetailUrl(int code) {
-        return "https://cdn02.moecube.com:444/ygomobile-images/" + code + ".jpg";
+        return Constants.URL_CARD_IMAGE_DOWNLOAD_LINK + code + Constants.IMAGE_URL_EX;
     }
 
     //关闭输入法

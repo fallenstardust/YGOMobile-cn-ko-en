@@ -208,16 +208,12 @@ public interface Constants {
     String URL_HOME_VERSION = "https://ygom.top/ver_code.json";
     String URL_HOME_VERSION_ALT = "https://cdn02.moecube.com:444/ygom-site/ver_code.txt";
     String URL_BILIBILI_DYNAMIC = "https://m.bilibili.com/space/16033444/";
-    String ID1 = "[versionname]";
-    String ID2 = "[download_link]";
-    String ID3 = "#pre_release_code";
+    String URL_CARD_IMAGE_DOWNLOAD_LINK = "https://cdn02.moecube.com:444/ygomobile-images/";
     String URL_GENESYS_LFLIST_DOWNLOAD_LINK = "https://cdntx.moecube.com/ygopro-genesys/lflist.conf";
-    String URL_YGO233_ADVANCE = "";//"https://ygo233.com/pre#pre_release_cards";//关闭233先行卡服务器，但不要删除该字段，许多未调用的遗留代码使用该contant
     String URL_CN_DATAVER = "https://cdn02.moecube.com:444/ygopro-super-pre/data/version.txt";
     String URL_PRE_CARD = "https://cdn02.moecube.com:444/ygopro-super-pre/data/test-release.json";
     String URL_SUPERPRE_CN_FILE = "https://cdn02.moecube.com:444/ygopro-super-pre/archive/ygopro-super-pre.ypk";
     String URL_SUPERPRE_CN_FILE_ALT = "https://cdn02.moecube.com:444/ygopro-super-pre/archive/ygopro-super-pre.ypk";
-    String URL_YGO233_BUG_REPORT = "https://ygo233.com/pre#faq";
     int PORT_Mycard_Super_Pre_Server = 888;
     String URL_Mycard_Super_Pre_Server = "mygo.superpre.pro";
     String URL_Mycard_Super_Pre_Server_2 = "mygo2.superpre.pro";

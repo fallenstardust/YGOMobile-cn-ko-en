@@ -1,8 +1,5 @@
 package cn.garymb.ygomobile.ui.home;
 
-import static cn.garymb.ygomobile.Constants.ID1;
-import static cn.garymb.ygomobile.Constants.ID2;
-import static cn.garymb.ygomobile.Constants.ID3;
 import static cn.garymb.ygomobile.Constants.URL_GENESYS_LFLIST_DOWNLOAD_LINK;
 import static cn.garymb.ygomobile.Constants.URL_HOME_VERSION;
 import static cn.garymb.ygomobile.Constants.URL_HOME_VERSION_ALT;
@@ -56,7 +53,6 @@ import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.cards.CardSearchFragment;
 import cn.garymb.ygomobile.ui.cards.DeckManagerFragment;
-import cn.garymb.ygomobile.ui.mycard.arena.DeckWinRateFragment;
 import cn.garymb.ygomobile.ui.mycard.MyCardWebFragment;
 import cn.garymb.ygomobile.ui.mycard.MycardFragment;
 import cn.garymb.ygomobile.ui.mycard.arena.MycardDuelArenaFragment;
