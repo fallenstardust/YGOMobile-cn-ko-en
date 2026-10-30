@@ -288,17 +288,18 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.font_files)));
             IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.FONT_DIRECTORY),
                     mSettings.getFontDirPath(), needsUpdate);
-            //复制脚本压缩包
+            //复制脚本压缩包：只在包内资源内容真正变化时才重写（内容未变保留原 mtime，
+            //下游 NativeScriptBootstrap 的解压指纹不会因此失配而全量重解压）
             if (IOUtils.hasAssets(mContext, getDatapath(Constants.CORE_SCRIPTS_ZIP))) {
                 setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.scripts)));
-                IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_SCRIPTS_ZIP),
-                        resPath, needsUpdate);
+                IOUtils.copyFileFromAssetsIfChanged(mContext, getDatapath(Constants.CORE_SCRIPTS_ZIP),
+                        new File(resPath), needsUpdate);
             }
-            //复制卡图压缩包
+            //复制卡图压缩包：同上，避免升级时白拷数百 MB 并扰动卡图档案时间戳
             if (IOUtils.hasAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP))) {
                 setMessage(mContext.getString(R.string.check_things, mContext.getString(R.string.images)));
-                IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP),
-                        resPath, needsUpdate);
+                IOUtils.copyFileFromAssetsIfChanged(mContext, getDatapath(Constants.CORE_PICS_ZIP),
+                        new File(resPath), needsUpdate);
             }
             //复制人机资源
             IOUtils.copyFilesFromAssets(mContext, getDatapath(Constants.WINDBOT_PATH), mSettings.getResourcePath(), needsUpdate);

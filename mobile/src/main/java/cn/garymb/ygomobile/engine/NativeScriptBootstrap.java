@@ -249,6 +249,10 @@ public final class NativeScriptBootstrap {
      * <p>必须比对指纹而不能只看解压过：JNI 侧 engineScriptReader 只认实体文件，而
      * C++ gframe 的 ScriptReaderEx 优先读 zip 挂载——资源升级后若不解压更新，Java 引擎重跑
      * 用的是陈旧脚本、行为与录制时代分叉，是旧格式回放中途 MSG_RETRY 的根因之一。
+     *
+     * <p>应用版本升级不再误触发本方法：{@code ResCheckTask} 拷 scripts.zip 已改走
+     * {@code IOUtils#copyFileFromAssetsIfChanged}，包内资源逐字节未变就不重写目标，目标的
+     * lastModified 保持不变，指纹因此命中快速路径；只有脚本包内容真的变了才重解一轮。
      */
     public static void ensureScriptsExtracted(String resourcePath) {
         if (resourcePath == null || resourcePath.isEmpty()) {
@@ -282,7 +286,13 @@ public final class NativeScriptBootstrap {
                 if (entry.isDirectory()) {
                     continue;
                 }
-                File out = new File(root, entry.getName());
+                String name = entry.getName().replace('\\', '/');
+                // 档案里夹带的仓库/系统垃圾条目不落盘：老设备上每个多余文件都要付一次
+                // 建目录+写盘+关闭的开销，且会在 script/ 里留下无意义文件
+                if (isJunkEntry(name)) {
+                    continue;
+                }
+                File out = new File(root, name);
                 // 防 zip slip：目标必须落在资源根目录内
                 if (!out.getCanonicalPath().startsWith(rootCanonical + File.separator)) {
                     Log.w(TAG, "跳过非法条目: " + entry.getName());
@@ -322,6 +332,25 @@ public final class NativeScriptBootstrap {
 
     private static String zipFingerprint(File zip) {
         return zip.length() + ":" + zip.lastModified();
+    }
+
+    /**
+     * 档案内与决斗无关的仓库/系统垃圾条目：{@code .git/}、{@code .gitignore}、
+     * {@code .gitattributes}、{@code .DS_Store}、{@code Thumbs.db}、{@code desktop.ini}、
+     * {@code __MACOSX/}。主脚本包与卡包解压时统一跳过，不落盘也不计入物化清单。
+     */
+    private static boolean isJunkEntry(String name) {
+        String lower = name.toLowerCase(Locale.ROOT);
+        return lower.contains(".git/")
+                || lower.contains("__macosx/")
+                || lower.endsWith("/.gitignore")
+                || lower.equals(".gitignore")
+                || lower.endsWith("/.gitattributes")
+                || lower.equals(".gitattributes")
+                || lower.endsWith("/.ds_store")
+                || lower.equals(".ds_store")
+                || lower.endsWith("thumbs.db")
+                || lower.endsWith("desktop.ini");
     }
 
     /**
@@ -447,6 +476,9 @@ public final class NativeScriptBootstrap {
                 }
                 String name = entry.getName().replace('\\', '/');
                 String lower = name.toLowerCase(Locale.ROOT);
+                if (isJunkEntry(name)) {
+                    continue;
+                }
                 String line;
                 File out;
                 String canonicalBase;

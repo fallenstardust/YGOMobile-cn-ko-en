@@ -9,13 +9,16 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 
+import java.io.BufferedInputStream;
 import java.io.Closeable;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Locale;
+import java.util.zip.CRC32;
 import java.util.zip.ZipFile;
 
 import cn.garymb.ygomobile.Constants;
@@ -158,6 +161,136 @@ public class IOUtils {
                 }
             }
             return count;
+        }
+    }
+
+    /**
+     * 单个大文件（zip/ypk 等档案）的资源拷贝：只在目标缺失、或本 APK 内的资源内容<b>逐字节
+     * 变化</b>时才重写目标文件。
+     *
+     * <p>存在的理由：{@code ResCheckTask} 在版本升级（needsUpdate）时按旧逻辑会无条件重拷
+     * {@code scripts.zip}/{@code pics.zip}，重拷把目标的 lastModified 刷新，而
+     * {@code NativeScriptBootstrap} 的解压/物化指纹是“大小+lastModified”，于是每次升级都会
+     * 白白重做一轮全量解压（老设备实测约 15s/次）。本方法先比长度再比 CRC32，内容没变就
+     * 完全不碰目标文件，指纹因此保持稳定，升级启动不再触发重解压。
+     *
+     * <p>校验和记录在目标同目录的隐藏文件 {@code .<目标文件名>.sig} 中；没有记录时不直接
+     * 判定“已变化”，而是再读一次目标文件算校验和比对，避免升级首轮白拷几十 MB。
+     *
+     * @param update 为 false 时与 {@link #copyFilesFromAssets} 语义一致：目标已存在则不动
+     * @return true 表示本次确实重写了目标文件
+     */
+    public static boolean copyFileFromAssetsIfChanged(Context context, String assets,
+            File targetDir, boolean update) throws IOException {
+        AssetManager am = context.getAssets();
+        File target = new File(targetDir, getName(assets));
+        File sigFile = signatureFile(targetDir, target.getName());
+        if (!target.isFile()) {
+            copyToFile(am.open(assets), target.getAbsolutePath());
+            writeFileSignature(sigFile, fileSignature(target));
+            if (Constants.DEBUG)
+                Log.i(TAG, "copy new:" + assets + "-->" + target.getAbsolutePath());
+            return true;
+        }
+        if (!update) {
+            return false;
+        }
+        // 长度探测：AssetInputStream.available() 给出解压后的总长，与目标文件长度不等即
+        // 内容必已变化，可直接重写，省掉“资源+目标”两遍全量读
+        long assetLen = -1;
+        try (InputStream probe = am.open(assets)) {
+            assetLen = probe.available();
+        } catch (Exception e) {
+            Log.w(TAG, "available() 探测失败，退回校验和比对: " + assets, e);
+        }
+        if (assetLen >= 0 && assetLen != target.length()) {
+            copyToFile(am.open(assets), target.getAbsolutePath());
+            writeFileSignature(sigFile, fileSignature(target));
+            Log.i(TAG, "资源长度变化，重拷: " + assets + " " + target.length() + "->" + assetLen);
+            return true;
+        }
+        String sig;
+        try (InputStream is = am.open(assets)) {
+            sig = streamSignature(is);
+        }
+        String recorded = readFileSignature(sigFile);
+        if (sig.equals(recorded)) {
+            Log.i(TAG, "资源内容未变，跳过重拷: " + target.getAbsolutePath());
+            return false;
+        }
+        // 无历史记录（首次跑到本逻辑的升级）：目标与资源内容其实一致时只补记录，不重拷
+        if (recorded == null && sig.equals(fileSignature(target))) {
+            writeFileSignature(sigFile, sig);
+            Log.i(TAG, "资源内容与目标一致，补记校验和并跳过重拷: " + target.getAbsolutePath());
+            return false;
+        }
+        copyToFile(am.open(assets), target.getAbsolutePath());
+        writeFileSignature(sigFile, fileSignature(target));
+        Log.i(TAG, "资源内容已变，重拷: " + target.getAbsolutePath());
+        return true;
+    }
+
+    /** 一次流式读取同时算出“长度:CRC32(十六进制)”签名，读完即关闭入流。 */
+    private static String streamSignature(InputStream in) throws IOException {
+        CRC32 crc = new CRC32();
+        byte[] buf = new byte[8192];
+        long len = 0;
+        int n;
+        try {
+            while ((n = in.read(buf)) > 0) {
+                crc.update(buf, 0, n);
+                len += n;
+            }
+        } finally {
+            close(in);
+        }
+        return len + ":" + Long.toHexString(crc.getValue());
+    }
+
+    /** 读文件算“长度:CRC32”签名；文件不可读返回 null（按未匹配处理，宁可重拷）。 */
+    @Nullable
+    private static String fileSignature(File file) {
+        if (file == null || !file.isFile()) {
+            return null;
+        }
+        try (InputStream in = new BufferedInputStream(new FileInputStream(file))) {
+            return streamSignature(in);
+        } catch (IOException e) {
+            Log.w(TAG, "读取文件校验和失败: " + file, e);
+            return null;
+        }
+    }
+
+    /** 档案拷贝的校验和记录文件：与目标同目录的隐藏文件 {@code .<目标文件名>.sig}。 */
+    private static File signatureFile(File targetDir, String fileName) {
+        return new File(targetDir, "." + fileName + ".sig");
+    }
+
+    @Nullable
+    private static String readFileSignature(File sigFile) {
+        if (!sigFile.isFile()) {
+            return null;
+        }
+        try (InputStream in = new FileInputStream(sigFile)) {
+            byte[] buf = new byte[64];
+            int n = in.read(buf);
+            if (n <= 0) {
+                return null;
+            }
+            return new String(buf, 0, n, "UTF-8").trim();
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    private static void writeFileSignature(File sigFile, String sig) {
+        if (sig == null) {
+            return;
+        }
+        try (OutputStream out = new FileOutputStream(sigFile)) {
+            out.write(sig.getBytes("UTF-8"));
+        } catch (IOException e) {
+            Log.w(TAG, "写入校验和记录失败: " + sigFile, e);
         }
     }
 
