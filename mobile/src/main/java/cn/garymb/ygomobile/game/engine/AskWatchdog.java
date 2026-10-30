@@ -71,10 +71,11 @@ class AskWatchdog {
                 && (engine.isHost || engine.serverCapsAskResend);
     }
 
-    /** 由 GameActions 在实际发出 CTOS_RESPONSE 后回调：开始看门狗计时。 */
+    /** 由 GameActions 在实际发出 CTOS_RESPONSE 后回调：开始看门狗计时。
+     *  撤回闩锁不再在此解除（旧语义「本方发出一条应答才算完成一次撤回」使连续撤回不可用）：
+     *  改由 {@link UndoClientCoordinator#applyUndoResync} 在重同步落地时、以及被拒时解除，
+     *  能不能再撤的准入见 {@link UndoClientCoordinator#canSendUndo} */
     void notifyResponseSent() {
-        // 本方有了新的操作：解除撤回一次性闩锁
-        engine.undoBlockedUntilNewAction = false;
         lastResponseTxAt = System.currentTimeMillis();
         if (!canProbeAsk() || askWatchdogRunning) {
             return;

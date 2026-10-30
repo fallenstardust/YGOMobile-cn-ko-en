@@ -530,6 +530,8 @@ public class GameFieldCards {
         field.disabledField = (field.disabledField >> 16) | (field.disabledField << 16);
         // HINT_ZONE 纵列标注与 disabledField 同位布局，换视角同样交换两半
         field.hintZoneMask = (field.hintZoneMask >>> 16) | (field.hintZoneMask << 16);
+        // 标注位的发动条数戳跟着各自掩码换位，否则撤回剪除会把戳配到另一侧的格上
+        field.swapZoneMarkStamps();
     }
 
     public static boolean clientCardSort(ClientCard c1, ClientCard c2) {

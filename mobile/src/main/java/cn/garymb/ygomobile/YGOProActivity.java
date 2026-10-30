@@ -298,8 +298,9 @@ public class YGOProActivity extends YGOProActivityEngine {
      */
     public void requestUndo() {
         if (engine == null || !engine.isInDuel() || !engine.canUndo()) return;
-        // sendUndo 的防连点闸门一致：本次不会真正发出撤回请求时不隐藏弹窗（隐藏后无人恢复）
-        if (engine.undoBlockedUntilNewAction) return;
+        // sendUndo 的准入闸门一致（重同步未落地 / 回退点询问未挂回 / 不足最小间隔）：
+        // 本次不会真正发出撤回请求时不隐藏弹窗（隐藏后无人恢复）
+        if (!engine.canSendUndo()) return;
         // 点击撤回瞬间先隐藏全部正在显示的询问弹窗（YesOrNoDialog），不等服务端 ACK：
         // 回退后旧询问必然失效，留着旧窗只会在 ACK 前误答旧询问。快照存入
         // undoHiddenDialogs：撤回被拒（onUndoDenied）且询问未被重派时逐个恢复，

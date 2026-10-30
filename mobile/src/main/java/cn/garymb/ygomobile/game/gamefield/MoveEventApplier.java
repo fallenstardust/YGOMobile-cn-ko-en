@@ -293,7 +293,7 @@ public class MoveEventApplier {
         // 存 dField.disabled_field 供交叉线绘制；MSG_SWAP 时由 swapField 同步换位
         int disabled = disabledMask;
         if (!engine.isDuelFirst()) disabled = (disabled >>> 16) | (disabled << 16);
-        engine.field.disabledField = disabled & 0xFFFFFFFFL;
+        engine.field.applyDisabledField(disabled);
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onFieldChanged();
         });

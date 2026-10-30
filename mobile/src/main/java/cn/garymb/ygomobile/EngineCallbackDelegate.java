@@ -287,6 +287,15 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
     public void onSelectRequired(int selectType, ByteBuffer data) {
         // 询问代次推进（撤回应答屏障的唯一放行点）：必须在投给 UI 之前同步执行；撤回布防记下的是「被撤销的那次询问」的代次，唯有本次新询问把代次推过屏障下界，界面上的选择/命令应答才会重新发往服务端；屏障只压住新询问到达之前那一段
         if (activity.engine != null) activity.engine.onQuestionDispatched();
+        // 本行就是撤回应答屏障的放行点，而服务端把 STOC_UNDO_STATE 发在重挂询问之前——那一波
+        // 评估时重同步尚未落地，准入必为假；此处补一次重算，撤回成功后的「再撤一次」入口
+        // 才会亮出来（连续撤回的可见入口）
+        if (activity.engine != null && activity.engine.canUndo()) {
+            activity.runOnUiThread(() -> {
+                if (activity.topInfoManager != null)
+                    activity.topInfoManager.setUndoPrompt(activity.engine.isUndoPromptActive());
+            });
+        }
         activity.runOnUiThread(() -> {
             // 结束阶段按钮仅在通讯允许进入 EP 时有效：空闲指令(11)/战斗指令(10) 路径内会按指令可用性重新启用；其余请求一律隐藏
             activity.fieldCtl.setEpButtonAllowed(selectType == 10 || selectType == 11);

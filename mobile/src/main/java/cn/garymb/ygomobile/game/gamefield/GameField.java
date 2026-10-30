@@ -3,6 +3,7 @@ import cn.garymb.ygomobile.game.replay.ReplayPosSnap;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import cn.garymb.ygomobile.lite.R;
@@ -168,6 +169,13 @@ public class GameField {
     public long disabledField;
     /** HINT_ZONE 通讯（duelclient.cpp L1529-1572）展开出的被标注魔陷格集，位布局与 disabledField 同构（本地视角：seat0 MZ bits0-6 / SZ bits8-15，seat1 高 16 位）；仅接受无效类效果的 SZ 位来位——无限泡影类脚本效果处理成功时 Duel.Hint(HINT_ZONE, tp, 0x1<<(seq+8)) 宣告自身所在列的 SZONE 位，本端把它标到同列两张魔陷格——同侧 SZONE 格（同 seq）与对侧镜像 SZONE 格（4-seq，aux.GetColumn 同式）；仅主列 seq 0-4（额外怪兽列无魔陷对应格）。MZ 位（bit0-6/16-22）为封锁格子类卡片（封锁龙/黄金国亡灵 等，效果伴随 MSG_FIELD_DISABLED 白 X）的怪兽纵列宣告，桌面端只对掩码位瞬时高亮 40 帧、从不扩张魔陷格；本端若同样展开会出现「白 X 同纵列魔陷格错误显示泡影标注」的误报，故不产生持久标注。效果携 RESET_PHASE+PHASE_END，故下一个 MSG_NEW_TURN 清除。 */
     public int hintZoneMask;
+    /** 两个标注掩码逐位的「写入时已登记的发动条数」（{@link EffectActivationLedger#eventCount()} 快照，
+     *  位序与各自掩码一致）：撤回把发动账本回退到 kept 条后，条数大于 kept 的标注位即由本次被抹掉的
+     *  发动适用，随之取消格子变色/无效徽记与白 X，直到该卡下次适用效果重新标注；0 = 无对应发动 */
+    final int[] hintZoneStamp = new int[32];
+    final int[] disabledStamp = new int[32];
+    /** 标注位布局为双方共 32 格（seat0 低 16 位 / seat1 高 16 位），条数戳与戳位同长 */
+    private static final int ZONE_BIT_COUNT = 32;
     /** MSG_SELECT_EFFECTYN 询问中的卡（用户规格：诱发效果被询问是否发动时，该卡矩形角上
      *  显示与可发动同款的绿色呼吸点）：由询问窗展示时置入、dismiss/新询问到达时清除。
      *  不写 cmdFlag——COMMAND_ACTIVATE 置位会让点卡路由（GameFieldController）误弹命令菜单，
@@ -333,6 +341,8 @@ public class GameField {
         contiAct = false;
         disabledField = 0;
         hintZoneMask = 0;
+        Arrays.fill(hintZoneStamp, 0);
+        Arrays.fill(disabledStamp, 0);
         effectYnAsking = null;
         deckReversed = false;
         pendulumPreludeL = null;
@@ -360,18 +370,104 @@ public class GameField {
 
     /** 接收 HINT_ZONE 掩码（本地视角）展开为魔陷格标注集存 hintZoneMask：仅 SZONE 位标注同纵列两格（同侧 seq 与对侧镜像 4-seq），MZ 位为封区类宣告不做持久标注，来位已被 disabledField 封锁时跳过，仅主列 seq 0-4 */
     public void applyHintZone(int zones) {
-        for (int bit = 0; bit < 32; bit++) {
+        final int stamp = EffectActivationLedger.eventCount();
+        for (int bit = 0; bit < ZONE_BIT_COUNT; bit++) {
             if ((zones & (1 << bit)) == 0) continue;
             if ((bit & 8) == 0) continue;                       // MZ 位：封区宣告，跳过
             if ((disabledField & (1L << bit)) != 0) continue;   // 该格已带白 X：不叠加标注
-            markSpellColumn(bit >= 16 ? 1 : 0, (bit & 7));
+            markSpellColumn(bit >= 16 ? 1 : 0, (bit & 7), stamp);
         }
     }
 
-    private void markSpellColumn(int seat, int seq) {
+    private void markSpellColumn(int seat, int seq, int stamp) {
         if (seq < 0 || seq > 4) return;
-        hintZoneMask |= 1 << (seat * 16 + 8 + seq);
-        hintZoneMask |= 1 << ((1 - seat) * 16 + 8 + (4 - seq));
+        markZoneBit(seat * 16 + 8 + seq, stamp);
+        markZoneBit((1 - seat) * 16 + 8 + (4 - seq), stamp);
+    }
+
+    /** 置位变色格/无效徽记标注并记入发动条数：已标注的格保留更早的条数（同格被多次标注时，
+     *  回退判据取最早那次发动，后续发动被撤回不得误清仍生效中的标注） */
+    private void markZoneBit(int bit, int stamp) {
+        if ((hintZoneMask & (1 << bit)) != 0) return;
+        hintZoneMask |= 1 << bit;
+        hintZoneStamp[bit] = stamp;
+    }
+
+    /** MSG_FIELD_DISABLED 下发的完整禁用掩码（本地视角）整值落位：新增格记当前发动条数，
+     *  仍禁的格沿用更早一次发动的条数（同一掩码被后续效果重发时不得把条数戳推到后来那次发动上），
+     *  解禁的格同时清位与戳 */
+    public void applyDisabledField(int mask) {
+        long prev = disabledField;
+        final int stamp = EffectActivationLedger.eventCount();
+        disabledField = mask & 0xFFFFFFFFL;
+        for (int bit = 0; bit < ZONE_BIT_COUNT; bit++) {
+            if ((mask & (1 << bit)) != 0) {
+                if ((prev & (1L << bit)) == 0) disabledStamp[bit] = stamp;
+            } else {
+                disabledStamp[bit] = 0;
+            }
+        }
+    }
+
+    /** 回合结束（MSG_NEW_TURN）清除 HINT_ZONE 纵列标注：颜色与无效徽记连同条数戳一并归零 */
+    public void clearHintZoneMarks() {
+        hintZoneMask = 0;
+        Arrays.fill(hintZoneStamp, 0);
+    }
+
+    /** 当回合持续态场地标注的撤回前快照（变色格/无效徽记掩码与白 X 掩码及各自的发动条数戳） */
+    public static final class ZoneMarks {
+        public final int hintZoneMask;
+        public final long disabledField;
+        final int[] hintZoneStamps;
+        final int[] disabledStamps;
+
+        private ZoneMarks(int hintZoneMask, long disabledField, int[] hintZoneStamps, int[] disabledStamps) {
+            this.hintZoneMask = hintZoneMask;
+            this.disabledField = disabledField;
+            this.hintZoneStamps = hintZoneStamps;
+            this.disabledStamps = disabledStamps;
+        }
+    }
+
+    /** 取标注快照：撤回重同步的 field.clear() 会把它们抹掉，同回合回退时用 {@link #restoreZoneMarks} 恢复 */
+    public ZoneMarks captureZoneMarks() {
+        return new ZoneMarks(hintZoneMask, disabledField,
+                Arrays.copyOf(hintZoneStamp, ZONE_BIT_COUNT),
+                Arrays.copyOf(disabledStamp, ZONE_BIT_COUNT));
+    }
+
+    /** 恢复快照并按保留条数回退：本次撤回把「适用该标注的那次效果发动」抹掉时（戳 > keptEvents），
+     *  该位的变色/无效徽记与白 X 一并取消（用户规格：效果回退为未使用，格子恢复常规颜色）。
+     *  keptEvents < 0（旧服务端不报条数）时整份恢复、不做回退。 */
+    public void restoreZoneMarks(ZoneMarks marks, int keptEvents) {
+        hintZoneMask = marks.hintZoneMask;
+        disabledField = marks.disabledField;
+        System.arraycopy(marks.hintZoneStamps, 0, hintZoneStamp, 0, ZONE_BIT_COUNT);
+        System.arraycopy(marks.disabledStamps, 0, disabledStamp, 0, ZONE_BIT_COUNT);
+        if (keptEvents < 0) return;
+        for (int bit = 0; bit < ZONE_BIT_COUNT; bit++) {
+            if (((hintZoneMask >>> bit) & 1) != 0 && hintZoneStamp[bit] > keptEvents) {
+                hintZoneMask &= ~(1 << bit);
+                hintZoneStamp[bit] = 0;
+            }
+            if (((disabledField >>> bit) & 1L) != 0 && disabledStamp[bit] > keptEvents) {
+                disabledField &= ~(1L << bit);
+                disabledStamp[bit] = 0;
+            }
+        }
+    }
+
+    /** 视角互换（swapField）：条数戳与高低 16 位掩码同步换位，保证剪除时戳与位仍同序 */
+    public void swapZoneMarkStamps() {
+        for (int i = 0; i < 16; i++) {
+            int t = hintZoneStamp[i];
+            hintZoneStamp[i] = hintZoneStamp[i + 16];
+            hintZoneStamp[i + 16] = t;
+            t = disabledStamp[i];
+            disabledStamp[i] = disabledStamp[i + 16];
+            disabledStamp[i + 16] = t;
+        }
     }
 
     /** 该本地座位的场上格子是否被 HINT_ZONE 纵列标注（location 为已去叠加位的 0x04/0x08） */

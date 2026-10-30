@@ -69,10 +69,8 @@ final class UndoQuestionGuard implements YGOProtocol {
             }
             int responder = analyzer.room.lastResponse;
             byte[] terminal = analyzer.silentTerminal;
-            if (terminal == null || analyzer.room.players[responder] == null) {
-                return;
-            }
-            // 状态门复位：撤回可能把待应答席位从 A 转移到 B，A 的连接状态残留在 CTOS_RESPONSE/
+            // 状态门复位无条件先做（旧实现把它排在重挂可行性判定之后，一旦早退就连复位一起跳过）：
+            // 撤回可能把待应答席位从 A 转移到 B，A 的连接状态残留在 CTOS_RESPONSE/
             // CTOS_TIME_CONFIRM，其后的迟到应答能通过状态门被 getResponse 以 responder=dp.type 当作
             // B 的应答喂给引擎（轻则非法应答引发 MSG_RETRY 风暴，重则旧列表里的合法指令直接作用于
             // 新局面）。C++ WaitforResponse 无需处理，此复位是本工程撤回路径特有的补齐。
@@ -80,6 +78,21 @@ final class UndoQuestionGuard implements YGOProtocol {
                 if (pl != null) {
                     pl.state = ServerConnection.STATE_NONE;
                 }
+            }
+            if (terminal == null || responder < 0 || responder >= analyzer.room.players.length
+                    || analyzer.room.players[responder] == null) {
+                // 重挂落空不再静默 return：把这条询问的字节与当代次留在 liveQuestion 槽（静默重放
+                // 不写该槽，beginSilentReplay 又把它清空，否则 hasLiveAsk 恒假），使客户端
+                // CTOS_ASK_RESEND 与被吞应答的自愈入口（两者只读 liveQuestion）后续仍能把它补挂出去，
+                // 不至于两席位从此互等（症状：点卡弹不出发动/召唤/盖放菜单而墓地/除外照旧可看）
+                if (terminal != null) {
+                    analyzer.liveQuestion = terminal;
+                    analyzer.liveQuestionGeneration = analyzer.askGeneration;
+                }
+                Log.e(TAG, "undo resync: cannot re-hang question now, terminal="
+                        + (terminal == null ? "null" : String.valueOf(terminal[0] & 0xFF))
+                        + " responder=" + responder + ", left to ask-resend/self-heal");
+                return;
             }
             // 询问不在此刻挂回，只记下席位交 hangUndoTerminalQuestion() 延后执行：状态复位到询问
             // 挂出之间留出一个往返窗口，被丢弃那一段里已在路上的应答全部落进 STATE_NONE 而被状态门丢弃
@@ -127,7 +140,9 @@ final class UndoQuestionGuard implements YGOProtocol {
         if (responder < 0 || responder >= analyzer.room.players.length) {
             return;
         }
-        byte[] terminal = analyzer.silentTerminal;
+        // 捕获槽为空时退回同一代次的 liveQuestion（重挂落空时留在该槽里的那条）：
+        // 宁可拿引擎确实还在等的这条询问去挂，也不要因空槽直接 return 后谁都不再挂
+        byte[] terminal = analyzer.silentTerminal != null ? analyzer.silentTerminal : analyzer.liveQuestion;
         ServerConnection dp = analyzer.room.players[responder];
         if (terminal == null || dp == null) {
             return;

@@ -182,7 +182,10 @@ public class GameEngine {
     public boolean serverCapsAskResend = false;
     /** 服务端确认存在可回退锚点（STOC_UNDO_STATE） */
     public boolean undoAvailable = false;
-    /** 撤回一次性锩锁：发出 CTOS_UNDO 置位，本方发出一条应答时清除；置位期间 isUndoPromptActive() 恒 false（服务端允许连续撤回，但连续点击会让 ACK/重同步/屏障布防叠加破坏派发链） */
+    /** 撤回一次性闩锁：发出 CTOS_UNDO 置位，「上一次撤回的全量重同步已落地」（UndoClientCoordinator
+     *  #applyUndoResync）或撤回被拒时清除；置位期间 isUndoPromptActive() 恒 false。
+     *  能不能再发下一条 CTOS_UNDO 的统一准入见 canSendUndo()：闩锁 + 无待消费重同步 + 应答屏障已放行
+     *  + 两次撤回最小间隔；服务端可撤状态（STOC_UNDO_STATE）仍是「有没有锚点」的唯一裁判 */
     public volatile boolean undoBlockedUntilNewAction = false;
 
     /** tag 模式本方是否已发起投降（等待队友回应）：防止对 STOC_TEAMMATE_SURRENDER 自我弹窗与重复发起 */
@@ -511,9 +514,16 @@ public class GameEngine {
 
     public boolean canUndo() { return undoCoord.canUndo(); }
 
+    /** 当前是否允许再发一条 CTOS_UNDO（实现见 UndoClientCoordinator）：连续撤回的客户端互斥闸门 */
+    public boolean canSendUndo() { return undoCoord.canSendUndo(); }
+
     public void onUndoAck(int result, int turn, int currentPlayer, int phase, int chainEvents) { undoCoord.onUndoAck(result, turn, currentPlayer, phase, chainEvents); }
 
     public boolean applyUndoResync(GameField field) { return undoCoord.applyUndoResync(field); }
+
+    /** 本次撤回重同步的「保留发动条数」（实现见 UndoClientCoordinator）：场地持续态标注（泡影类变色格/
+     *  无效徽记、封区白 X）按此剪除被抹掉那次发动所适用的位；-1 = 旧服务端不报，不回退 */
+    public int undoKeptChainEvents() { return undoCoord.undoKeptChainEvents; }
 
     public void clearUndoResync() { undoCoord.clearUndoResync(); }
 

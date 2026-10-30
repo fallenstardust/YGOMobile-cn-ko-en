@@ -28,6 +28,28 @@ class UndoClientCoordinator {
      *  随 reload 落地时把发动账本超出该条数的后缀剪除（被撤回抹掉的使用过的效果恢复
      *  未使用态）；-1 = 旧服务端短载荷/无 latch，跳过账本回退。 */
     volatile int undoResyncChainEvents = -1;
+    /** 本次撤回重同步消费的「保留发动条数」（applyUndoResync 从上一字段取出后暂存，同批重同步里由
+     *  ReloadFieldBuilder 读它剪除场地持续态标注中属于被抹掉那次发动的位）；-1 = 旧服务端不报条数，不回退；
+     *  ACK 与 reload 同走 DuelClient.mainHandler 一条 FIFO，volatile 与同组闩锁字段一致，为跨线程可见性兜底 */
+    volatile int undoKeptChainEvents = -1;
+
+    // === 撤回发出闸门 ===
+
+    /** 两次 CTOS_UNDO 之间的最小间隔：覆盖服务端「留白 400ms 吞旧应答 + 延后重挂询问」与客户端
+     *  「全量 reload + 各区 refresh 派发」的整段窗口，避免两批 ACK/reload 在单槽闩锁上错拍 */
+    private static final long UNDO_SEND_MIN_INTERVAL_MS = 1000L;
+    /** 上一次发出 CTOS_UNDO 的时刻（0 = 本局尚未发过），新一局随 {@link #clearUndoResync()} 复位 */
+    private volatile long lastUndoSentAt;
+
+    /** 重同步落地超时自愈时限（两种挂住形态共用）：reload 因异常载荷早退或被丢时单槽闩锁会永久挂住
+     *  撤回入口；超过此时限即在 canSendUndo 判定处复位重同步组（不动 lastUndoSentAt 的 1s 间隔计时，
+     *  也不动有自身 5s 兜底的应答屏障与 DENIED 恢复待答询问的路径） */
+    private static final long UNDO_RESYNC_TIMEOUT_MS = 8000L;
+    /** 「连 ACK 都没回来」形态的自愈时限：比 reload 窗口宽一倍，那一趟要覆盖服务端整场重建引擎 +
+     *  静默重放全部前缀应答 + 重录录像的总耗时，误判会让第二次 CTOS_UNDO 在第一次还在算的时候发出去 */
+    private static final long UNDO_ACK_TIMEOUT_MS = 16000L;
+    /** ACK=OK/REBUILT 到达时刻（0 = 无待落地重同步）：onUndoAck 写入，applyUndoResync 消费、超时自愈与 clearUndoResync 清零 */
+    private volatile long undoResyncLatchAtMs;
 
     // === 应答代次屏障字段 ===
 
@@ -51,11 +73,14 @@ class UndoClientCoordinator {
         this.engine = engine;
     }
 
-    // === sendUndo / canUndo / isUndoPromptActive ===
+    // === sendUndo / canUndo / canSendUndo / isUndoPromptActive ===
 
     void sendUndo() {
-        if (engine.undoBlockedUntilNewAction) return;
+        // 准入闸门（用户方案2）：上一次撤回的重同步未落地、回退点的询问还没挂回界面、或距上次
+        // 撤回不足最小间隔时一律不发 CTOS_UNDO；能不能撤的最终判定仍交回服务端（STOC_UNDO_STATE）
+        if (!canSendUndo()) return;
         engine.undoBlockedUntilNewAction = true;
+        lastUndoSentAt = System.currentTimeMillis();
         armUndoResponseBarrier();
         engine.lobbyActions.sendUndo();
         engine.mainHandler.post(() -> {
@@ -67,16 +92,60 @@ class UndoClientCoordinator {
         return (engine.isHost || engine.serverCapsUndo) && !engine.isSingleMode && !engine.replayMode;
     }
 
+    /** 现在是否允许再发一条 CTOS_UNDO：闩锁已解（重同步落地或被拒）+ 无待消费重同步（超时自愈见
+     *  {@link #healStaleUndoResyncLatch}）+ 应答屏障已放行（回退点询问已重新派发）+ 过了最小间隔；
+     *  屏障须内联读 undoBarrierSeq，不能用会置 undoBarrierDropped 的 {@link #isResponseBlocked()} */
+    boolean canSendUndo() {
+        healStaleUndoResyncLatch();
+        if (engine.undoBlockedUntilNewAction || undoResyncTurn >= 0) return false;
+        long barrier = undoBarrierSeq;
+        if (barrier >= 0 && questionSeq <= barrier) return false;
+        long last = lastUndoSentAt;
+        return last == 0L || System.currentTimeMillis() - last >= UNDO_SEND_MIN_INTERVAL_MS;
+    }
+
+    /** 超时自愈（两种挂住形态，同一入口）：① ACK=OK/REBUILT 已到但其 reload 超时未被 applyUndoResync 消费
+     *  （按 undoResyncLatchAtMs 计时）；② 连 ACK 都没回来（服务端不支持/静默丢弃此包，只剩发送侧闩锁挂着），
+     *  改按 lastUndoSentAt 计时并放宽到 {@link #UNDO_ACK_TIMEOUT_MS}。两者都只整组复位重同步闩锁与
+     *  undoBlockedUntilNewAction（迟到的旧 reload/ACK 不得再把陈旧回合回填进已推进的新局面，也不让一个误点
+     *  把入口锁到本局结束），不碰 {@link #lastUndoSentAt} 的 1s 间隔与应答屏障；DENIED 分支早已把闩锁解了、
+     *  turn 置 -1，进不了本判定；只在主线程 canSendUndo 入口调用，与同线程 applyUndoResync 串行不争抢 */
+    private void healStaleUndoResyncLatch() {
+        boolean resyncPending = undoResyncTurn >= 0;
+        if (!resyncPending && !engine.undoBlockedUntilNewAction) return;
+        long at = resyncPending ? undoResyncLatchAtMs : lastUndoSentAt;
+        long limit = resyncPending ? UNDO_RESYNC_TIMEOUT_MS : UNDO_ACK_TIMEOUT_MS;
+        long elapsed = at <= 0L ? 0L : System.currentTimeMillis() - at;
+        if (elapsed < limit) return;
+        Log.w(TAG, "undo round stale for " + elapsed + "ms (" + (resyncPending
+                ? "MSG_RELOAD_FIELD never landed" : "no STOC_UNDO_ACK at all")
+                + "): reset gates");
+        resetUndoResyncLatch();
+        engine.undoBlockedUntilNewAction = false;
+    }
+
+    /** 复位待消费的重同步闩锁组（不动 lastUndoSentAt 的 1s 最小间隔计时，也不动应答屏障）；
+     *  超时自愈复用它做幂等复位：DENIED/clearUndoResync 调用时各字段多为 -1，重复写入无副作用 */
+    private void resetUndoResyncLatch() {
+        undoResyncTurn = -1;
+        undoResyncPlayer = -1;
+        undoResyncPhase = -1;
+        undoResyncChainEvents = -1;
+        undoKeptChainEvents = -1;
+        undoResyncLatchAtMs = 0L;
+    }
+
     boolean isUndoPromptActive() {
-        return canUndo() && engine.undoAvailable && !engine.undoBlockedUntilNewAction;
+        return canUndo() && engine.undoAvailable && canSendUndo();
     }
 
     // === STOC_UNDO_ACK 处理 ===
 
     void onUndoAck(int result, int turn, int currentPlayer, int phase, int chainEvents) {
         if (result == YGOProtocol.UNDO_ACK_DENIED) {
-            undoResyncTurn = -1;
-            undoResyncChainEvents = -1;
+            resetUndoResyncLatch();
+            // 被拒即无后续重同步：闩锁当场解除，本方手上的询问答完（或新询问到达）就能再次发起撤回
+            engine.undoBlockedUntilNewAction = false;
             boolean droppedWhileArmed = undoBarrierDropped;
             releaseUndoResponseBarrier();
             if (droppedWhileArmed) restorePendingQuestionUi();
@@ -96,6 +165,8 @@ class UndoClientCoordinator {
         undoResyncPlayer = currentPlayer;
         undoResyncPhase = phase;
         undoResyncChainEvents = chainEvents;
+        // 记下 ACK 到达时刻：它与其后的 MSG_RELOAD_FIELD 同源同序，超过时限仍未被消费即自愈
+        undoResyncLatchAtMs = System.currentTimeMillis();
         postUndoHint(result == YGOProtocol.UNDO_ACK_REBUILT
                 ? "撤回失败：已按原局面重建并重同步" : "已撤回上一步操作");
         if (engine.listener != null) engine.listener.onUndoResync();
@@ -113,6 +184,12 @@ class UndoClientCoordinator {
         int turn = undoResyncTurn;
         if (turn < 0) return false;
         undoResyncTurn = -1;
+        // 重同步已落地，ACK→reload 的超时自愈计时随之作废
+        undoResyncLatchAtMs = 0L;
+        // 用户方案1：闩锁改在「重同步已落地」这一时刻解除（旧的解锁条件是本方发出一条应答）。
+        // 此刻回退点的询问尚未挂回，屏障仍在压制，canSendUndo() 要等新询问派发后才会放行，
+        // 既支持纯单人模式一路撤回到底，也不让两批 ACK/reload 交叠
+        engine.undoBlockedUntilNewAction = false;
         field.turnCount = turn;
         // 撤回重同步回到历史回合：发动标记的「本回合」基准随之校正，并刷新正在展示的卡详
         EffectActivationLedger.setCurrentTurn(turn);
@@ -121,6 +198,7 @@ class UndoClientCoordinator {
         // 保留前缀内的条目继续标记本回合/决斗已使用；旧服务端短载荷（-1）不回退
         int chainEvents = undoResyncChainEvents;
         undoResyncChainEvents = -1;
+        undoKeptChainEvents = chainEvents;
         if (chainEvents >= 0) {
             EffectActivationLedger.dropBeyond(chainEvents);
         }
@@ -138,10 +216,8 @@ class UndoClientCoordinator {
     }
 
     void clearUndoResync() {
-        undoResyncTurn = -1;
-        undoResyncPlayer = -1;
-        undoResyncPhase = -1;
-        undoResyncChainEvents = -1;
+        resetUndoResyncLatch();
+        lastUndoSentAt = 0L;
         releaseUndoResponseBarrier();
         engine.undoBlockedUntilNewAction = false;
     }

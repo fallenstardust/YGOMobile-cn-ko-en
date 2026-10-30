@@ -1,6 +1,7 @@
 package cn.garymb.ygomobile.utils;
 
 import java.util.Comparator;
+import java.util.List;
 
 import ocgcore.data.Card;
 import ocgcore.enums.CardType;
@@ -10,17 +11,17 @@ public class CardSort implements Comparator<Card> {
     public static final CardSort ASC = new CardSort(false, null);
     public static final CardSort FULL_ASC = new CardSort(true, null);
     private final boolean full;
-    private final java.util.List<Integer> priorityOrder;
-    private CardSort(boolean full, java.util.List<Integer> priorityOrder) {
+    private final List<Integer> priorityOrder;
+    private CardSort(boolean full, List<Integer> priorityOrder) {
         this.full = full;
         this.priorityOrder = priorityOrder;
     }
 
-    public static CardSort ASC_inCards(java.util.List<Integer> priorityOrder) {
+    public static CardSort ASC_inCards(List<Integer> priorityOrder) {
         return new CardSort(false, priorityOrder);
     }
 
-    public static CardSort FULL_ASC_inCards(java.util.List<Integer> priorityOrder) {
+    public static CardSort FULL_ASC_inCards(List<Integer> priorityOrder) {
         return new CardSort(true, priorityOrder);
     }
     private int comp(long l1, long l2) {

@@ -28,12 +28,12 @@ public class ReloadFieldBuilder {
         // 隐藏卡不下发卡码（新建 ClientCard code=0 背面占位，与 C++ CreateCard 一致）。
         if (data == null) return;
         final GameField field = engine.field;
-        // 撤回（undo）重同步前快照当回合持续态标注：HINT_ZONE 无效格玫瑰呼吸（hintZoneMask）与
-        // MSG_FIELD_DISABLED 白 X（disabledField）本应存活到回合结束（仅 MSG_NEW_TURN 清），
+        // 撤回（undo）重同步前快照当回合持续态标注：HINT_ZONE 无效格玫瑰呼吸（hintZoneMask，无限泡影类的
+        // 格子变色与格上无效徽记）与 MSG_FIELD_DISABLED 白 X（disabledField）本应存活到回合结束（仅 MSG_NEW_TURN 清），
         // 而撤回链路无通讯重放，field.clear() 会把它们抹掉——同回合撤回后在下面恢复；
+        // 快照同时携带逐位的「适用时已登记的发动条数」戳，供恢复时剪除本次被抹掉那次发动所标注的位；
         // 回合数变化（跨回合 reload）则不恢复，保持回合结束的既有清除语义
-        final int prevHintZone = field.hintZoneMask;
-        final long prevDisabled = field.disabledField;
+        final GameField.ZoneMarks prevMarks = field.captureZoneMarks();
         final int prevTurn = field.turnCount;
         field.clear();
         if (data.remaining() < 1) {
@@ -163,9 +163,11 @@ public class ReloadFieldBuilder {
         final boolean undoResync = engine.applyUndoResync(field);
         if (undoResync && prevTurn > 0 && field.turnCount == prevTurn) {
             // 同回合撤回：恢复被 clear() 抹掉的无效格标注与变色，FieldBoardRenderer 的
-            // 玫瑰呼吸/白 X 动画随即继续显示（animTime 相位连续，无需额外重建）
-            field.hintZoneMask = prevHintZone;
-            field.disabledField = prevDisabled;
+            // 玫瑰呼吸/白 X 动画随即继续显示（animTime 相位连续，无需额外重建）；
+            // 本次被回退的那一段里才适用的标注（条数戳 > 保留条数）不恢复：无限泡影变回未使用
+            // 效果时格子恢复常规颜色并去掉无效徽记，封区效果变回未使用时去掉白 X，
+            // 直到该效果下次适用时由新的 HINT_ZONE / MSG_FIELD_DISABLED 重新标注
+            field.restoreZoneMarks(prevMarks, engine.undoKeptChainEvents());
         }
         engine.mainHandler.post(() -> {
             if (engine.listener != null) {

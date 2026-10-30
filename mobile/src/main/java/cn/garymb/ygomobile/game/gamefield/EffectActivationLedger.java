@@ -133,6 +133,15 @@ public final class EffectActivationLedger {
         return currentTurn;
     }
 
+    /** 已登记的「有效效果发动」条数（追加日志长度，与服务端静默重放的 silentChainEvents 同口径）：
+     *  场地持续态标注（HINT_ZONE 变色格/无效徽记、MSG_FIELD_DISABLED 白 X）写入时取此快照，
+     *  撤回后条数大于服务端保留条数的标注即属于被抹掉的那次发动 */
+    public static int eventCount() {
+        synchronized (LOG) {
+            return LOG.size();
+        }
+    }
+
     /** 回合号同步：MSG_START 置 0、MSG_NEW_TURN 置 field.turnCount、撤回重同步置重同步落点 */
     public static void setCurrentTurn(int turn) {
         currentTurn = turn;
