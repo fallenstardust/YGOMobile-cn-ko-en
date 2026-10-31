@@ -50,6 +50,15 @@ class UndoClientCoordinator {
     private static final long UNDO_ACK_TIMEOUT_MS = 16000L;
     /** ACK=OK/REBUILT 到达时刻（0 = 无待落地重同步）：onUndoAck 写入，applyUndoResync 消费、超时自愈与 clearUndoResync 清零 */
     private volatile long undoResyncLatchAtMs;
+    /** 属于本次撤回重同步的 MSG_RELOAD_FIELD 是否已入 pendingMsgs 队列（入队时置位，
+     *  applyUndoResync 消费/clearUndoResync 清零）：撤回后紧接确认卡对话框/长动画时，reload
+     *  可能被无时限的对话框持闸压住超过 8s——那并非丢失，heal 见置位不得复位闩锁
+     *  （评审 Major②：复位后迟到的 reload 因无 latch 直接 return，capture+clear 已执行而
+     *  回合/标注/账本回退全部跳过，「半落地」把标注永久清掉）；另留
+     *  {@link #UNDO_RELOAD_QUEUED_TIMEOUT_MS} 底线，防异常载荷早退把入口锁死 */
+    private volatile boolean undoReloadQueued;
+    /** 入队后仍永不派发的底线时限（大于对话框读卡/长动画的合理时长，只在真丢失时生效） */
+    private static final long UNDO_RELOAD_QUEUED_TIMEOUT_MS = 30000L;
 
     // === 应答代次屏障字段 ===
 
@@ -104,6 +113,19 @@ class UndoClientCoordinator {
         return last == 0L || System.currentTimeMillis() - last >= UNDO_SEND_MIN_INTERVAL_MS;
     }
 
+    /** MSG_RELOAD_FIELD 入队时由 MsgDispatchGate 告知：本次撤回的重同步已在路上，自愈挂起 */
+    void noteUndoReloadQueued() {
+        undoReloadQueued = true;
+    }
+
+    /** 距最小发出间隔的剩余 ms（≤0 = 已过）：UI 在显示态评估为假且剩余间隔仍在计时时，
+     *  按此延时补算一次，保证撤回成功后「再撤一次」入口在间隔到期时自动重新点亮 */
+    long undoSendIntervalRemainingMs() {
+        long last = lastUndoSentAt;
+        if (last == 0L) return 0L;
+        return UNDO_SEND_MIN_INTERVAL_MS - (System.currentTimeMillis() - last);
+    }
+
     /** 超时自愈（两种挂住形态，同一入口）：① ACK=OK/REBUILT 已到但其 reload 超时未被 applyUndoResync 消费
      *  （按 undoResyncLatchAtMs 计时）；② 连 ACK 都没回来（服务端不支持/静默丢弃此包，只剩发送侧闩锁挂着），
      *  改按 lastUndoSentAt 计时并放宽到 {@link #UNDO_ACK_TIMEOUT_MS}。两者都只整组复位重同步闩锁与
@@ -113,6 +135,17 @@ class UndoClientCoordinator {
     private void healStaleUndoResyncLatch() {
         boolean resyncPending = undoResyncTurn >= 0;
         if (!resyncPending && !engine.undoBlockedUntilNewAction) return;
+        // reload 已入队、只是被对话框持闸/长动画压住（无时限）：常规 8s 窗口不适用，
+        // 按放宽底线计时（评审 Major②）；未超底线一律挂起自愈，避免「半落地」
+        if (resyncPending && undoReloadQueued) {
+            long qEl = System.currentTimeMillis() - undoResyncLatchAtMs;
+            if (undoResyncLatchAtMs > 0L && qEl < UNDO_RELOAD_QUEUED_TIMEOUT_MS) return;
+            Log.w(TAG, "undo reload queued but never dispatched for " + qEl
+                    + "ms: treat as lost, reset gates");
+            resetUndoResyncLatch();
+            engine.undoBlockedUntilNewAction = false;
+            return;
+        }
         long at = resyncPending ? undoResyncLatchAtMs : lastUndoSentAt;
         long limit = resyncPending ? UNDO_RESYNC_TIMEOUT_MS : UNDO_ACK_TIMEOUT_MS;
         long elapsed = at <= 0L ? 0L : System.currentTimeMillis() - at;
@@ -133,10 +166,20 @@ class UndoClientCoordinator {
         undoResyncChainEvents = -1;
         undoKeptChainEvents = -1;
         undoResyncLatchAtMs = 0L;
+        undoReloadQueued = false;
     }
 
+    /** 撤回入口显示态（顶部 ic_undo 闪动）：与发出闸门解耦（评审 Critical）——不含
+     *  {@link #UNDO_SEND_MIN_INTERVAL_MS} 最小间隔条件：撤回成功后重挂询问的补算点落在
+     *  ACK 后约 450ms，若把 1s 闸门折进显示判定，INVISIBLE 的图标不吃触摸且无补算点，
+     *  「再撤一次」入口要直到答掉回退点询问才可能复亮（时序相关的间歇性按钮消失）；
+     *  1s 间隔只在 {@link #canSendUndo()} 的发出路径限速，误点由服务端 STOC_UNDO_STATE 兜底 */
     boolean isUndoPromptActive() {
-        return canUndo() && engine.undoAvailable && canSendUndo();
+        if (!canUndo() || !engine.undoAvailable) return false;
+        healStaleUndoResyncLatch();
+        if (engine.undoBlockedUntilNewAction || undoResyncTurn >= 0) return false;
+        long barrier = undoBarrierSeq;
+        return barrier < 0 || questionSeq > barrier;
     }
 
     // === STOC_UNDO_ACK 处理 ===
@@ -184,8 +227,9 @@ class UndoClientCoordinator {
         int turn = undoResyncTurn;
         if (turn < 0) return false;
         undoResyncTurn = -1;
-        // 重同步已落地，ACK→reload 的超时自愈计时随之作废
+        // 重同步已落地，ACK→reload 的超时自愈计时与入队标志随之作废
         undoResyncLatchAtMs = 0L;
+        undoReloadQueued = false;
         // 用户方案1：闩锁改在「重同步已落地」这一时刻解除（旧的解锁条件是本方发出一条应答）。
         // 此刻回退点的询问尚未挂回，屏障仍在压制，canSendUndo() 要等新询问派发后才会放行，
         // 既支持纯单人模式一路撤回到底，也不让两批 ACK/reload 交叠

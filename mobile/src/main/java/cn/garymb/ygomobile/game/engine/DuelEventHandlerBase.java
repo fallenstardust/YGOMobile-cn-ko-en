@@ -366,6 +366,10 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
         // CardInfoBinder 映射到描述段落；登记后按卡码门控刷新正在展示的卡详（用户规格1/2：
         // 本回合发动即时反映无需重新点卡，但只有同码/同 alias 卡发动才打扰面板）
         EffectActivationLedger.record(code, desc, localCc, engine.field.turnCount);
+        // 登记序快照（评审 Major①）：效果处理阶段适用的 HINT_ZONE/MSG_FIELD_DISABLED 标注
+        // 落本次发动的序而非标注到达时的实时条数，连锁交错（后链先结算/无关发动在后）
+        // 时撤回才不误清保留中的标注
+        engine.field.currentChain.activationOrdinal = EffectActivationLedger.eventCount();
         CardDetailPanel.refreshCardDetailMarks(code);
         if (chainCard != null && chainCard.code != code) {
             chainCard.setCode(code);
@@ -457,7 +461,12 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
 
     @Override
     public void onChainSolving(int chainCount) {
-
+        // 记录正在结算的链的登记序（MSG_CHAINED 已按 1..n 把 currentChain 依 CHAINING 顺序
+        // 压入 chains，第 ct 链 = chains.get(ct-1)）：本链效果处理内适用的场地标注据此落戳；
+        // 取不到对应链（异常/越界）时清 0，标注退回实时 eventCount() 口径
+        GameField.ChainInfo ci = chainCount >= 1 && chainCount <= engine.field.chains.size()
+                ? engine.field.chains.get(chainCount - 1) : null;
+        engine.field.resolvingChainOrdinal = ci != null ? ci.activationOrdinal : 0;
     }
 
     @Override
@@ -476,6 +485,8 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
         chainCodes.clear();
         engine.field.chains.clear();
         engine.field.currentChain = new GameField.ChainInfo();
+        // 结算链登记序随链结束复位（下次链外持续/规则类适用退回实时条数）
+        engine.field.resolvingChainOrdinal = 0;
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onFieldChanged();
         });

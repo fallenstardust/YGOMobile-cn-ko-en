@@ -50,6 +50,12 @@ public class MsgDispatchGate {
             engine.recordMsgFrame(msgType, body);
         }
         // 入队后由闸门串行派发：动画消息会关闭闸门，暂缓后续消息（对齐 C++ WaitFrameSignal 阻塞语义）
+        // 撤回重同步的 reload 入队即告知协调器挂起超时自愈（评审 Major②）：ACK 后紧接确认卡
+        // 对话框/长动画时，reload 可能被无时限的持闸压住超过常规窗口——那并非丢失，
+        // 过早复位会使迟到的 reload 因无 latch 只执行 capture+clear 就 return（半落地，标注被永久清掉）
+        if (msgType == GameMessage.ReloadField.value() && engine.undoCoord.undoResyncTurn >= 0) {
+            engine.undoCoord.noteUndoReloadQueued();
+        }
         engine.pendingMsgs.offer(() -> dispatchGameMsg(msgType, data));
         drainPendingMsgs();
     }

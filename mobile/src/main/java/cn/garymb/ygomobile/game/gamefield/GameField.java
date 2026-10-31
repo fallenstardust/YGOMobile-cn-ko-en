@@ -126,6 +126,11 @@ public class GameField {
         public int sequence;
         public boolean solved;
         public boolean needDistinguish;
+        /** 该次发动登记进发动账本时的登记序（MSG_CHAINING 里 record 后的
+         *  {@link EffectActivationLedger#eventCount()} 快照，0=未知）：效果处理阶段适用的
+         *  HINT_ZONE/MSG_FIELD_DISABLED 标注据此落戳，撤回剪除时比较的是「造成者那次发动」
+         *  而非标注消息到达时刻（连锁交错时后链先结算、无关发动后登记会误清保留中的标注） */
+        public int activationOrdinal;
         public List<ClientCard> targets = new ArrayList<>();
         /** 连锁图标（chain 旋转图 / number 序号）位置快照：MSG_CHAINED 时捕捉发动卡 xyz，卡因结算离开原位时图标不跟随，停在原地直到连锁消失。 */
         public boolean iconPosCaptured;
@@ -176,6 +181,10 @@ public class GameField {
     final int[] disabledStamp = new int[32];
     /** 标注位布局为双方共 32 格（seat0 低 16 位 / seat1 高 16 位），条数戳与戳位同长 */
     private static final int ZONE_BIT_COUNT = 32;
+    /** 正在结算的链的登记序（MSG_CHAIN_SOLVING(ct) 写 chains.get(ct-1).activationOrdinal，
+     *  CHAIN_END/reload 复位 0）：applyHintZone/applyDisabledField 优先取本作当前戳，链外
+     *  （持续/规则类适用，无结算链）退实时 eventCount()；仅引擎派发线程读写 */
+    public int resolvingChainOrdinal;
     /** MSG_SELECT_EFFECTYN 询问中的卡（用户规格：诱发效果被询问是否发动时，该卡矩形角上
      *  显示与可发动同款的绿色呼吸点）：由询问窗展示时置入、dismiss/新询问到达时清除。
      *  不写 cmdFlag——COMMAND_ACTIVATE 置位会让点卡路由（GameFieldController）误弹命令菜单，
@@ -341,6 +350,7 @@ public class GameField {
         contiAct = false;
         disabledField = 0;
         hintZoneMask = 0;
+        resolvingChainOrdinal = 0;
         Arrays.fill(hintZoneStamp, 0);
         Arrays.fill(disabledStamp, 0);
         effectYnAsking = null;
@@ -368,9 +378,15 @@ public class GameField {
         lpcstring = "";
     }
 
+    /** 标注当前戳（用户反馈连锁交错误清修正，评审 Major①）：优先取正在结算链的登记序
+     *  （造成该标注的那次发动），链外适用退实时登记条数 */
+    private int currentStamp() {
+        return resolvingChainOrdinal > 0 ? resolvingChainOrdinal : EffectActivationLedger.eventCount();
+    }
+
     /** 接收 HINT_ZONE 掩码（本地视角）展开为魔陷格标注集存 hintZoneMask：仅 SZONE 位标注同纵列两格（同侧 seq 与对侧镜像 4-seq），MZ 位为封区类宣告不做持久标注，来位已被 disabledField 封锁时跳过，仅主列 seq 0-4 */
     public void applyHintZone(int zones) {
-        final int stamp = EffectActivationLedger.eventCount();
+        final int stamp = currentStamp();
         for (int bit = 0; bit < ZONE_BIT_COUNT; bit++) {
             if ((zones & (1 << bit)) == 0) continue;
             if ((bit & 8) == 0) continue;                       // MZ 位：封区宣告，跳过
@@ -398,7 +414,7 @@ public class GameField {
      *  解禁的格同时清位与戳 */
     public void applyDisabledField(int mask) {
         long prev = disabledField;
-        final int stamp = EffectActivationLedger.eventCount();
+        final int stamp = currentStamp();
         disabledField = mask & 0xFFFFFFFFL;
         for (int bit = 0; bit < ZONE_BIT_COUNT; bit++) {
             if ((mask & (1 << bit)) != 0) {
@@ -445,6 +461,22 @@ public class GameField {
         disabledField = marks.disabledField;
         System.arraycopy(marks.hintZoneStamps, 0, hintZoneStamp, 0, ZONE_BIT_COUNT);
         System.arraycopy(marks.disabledStamps, 0, disabledStamp, 0, ZONE_BIT_COUNT);
+        trimZoneMarksByKeptEvents(keptEvents);
+    }
+
+    /** 跨回合撤回只回填决斗级封区标注（评审 Minor）：disabledField 是决斗级持续态，而撤回
+     *  重同步的 reload/各区 refresh 不重发 MSG_FIELD_DISABLED（query_field_info 亦不携禁用态），
+     *  若不回填则仍在生效的封区白 X 直到该效果下次适用才会重现——无条件恢复后同样按戳剪除；
+     *  hintZoneMask 是回合级（本就随 MSG_NEW_TURN 边界清除），跨回合不复活 */
+    public void restoreDisabledMarks(ZoneMarks marks, int keptEvents) {
+        disabledField = marks.disabledField;
+        System.arraycopy(marks.disabledStamps, 0, disabledStamp, 0, ZONE_BIT_COUNT);
+        if (keptEvents >= 0) trimZoneMarksByKeptEvents(keptEvents);
+    }
+
+    /** 按保留发动条数逐位剪除戳超新的标注：保留前缀内的标注（戳≤kept）连同更早戳原样留下，
+     *  被抹掉那次发动所标的位清值同清戳（下次适用重新落戳） */
+    private void trimZoneMarksByKeptEvents(int keptEvents) {
         if (keptEvents < 0) return;
         for (int bit = 0; bit < ZONE_BIT_COUNT; bit++) {
             if (((hintZoneMask >>> bit) & 1) != 0 && hintZoneStamp[bit] > keptEvents) {

@@ -542,6 +542,10 @@ public class GameEngine {
 
     public boolean isUndoPromptActive() { return undoCoord.isUndoPromptActive(); }
 
+    /** 撤回最小发出间隔（1s）的剩余 ms（≤0 = 已过）：UI 显示态评估为假且仍在计时时，
+     *  据此延时补算一次，保证 ic_undo 在间隔到期时自动重新点亮（显示态与发出闸门解耦配套） */
+    public long undoSendIntervalRemainingMs() { return undoCoord.undoSendIntervalRemainingMs(); }
+
     /**
      * 按留存的最近询问快照重派发待答询问（实现见 UndoClientCoordinator）：界面侧撤回被拒时，
      * 点击撤回瞬间被收口的选择/宣言/选项类弹窗没有实例快照可原地恢复，只能靠本路重建。

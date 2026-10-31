@@ -161,13 +161,21 @@ public class ReloadFieldBuilder {
         // 撤回（CTOS_UNDO）重同步：field.clear() 已把回合数/阶段归零，而 MSG_RELOAD_FIELD 本身
         // 不携这两项，故从 STOC_UNDO_ACK 暂存值回填（非撤回触发的 reload 不会有 latch，行为不变）
         final boolean undoResync = engine.applyUndoResync(field);
-        if (undoResync && prevTurn > 0 && field.turnCount == prevTurn) {
-            // 同回合撤回：恢复被 clear() 抹掉的无效格标注与变色，FieldBoardRenderer 的
-            // 玫瑰呼吸/白 X 动画随即继续显示（animTime 相位连续，无需额外重建）；
-            // 本次被回退的那一段里才适用的标注（条数戳 > 保留条数）不恢复：无限泡影变回未使用
-            // 效果时格子恢复常规颜色并去掉无效徽记，封区效果变回未使用时去掉白 X，
-            // 直到该效果下次适用时由新的 HINT_ZONE / MSG_FIELD_DISABLED 重新标注
-            field.restoreZoneMarks(prevMarks, engine.undoKeptChainEvents());
+        if (undoResync && prevTurn > 0) {
+            final int kept = engine.undoKeptChainEvents();
+            if (field.turnCount == prevTurn) {
+                // 同回合撤回：恢复被 clear() 抹掉的无效格标注与变色，FieldBoardRenderer 的
+                // 玫瑰呼吸/白 X 动画随即继续显示（animTime 相位连续，无需额外重建）；
+                // 本次被回退的那一段里才适用的标注（条数戳 > 保留条数）不恢复：无限泡影变回未使用
+                // 效果时格子恢复常规颜色并去掉无效徽记，封区效果变回未使用时去掉白 X，
+                // 直到该效果下次适用时由新的 HINT_ZONE / MSG_FIELD_DISABLED 重新标注
+                field.restoreZoneMarks(prevMarks, kept);
+            } else {
+                // 跨回合撤回（评审 Minor）：hintZoneMask 是回合级，随回合推进维持「新回合清除」
+                // 既有语义不复活；disabledField 是决斗级持续态且重同步不重发 MSG_FIELD_DISABLED，
+                // 无条件回填后同样按戳剪除，否则仍在封区的格子白 X 凭空消失
+                field.restoreDisabledMarks(prevMarks, kept);
+            }
         }
         engine.mainHandler.post(() -> {
             if (engine.listener != null) {

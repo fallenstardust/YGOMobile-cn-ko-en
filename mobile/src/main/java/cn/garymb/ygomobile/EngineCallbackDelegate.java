@@ -283,6 +283,21 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
         });
     }
 
+    /** 撤回入口显示态的延时补算（评审 Critical 配套）：显示态已与 1s 发出闸门解耦，若补算
+     *  重算仍为假（其余判定未落定）且最小发出间隔仍在计时，按剩余时间到点后再算一次，
+     *  保证 ic_undo 不会因窗口内评估为假而熄灭后无人点亮（INVISIBLE 图标不吃触摸）。
+     *  用方法引用而非 lambda 作字段初始化：activity 是构造器才赋值的 blank final，
+     *  初始化器里 lambda 体内直接读取会触发「might not have been initialized」确定赋值告警，
+     *  方法引用只绑定 this，字段读取推迟到运行期 */
+    private final Runnable undoPromptRecheck = this::recheckUndoPrompt;
+
+    /** {@link #undoPromptRecheck} 的实体：到点重算 ic_undo 显示态（引擎已销毁/非可撤场景静默跳过） */
+    private void recheckUndoPrompt() {
+        if (activity.engine == null || !activity.engine.canUndo()
+                || activity.topInfoManager == null) return;
+        activity.topInfoManager.setUndoPrompt(activity.engine.isUndoPromptActive());
+    }
+
     @Override
     public void onSelectRequired(int selectType, ByteBuffer data) {
         // 询问代次推进（撤回应答屏障的唯一放行点）：必须在投给 UI 之前同步执行；撤回布防记下的是「被撤销的那次询问」的代次，唯有本次新询问把代次推过屏障下界，界面上的选择/命令应答才会重新发往服务端；屏障只压住新询问到达之前那一段
@@ -292,8 +307,18 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
         // 才会亮出来（连续撤回的可见入口）
         if (activity.engine != null && activity.engine.canUndo()) {
             activity.runOnUiThread(() -> {
-                if (activity.topInfoManager != null)
-                    activity.topInfoManager.setUndoPrompt(activity.engine.isUndoPromptActive());
+                if (activity.topInfoManager != null) {
+                    boolean undoActive = activity.engine.isUndoPromptActive();
+                    activity.topInfoManager.setUndoPrompt(undoActive);
+                    // 评审 Critical：若仍为假且 1s 最小间隔仍在计时，按剩余时间调度一次补算
+                    activity.engine.mainHandler.removeCallbacks(undoPromptRecheck);
+                    if (!undoActive) {
+                        long wait = activity.engine.undoSendIntervalRemainingMs();
+                        if (wait > 0L) {
+                            activity.engine.mainHandler.postDelayed(undoPromptRecheck, wait + 50L);
+                        }
+                    }
+                }
             });
         }
         activity.runOnUiThread(() -> {
