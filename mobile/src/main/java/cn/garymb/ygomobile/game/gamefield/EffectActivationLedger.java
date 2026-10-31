@@ -73,11 +73,26 @@ public final class EffectActivationLedger {
     private EffectActivationLedger() {}
 
     /** 登记 code 卡（半场 side、回合 turn）发动了 descRaw 指向的效果：仅卡码型字符串 id
-     *（>MAX_STRING_ID）有段落序含义，desc==0（脚本未 SetDescription）与系统字符串 id 忽略 */
+     *（>MAX_STRING_ID）有段落序含义，desc==0（脚本未 SetDescription）与系统字符串 id 忽略。
+     * <p>幂等去重（评审 Minor①）：同 (code, offset, side, turn) 键已存在任何日志行时直接返回，
+     * 不重复成行——重放/自愈重复投递同一条 MSG_CHAINING 不再把 LOG 推得比服务端
+     *  silentChainEvents 大（dropBeyond 误清保留前缀方向）；合法的同键重复发动本只需一条标记，
+     *  存在性语义与 kept 前缀判定仍一致（该键被保留 ⇒ 标记留，被全撤 ⇒ kept 小于唯一行序 ⇒ 清），
+     *  与服务端每链计数口径的差值只会落在「清不少」的安全侧 */
     public static void record(int code, int descRaw, int side, int turn) {
         long uid = descRaw & 0xFFFFFFFFL;
         if (code <= 0 || uid <= DataManager.MAX_STRING_ID) return;
         int offset = (int) (uid & 0xf);
+        synchronized (LOG) {
+            // 主码行四字段全等即视为同一笔发动（side 为当前视角屏幕侧，swapSides 后两侧
+            // 同步翻转，比较口径自洽）
+            for (LoggedAdds row : LOG) {
+                Activation a0 = row.acts[0];
+                if (row.codes[0] == code && a0.offset == offset && a0.side == side && a0.turn == turn) {
+                    return;
+                }
+            }
+        }
         // alias 镜像：发动的异画卡与其的本卡（或反之）共用同一效果段落编号，两码都要能查到
         Card c = DataManager.get().getCardManager().getCard(code);
         boolean mirror = c != null && c.Alias > 0 && c.Alias != code;

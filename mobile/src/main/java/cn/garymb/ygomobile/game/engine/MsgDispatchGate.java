@@ -78,8 +78,18 @@ public class MsgDispatchGate {
         }
         ByteBuffer buf = ByteBuffer.wrap(engine.lastGameMsgBody);
         buf.order(ByteOrder.LITTLE_ENDIAN);
-        // 直接入队但不刷新缓存（保留原快照以便再次重放），故不经 enqueueGameMsg 的缓存分支
-        engine.pendingMsgs.offer(() -> dispatchGameMsg(engine.lastGameMsgType, buf));
+        // 直接入队但不刷新缓存（保留原快照以便再次重放），故不经 enqueueGameMsg 的缓存分支；
+        // 重放派发全程置抑制标志（评审 Minor①）：重放的 MSG_CHAINING 只重建 UI/动画，
+        // 不得再次登记发动账本——同一笔发动在原始派发已计数，重放再计会使客户端 LOG 条数
+        // 超过服务端保留前缀计数，撤回 dropBeyond 误清保留中的标记
+        engine.pendingMsgs.offer(() -> {
+            engine.suppressLedgerRecord = true;
+            try {
+                dispatchGameMsg(engine.lastGameMsgType, buf);
+            } finally {
+                engine.suppressLedgerRecord = false;
+            }
+        });
         drainPendingMsgs();
     }
 

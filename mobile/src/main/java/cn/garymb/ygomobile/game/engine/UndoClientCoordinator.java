@@ -60,6 +60,12 @@ class UndoClientCoordinator {
     /** 入队后仍永不派发的底线时限（大于对话框读卡/长动画的合理时长，只在真丢失时生效） */
     private static final long UNDO_RELOAD_QUEUED_TIMEOUT_MS = 30000L;
 
+    /** 已接受的最新撤回轮次（STOC_UNDO_ACK 尾部新字段，服务端每受理一轮 OK/REBUILT 自增）：
+     *  超时自愈复位后迟到的旧轮 OK/REBUILT 据此拒收，不再把陈旧回合/条数 latch 回填进已推进的
+     *  新局面（评审 Minor②，heal 注释宣称的「陈旧 ACK 不得回填」据此成立）；
+     *  -1 = 尚未接受任何带轮次的 ACK（旧服务端恒发 -1，不参与校验）；新一局随 clearUndoResync 复位 */
+    private volatile int lastUndoAckRound = -1;
+
     // === 应答代次屏障字段 ===
 
     private volatile long questionSeq;
@@ -130,8 +136,10 @@ class UndoClientCoordinator {
      *  （按 undoResyncLatchAtMs 计时）；② 连 ACK 都没回来（服务端不支持/静默丢弃此包，只剩发送侧闩锁挂着），
      *  改按 lastUndoSentAt 计时并放宽到 {@link #UNDO_ACK_TIMEOUT_MS}。两者都只整组复位重同步闩锁与
      *  undoBlockedUntilNewAction（迟到的旧 reload/ACK 不得再把陈旧回合回填进已推进的新局面，也不让一个误点
-     *  把入口锁到本局结束），不碰 {@link #lastUndoSentAt} 的 1s 间隔与应答屏障；DENIED 分支早已把闩锁解了、
-     *  turn 置 -1，进不了本判定；只在主线程 canSendUndo 入口调用，与同线程 applyUndoResync 串行不争抢 */
+     *  把入口锁到本局结束），不碰 {@link #lastUndoSentAt} 的 1s 间隔与应答屏障；复位后迟到的同轮
+     *  ACK 由 {@link #lastUndoAckRound} 轮次校验在 onUndoAck 入口拒收（评审 Minor②，本句不再是空话）；
+     *  DENIED 分支早已把闩锁解了、turn 置 -1，进不了本判定；只在主线程 canSendUndo 入口调用，
+     *  与同线程 applyUndoResync 串行不争抢 */
     private void healStaleUndoResyncLatch() {
         boolean resyncPending = undoResyncTurn >= 0;
         if (!resyncPending && !engine.undoBlockedUntilNewAction) return;
@@ -184,7 +192,8 @@ class UndoClientCoordinator {
 
     // === STOC_UNDO_ACK 处理 ===
 
-    void onUndoAck(int result, int turn, int currentPlayer, int phase, int chainEvents) {
+    void onUndoAck(int result, int turn, int currentPlayer, int phase, int chainEvents,
+                   int ackRound) {
         if (result == YGOProtocol.UNDO_ACK_DENIED) {
             resetUndoResyncLatch();
             // 被拒即无后续重同步：闩锁当场解除，本方手上的询问答完（或新询问到达）就能再次发起撤回
@@ -202,6 +211,15 @@ class UndoClientCoordinator {
             });
             return;
         }
+        // 轮次校验（评审 Minor②）：自愈复位后迟到的旧轮 OK/REBUILT 在此拒收——它携带的
+        // 回退点回合/阶段与保留条数属于已被判定丢失的那一轮，回填会把陈旧局面盖进已推进的
+        // 新局；旧服务端不带轮次（-1）时跳过校验；重复同轮 ACK（如保活重发）同样拒收
+        if (ackRound >= 0 && ackRound <= lastUndoAckRound) {
+            Log.w(TAG, "stale/duplicate undo ack dropped: round=" + ackRound
+                    + " lastAccepted=" + lastUndoAckRound + " result=" + result);
+            return;
+        }
+        if (ackRound >= 0) lastUndoAckRound = ackRound;
         engine.invalidateCurrentMsgSegment();
         clearStaleMsgStateAfterUndo();
         undoResyncTurn = turn;
@@ -262,6 +280,9 @@ class UndoClientCoordinator {
     void clearUndoResync() {
         resetUndoResyncLatch();
         lastUndoSentAt = 0L;
+        // 新一局服务端 ServerDuel 重建、轮次从头计数，客户端基准同步复位，
+        // 否则新局的 round=1 会被上一局的 lastUndoAckRound 误判为陈旧
+        lastUndoAckRound = -1;
         releaseUndoResponseBarrier();
         engine.undoBlockedUntilNewAction = false;
     }

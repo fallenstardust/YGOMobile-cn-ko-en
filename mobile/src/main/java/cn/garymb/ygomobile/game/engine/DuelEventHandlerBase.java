@@ -364,13 +364,18 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
         // triggering_controler；按 卡码×半场×回合 登记进决斗级账本（不依赖 chainCard 是否解析
         // 成功，墓地/卡组/额外等列表重建临时 ClientCard 场景也能按卡码命中），由
         // CardInfoBinder 映射到描述段落；登记后按卡码门控刷新正在展示的卡详（用户规格1/2：
-        // 本回合发动即时反映无需重新点卡，但只有同码/同 alias 卡发动才打扰面板）
-        EffectActivationLedger.record(code, desc, localCc, engine.field.turnCount);
-        // 登记序快照（评审 Major①）：效果处理阶段适用的 HINT_ZONE/MSG_FIELD_DISABLED 标注
-        // 落本次发动的序而非标注到达时的实时条数，连锁交错（后链先结算/无关发动在后）
-        // 时撤回才不误清保留中的标注
-        engine.field.currentChain.activationOrdinal = EffectActivationLedger.eventCount();
-        CardDetailPanel.refreshCardDetailMarks(code);
+        // 本回合发动即时反映无需重新点卡，但只有同码/同 alias 卡发动才打扰面板）。
+        // MSG_RETRY 重放派发（suppressLedgerRecord）只重建 UI/动画，不重复登记与刷卡详：
+        // 同一笔发动的原始派发已计数，重放再计会使客户端账本条数超过服务端保留前缀计数
+        //（配合 EffectActivationLedger.record 幂等去重，双保险评审 Minor①）
+        if (!engine.suppressLedgerRecord) {
+            EffectActivationLedger.record(code, desc, localCc, engine.field.turnCount);
+            // 登记序快照（评审 Major①）：效果处理阶段适用的 HINT_ZONE/MSG_FIELD_DISABLED 标注
+            // 落本次发动的序而非标注到达时的实时条数，连锁交错（后链先结算/无关发动在后）
+            // 时撤回才不误清保留中的标注
+            engine.field.currentChain.activationOrdinal = EffectActivationLedger.eventCount();
+            CardDetailPanel.refreshCardDetailMarks(code);
+        }
         if (chainCard != null && chainCard.code != code) {
             chainCard.setCode(code);
             engine.field.moveCardAnimated(chainCard, 10);

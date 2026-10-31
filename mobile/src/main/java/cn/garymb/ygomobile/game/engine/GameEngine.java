@@ -252,6 +252,12 @@ public class GameEngine {
     /** 录像回放播放器（唯一回放入口：消息投喂本引擎实况管线，与联机/观战同一渲染路径） */
     // 撤回/录制/看门狗协作类（同包，持 engine 反向引用）
     final UndoClientCoordinator undoCoord;
+    /** MSG_RETRY 重放置位（评审 Minor①）：replayLastGameMsg 重新派发缓存消息期间为 true，
+     *  于 DuelEventHandlerBase.onChaining 抑制发动账本登记与卡详刷新——重放只是重建选择 UI
+     *  的本地回显，不是新的发动事件，否则客户端 LOG 多于一行、与保留前缀的
+     *  silentChainEvents 条数口径偏移，dropBeyond 误清保留中的标记；
+     *  与派发链同在主线程，volatile 仅作跨线程可见性兜底 */
+    volatile boolean suppressLedgerRecord;
     final MsgFrameRecorder msgRecorder;
     final AskWatchdog askWatchdog;
     /** 消息串行闸门（入队派发/动画持闸/回放排空，实现在 MsgDispatchGate）与对局视角（显示名/切视角，实现在 DuelViewpointManager） */
@@ -517,7 +523,8 @@ public class GameEngine {
     /** 当前是否允许再发一条 CTOS_UNDO（实现见 UndoClientCoordinator）：连续撤回的客户端互斥闸门 */
     public boolean canSendUndo() { return undoCoord.canSendUndo(); }
 
-    public void onUndoAck(int result, int turn, int currentPlayer, int phase, int chainEvents) { undoCoord.onUndoAck(result, turn, currentPlayer, phase, chainEvents); }
+    public void onUndoAck(int result, int turn, int currentPlayer, int phase, int chainEvents,
+                          int ackRound) { undoCoord.onUndoAck(result, turn, currentPlayer, phase, chainEvents, ackRound); }
 
     public boolean applyUndoResync(GameField field) { return undoCoord.applyUndoResync(field); }
 

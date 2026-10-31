@@ -140,9 +140,12 @@ final class UndoQuestionGuard implements YGOProtocol {
         if (responder < 0 || responder >= analyzer.room.players.length) {
             return;
         }
-        // 捕获槽为空时退回同一代次的 liveQuestion（重挂落空时留在该槽里的那条）：
-        // 宁可拿引擎确实还在等的这条询问去挂，也不要因空槽直接 return 后谁都不再挂
-        byte[] terminal = analyzer.silentTerminal != null ? analyzer.silentTerminal : analyzer.liveQuestion;
+        // 捕获槽为空时退回 liveQuestion 兜底（重挂落空时留在该槽里的那条），但必须经
+        // hasLiveAsk() 代次配对把关（评审 Minor，与 rehangPendingQuestion/
+        // canRedeliverQuestion 同一闸门）：无把关时可能拿上一代次的旧题挂给新席位，
+        // 把回退前那段已被丢弃的询问错挂出去；代次不配则视同无兜底，宁等下一次自愈
+        byte[] terminal = analyzer.silentTerminal != null ? analyzer.silentTerminal
+                : (hasLiveAsk() ? analyzer.liveQuestion : null);
         ServerConnection dp = analyzer.room.players[responder];
         if (terminal == null || dp == null) {
             return;

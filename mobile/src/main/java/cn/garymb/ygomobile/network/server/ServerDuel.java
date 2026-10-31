@@ -40,6 +40,12 @@ final class ServerDuel extends ServerDuelBase {
     // 撤回操作（undo）：本工程扩展——局域网房间内回退「最近一个完整动作」
     // ==================================================================
 
+    /** 已发出的撤回 ACK 轮次号（评审 Minor②）：每受理一轮撤回（进入回退流程，无论
+     *  OK 还是 REBUILT 结局）自增一次，随 ACK 下发供客户端拒收超时自愈后迟到的旧轮
+     *  ACK；DENIED 不消耗轮次（携带当前值，客户端不参与轮次判定）；方法均在单线程
+     *  房间执行器上串行，无需同步；新一局重建 ServerDuel 时从 1 重新计数 */
+    private int undoAckRound;
+
     /**
      * CTOS_UNDO：把局面回退到本席位最近一个动作宣言之前（引擎按开局 seed 重建 + 重放更早应答）；可连续多次，直到 {@link #undoSteps} 再无动作锚点（不越过本局首个动作，match 换边每局新栈天然隔离）。
      * <p>撤回单位是一个完整动作：栈中仅 IDLECMD/BATTLECMD 应答及回合玩家在 DP/SP 以 CHAIN/EFFECTYN 挂出的几步是「动作锚点」，锚点后的连锁/选格/表示形式/对方应答均属该动作处理过程，一次撤回连带丢弃多步。
@@ -80,6 +86,8 @@ final class ServerDuel extends ServerDuelBase {
             return;
         }
         UndoStep step = targetStep;
+        // 本轮撤回轮次号（受理即消耗）：OK/REBUILT 两分支同一轮同值，重挂不改变轮次
+        final int ackRound = ++undoAckRound;
         // 计时快照：回退到 step 应答之前的值；重建失败时恢复回现值
         int tl0 = room.timeLimit[0];
         int tl1 = room.timeLimit[1];
@@ -98,7 +106,7 @@ final class ServerDuel extends ServerDuelBase {
                     + " phase=" + Integer.toHexString(analyzer.silentPhase));
             sendUndoAckToAll(UNDO_ACK_OK, analyzer.silentTurnCount,
                     analyzer.silentTurnPlayer, analyzer.silentPhase,
-                    analyzer.silentChainEvents);
+                    analyzer.silentChainEvents, ackRound);
             analyzer.resyncAfterUndo(OcgDuelEngine.queryFieldInfo(pduel));
             scheduleUndoQuestionHang();
             sendUndoStateToAll();
@@ -115,7 +123,7 @@ final class ServerDuel extends ServerDuelBase {
         if (rebuildAndReplay(undoSteps.size())) {
             sendUndoAckToAll(UNDO_ACK_REBUILT, analyzer.silentTurnCount,
                     analyzer.silentTurnPlayer, analyzer.silentPhase,
-                    analyzer.silentChainEvents);
+                    analyzer.silentChainEvents, ackRound);
             analyzer.resyncAfterUndo(OcgDuelEngine.queryFieldInfo(pduel));
             scheduleUndoQuestionHang();
             sendUndoStateToAll();
@@ -229,13 +237,15 @@ final class ServerDuel extends ServerDuelBase {
 
     protected void denyUndo(ServerConnection requester) {
         if (requester != null) {
-            requester.send(STOC_UNDO_ACK, undoAckPayload(UNDO_ACK_DENIED, 0, 0, 0, 0));
+            // DENIED 不消耗轮次：携带当前值，客户端 DENIED 分支不做轮次判定（拒绝无重同步回填，晚到无害）
+            requester.send(STOC_UNDO_ACK, undoAckPayload(UNDO_ACK_DENIED, 0, 0, 0, 0, undoAckRound));
         }
     }
 
     /** 把撤回结果推给全体在场连接（solo 一条连接占两席位，按连接身份去重）。 */
-    protected void sendUndoAckToAll(int result, int turn, int player, int phase, int chainEvents) {
-        byte[] ack = undoAckPayload(result, turn, player, phase, chainEvents);
+    protected void sendUndoAckToAll(int result, int turn, int player, int phase, int chainEvents,
+                                    int ackRound) {
+        byte[] ack = undoAckPayload(result, turn, player, phase, chainEvents, ackRound);
         ServerConnection p0 = room.players[0];
         ServerConnection p1 = room.players[1];
         if (p0 != null) {
@@ -249,17 +259,20 @@ final class ServerDuel extends ServerDuelBase {
         }
     }
 
-    /** STOC_UNDO_ACK 载荷：{@code [result(1B)][turn(1B)][currentPlayer(1B)][phase(u16 LE)][chainEvents(i32 LE)]}。
+    /** STOC_UNDO_ACK 载荷：{@code [result(1B)][turn(1B)][currentPlayer(1B)][phase(u16 LE)][chainEvents(i32 LE)][ackRound(i32 LE)]}。
      *  chainEvents = 回退后重放前缀内的「有效效果发动」条数（与客户端 EffectActivationLedger
      *  登记同口径），客户端把账本超出该条数的后缀条目剪除（撤回连带回退已使用效果标记）；
-     *  拒绝态无重放，5=无后续重同步语义不变。 */
-    protected static byte[] undoAckPayload(int result, int turn, int player, int phase, int chainEvents) {
-        ByteBuffer b = ByteBuffer.allocate(9).order(ByteOrder.LITTLE_ENDIAN);
+     *  ackRound = 撤回轮次号（评审 Minor②），客户端据此拒收超时自愈后迟到的旧轮 OK/REBUILT，
+     *  不再把陈旧回合/条数回填进已推进的新局面；旧客户端截断消费同无害。 */
+    protected static byte[] undoAckPayload(int result, int turn, int player, int phase,
+                                           int chainEvents, int ackRound) {
+        ByteBuffer b = ByteBuffer.allocate(13).order(ByteOrder.LITTLE_ENDIAN);
         b.put((byte) result);
         b.put((byte) turn);
         b.put((byte) player);
         b.putShort((short) phase);
         b.putInt(chainEvents);
+        b.putInt(ackRound);
         return b.array();
     }
 
