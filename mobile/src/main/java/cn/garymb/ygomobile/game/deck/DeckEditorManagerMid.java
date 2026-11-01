@@ -46,7 +46,6 @@ import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.YGOProActivity;
-import ocgcore.DataManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
@@ -65,7 +64,9 @@ abstract class DeckEditorManagerMid extends DeckEditorManagerBase {
 
     public void terminate() {
         if (isModified && !isReadonly) {
-            showConfirmDialog(DataManager.get().getStringManager().getSystemString(1356, "此操作将放弃对当前卡组的修改，是否继续？"), this::doTerminate);
+            // “退出编辑”与“选择卡组”是用户直接操作的入口，也是两侧唯一的放弃确认点：
+            // 对端（卡组编辑页）现在静默跟随本侧切换，不再重复弹同一句（gframe 系统字符串 1356）
+            showConfirmDialog(activity.getString(R.string.deck_discard_switch_tip), this::doTerminate);
         } else {
             doTerminate();
         }
@@ -321,7 +322,7 @@ abstract class DeckEditorManagerMid extends DeckEditorManagerBase {
                     return;
                 }
                 if (isModified && !isReadonly) {
-                    showConfirmDialog("此操作将放弃对当前卡组的修改，是否继续？",
+                    showConfirmDialog(activity.getString(R.string.deck_discard_switch_tip),
                             () -> {
                                 if (deckSelectorDialog != null)
                                     deckSelectorDialog.show(btnDeckManager);

@@ -140,10 +140,9 @@ public class DeckSelectFragment extends Fragment {
                     }
                     deckAdp.notifyItemChanged(position);
                 } else {
-                    //dismiss();
-
-                    mDialogListener.onDismiss();
-                    onDeckMenuListener.onDeckSelect(item);
+                    //对话框先不收，收起时机交给接收方：它要先弹“放弃未保存修改”确认时本对话框
+                    //得留在确认窗底下，到用户点确定或取消再执行 mDialogListener::onDismiss
+                    onDeckMenuListener.onDeckSelect(item, mDialogListener::onDismiss);
                 }
             }
         });
@@ -176,9 +175,9 @@ public class DeckSelectFragment extends Fragment {
         resultListAdapter.setOnItemSelectListener(new DeckListAdapter.OnItemSelectListener<DeckFile>() {
             @Override
             public void onItemSelect(int position, DeckFile item) {
-                //点击搜索结果加载卡组时只隐藏对话框，不重置搜索界面，保留搜索状态供下次恢复显示
-                mDialogListener.onDismiss();
-                onDeckMenuListener.onDeckSelect(item);
+                //点击搜索结果加载卡组时不重置搜索界面，保留搜索状态供下次恢复显示；
+                //对话框同样交给接收方收（未保存确认期间保持展开）
+                onDeckMenuListener.onDeckSelect(item, mDialogListener::onDismiss);
             }
         });
 

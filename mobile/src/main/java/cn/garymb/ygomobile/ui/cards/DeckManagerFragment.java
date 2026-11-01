@@ -215,7 +215,27 @@ public class DeckManagerFragment extends DeckManagerFragmentMenu {
     //在本页面中根据卡组来源（本地或服务器）显示卡组内容
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
+    public void onDeckSelect(DeckFile deckFile, Runnable dismissDialog) {
+        // 三处入口（选本地其他卡组、点卡组广场的卡组、长按在线备份的卡组）均经此回调：
+        // 本页有未保存修改时先弹“放弃当前卡组的修改，是否继续”，确认窗弹在卡组选择
+        // 对话框之上并保持它展开；只有“确定”这一支才收选择窗并加载卡组。
+        // 取消/返回键/点窗外空白/关闭叉则只关掉确认窗，并把列表上被这次点击预先改掉的
+        // 选中高亮还原回当前真正在显示的那份卡组
+        confirmDiscardThen(() -> {
+            dismissDialog.run();
+            applyDeckSelect(deckFile);
+        }, this::restoreDeckManageSelection);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    @Override
     public void onDeckSelect(DeckFile deckFile) {
+        // 不经卡组选择对话框的调用（没有收起回调可用）：同样只在未保存时问一次
+        confirmDiscardThen(() -> applyDeckSelect(deckFile), this::restoreDeckManageSelection);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void applyDeckSelect(DeckFile deckFile) {
         if (!deckFile.isLocal()) {//不在本地，在云上（卡组广场中或用户的云上）
             VUiKit.defer().when(() -> {
                 DownloadDeckResponse response = DeckSquareApiUtil.getDeckById(deckFile.getDeckId());

@@ -354,8 +354,8 @@ public class MyOnlineDeckListAdapter extends BaseMultiItemQuickAdapter<DeckListI
         });
         helper.getView(R.id.ll_download).setOnLongClickListener(view -> {
             DeckFile deckFile = new DeckFile(deckItem.getDeckId(), DeckType.ServerType.MY_SQUARE);
-            mDialogListener.onDismiss();
-            onDeckMenuListener.onDeckSelect(deckFile);
+            //长按在线备份的卡组也算“换卡组”：本对话框先不收，收起时机交给接收方
+            onDeckMenuListener.onDeckSelect(deckFile, mDialogListener::onDismiss);
             return true;
         });
     }

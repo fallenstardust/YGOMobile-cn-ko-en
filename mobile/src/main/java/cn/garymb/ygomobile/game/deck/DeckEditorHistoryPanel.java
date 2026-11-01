@@ -191,22 +191,20 @@ class DeckEditorHistoryPanel implements DeckHistory.Listener {
     }
 
     /**
-     * 卡组编辑页切换到另一份卡组：本编辑器也跟着换。
+     * 卡组编辑页切换到另一份卡组：本编辑器静默跟随，不重复弹“放弃修改”确认。
      * <p>
-     * 未保存修改时不静默覆盖，复用与“选择卡组 / 退出编辑”同一套确认弹窗文案；
-     * 用户取消则本侧停在原卡组，后续对端的内容广播会因 path 不匹配被自然忽略（不会反复弹窗）。
-     * 只读与卡包展示下不接受切换（人机/AI 卡组不允许改）。
+     * 两套编辑器只有一份会话：发起切换的一侧 bindDeck 换户时，上一份卡组的时间线已被
+     * 整段清空，跟随侧再问一次也防不住任何数据（要保留必须在切换前保存），只会让用户在
+     * 两个界面里看到同一个询问内容。真正的确认留在用户直接操作的入口上：本侧的“选择卡组”
+     * 与“退出编辑”仍按 isModified 弹框（见 DeckEditorManagerMid）。
+     * 不接受切换的两种态：只读/卡包展示（人机/AI 卡组不允许改）与副卡组替换期间
+     *（席位卡组正被换侧流程占用，跨侧替换会打断换侧）。
      */
     @Override
     public void onDeckKeyChanged(String key, int publisher) {
         if (publisher == DeckHistory.PUBLISHER_DECK_EDITOR) return;
         if (key == null || key.isEmpty() || key.equals(owner.currentDeckFilePath)) return;
-        if (owner.isReadonly || owner.isPackMode) return;
-        if (owner.isModified) {
-            owner.showConfirmDialog(owner.activity.getString(R.string.deck_discard_switch_tip),
-                    () -> switchTo(key));
-            return;
-        }
+        if (owner.isReadonly || owner.isPackMode || owner.isSiding) return;
         switchTo(key);
     }
 

@@ -6,6 +6,7 @@ import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
 import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
 
 import android.animation.ObjectAnimator;
+import android.app.Dialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.DialogInterface;
@@ -26,6 +27,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -302,10 +304,9 @@ public abstract class DeckManagerFragmentDeck extends DeckManagerFragmentBase {
     /**
      * 将当前卡组状态记入撤销历史（去重与截尾规则见 {@code DeckHistory#push}）。
      * <p>
-     * 写入前先确认会话归属：若对方已切到另一份卡组而本页拒绝跟随切换（会话 key = 对方的 path），
-     * 直接 push 会把本页 A 卡组的内容写进 B 的时间线并广播给对方，造成跨卡组污染。因此由本页
-     * 重新换户回自己的卡组：对方刚完成切换、并无未保存修改，会静默跟着回到本页这份卡组——
-     * 两边最终停在用户拒绝切换时所看到的那份卡组。
+     * 写入前先确认会话归属：若对端已切到另一份卡组而本页未能跟上（如对端卡组文件已被
+     * 删除或移动，本页保持原样），直接 push 会把本页这份卡组的内容写进对方的时间线并广播
+     * 过去，造成跨卡组污染；因此由本页重新换户回自己的卡组，让两边停在同一份。
      * （DeckHistory 内部已按游标内容去重，回换后本页随后的 push 不会重复新增快照。）
      */
     protected void addDeckToHistory(DeckInfo deckInfo) {
@@ -324,12 +325,123 @@ public abstract class DeckManagerFragmentDeck extends DeckManagerFragmentBase {
     }
 
     /**
-     * 跟随决斗内卡组编辑器切换到同一份卡组。
-     * <p>
      * 本页有未保存修改（isChanged：当前 mItems 与 ydk 文件的 md5 不一致）时先弹
-     * “此操作将放弃对当前卡组的修改，是否继续”确认；取消则本页停在原卡组，之后对端的内容
-     * 广播会因 path 不匹配被自然忽略（不会反复弹窗），直到本页下一次写入时由
-     * {@link #addDeckToHistory} 把会话换回自己这份卡组。
+     * “此操作将放弃对当前卡组的修改，是否继续？”（DialogPlus，左键确定/右键取消）：
+     * <b>只有确定才执行 onConfirm</b>，取消/返回键/点窗外空白/点标题栏关闭叉一律只关掉
+     * 本确认窗（走 onDismissed），卡组选择对话框保持展开，让用户接着挑。
+     * <p>
+     * 只给发起侧的用户动作入口用：本页三处选卡组入口（本地卡组、卡组广场的卡组、长按
+     * 在线备份的卡组）均汇到 DeckManagerFragment#onDeckSelect，在那里问一次即可，
+     * 并将对话框的收起时机一起交给本方法，确认窗才能弹在它上面而不是“先收再问”。
+     * 对端广播过来的联动切换不走这里：两套编辑器只有一份会话，发起侧 bindDeck 换户时
+     * 上一份卡组的时间线已被清空，跟随侧再问只会把同一句话问两遍。
+     */
+    protected void confirmDiscardThen(Runnable onConfirm, Runnable onDismissed) {
+        if (mDeckAdapater == null || !mDeckAdapater.isChanged()) {
+            onConfirm.run();
+            return;
+        }
+        // 拿不到 context 就弹不出确认窗：不加载卡组，但要还原被这次点击预先改掉的选中高亮
+        if (getContext() == null) {
+            onDismissed.run();
+            return;
+        }
+        final DialogPlus dialog = new DialogPlus(getContext());
+        dialog.setTitle(R.string.question);
+        dialog.setMessage(getString(R.string.deck_discard_switch_tip));
+        dialog.setMessageGravity(Gravity.CENTER_HORIZONTAL);
+        dialog.setLeftButtonListener((dlg, v) -> {
+            dlg.dismiss();
+            onConfirm.run();
+        });
+        // 取消：只关掉确认窗，不执行任何换卡组动作，也不收起卡组选择对话框
+        dialog.setRightButtonListener((dlg, v) -> {
+            dlg.dismiss();
+            onDismissed.run();
+        });
+        // 标题栏的关闭叉：与取消同义（DialogPlus 默认只 dismiss，这里补上还原高亮）
+        dialog.setOnCloseLinster(dlg -> {
+            dlg.dismiss();
+            onDismissed.run();
+        });
+        // 返回键必须由确认窗自己吃掉：否则它会落到下层仍处于展开态的卡组选择对话框窗口，
+        // 触发 DeckManageDialog.onCreateDialog 里重写的 onBackPressed → onDismiss()，
+        // 把选择窗一并收掉（用户反馈的“按返回键还是收起了”即此路径）
+        dialog.setOnKeyListener((v, keyCode, event) -> {
+            if (keyCode != KeyEvent.KEYCODE_BACK) {
+                return false;
+            }
+            if (event.getAction() == KeyEvent.ACTION_UP) {
+                dialog.dismiss();
+                onDismissed.run();
+            }
+            return true;
+        });
+        // 点确认窗以外的空白处：与取消同义——只关掉确认窗，不加载也不收选择窗。
+        // DialogPlus 把 onTouchEvent 整条交给自己的 GestureDetector、不走 Dialog 原生的
+        // outside-touch 收起，所以只能经这个手势钩子做。
+        dialog.setOnGestureListener(new AOnGestureListener() {
+            @Override
+            public boolean onSingleTapUp(MotionEvent e) {
+                if (isInsideConfirmCard(dialog, e)) {
+                    //落在卡片内（非按钮的文本/背景区）：不算“点空白处”，什么都不做
+                    return false;
+                }
+                dialog.dismiss();
+                onDismissed.run();
+                return true;
+            }
+        });
+        dialog.show();
+    }
+
+    /**
+     * 未确认就关掉确认窗时，把卡组管理对话框里本地卡组列表的高亮还原到“当前真正在显示的那份卡组”。
+     * <p>
+     * 列表适配器在点击那一刻就把选中位改到了被点的 item 上（先选后通知），而本次换卡组被取消、
+     * 并没有加载它，高亮不能停在那份卡组上。refreshLocalDeckSelection 内部按 getLastDeckPath
+     * （= 当前已显示卡组）重算选中位，与“重新打开对话框时的高亮”同源；当前若是卡包展示/在线
+     * 卡组（本地列表无匹配项）则返回 -1，即清掉残留高亮。
+     */
+    protected void restoreDeckManageSelection() {
+        if (!isAdded()) {
+            return;
+        }
+        Fragment fragment = requireActivity().getSupportFragmentManager()
+                .findFragmentByTag(DeckManageDialog.DIALOG_TAG);
+        if (fragment instanceof DeckManageDialog) {
+            ((DeckManageDialog) fragment).refreshLocalDeckSelection();
+        }
+    }
+
+    /**
+     * 本次单击是否落在确认窗的内容卡片内。
+     * <p>
+     * 取的是 dialog_plus_base 的根布局（带 sdialogl 背景那张卡片），它是 android.R.id.content
+     * 的唯一子 View：不能直接用 content，因为主题若为非浮动（全屏透明）窗时 content 会铺满整屏，
+     * 那样任何单击都被判成“在卡片内”，点空白永远关不掉确认窗。取它在窗口内的矩形与单击坐标比对。
+     */
+    private boolean isInsideConfirmCard(Dialog dialog, MotionEvent event) {
+        View content = dialog.findViewById(android.R.id.content);
+        View card = content instanceof ViewGroup && ((ViewGroup) content).getChildCount() > 0
+                ? ((ViewGroup) content).getChildAt(0) : content;
+        if (card == null || card.getWidth() == 0) {
+            //拿不到卡片矩形时偏保守：当成点在卡片内，不做任何收起
+            return true;
+        }
+        int[] loc = new int[2];
+        card.getLocationInWindow(loc);
+        return event.getX() >= loc[0] && event.getX() <= loc[0] + card.getWidth()
+                && event.getY() >= loc[1] && event.getY() <= loc[1] + card.getHeight();
+    }
+
+    /**
+     * 跟随决斗内卡组编辑器切换到同一份卡组：静默加载，不重复弹“放弃修改”确认。
+     * <p>
+     * 两套编辑器只有一份会话：对端 bindDeck 换户时上一份卡组的时间线已被整段清空，
+     * 本页再问一次也防不住任何数据（要保留必须在切换前保存），只会让用户在 MainActivity
+     * 里看到一个与决斗内编辑器完全相同的询问（且本页在后台，弹窗要等到回到主页才显形，
+     * 看上去就像退出编辑后又问一遍）。本页自己的选卡组入口历史上也是直接换组，语义一致。
      */
     @Override
     void onRemoteDeckSwitch(String path) {
@@ -342,34 +454,15 @@ public abstract class DeckManagerFragmentDeck extends DeckManagerFragmentBase {
         }
         File target = new File(path);
         if (!target.exists()) {
-            //对端卡组文件已被删除或移动：保持现状，不弹无意义的确认
-            return;
-        }
-        if (mDeckAdapater.isChanged()) {
-            confirmDiscardForRemoteSwitch(target);
+            //对端卡组文件已被删除或移动：保持现状
             return;
         }
         loadDeckFromFile(target);
     }
 
-    /** 跟随对端切换前的未保存确认弹窗（与退出页、删卡的 DialogPlus 同款交互，左键为继续） */
-    private void confirmDiscardForRemoteSwitch(File target) {
-        if (getContext() == null) return;
-        DialogPlus dialog = new DialogPlus(getContext());
-        dialog.setTitle(R.string.question);
-        dialog.setMessage(getString(R.string.deck_discard_switch_tip));
-        dialog.setMessageGravity(Gravity.CENTER_HORIZONTAL);
-        dialog.setLeftButtonListener((dlg, v) -> {
-            dlg.dismiss();
-            loadDeckFromFile(target);
-        });
-        dialog.setRightButtonListener((dlg, v) -> dlg.dismiss());
-        dialog.show();
-    }
-
     /**
      * 跟随决斗内卡组编辑器对本份卡组的修改：以共享会话游标处的内容重建本页卡组网格。
-     * 两边的 path 不一致（典型场景是本页拒绝了跟随切换）时保持不动。
+     * 两边的 path 不一致（本页停在只读/卡包展示卡组，或对端已换组而本次载入尚未落地）时保持不动。
      */
     @Override
     void onRemoteDeckContent() {

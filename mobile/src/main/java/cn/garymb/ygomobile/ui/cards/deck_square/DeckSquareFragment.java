@@ -240,9 +240,9 @@ public class DeckSquareFragment extends Fragment {
         deckSquareListAdapter.setOnItemClickListener((adapter, view, position) -> {
             OnlineDeckDetail item = (OnlineDeckDetail) adapter.getItem(position);
             LogUtil.v("seesee", item.toString());
-            mDialogListener.onDismiss();
             DeckFile deckFile = new DeckFile(item.getDeckId(), DeckType.ServerType.SQUARE_DECK);
-            onDeckMenuListener.onDeckSelect(deckFile);
+            //点卡组广场的卡组：本对话框先不收，收起时机交给接收方（未保存确认期间保持展开）
+            onDeckMenuListener.onDeckSelect(deckFile, mDialogListener::onDismiss);
         });
         return binding.getRoot();
     }
