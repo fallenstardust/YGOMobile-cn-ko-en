@@ -21,6 +21,7 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.function.Consumer;
 import java.util.List;
 
@@ -98,6 +99,8 @@ abstract class GameTopInfoManagerBase {
     protected ImageView ivPlayerCardBack, ivOpponentCardBack;
     // 头像框容器（含头像贴图 + 叠加的头像框）：宽度按面板高 × 64/70 设定，令头像框贴合头像不横向拉伸
     protected View layoutPlayerAvatarBox, layoutOpponentAvatarBox;
+    // 血条框容器：其实测宽决定 LP 填充的外侧内缩（血条框裁剪区 241px 横向自由拉伸）
+    protected View layoutPlayerBarBox, layoutOpponentBarBox;
     // lpbarf 拆分后的头像框与血条框（分别叠加在头像容器与血条容器之上，取代旧的整面板单框）
     protected ImageView ivPlayerAvatarFrame, ivPlayerBarFrame;
     protected ImageView ivOpponentAvatarFrame, ivOpponentBarFrame;
@@ -112,6 +115,23 @@ abstract class GameTopInfoManagerBase {
      * 点亮并循环播放呼吸式闪动发光，点击即发起 CTOS_UNDO。
      */
     protected ImageView ivUndo;
+    /**
+     * 持续适用中效果徽标（用户新规格）：本侧头像下角的金色外发光感叹号（我方左下、对方右下），
+     * 该侧存在「整回合/整局一直适用中」的效果时呼吸闪动，点击向下展开该侧列表。
+     */
+    protected ImageView ivPlayerApplying, ivOpponentApplying;
+    /** 两侧当前持续适用中的效果条目（解算后缓存，徽标点击据此展开，避免重复解算） */
+    protected List<ContinuousEffectApplier.Applying> applyingMe = Collections.emptyList();
+    protected List<ContinuousEffectApplier.Applying> applyingOpp = Collections.emptyList();
+    /** 徽标点击展开的下拉列表（PopupWindow 层，不被 GL 曲面遮挡） */
+    protected ApplyingEffectsPopup applyingPopup;
+    /** 两侧徽标各自的呼吸动画（null=未播放） */
+    protected ValueAnimator applyingPulseMe, applyingPulseOpp;
+    /** 徽标 XML 基准尺寸与内边距（dp，f=1；内边距用于露出 applying_glow 光晕） */
+    protected static final float APPLYING_BASE_SIZE_DP = 22f;
+    protected static final float APPLYING_BASE_PADDING_DP = 5f;
+    /** 徽标呼吸动画单程时长（REVERSE 循环，一个完整明暗周期 ≈ 2×此值） */
+    protected static final long APPLYING_PULSE_HALF_MS = 700L;
     /** iv_undo 的呼吸动画（可撤回期间常驻循环）；null = 未播放 */
     protected ValueAnimator undoPulse;
     /** 撤回提示图标 XML 基准尺寸（dp，f=1）与内边距（露出 undo_glow 光晕） */
@@ -176,6 +196,32 @@ abstract class GameTopInfoManagerBase {
     protected static final float LPBARF_ASPECT = 305f / 70f;
     /** 头像框方块宽高比 64:70（lpbarf 行首/行尾 64px 宽、70px 高的方形镂空框） */
     protected static final float AVATAR_FRAME_ASPECT = 64f / 70f;
+    /**
+     * lpbarf 镂空包围盒实测内缩（源图像素，305×280 四行×70；由本地脚本 build/lpbarf_probe.ps1
+     * 按 alpha&lt;10 逐扫描线量得，不入库；改图后需重跑校准并同步下列常量）：
+     * <p>头像框裁剪区 64×70 —— 我方（行0/1，头像在裁剪区左）镂空 x[7,61] y[7,61]；
+     * 对方（行2/3，头像在裁剪区右）镂空 x[2,56] y[8,61]（整幅水平+纵向镜像）。
+     * 头像贴图按此四边内缩，才能与头像框内外缘无缝贴合（旧实现四边等距 padding，
+     * 使我方头像右缘、对方头像左缘各差 5/70 面板高而露缝）。
+     */
+    protected static final int[] AVATAR_HOLE_INSET_ME = {7, 7, 2, 8};   // left top right bottom
+    protected static final int[] AVATAR_HOLE_INSET_OPP = {2, 8, 7, 8};
+    /**
+     * 血条框裁剪区 241×70 的镂空纵向内缩 —— 我方（行0/1）y[6,64]、对方（行2/3）y[7,65]。
+     * LP 填充按此上下内缩，才能既填满镂空又不从框线上下缘露出（旧实现固定 marginVertical
+     * 4dp，随面板高变化不再等于边框厚度，血条底边与血条框底边之间露缝）。
+     */
+    protected static final int BAR_HOLE_INSET_ME_TOP = 6;
+    protected static final int BAR_HOLE_INSET_ME_BOTTOM = 5;
+    protected static final int BAR_HOLE_INSET_OPP_TOP = 7;
+    protected static final int BAR_HOLE_INSET_OPP_BOTTOM = 4;
+    /** 血条填充横向内缩：裁剪区镂空 x 我方[64,298]/对方[6,240]，即靠头像一侧 0、靠面板外缘
+     *  一侧 6px（血条框 241px 裁剪宽内），按血条框实测宽换算 */
+    protected static final int BAR_HOLE_INSET_OUTER = 6;
+    protected static final int BAR_CROP_WIDTH = 241;
+    /** 信息列（昵称/LP/卡数/倒计时）外侧留白：血条框外侧边框 6px + gframe 卡数距血条右端 5px
+     *  （drawing.cpp L1014-1025 卡数画到 625 而血条止于 630），统一按纵向比例换算 */
+    protected static final int INFO_OUTER_INSET = 11;
     /** 竖屏血条面板基准高度（dp）：对应 XML 内置头像 34dp/字号基准，放大系数 f=面板高/基准高 */
     protected static final float HUD_BASE_HEIGHT_DP = 44f;
     /** 横屏血条面板基准高度（dp）：对应旧布局头像 40dp + 上下 5dp 边距，f=1 时的设计高度 */
@@ -247,14 +293,25 @@ abstract class GameTopInfoManagerBase {
         setPanelHeight(layoutOpponentPanel, h);
         // 内容随面板高度等比放大（f=1 为各自基准档）
         float f = h / baseH;
-        // 头像框容器：宽 = h × 64/70（贴合头像框方形比例），高 = h；头像贴图 match_parent 填满容器（内边距避让边框）
+        // 头像框容器：宽 = h × 64/70（贴合头像框方形比例），高 = h；头像贴图 match_parent 填满容器，
+        // 四边内缩按 lpbarf 头像框镂空实测包围盒换算（纵横同比例 h/70），令头像内外缘与头像框无缝贴合
         int boxW = Math.round(h * AVATAR_FRAME_ASPECT);
         setSize(layoutPlayerAvatarBox, boxW, h);
         setSize(layoutOpponentAvatarBox, boxW, h);
+        applyAvatarHoleInsets(ivPlayerAvatar, AVATAR_HOLE_INSET_ME, h);
+        applyAvatarHoleInsets(ivOpponentAvatar, AVATAR_HOLE_INSET_OPP, h);
+        // 血条填充按血条框镂空实测内缩（上下按 h/70、外侧按血条框实测宽/241）
+        applyLpBarInsets(ivPlayerLpBar, ivPlayerLpBarLayer, layoutPlayerBarBox, h,
+                BAR_HOLE_INSET_ME_TOP, BAR_HOLE_INSET_ME_BOTTOM, true);
+        applyLpBarInsets(ivOpponentLpBar, ivOpponentLpBarLayer, layoutOpponentBarBox, h,
+                BAR_HOLE_INSET_OPP_TOP, BAR_HOLE_INSET_OPP_BOTTOM, false);
+        // 信息列外侧留白随面板高等比：既避开头像框（我方左/对方右 = boxW），又留出
+        // 血条框外缘边框厚度，使卡数/倒计时不压在血条框边框上而不越出面板
+        int outerPad = Math.round(INFO_OUTER_INSET * h / 70f);
         if (layoutPlayerInfoCol != null)
-            layoutPlayerInfoCol.setPadding(boxW, 0, 0, 0);
+            layoutPlayerInfoCol.setPadding(boxW, 0, outerPad, 0);
         if (layoutOpponentInfoCol != null)
-            layoutOpponentInfoCol.setPadding(0, 0, boxW, 0);
+            layoutOpponentInfoCol.setPadding(outerPad, 0, boxW, 0);
         setTextSp(tvPlayerName, 10f * f);
         setTextSp(tvOpponentName, 10f * f);
         setTextSp(tvPlayerLpNumber, 12f * f);
@@ -271,6 +328,13 @@ abstract class GameTopInfoManagerBase {
             int pad = Math.round(UNDO_BASE_PADDING_DP * f * dm.density);
             ivUndo.setPadding(pad, pad, pad, pad);
         }
+        // 持续适用中效果徽标同样随面板高度等比放大（含光晕内边距）
+        int applyingSize = Math.round(APPLYING_BASE_SIZE_DP * f * dm.density);
+        int applyingPad = Math.round(APPLYING_BASE_PADDING_DP * f * dm.density);
+        setSize(ivPlayerApplying, applyingSize, applyingSize);
+        setSize(ivOpponentApplying, applyingSize, applyingSize);
+        if (ivPlayerApplying != null) ivPlayerApplying.setPadding(applyingPad, applyingPad, applyingPad, applyingPad);
+        if (ivOpponentApplying != null) ivOpponentApplying.setPadding(applyingPad, applyingPad, applyingPad, applyingPad);
         int cardBackH = Math.round(10f * f * dm.scaledDensity); // XML 基准高 10sp
         setSize(ivPlayerCardBack, -1, cardBackH);
         setSize(ivOpponentCardBack, -1, cardBackH);
@@ -309,6 +373,45 @@ abstract class GameTopInfoManagerBase {
             lp.height = h;
             panel.setLayoutParams(lp);
         }
+    }
+
+    /** 头像贴图四边内缩 = 头像框镂空包围盒内缩 × (h/70)（裁剪区 64×70 拉伸到 boxW×h，纵横比例相同） */
+    protected void applyAvatarHoleInsets(ImageView avatar, int[] inset, int h) {
+        if (avatar == null) return;
+        float k = h / 70f;
+        avatar.setPadding(Math.round(inset[0] * k), Math.round(inset[1] * k),
+                Math.round(inset[2] * k), Math.round(inset[3] * k));
+    }
+
+    /**
+     * LP 血条填充（含超一节的叠加层）内缩：上下按 h/70 换算，横向靠头像一侧 0、靠面板外缘
+     * 一侧按血条框实测宽/241 换算。血条框实测宽在首次 applyTopInfoSize（initViews，未布局）时
+     * 取不到，由 layout_game_right 的布局监听在首次布局后重跑本方法时补齐。
+     *
+     * @param avatarOnLeft 我方为 true（血条框在头像右侧、外缘在右），对方为 false（外缘在左）
+     */
+    protected void applyLpBarInsets(ImageView bar, ImageView layer, View box, int h,
+                                    int topInset, int bottomInset, boolean avatarOnLeft) {
+        if (bar == null) return;
+        float k = h / 70f;
+        int top = Math.round(topInset * k);
+        int bottom = Math.round(bottomInset * k);
+        int outer = 0;
+        int boxWidth = box != null ? box.getWidth() : 0;
+        if (boxWidth > 0) outer = Math.round(BAR_HOLE_INSET_OUTER * boxWidth / (float) BAR_CROP_WIDTH);
+        setViewMargins(bar, avatarOnLeft ? 0 : outer, top, avatarOnLeft ? outer : 0, bottom);
+        if (layer != null) setViewMargins(layer, avatarOnLeft ? 0 : outer, top, avatarOnLeft ? outer : 0, bottom);
+    }
+
+    /** 设置 FrameLayout 子视图的外边距（传值已为像素） */
+    protected void setViewMargins(View v, int left, int top, int right, int bottom) {
+        if (v == null || !(v.getLayoutParams() instanceof ViewGroup.MarginLayoutParams)) return;
+        ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+        if (lp.leftMargin == left && lp.topMargin == top && lp.rightMargin == right && lp.bottomMargin == bottom) {
+            return;
+        }
+        lp.setMargins(left, top, right, bottom);
+        v.setLayoutParams(lp);
     }
 
     protected void setSize(View v, int size) {
@@ -362,6 +465,69 @@ abstract class GameTopInfoManagerBase {
             ivUndo.setScaleY(1f);
             ivUndo.setVisibility(View.INVISIBLE);
         }
+    }
+
+    /**
+     * 按该侧条目数切换持续适用中效果徽标（用户新规格）：有条目时点亮头像下角的金色感叹号
+     * 并循环播放「变亮放大 → 变暗缩小」呼吸动画，{@code @drawable/applying_glow} 的金色光晕底
+     * 随之明暗；无条目时停动画并回 INVISIBLE 恒占位（不用 GONE，避免头像框容器子树重排）。
+     * <p>已在闪动时重复调用不重启动画，避免每笔发动/每次刷新都让呼吸相位归零（同 iv_undo 口径）。
+     */
+    protected void setApplyingPrompt(int side, boolean active) {
+        ImageView badge = side == 0 ? ivPlayerApplying : ivOpponentApplying;
+        if (badge == null) return;
+        if (!active) {
+            stopApplyingPulse(side);
+            return;
+        }
+        ValueAnimator running = side == 0 ? applyingPulseMe : applyingPulseOpp;
+        if (running != null && running.isRunning()) return;
+        badge.setVisibility(View.VISIBLE);
+        final int watched = side;
+        ValueAnimator pulse = ValueAnimator.ofFloat(0f, 1f);
+        pulse.setDuration(APPLYING_PULSE_HALF_MS);
+        pulse.setRepeatCount(ValueAnimator.INFINITE);
+        pulse.setRepeatMode(ValueAnimator.REVERSE);
+        pulse.setInterpolator(new AccelerateDecelerateInterpolator());
+        pulse.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator a) {
+                ImageView v = watched == 0 ? ivPlayerApplying : ivOpponentApplying;
+                if (v == null) return;
+                float p = (float) a.getAnimatedValue();
+                v.setAlpha(0.45f + 0.55f * p);
+                float s = 0.92f + 0.16f * p;
+                v.setScaleX(s);
+                v.setScaleY(s);
+            }
+        });
+        pulse.start();
+        if (side == 0) applyingPulseMe = pulse;
+        else applyingPulseOpp = pulse;
+    }
+
+    /** 停掉指定侧徽标的呼吸动画并隐藏（该侧条目清空 / 离开决斗 / HUD 隐藏） */
+    protected void stopApplyingPulse(int side) {
+        ValueAnimator a = side == 0 ? applyingPulseMe : applyingPulseOpp;
+        if (a != null) {
+            a.cancel();
+            if (side == 0) applyingPulseMe = null;
+            else applyingPulseOpp = null;
+        }
+        ImageView v = side == 0 ? ivPlayerApplying : ivOpponentApplying;
+        if (v != null) {
+            v.setAlpha(1f);
+            v.setScaleX(1f);
+            v.setScaleY(1f);
+            v.setVisibility(View.INVISIBLE);
+        }
+    }
+
+    /** 两侧徽标与下拉列表一并收口（hide/stopTimer/重开一局均经此，防 PopupWindow 泄漏） */
+    protected void resetApplyingHints() {
+        stopApplyingPulse(0);
+        stopApplyingPulse(1);
+        if (applyingPopup != null) applyingPopup.dismiss();
     }
 
     /**

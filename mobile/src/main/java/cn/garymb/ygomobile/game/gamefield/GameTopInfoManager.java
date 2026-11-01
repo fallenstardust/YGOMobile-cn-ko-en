@@ -22,11 +22,14 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Consumer;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.render.card.CardDetailPanel;
 import cn.garymb.ygomobile.render.gamefieldview.GameFieldView;
 import cn.garymb.ygomobile.render.field.TextureLoader;
 import cn.garymb.ygomobile.utils.YGOUtil;
@@ -50,6 +53,94 @@ public class GameTopInfoManager extends GameTopInfoManagerBase {
      */
     public GameTopInfoManager(YGOProActivity activity, Handler mainHandler) {
         super(activity, mainHandler);
+        // 引擎派发线程在发动登记/回合轮转/开局胜负/撤回回退/换视角后只能拿到静态入口
+        //（同 CardDetailPanel.refreshCardDetailMarks 的约定）：经最新实例回到主线程刷徽标
+        sLive = this;
+    }
+
+    /** 当前活动的顶部信息条实例（旋转重建/重进决斗时由新构造覆盖） */
+    private static GameTopInfoManager sLive;
+
+    /**
+     * 持续适用中效果徽标的统一刷新入口（引擎派发线程可调）：重新解算两侧条目并切徽标闪动。
+     * 调用点与卡详已发动标记完全对齐（MSG_CHAINING 登记 / MSG_NEW_TURN / MSG_START / MSG_WIN /
+     * 撤回回退 / 视角互换），保证两处对「哪些效果还在适用」的口径不会分叉。
+     */
+    public static void refreshApplyingEffects() {
+        GameTopInfoManager m = sLive;
+        if (m == null) return;
+        m.mainHandler.post(m::refreshApplyingEffectsNow);
+    }
+
+    /**
+     * 主线程解算并落地：两侧条目缓存→徽标闪动→已展开的下拉列表同步（该侧条目清空则收起，
+     * 否则重建行以反映新发动/已过期的效果）。
+     */
+    private void refreshApplyingEffectsNow() {
+        applyingMe = ContinuousEffectApplier.forSide(0);
+        applyingOpp = ContinuousEffectApplier.forSide(1);
+        setApplyingPrompt(0, !applyingMe.isEmpty());
+        setApplyingPrompt(1, !applyingOpp.isEmpty());
+        if (applyingPopup == null || !applyingPopup.isShowing()) return;
+        int side = applyingPopup.isShowing(0) ? 0 : (applyingPopup.isShowing(1) ? 1 : -1);
+        if (side < 0) return;
+        List<ContinuousEffectApplier.Applying> items = side == 0 ? applyingMe : applyingOpp;
+        if (items.isEmpty()) {
+            applyingPopup.dismiss();
+            return;
+        }
+        openApplyingPopup(side, items);
+    }
+
+    /** 徽标点击：同侧再次点击收起，否则展开该侧列表（用户规格：只显示被点击那一侧） */
+    private void onApplyingBadgeClick(int side) {
+        if (applyingPopup != null && applyingPopup.isShowing(side)) {
+            applyingPopup.dismiss();
+            return;
+        }
+        List<ContinuousEffectApplier.Applying> items = side == 0 ? applyingMe : applyingOpp;
+        if (items.isEmpty()) {
+            // 解算缓存为空（如进决斗前首次点击）：先重算一次再判，避免徽标在而列表空
+            refreshApplyingEffectsNow();
+            items = side == 0 ? applyingMe : applyingOpp;
+            if (items.isEmpty()) return;
+        }
+        openApplyingPopup(side, items);
+    }
+
+    /** 展开指定侧的下拉列表（锚 layout_top_info 下缘、横向对齐该侧血条面板） */
+    private void openApplyingPopup(int side, List<ContinuousEffectApplier.Applying> items) {
+        if (applyingPopup == null) {
+            applyingPopup = new ApplyingEffectsPopup(activity, activity.getImageLoader());
+            // 行点击→卡详面板（用户新规格）：列表只给时长语子句，完整效果文本与已打勾的
+            // 序号段落回卡详看（与点场上卡/点询问窗卡图同一展示态路径）
+            applyingPopup.setOnCardClick(this::showApplyingEffectCardDetail);
+        }
+        View panel = side == 0 ? layoutPlayerPanel : layoutOpponentPanel;
+        applyingPopup.show(layoutTopInfo, panel, side, items, hudScaleFactor);
+    }
+
+    /**
+     * 列表行点击→在 carddetailpanel 展示该卡详情与已标记的序号效果文本（用户新规格）：
+     * 账本只记 卡码×半场×段落序，不带坐标，故按卡码合成携带归属半场的临时 ClientCard
+     * （同 CardSelectController.showCardInfoFromItem / YesOrNoDialog.bindCardDetailClick 口径）：
+     * 走 ClientCard 路径才能让 binder 按 displayedSide 取账本标记（我方绿勾/对方红勾）
+     * 与可发动呼吸条目；改传 Card 则按双方合并展示（side=-1）并丢掉半场归属。
+     */
+    private void showApplyingEffectCardDetail(int code, int side) {
+        if (code <= 0) return;
+        CardDetailPanel panel = activity.getCardDetailPanel();
+        if (panel == null) return;
+        ClientCard cc = new ClientCard();
+        cc.code = code & 0x7fffffff;
+        // side 已是本地索引（0=我方），binder 直接据此定 displayedSide，不再经 localPlayer 换算
+        cc.controler = side == 1 ? 1 : 0;
+        // 账本不带区域坐标：location/sequence 置 0 即可，详情面板全按卡表原值渲染，
+        // 且 showCard(ClientCard) 不读这两个字段（仅 displayCode/controler 参与绑定）
+        cc.location = 0;
+        cc.sequence = 0;
+        cc.position = 0x1;
+        panel.showCard(cc);
     }
 
     /** 统一初始化 layout_top_info 全部视图（由 YGOProActivity.initViews 调用） */
@@ -64,6 +155,8 @@ public class GameTopInfoManager extends GameTopInfoManagerBase {
         ivOpponentAvatar = activity.findViewById(R.id.iv_opponent_avatar);
         layoutPlayerAvatarBox = activity.findViewById(R.id.layout_player_avatar_box);
         layoutOpponentAvatarBox = activity.findViewById(R.id.layout_opponent_avatar_box);
+        layoutPlayerBarBox = activity.findViewById(R.id.layout_player_bar_box);
+        layoutOpponentBarBox = activity.findViewById(R.id.layout_opponent_bar_box);
         ivPlayerAvatarFrame = activity.findViewById(R.id.iv_player_avatar_frame);
         ivPlayerBarFrame = activity.findViewById(R.id.iv_player_bar_frame);
         ivOpponentAvatarFrame = activity.findViewById(R.id.iv_opponent_avatar_frame);
@@ -88,6 +181,16 @@ public class GameTopInfoManager extends GameTopInfoManagerBase {
         }
         ivPlayerCardBack = activity.findViewById(R.id.iv_player_card_back);
         ivOpponentCardBack = activity.findViewById(R.id.iv_opponent_card_back);
+        ivPlayerApplying = activity.findViewById(R.id.iv_player_applying);
+        ivOpponentApplying = activity.findViewById(R.id.iv_opponent_applying);
+        // 徽标点击展开该侧持续适用中效果列表（initViews 可随旋转重建重入，故需重新挂监听）
+        if (ivPlayerApplying != null) ivPlayerApplying.setOnClickListener(v -> onApplyingBadgeClick(0));
+        if (ivOpponentApplying != null) ivOpponentApplying.setOnClickListener(v -> onApplyingBadgeClick(1));
+        // 重绑视图树后旧实例的呼吸动画会按字段引用驱动新视图（旋转重建场景）：先整体收口，
+        // 再由 prepareForDisplay 的 refreshApplyingEffects 按当前账本重新点亮
+        resetApplyingHints();
+        applyingMe = Collections.emptyList();
+        applyingOpp = Collections.emptyList();
 
         setupAvatarImages();
         setupCardBackImages();
@@ -116,6 +219,9 @@ public class GameTopInfoManager extends GameTopInfoManagerBase {
     public void reset() {
         stopTimer();
         stopUndoPulse();
+        // 新一局/重进决斗：上一局的持续适用条目不再成立，徽标与下拉列表一并收口
+        resetApplyingHints();
+        ContinuousEffectApplier.clearCache();
         setPlayerDisplay(0, Constants.PlayerName, DEFAULT_LP_TEXT);
         setPlayerDisplay(1, "Opponent", DEFAULT_LP_TEXT);
         setTurnText(DEFAULT_TURN_TEXT);
@@ -161,11 +267,14 @@ public class GameTopInfoManager extends GameTopInfoManagerBase {
         setPlayerDisplay(1, oppName, String.valueOf(startLp));
         updateLpBar(startLp, startLp, ivPlayerLpBar, ivPlayerLpBarLayer, Gravity.START);
         updateLpBar(startLp, startLp, ivOpponentLpBar, ivOpponentLpBarLayer, Gravity.END);
+        // 进决斗 UI 即按当前账本点亮持续适用中效果徽标（旋转/回前台后不等到下一次发动才亮）
+        refreshApplyingEffects();
     }
 
     public void hide() {
         stopTimer();
         stopUndoPulse();
+        resetApplyingHints();
         if (layoutTopInfo != null) layoutTopInfo.setVisibility(View.GONE);
     }
 
@@ -340,5 +449,7 @@ public class GameTopInfoManager extends GameTopInfoManagerBase {
         if (tvPlayerLpFloat != null) tvPlayerLpFloat.setVisibility(View.GONE);
         if (tvOpponentLpFloat != null) tvOpponentLpFloat.setVisibility(View.GONE);
         dismissFloatWindow();
+        // 同属 PopupWindow 层的持续适用效果列表一并收起，徽标呼吸动画停掉
+        resetApplyingHints();
     }
 }

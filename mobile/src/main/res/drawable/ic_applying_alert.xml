@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  持续适用中效果徽标的图标本体（感叹号）：作为 iv_*_applying 的 src，外发光由
+  @drawable/applying_glow 作 background 承担（图标留 padding 露出光晕）。
+  纯矢量、着色固定金色，不随回合方高亮变色（用户规格：金色外发光感叹号）。
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFD54F"
+        android:pathData="M12,19m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0M10,3h4v12h-4z" />
+</vector>

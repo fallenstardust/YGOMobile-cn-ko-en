@@ -548,4 +548,11 @@
     <string name="spectator_skip_to_current">to Current</string>
     <string name="refresh_lan_button">Refresh LAN</string>
     <string name="mode_single_duel_solo">Solo Mode</string>
+
+    <!-- 持续适用中效果提示（头像角金色感叹号徽标与其下拉列表） -->
+    <string name="applying_effects_title">Applying effects</string>
+    <string name="applying_effects_self">My applying effects</string>
+    <string name="applying_effects_opponent">Opponent\'s applying effects</string>
+    <string name="applying_effect_scope_turn">This turn</string>
+    <string name="applying_effect_scope_duel">Whole duel</string>
 </resources>

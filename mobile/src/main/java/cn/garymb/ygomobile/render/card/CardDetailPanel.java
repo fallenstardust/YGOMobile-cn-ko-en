@@ -14,6 +14,7 @@ import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.game.gamefield.ClientCard;
 import cn.garymb.ygomobile.game.gamefield.EffectActivationLedger;
 import cn.garymb.ygomobile.game.gamefield.GameFieldController;
+import cn.garymb.ygomobile.game.gamefield.GameTopInfoManager;
 import cn.garymb.ygomobile.game.replay.ReplayPlayer;
 import cn.garymb.ygomobile.game.select.ShowDialogUtil;
 import cn.garymb.ygomobile.lite.R;
@@ -37,25 +38,31 @@ public class CardDetailPanel extends CardDetailPanelMid {
 
     /** 发动账本变更通知（引擎派发线程在 MSG_CHAINING 登记/MSG_NEW_TURN 回合推进/MSG_START、
      * MSG_WIN 清零后调用）：若卡详正在展示同一张卡则及时重绑描述段落标记文本，
-     * 无需玩家重新点卡；实现下沉到 CardInfoBinder.notifyLedgerChanged（本类是包外可见入口） */
+     * 无需玩家重新点卡；实现下沉到 CardInfoBinder.notifyLedgerChanged（本类是包外可见入口）。
+     * <p>同时无条件刷顶部 HUD 的持续适用中效果徽标：两处同源同账本，共用本入口保证不会分叉 */
     public static void refreshCardDetailMarks() {
         CardInfoBinder.notifyLedgerChanged();
+        GameTopInfoManager.refreshApplyingEffects();
     }
 
     /** 效果发动的门控刷新入口（MSG_CHAINING 登记后调用，用户规格2）：只有发动卡与正在
      *  展示卡同码/同 alias（异画与本卡）才重绑标记，其它卡码的发动不打扰面板，
-     *  避免每次发动都走一遍后台高亮/关联卡重建 */
+     *  避免每次发动都走一遍后台高亮/关联卡重建；但顶部徽标不门控（新发动的持续效果
+     *  无论当前展示哪张卡都要及时点亮感叹号） */
     public static void refreshCardDetailMarks(int activatedCode) {
         CardInfoBinder.notifyLedgerChanged(activatedCode);
+        GameTopInfoManager.refreshApplyingEffects();
     }
 
     /** 视角切换统一入口（观战切视角/单人模式自动翻转/回放交换，用户规格3）：
      *  发动账本与可发动登记的半场归属随视角整体对调，展示中卡的绿/红勾与
-     *  绿/橙发光同步互换（纯单人逐回合自动翻转下不翻转会使自己方的可发动条目被记到对面） */
+     *  绿/橙发光同步互换（纯单人逐回合自动翻转下不翻转会使自己方的可发动条目被记到对面）；
+     *  持续适用中效果徽标按新半场归属重列（两侧列表内容随之对调） */
     public static void notifyViewpointSwapped() {
         EffectActivationLedger.swapSides();
         EffectActivatableHints.swapSides();
         CardInfoBinder.notifyViewpointSwapped();
+        GameTopInfoManager.refreshApplyingEffects();
     }
 
     public void bindViews() {

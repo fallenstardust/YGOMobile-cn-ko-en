@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  持续适用中效果的下拉面板（用户新规格：点头像角上的金色感叹号 → 向下展开列表）。
+  由 ApplyingEffectsPopup 以 PopupWindow 承载贴在 layout_top_info 下缘——GameFieldView 是
+  setZOrderOnTop(true) 的 GLSurfaceView，普通子 View 会被场地/卡片纹理遮挡（同 LP 浮字、
+  聊天行的图层约定）。本文件只定义面板骨架，列表行按当前侧条目动态填充进
+  @+id/layout_applying_rows；行高与卡图随 GameTopInfoManager 的 HUD 系数缩放，
+  文字固定 9sp（与决斗内聊天行同基准，不随 HUD 放大）。
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layout_applying_effects"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/blackLinght"
+    android:orientation="vertical"
+    android:paddingStart="6dp"
+    android:paddingEnd="6dp">
+
+    <TextView
+        android:id="@+id/tv_applying_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="2dp"
+        android:drawablePadding="4dp"
+        android:gravity="center_vertical"
+        android:maxLines="1"
+        android:textColor="@color/white"
+        android:textSize="9sp"
+        android:textStyle="bold" />
+
+    <ScrollView
+        android:id="@+id/scroll_applying_effects"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
+        android:scrollbars="vertical">
+
+        <LinearLayout
+            android:id="@+id/layout_applying_rows"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </ScrollView>
+</LinearLayout>

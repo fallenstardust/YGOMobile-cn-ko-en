@@ -523,4 +523,11 @@
     <string name="spectator_skip_to_current">跳到當前</string>
     <string name="refresh_lan_button">刷新區域網路</string>
     <string name="mode_single_duel_solo">單人模式</string>
+
+    <!-- 持續適用中效果提示（頭像角金色感嘆號徽標與其下拉列表） -->
+    <string name="applying_effects_title">持續適用中的效果</string>
+    <string name="applying_effects_self">我方持續適用中的效果</string>
+    <string name="applying_effects_opponent">對方持續適用中的效果</string>
+    <string name="applying_effect_scope_turn">本回合</string>
+    <string name="applying_effect_scope_duel">整局決鬥</string>
 </resources>

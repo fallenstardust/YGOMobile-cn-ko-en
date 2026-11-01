@@ -3,6 +3,7 @@ package cn.garymb.ygomobile.game.gamefield;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -146,6 +147,31 @@ public final class EffectActivationLedger {
     /** 当前回合号（渲染时判「本回合发动」与否的基准） */
     public static int getCurrentTurn() {
         return currentTurn;
+    }
+
+    /** 账本全量条目（卡码 + 该条发动记录），供「持续适用中效果」按半场整体枚举 */
+    public static final class Entry {
+        public final int code;
+        public final Activation activation;
+
+        Entry(int code, Activation activation) {
+            this.code = code;
+            this.activation = activation;
+        }
+    }
+
+    /** 快照全部登记条目（含 alias 镜像行）：BY_CODE 为并发容器，弱一致遍历不抛
+     *  ConcurrentModificationException；调用方自行按卡名/段落去重与回合门控 */
+    public static List<Entry> snapshot() {
+        List<Entry> out = new ArrayList<>();
+        for (Map.Entry<Integer, Set<Activation>> e : BY_CODE.entrySet()) {
+            Set<Activation> s = e.getValue();
+            if (s == null) continue;
+            for (Activation a : s) {
+                out.add(new Entry(e.getKey(), a));
+            }
+        }
+        return out;
     }
 
     /** 已登记的「有效效果发动」条数（追加日志长度，与服务端静默重放的 silentChainEvents 同口径）：

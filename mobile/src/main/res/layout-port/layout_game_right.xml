@@ -91,7 +91,6 @@
                                     android:id="@+id/iv_player_avatar"
                                     android:layout_width="match_parent"
                                     android:layout_height="match_parent"
-                                    android:padding="3dp"
                                     android:scaleType="fitXY"
                                     android:src="@drawable/avatar" />
 
@@ -100,6 +99,23 @@
                                     android:layout_width="match_parent"
                                     android:layout_height="match_parent"
                                     android:scaleType="fitXY" />
+
+                                <!-- 持续适用中效果徽标（用户新规格，与横屏同名同构）：本侧头像
+                                     左下角的金色外发光感叹号，有整回合/整局一直适用中的效果时
+                                     闪动，点击向下展开该侧列表；尺寸随 HUD 系数由 Java 设定 -->
+                                <ImageView
+                                    android:id="@+id/iv_player_applying"
+                                    android:layout_width="22dp"
+                                    android:layout_height="22dp"
+                                    android:layout_gravity="bottom|start"
+                                    android:background="@drawable/applying_glow"
+                                    android:clickable="true"
+                                    android:contentDescription="@string/applying_effects_title"
+                                    android:focusable="true"
+                                    android:padding="5dp"
+                                    android:scaleType="fitCenter"
+                                    android:src="@drawable/ic_applying_alert"
+                                    android:visibility="invisible" />
                             </FrameLayout>
 
                             <!-- 血条框容器：LP 血条填充 + 叠加其上的血条框（lpbarf 行尾 241px 中段，自由拉伸）。
@@ -114,9 +130,6 @@
                                     android:id="@+id/iv_player_lp_bar"
                                     android:layout_width="match_parent"
                                     android:layout_height="match_parent"
-                                    android:layout_marginVertical="4dp"
-                                    android:layout_marginStart="2dp"
-                                    android:layout_marginEnd="4dp"
                                     android:scaleType="fitXY"
                                     android:src="@drawable/ygopro_selected_background" />
 
@@ -124,9 +137,6 @@
                                     android:id="@+id/iv_player_lp_bar_layer"
                                     android:layout_width="match_parent"
                                     android:layout_height="match_parent"
-                                    android:layout_marginVertical="4dp"
-                                    android:layout_marginStart="2dp"
-                                    android:layout_marginEnd="4dp"
                                     android:scaleType="fitXY"
                                     android:visibility="gone" />
 
@@ -138,7 +148,9 @@
                             </FrameLayout>
                         </LinearLayout>
 
-                        <!-- 顶层：玩家名字 / 总卡数 / 回合倒计时（字号/留白随面板高度由 Java 等比放大） -->
+                        <!-- 顶层：玩家名字 / 总卡数 / 回合倒计时（字号/留白随面板高度由 Java 等比放大；
+                             paddingStart 与 paddingEnd 均由 GameTopInfoManager 按头像框宽与 lpbarf 镂空
+                             实测内缩同步设定；卡数组取 wrap_content 不占权重，LP 数字占余宽并居中） -->
                         <LinearLayout
                             android:id="@+id/layout_player_info_col"
                             android:layout_width="match_parent"
@@ -187,9 +199,8 @@
                                     android:textStyle="bold" />
 
                                 <LinearLayout
-                                    android:layout_width="0dp"
+                                    android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:layout_weight="1"
                                     android:layout_marginEnd="2dp"
                                     android:gravity="right|center_vertical"
                                     android:orientation="horizontal">
@@ -292,9 +303,6 @@
                                     android:id="@+id/iv_opponent_lp_bar"
                                     android:layout_width="match_parent"
                                     android:layout_height="match_parent"
-                                    android:layout_marginVertical="4dp"
-                                    android:layout_marginStart="4dp"
-                                    android:layout_marginEnd="2dp"
                                     android:scaleType="fitXY"
                                     android:src="@drawable/ygopro_selected_background" />
 
@@ -302,9 +310,6 @@
                                     android:id="@+id/iv_opponent_lp_bar_layer"
                                     android:layout_width="match_parent"
                                     android:layout_height="match_parent"
-                                    android:layout_marginVertical="4dp"
-                                    android:layout_marginStart="4dp"
-                                    android:layout_marginEnd="2dp"
                                     android:scaleType="fitXY"
                                     android:visibility="gone" />
 
@@ -325,7 +330,6 @@
                                     android:id="@+id/iv_opponent_avatar"
                                     android:layout_width="match_parent"
                                     android:layout_height="match_parent"
-                                    android:padding="3dp"
                                     android:scaleType="fitXY"
                                     android:src="@drawable/avatar" />
 
@@ -334,10 +338,26 @@
                                     android:layout_width="match_parent"
                                     android:layout_height="match_parent"
                                     android:scaleType="fitXY" />
+
+                                <!-- 持续适用中效果徽标（镜像我方）：本侧头像右下角 -->
+                                <ImageView
+                                    android:id="@+id/iv_opponent_applying"
+                                    android:layout_width="22dp"
+                                    android:layout_height="22dp"
+                                    android:layout_gravity="bottom|end"
+                                    android:background="@drawable/applying_glow"
+                                    android:clickable="true"
+                                    android:contentDescription="@string/applying_effects_title"
+                                    android:focusable="true"
+                                    android:padding="5dp"
+                                    android:scaleType="fitCenter"
+                                    android:src="@drawable/ic_applying_alert"
+                                    android:visibility="invisible" />
                             </FrameLayout>
                         </LinearLayout>
 
-                        <!-- 顶层：玩家名字 / 总卡数 / 回合倒计时（镜像我方） -->
+                        <!-- 顶层：玩家名字 / 总卡数 / 回合倒计时（镜像我方；paddingStart 与 paddingEnd
+                             均由 GameTopInfoManager 同步设定，卡数组同样 wrap_content 不占权重） -->
                         <LinearLayout
                             android:id="@+id/layout_opponent_info_col"
                             android:layout_width="match_parent"
@@ -372,9 +392,8 @@
                                 android:orientation="horizontal">
 
                                 <LinearLayout
-                                    android:layout_width="0dp"
+                                    android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:layout_weight="1"
                                     android:layout_marginStart="2dp"
                                     android:gravity="left|center_vertical"
                                     android:orientation="horizontal">

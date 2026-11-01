@@ -521,4 +521,11 @@
     <string name="spectator_skip_to_current">現在へ移動</string>
     <string name="refresh_lan_button">LANを更新</string>
     <string name="mode_single_duel_solo">ソロモード</string>
+
+    <!-- 適用中効果のヒント（アバター隅の金色の感嘆符バッジとそのドロップダウンリスト） -->
+    <string name="applying_effects_title">適用中の効果</string>
+    <string name="applying_effects_self">自分の適用中の効果</string>
+    <string name="applying_effects_opponent">相手の適用中の効果</string>
+    <string name="applying_effect_scope_turn">このターン</string>
+    <string name="applying_effect_scope_duel">決闘中</string>
 </resources>

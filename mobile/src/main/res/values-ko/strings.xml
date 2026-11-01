@@ -537,4 +537,11 @@
     <string name="spectator_skip_to_current">현재로 이동</string>
     <string name="refresh_lan_button">LAN 새로고침</string>
     <string name="mode_single_duel_solo">솔로 모드</string>
+
+    <!-- 지속 적용 효과 힌트 (어바타 모서리의 금색 느낌표 배지와 드롭다운 목록) -->
+    <string name="applying_effects_title">적용 중인 효과</string>
+    <string name="applying_effects_self">나의 적용 중인 효과</string>
+    <string name="applying_effects_opponent">상대의 적용 중인 효과</string>
+    <string name="applying_effect_scope_turn">이번 턴</string>
+    <string name="applying_effect_scope_duel">듀얼 동안</string>
 </resources>
