@@ -31,6 +31,8 @@ public class GameFieldCards {
             card.controler = controler;
             card.location = location;
             card.sequence = sequence;
+            // 已入区即不再按「淡出卡的原区域」回退（防被复用的旧对象带着陈区域走错绘制分支）
+            card.fadeLocation = 0;
         }
         List<ClientCard> list = field.players[controler].getLocationList(location);
         if (list == null) return;
@@ -47,6 +49,9 @@ public class GameFieldCards {
                     card.is_reversed = false;
                     card.clearData();
                     card.clearTarget();
+                    // client_field.cpp AddCard(LOCATION_DECK) L187：入卡组同时关掉该卡悬停产生的
+                    // 装备/对象/连锁对象图标（旧实现漏此一步，入卡组的卡与其对面卡的图标不随行清理）
+                    setShowMark(card, false);
                 }
                 break;
             }

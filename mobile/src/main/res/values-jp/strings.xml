@@ -182,7 +182,7 @@
     <string name="select_deck">デッキを選択</string>
     <string name="solo_mode">ソロモード</string>
     <string name="quit_deck_tip">変更を破棄しますか？</string>
-    <string name="deck_discard_switch_tip">現在のデッキへの変更を破棄します。続行しますか？</string>
+    <string name="deck_discard_switch_tip">現在のデッキの変更を破棄します。続行しますか？</string>
     <string name="deck_delete_text">デッキ削除</string>
     <string name="question_keep_cur_deck">現在のカードを残す？</string>
     <string name="check_choose_file" formatted="false"> %s を選択しますか？</string>

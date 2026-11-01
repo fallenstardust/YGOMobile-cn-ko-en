@@ -70,6 +70,8 @@ class CardInfoBinder {
 
     private int currentCardCode = -1;
     private Bitmap coverBitmap;
+    /** 对方卡背（cover2.jpg）缓存：点对方未公开信息的卡时贴，对齐 tCover[1] */
+    private Bitmap coverBitmapOpp;
     private StringManager mStringManager = DataManager.get().getStringManager();
 
     // 关键词卡片列表弹窗支撑（详情描述「」/""高亮点击后在 layout_game_right 最左侧停靠显示命中列表）：
@@ -190,6 +192,17 @@ class CardInfoBinder {
     }
 
     void showDefault() {
+        showDefault(false);
+    }
+
+    /**
+     * 无卡码/未知卡时的详情重置（对齐 game.cpp ClientField 悬停无码分支的
+     * {@code Game::ClearCardInfo(mcard->controler)}：图框贴 tCover[控制方]，卡名/字段/攻守/描述均清空）。
+     *
+     * @param opponentCover 是否按对方半场取卡背（传入该卡的本地 controler!=0）：旧实现无论哪方
+     *                      都贴 cover.jpg（我方卡背），导致点对方未公开的里侧卡时卡详显示成我方卡背
+     */
+    void showDefault(boolean opponentCover) {
         stopGlowBreath();
         currentCardCode = -1;
         currentDisplayCard = null;
@@ -203,7 +216,7 @@ class CardInfoBinder {
         }
         if (panelRoot != null) panelRoot.setVisibility(View.VISIBLE);
         if (ivCardImage != null) {
-            Bitmap cover = getCoverBitmap();
+            Bitmap cover = getCoverBitmap(opponentCover);
             if (cover != null) {
                 ivCardImage.setImageBitmap(cover);
             } else {
@@ -240,7 +253,8 @@ class CardInfoBinder {
         }
         int code = clientCard.displayCode();
         if (code <= 0) {
-            showDefault();
+            // 未公开信息的卡（对方手卡/暗盖卡）：卡背按该卡所在半场取，对齐 ClearCardInfo(mcard->controler)
+            showDefault(clientCard.controler != 0);
             return;
         }
         // 用户规格：详情正在展示该卡时重复点击不重新绑定（保持滚动位置与现状），
@@ -1361,9 +1375,22 @@ class CardInfoBinder {
     // 引用文本解析状态（对齐 CardDetail.QuoteType）
     private enum QuoteType {NONE, DOUBLE_QUOTE, ANGLE_QUOTE}
 
-    private Bitmap getCoverBitmap() {
+    private Bitmap getCoverBitmap(boolean opponent) {
+        // 对齐 TextureLoader.getCardCover(opponent)：tCover[0]=cover.jpg、tCover[1]=cover2.jpg，
+        // 对方皮肤缺失时回退我方卡背（与桌面版 ImageManager 加载失败时的同构兼容）
+        String skin = AppsSettings.get().getCoreSkinPath();
+        if (opponent) {
+            if (coverBitmapOpp == null || coverBitmapOpp.isRecycled()) {
+                File oppFile = new File(skin, "cover2.jpg");
+                if (!oppFile.exists()) oppFile = new File(skin, "cover.jpg");
+                if (oppFile.exists()) {
+                    coverBitmapOpp = BitmapFactory.decodeFile(oppFile.getAbsolutePath());
+                }
+            }
+            return coverBitmapOpp;
+        }
         if (coverBitmap == null || coverBitmap.isRecycled()) {
-            File coverFile = new File(AppsSettings.get().getCoreSkinPath(), "cover.jpg");
+            File coverFile = new File(skin, "cover.jpg");
             if (coverFile.exists()) {
                 coverBitmap = BitmapFactory.decodeFile(coverFile.getAbsolutePath());
             }

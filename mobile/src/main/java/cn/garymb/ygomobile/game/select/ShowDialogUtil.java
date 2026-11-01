@@ -366,8 +366,13 @@ public class ShowDialogUtil {
         cardCtl.showTributeSelectDialog(data);
     }
 
+    /**
+     * MSG_SELECT_COUNTER（取除指示物）：对齐 gframe 桌面版，不开任何弹窗——候选卡已由引擎
+     *（{@code MessageUIHandler.applyCounterCandidates}）标为场上可选，此处只开启场上点卡取除
+     * 会话，取满后由会话自行组 uint16 数组应答（event_handler.cpp L1536-1556）。
+     */
     public void showCounterSelectDialog(ByteBuffer data) {
-        YesOrNoDialog.showCounterSelectDialog(activity, data);
+        fieldCtl().beginCounterSelect();
     }
 
     public void showSumSelectDialog(ByteBuffer data) {

@@ -96,6 +96,8 @@ public class TagSwapApplier {
             ClientCard c = list.remove(list.size() - 1);
             if (c == null) continue;
             if (loc == CardLocation.Extra.value() && c.isFaceUp()) field.extraPCount[p]--;
+            // 淡出期间渲染层按离场前的堆区回退取绘制分支与卡背（同 MoveEventApplier cl==0 分支）
+            c.fadeLocation = loc;
             c.location = 0;
             c.clearTarget();
             c.is_hovered = false;

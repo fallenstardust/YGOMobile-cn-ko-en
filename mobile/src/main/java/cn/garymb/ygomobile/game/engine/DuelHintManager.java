@@ -82,16 +82,19 @@ public class DuelHintManager {
     /**
      * 生成选择类消息提示（duelclient.cpp L1965/L2056/L2331："%ls(%d-%d)"）。
      * 用 duplicate 解析不推进原缓冲（UI 侧仍需读取同一数据）；
-     * selectHint 只读取不消费（消费仍由 UI 侧对话框标题承担）
-     *
-     * @param skipBeforeMinMax min/max 之前需跳过的字节数：MSG_SELECT_CARD/TRIBUTE 头为
-     *                         player/cancelable（跳过 2），MSG_SELECT_UNSELECT 头为
-     *                         player/finishable/cancelable（duelclient.cpp L1989-1994，跳过 3）
+     * selectHint 只读取不消费（消费仍由 UI 侧对话框标题承担）。
+     * 本重载按 MSG_SELECT_CARD/TRIBUTE 的头（player/cancelable，跳过 2 字节）取 min/max，
+     * 头布局不同的消息请改用 {@link #selectRangeHint(ByteBuffer, int, String, int)}。
      */
     public String selectRangeHint(ByteBuffer data, int defIndex, String defText) {
         return selectRangeHint(data, defIndex, defText, 2);
     }
 
+    /**
+     * @param skipBeforeMinMax min/max 之前需跳过的字节数：MSG_SELECT_CARD/TRIBUTE 头为
+     *                         player/cancelable（跳过 2），MSG_SELECT_UNSELECT 头为
+     *                         player/finishable/cancelable（duelclient.cpp L1989-1994，跳过 3）
+     */
     public String selectRangeHint(ByteBuffer data, int defIndex, String defText, int skipBeforeMinMax) {
         try {
             ByteBuffer dup = data.duplicate();
@@ -156,11 +159,19 @@ public class DuelHintManager {
             dup.get(); // selecting_player
             int counterType = dup.getShort() & 0xFFFF;
             int count = dup.getShort() & 0xFFFF;
-            DataManager dm = DataManager.get();
-            return dm.formatSystemString(204, "请取除%d个[%s]", count, dm.getCounterName(counterType));
+            return counterHint(count, counterType);
         } catch (Exception e) {
             return null;
         }
+    }
+
+    /**
+     * 指示物取除提示（对齐 event_handler.cpp L1552 每次点卡后的刷新：同一 GetSysString(204)），
+     * 取除会话中按尚需取除的个数与指示物类型重新生成，与首次询问文案同源。
+     */
+    public String counterHint(int count, int counterType) {
+        DataManager dm = DataManager.get();
+        return dm.formatSystemString(204, "请取除%d个[%s]", count, dm.getCounterName(counterType));
     }
 
     /** 对齐 dataManager.GetName（duelclient.cpp L2201：GetName(select_hint)） */

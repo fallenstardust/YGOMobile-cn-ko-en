@@ -228,7 +228,20 @@ public class GameField {
     public volatile ClientCard selectAttacking;
 
     public List<ClientCard> selectableCards = new ArrayList<>();
+    /**
+     * 当前点击选中的卡（移动端语义对应 client_field.h 的 {@code hovered_card}）：点卡时由渲染层
+     * 经 {@code SetShowMark} 联动点亮其装备/对象/连锁对象图标，下次点别的卡前先据本引用清除。
+     * 存在场地上而非视图上，因视图实例会随横竖屏重建（rebindAfterRotation），
+     * 若引用随视图丢失则只会点亮不会清除，表现为旧关系卡与新关系卡同时带图标。
+     */
+    public ClientCard showMarkedCard;
     public List<ClientCard> selectedCards = new ArrayList<>();
+    /** client_field.h L82-83 select_counter_count / select_counter_type：MSG_SELECT_COUNTER 询问中
+     *  还需取除的指示物个数与指示物类型。候选卡按消息顺序存 {@link #selectableCards}，其当前/初始
+     *  指示物数分别存 {@code ClientCard.opParam} 的低/高 16 位（对齐 duelclient.cpp L2362），
+     *  场上点卡逐个递减低位，取满后按 {@code (opParam>>16)-(opParam&0xffff)} 组应答。 */
+    public int selectCounterCount;
+    public int selectCounterType;
     /** 正在「揭示」展示的手牌卡——由 applyMoveToHandReveal 加入，SelectionOutlineRenderer 对其绘行进蚂蚁线（不受 is_selectable 门控）；展示结束/洗切时清空，亦复用为灵摆召唤两张刻度卡。 */
     public final List<ClientCard> revealHighlightCards = new ArrayList<>();
     public List<ClientCard> selectsumCards = new ArrayList<>();
@@ -343,6 +356,9 @@ public class GameField {
         revealHighlightCards.clear();
         // 断线/结束/新开一局时选择态列表必须随场一并清空，旧实现漏清致残留 is_selectable 蚂蚁线（SelectionOutlineRenderer 仍绘线）
         selectableCards.clear();
+        // 联动图标引用随场复位（对齐 client_field.cpp Clear 的 hovered_card = 0）：
+        // 旧卡对象已不属本局场面，留着引用会使新一局首次点卡去清一个无关旧对象
+        showMarkedCard = null;
         selectedCards.clear();
         selectsumCards.clear();
         selectsumAll.clear();

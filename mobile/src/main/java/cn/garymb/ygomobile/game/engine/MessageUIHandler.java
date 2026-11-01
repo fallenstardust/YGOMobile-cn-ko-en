@@ -104,7 +104,7 @@ public class MessageUIHandler {
     }
 
     /** MSG_HINT 居中消息文本动画（duelclient.cpp L1463-1521：SetStaticText+PopupElement+WaitFrameSignal(40)）：网络线程调用，经 UI 层 SpecEffectOverlay 于右侧中央以 12sp 小字展示，并设约 40 帧动画屏障使 isAnyAnimationBusy 在持有期内恒真以串行插入后续消息。 */
-    private void showActionMessage(String text) {
+    void showActionMessage(String text) {
         if (text == null || text.isEmpty()) return;
         if (engine.replaySkip) return; // 回放快进：丢弃居中消息文本，不占用动画屏障
         final String acText = text;
@@ -153,8 +153,20 @@ public class MessageUIHandler {
         engine.field.dInfo.lp[p0] = lp0;
         engine.field.dInfo.lp[p1] = lp1;
         // ClientField::Initial：为双方卡组/额外创建全部 ClientCard（背面朝下、带堆叠高度）
-        engine.field.initial(p0, deck0, extra0, 0);
-        engine.field.initial(p1, deck1, extra1, 0);
+        // 张数回退：部分服务端在 MSG_START 里不填卡组/额外张数（留 0），此时拿 STOC_DECK_COUNT
+        // 留存的本视角张数补齐；两边都拿不到时开局整场没有卡组/额外堆叠（观战方无 DECK_COUNT
+        // 时由内置服务端向观战补发同一包保障）
+        int deckForP0 = deck0, extraForP0 = extra0, deckForP1 = deck1, extraForP1 = extra1;
+        if (deckForP0 == 0 && extraForP0 == 0) {
+            deckForP0 = engine.lastDeckCounts[p0 * 2];
+            extraForP0 = engine.lastDeckCounts[p0 * 2 + 1];
+        }
+        if (deckForP1 == 0 && extraForP1 == 0) {
+            deckForP1 = engine.lastDeckCounts[p1 * 2];
+            extraForP1 = engine.lastDeckCounts[p1 * 2 + 1];
+        }
+        engine.field.initial(p0, deckForP0, extraForP0, 0);
+        engine.field.initial(p1, deckForP1, extraForP1, 0);
         // 回放（含带消息流录像 MSG_START）不切 DUELING 状态：该状态会经 EngineCallbackDelegate 弹底部行动区，回放左侧面板只应显示录像控制条
         if (!engine.replayMode) {
             engine.setState(GameEngine.GameState.DUELING);
@@ -343,12 +355,51 @@ public class MessageUIHandler {
 
     public void onSelectCounter(ByteBuffer data) {
         if (engine.replayMode) return;
+        // 对齐 duelclient.cpp MSG_SELECT_COUNTER L2345-2371：本消息不走弹窗，而是把候选卡标成
+        // 场上可选（黄色行进虚线由 SelectionOutlineRenderer 统一承担），由玩家在场上直接点卡取除指示物
+        applyCounterCandidates(data);
         // 对齐 duelclient.cpp L2362-2365：stHintMsg 显示 GetSysString(204)（移除 N 个指示物）
         String hint = engine.hintManager.counterHint(data);
         if (hint != null) engine.hintManager.postDuelHint(hint);
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onSelectRequired(22, data);
         });
+    }
+
+    /**
+     * MSG_SELECT_COUNTER 候选登记（对齐 duelclient.cpp L2345-2364）：读 player(1) counter_type(u16)
+     * counter_count(u16) count(1) + count×[code(4) ctrl(1) loc(1) seq(1) counter(u16)]，按消息顺序把
+     * 候选卡入 {@code field.selectableCards}（应答数组的编码顺序即此顺序），并把该卡当前指示物数同时写入
+     * {@code opParam} 高 16 位（初始值，取满后据此算差值）与低 16 位（点击逐次递减）。
+     * 用 duplicate 解析不推进原缓冲（提示文案与 UI 侧仍需同一份数据）。
+     */
+    private void applyCounterCandidates(ByteBuffer data) {
+        GameField field = engine.field;
+        field.selectableCards.clear();
+        field.selectCounterCount = 0;
+        field.selectCounterType = 0;
+        if (data == null || data.remaining() < 6) return;
+        try {
+            ByteBuffer dup = data.duplicate();
+            dup.order(ByteOrder.LITTLE_ENDIAN);
+            dup.get(); // selecting_player（对齐 C++ 读入即弃）
+            field.selectCounterType = dup.getShort() & 0xFFFF;
+            field.selectCounterCount = dup.getShort() & 0xFFFF;
+            int count = dup.get() & 0xFF;
+            for (int i = 0; i < count && dup.remaining() >= 9; i++) {
+                dup.getInt(); // code（C++ 读入即弃，卡码由场地既有数据提供）
+                int c = engine.localPlayer(dup.get() & 0xFF);
+                int l = dup.get() & 0xFF;
+                int s = dup.get() & 0xFF;
+                int counter = dup.getShort() & 0xFFFF;
+                ClientCard pcard = field.getCard(c, l, s);
+                if (pcard == null) continue;
+                field.selectableCards.add(pcard);
+                pcard.opParam = (counter << 16) | counter;
+                pcard.is_selectable = true;
+            }
+        } catch (Exception ignored) {
+        }
     }
 
     public void onSelectSum(ByteBuffer data) {

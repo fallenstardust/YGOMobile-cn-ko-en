@@ -70,26 +70,63 @@ public class DuelEventHandler extends DuelEventHandlerBase {
 
     @Override
     public void onAddCounter(int type, int ctrl, int loc, int seq, int count) {
-        ClientCard card = engine.field.getCard(ctrl, loc, seq);
-        if (card != null) {
-            card.counters.put(type, count);
-        }
-        engine.soundManager.playSoundEffect(SoundManager.SFX.COUNTER_ADD);
-        engine.mainHandler.post(() -> {
-            if (engine.listener != null) engine.listener.onFieldChanged();
-        });
+        // duelclient.cpp MSG_ADD_COUNTER L3774-3795：控制方先经 LocalPlayer 转本地视角索引（旧实现
+        // 直用协议索引，后攻方与观战切视角后指示物会落到对面半场），同类型计数为累加而非覆盖
+        int localCtrl = engine.localPlayer(ctrl & 1);
+        ClientCard card = engine.field.getCard(localCtrl, loc, seq);
+        if (card == null)
+            return;
+        Integer cur = card.counters.get(type);
+        card.counters.put(type, (cur == null ? 0 : cur) + count);
+        counterAction(type, card, 1617, "[%s]获得了%d个指示物[%s]", count);
     }
 
     @Override
     public void onRemoveCounter(int type, int ctrl, int loc, int seq, int count) {
-        ClientCard card = engine.field.getCard(ctrl, loc, seq);
-        if (card != null) {
+        // duelclient.cpp MSG_REMOVE_COUNTER L3797-3818：同样先转本地视角索引，并按本次取除量
+        // 递减（旧实现直接 remove 整个类型，部分取除会把剩下的指示物一并抹掉）
+        int localCtrl = engine.localPlayer(ctrl & 1);
+        ClientCard card = engine.field.getCard(localCtrl, loc, seq);
+        if (card == null)
+            return;
+        Integer cur = card.counters.get(type);
+        int left = (cur == null ? 0 : cur) - count;
+        if (left <= 0)
             card.counters.remove(type);
+        else
+            card.counters.put(type, left);
+        counterAction(type, card, 1618, "[%s]失去了%d个指示物[%s]", count);
+    }
+
+    /**
+     * 指示物增减的同步表现（对齐 duelclient.cpp L3784-3794 / L3807-3817）：音效 +
+     * 居中动作文本（GetSysString(1617/1618)，携带卡名与指示物名）+ 该卡 is_highlighting 青框
+     * 持续 WaitFrameSignal(40) 后自动清除；回放快进（instantPlace）与纯消息回放只落数据不跑动画。
+     */
+    private void counterAction(int type, ClientCard card, int sysIndex, String defText, int count) {
+        // 回放快进/上一步重算（instantPlace）：与 duelclient.cpp 的 isReplaySkiping 分支同构，
+        // 只落计数不跑音效/居中文本/青框，避免每次重算刷一叠指示物动画
+        if (engine.field.instantPlace) {
+            engine.mainHandler.post(() -> {
+                if (engine.listener != null) engine.listener.onFieldChanged();
+            });
+            return;
         }
-        engine.soundManager.playSoundEffect(SoundManager.SFX.COUNTER_REMOVE);
+        engine.soundManager.playSoundEffect(sysIndex == 1617
+                ? SoundManager.SFX.COUNTER_ADD : SoundManager.SFX.COUNTER_REMOVE);
+        String name = DataManager.get().getName(card.code);
+        engine.messageParser.showActionMessage(DataManager.get().formatSystemString(sysIndex, defText,
+                name, count, DataManager.get().getCounterName(type)));
+        card.is_highlighting = true;
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onFieldChanged();
         });
+        // 与 showActionMessage 的 40 帧屏障同时长，到点收青框（高亮不参与闸门判定，必须自带收尾）
+        final ClientCard lit = card;
+        engine.mainHandler.postDelayed(() -> {
+            lit.is_highlighting = false;
+            if (engine.listener != null) engine.listener.onFieldChanged();
+        }, 40L * 17L);
     }
 
     @Override

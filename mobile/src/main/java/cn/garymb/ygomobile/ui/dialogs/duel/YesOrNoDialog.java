@@ -737,38 +737,8 @@ public class YesOrNoDialog extends YesOrNoDialogBase {
         dialog.show();
     }
 
-    /** MSG_SELECT_COUNTER：列出 1..counterCount 供选择取除总数（playerop.cpp L608-637） */
-    public static void showCounterSelectDialog(YGOProActivity activity, ByteBuffer data) {
-        if (data == null || data.remaining() < 6) {
-            activity.sendResponseInt(0);
-            return;
-        }
-        data.get();                                    // selecting_player
-        int counterType = data.getShort() & 0xFFFF;
-        int counterCount = data.getShort() & 0xFFFF;
-        int cardCount = data.get() & 0xFF;
-        final List<Integer> cardCounters = new ArrayList<>();
-        for (int i = 0; i < cardCount && data.remaining() >= 9; i++) {
-            data.getInt();
-            data.get();
-            data.get();
-            data.get();
-            cardCounters.add(data.getShort() & 0xFFFF);
-        }
-        if (cardCounters.isEmpty() || counterCount <= 0) {
-            activity.sendResponseInt(0);
-            return;
-        }
-        DataManager dm = DataManager.get();
-        String title = dm.formatSystemString(204, "请取除%d个 [%s]", counterCount, dm.getCounterName(counterType));
-        YesOrNoDialog dialog = new YesOrNoDialog(activity);
-        dialog.setTitle(title).setOptionsContentView();
-        for (int i = 1; i <= counterCount; i++) {
-            final int val = i;
-            dialog.addOption(String.valueOf(i), YGOUtil.c(R.color.option_bg_blue), () -> sendCounterResponse(activity, cardCounters, val));
-        }
-        dialog.setCancelable(false).setCenterInView(gameDialogRegion(activity));
-        dialog.show();
-    }
+    // MSG_SELECT_COUNTER（取除指示物）不再经弹窗应答：对齐 gframe 桌面版由玩家在场上直接
+    // 点卡逐个取除（候选登记见 MessageUIHandler.applyCounterCandidates，点卡与应答见
+    // FieldSelectManager.handleCounterClick），入口由 ShowDialogUtil.showCounterSelectDialog 转给场上会话。
 
 }

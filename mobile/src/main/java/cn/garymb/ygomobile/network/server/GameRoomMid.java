@@ -463,6 +463,17 @@ abstract class GameRoomMid extends GameRoomBase {
         if (!soloMode) {
             players[1].send(STOC_DECK_COUNT, PlayerDeck.deckCountPayload(decks[0], decks[1], 1));
         }
+        // 观战同步补发卡组/额外/副卡组数量：内置服务端仅向两个决斗位发 STOC_DECK_COUNT 时，
+        // 观战方在猜拳/选先后阶段场上没有卡组与额外卡组堆叠（决斗玩家已先由本包建好堆叠），
+        // 直到 MSG_START 才突然出现。观战的本地视角与 players[0] 同侧（bindViewNames 固定座位 0
+        // 在左/下，MSG_START 的 playertype 0x10 亦按先动方为我方），故直接复用 players[0] 的载荷。
+        //（gframe 桌面版此处也只发两个决斗位，本端为使观战与对战玩家开场画面一致而扩展）
+        byte[] obCount = tagMode
+                ? PlayerDeck.deckCountPayload(decks[0], decks[2], 0)
+                : PlayerDeck.deckCountPayload(decks[0], decks[1], 0);
+        for (ServerConnection o : observers) {
+            o.send(STOC_DECK_COUNT, obCount);
+        }
         if (soloMode) {
             // Skip rock-paper-scissors: directly ask host to choose first/second
             players[0].send(STOC_SELECT_TP, null);

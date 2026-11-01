@@ -44,6 +44,9 @@ abstract class FieldSelectManagerBase {
     // === MSG_SELECT_UNSELECT_CARD 场上会话（连接召唤手续逐步选素材：点卡即单卡提交，
     //  count2 已确认素材画实线框；gframe duelclient.cpp L1985-2079）===
     boolean isUnselectSelecting = false;
+    // === 场上指示物取除会话（MSG_SELECT_COUNTER，gframe duelclient.cpp L2345-2371 登记候选 +
+    //  event_handler.cpp L1536-1556 点卡逐个取除；桌面版同样不弹窗，只在场上直接点卡）===
+    boolean isCounterSelecting = false;
     // === 场上/手牌合计选择会话（MSG_SELECT_SUM 候选全在场内时不弹 CardSelectDialog，
     //  忠实移植 client_field.cpp CheckSelectSum/ShowSelectSum 的点击-重校验循环）===
     boolean isSumSelecting = false;
@@ -97,6 +100,8 @@ abstract class FieldSelectManagerBase {
         isSumSelecting = true;
         isUnselectSelecting = false;
         isCardSelecting = true;
+        // 合计选择会话取代可能仍在生效的指示物取除会话（上方 clearSelect 已清候选标记）
+        isCounterSelecting = false;
         cardSelectCancelable = false;
         field.mustSelectCount = mustItems == null ? 0 : mustItems.size();
         field.selectMode = selectMode;

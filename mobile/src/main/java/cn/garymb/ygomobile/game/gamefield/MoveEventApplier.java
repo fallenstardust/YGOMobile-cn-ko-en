@@ -83,7 +83,7 @@ public class MoveEventApplier {
             }
         } else if (newLoc == 0) {
             // 离场消失（cl==0，duelclient.cpp MSG_MOVE L2973-2990）：先从区域移除，
-            // 清效果对象链接后淡出到 alpha 5（APPEAR_FRAME 帧），播完由 GameFieldMotion  purge；
+            // 清效果对象链接后淡出到 alpha 5（APPEAR_FRAME 帧），播完由 GameFieldMotion purge；
             // 旧实现直接丢弃卡片，场上/墓地卡片消失没有任何淡出过程
             ClientCard card = engine.field.removeCard(oldCtrl, oldLoc, oldSeq);
             if (card != null) {
@@ -91,6 +91,14 @@ public class MoveEventApplier {
                     card.code = code;
                 card.clearTarget();
                 card.is_hovered = false;
+                // removeCard 已把 location 置 0，而 getCardLocation 的 case 0 与手卡共用分支（同
+                // client_field.cpp L853-854），淡出期间渲染层必须按离场前的区域走：否则手卡/场上卡
+                // 会改走 3D 分支按手卡姿态斜立在手卡行列外，形成一张「没排齐的斜虚影」
+                card.fadeLocation = oldLoc & 0x7f;
+                // 对象/连锁对象/装备图标随卡离场关掉（同 C++ 移除前对 hovered 卡的 SetShowMark 语义）
+                card.is_showequip = false;
+                card.is_showtarget = false;
+                card.is_showchaintarget = false;
                 engine.field.fadeCard(card, 5, GameField.APPEAR_FRAME);
                 engine.field.fadingCards.add(card);
             }
@@ -114,6 +122,24 @@ public class MoveEventApplier {
             // 旧实现无条件覆写 code 使其它隐藏信息移动误清卡码
             if (card.code != code && (code != 0 || newLoc == 0x40))
                 card.setCode(code);
+            // duelclient.cpp MSG_MOVE 普通移动分支 L2999-3014 的逐顶清理：
+            // 离开场上（旧位置为 MZONE/SZONE 且换区）时指示物随卡失效；换区时摘除效果对象
+            // 链接并断开装备关系；无论哪种移动一律关掉卡上的装备/对象/连锁对象图标与悬停态——
+            // 旧实现一个都不清，图标与对象链会跨移区残留（点已无关的旧对象链卡仍亮 target 图标）
+            boolean locChanged = newLoc != oldLoc;
+            if ((oldLoc & 0x0C) != 0 && locChanged) card.counters.clear();
+            if (locChanged) {
+                card.clearTarget();
+                if (card.equipTarget != null) {
+                    card.equipTarget.equipped.remove(card);
+                    card.equipTarget.is_showequip = false;
+                    card.equipTarget = null;
+                }
+            }
+            card.is_hovered = false;
+            card.is_showequip = false;
+            card.is_showtarget = false;
+            card.is_showchaintarget = false;
             // C++ L3018-3020 时序：RemoveCard → 改 position → AddCard。旧实现先覆写 position
             // 再移除，使额外卡组抽出时 removeCard(0x40) 的 isFaceUp 判定读到新值，
             // extraPCount 不递减而漂移；后续里侧回插点 (count-extraPCount) 落在错误层序，

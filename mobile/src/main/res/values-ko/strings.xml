@@ -202,7 +202,7 @@
     <string name="select_deck">덱을 선택하세요</string>
     <string name="solo_mode">순수 싱글 모드</string>
     <string name="quit_deck_tip">덱 저장하지 않고 앱을 종료하겠습니까?</string>
-    <string name="deck_discard_switch_tip">현재 덱의 수정 내용을 취소합니다. 계속하시겠습니까?</string>
+    <string name="deck_discard_switch_tip">현재 덱의 수정 내용을 폐기하고 계속하겠습니까?</string>
     <string name="deck_delete_text">삭제하려면 여기로 드래그하십시오</string>
     <string name="question_keep_cur_deck">현재 카드를 유지하겠습니까?</string>
     <string name="check_choose_file" formatted="false">%s을(를) 선택하시겠습니까?</string>

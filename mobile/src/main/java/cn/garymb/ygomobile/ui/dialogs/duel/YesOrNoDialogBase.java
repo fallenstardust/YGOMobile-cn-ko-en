@@ -637,19 +637,6 @@ abstract class YesOrNoDialogBase {
         String event = field != null ? field.eventString : null;
         return (event == null || event.isEmpty()) ? text : event + "\n" + text;
     }
-    /** playerop.cpp L624-637：按列表顺序贪心分摊玩家选定的取除总数 */
-    protected static void sendCounterResponse(YGOProActivity activity, List<Integer> cardCounters, int total) {
-        ByteBuffer buf = ByteBuffer.allocate(2 * cardCounters.size());
-        buf.order(ByteOrder.LITTLE_ENDIAN);
-        int remain = total;
-        for (int i = 0; i < cardCounters.size(); i++) {
-            int take = Math.min(remain, cardCounters.get(i));
-            buf.putShort((short) take);
-            remain -= take;
-        }
-        activity.getEngine().sendResponse(buf.array());
-    }
-
     protected YesOrNoDialogBase(Context context) {
         this.context = context;
     }

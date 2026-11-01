@@ -48,6 +48,16 @@ public class FieldCardRenderer {
     }
 
     /**
+     * 绘制用区域：已离场淡出中的卡 {@code location} 被 removeCard 置 0（而 getCardLocation 的
+     * case 0 与手卡共用分支），若直接按 location 分流，手卡会落到场上卡的 3D 分支并按手卡姿态
+     *（rotX=±0.798/rotY=π）斜立在手卡行列外，形成一张没排齐的斜虚影；故此处回退到卡离场前
+     * 记录的原区域，使淡出全过程的绘制分支与离场前完全一致。
+     */
+    static int effectiveLocation(ClientCard c) {
+        return c.location != 0 ? c.location : c.fadeLocation;
+    }
+
+    /**
      * 构建卡片模型矩阵（drawCard 与选择轮廓共用，避免姿态计算分叉）：
      * 手卡走相机 billboard，场上卡按 Y→X→Z 旋转，末尾统一 scale(CARD_W, CARD_H)；
      * 手卡额外按 handFlipT 做 X 轴挤压以呈现「绕竖轴翻面」的视觉效果
@@ -58,15 +68,16 @@ public class FieldCardRenderer {
 
     private void buildCardModel(ClientCard c, float[] out, float zBias) {
         Matrix.setIdentityM(out, 0);
-        if (c.location == 0x02) {
+        if (effectiveLocation(c) == 0x02) {
             Matrix.translateM(out, 0, FieldGeometry.mirrorX(c.curX),
                     handY(c) + view.cam.mCamRot[5] * handLift(c), c.curZ + handLiftZ(c));
             Matrix.multiplyMM(view.mModelTmp, 0, out, 0, view.cam.mCamRot, 0);
             System.arraycopy(view.mModelTmp, 0, out, 0, 16);
             Matrix.scaleM(out, 0, FieldGeometry.CARD_W * handFlipSqueeze(c), FieldGeometry.CARD_H, 1f);
         } else {
-            boolean isPile = c.location == 0x01 || c.location == 0x10
-                    || c.location == 0x20 || c.location == 0x40;
+            int zoneLoc = effectiveLocation(c);
+            boolean isPile = zoneLoc == 0x01 || zoneLoc == 0x10
+                    || zoneLoc == 0x20 || zoneLoc == 0x40;
             float jx = isPile ? ((c.sequence % 3) - 1) * 0.012f : 0f;
             float jy = isPile ? (((c.sequence / 3) % 3) - 1) * 0.012f : 0f;
             Matrix.translateM(out, 0, FieldGeometry.mirrorX(c.curX) + jx, c.curY + jy, c.curZ + zBias);
@@ -169,7 +180,7 @@ public class FieldCardRenderer {
         float alpha = Math.max(0f, Math.min(1f, c.curAlpha / 255f));
         if (alpha <= 0.01f) return;
 
-        boolean isHand = c.location == 0x02;
+        boolean isHand = effectiveLocation(c) == 0x02;
         buildCardModel(c, view.mModel, zBias);
         boolean front = isFrontFacing(view.mModel);
 
@@ -206,7 +217,10 @@ public class FieldCardRenderer {
                     view.quad.drawQuadColor(view.mModel, 0.35f, 0.35f, 0.40f, alpha);
                 }
             } else {
-                drawCoverQuad(view.mModel, true, alpha, 0f, 1f);
+                // 卡背按本卡所在半场（本地索引 controler）取图，对齐 drawing.cpp L628
+                // imageManager.tCover[pcard->controler]：旧实现写死为对方卡背，使本方未公开的手卡
+                //（观战视角下双方手卡、或被对方拿去的本方卡）一律显示对方卡背
+                drawCoverQuad(view.mModel, c.controler != 0, alpha, 0f, 1f);
             }
             return;
         }
@@ -226,7 +240,7 @@ public class FieldCardRenderer {
             // 一眼可辨这是一张背面卡
             boolean reveal = isBreathRevealCard(c);
             float wave = reveal ? revealWave() : 1f;
-            drawCoverQuad(view.mModelTmp, c.owner != 0,
+            drawCoverQuad(view.mModelTmp, c.controler != 0,
                     alpha * (reveal ? 1f - 0.4f * wave : 1f), 1f, 0f);
             if (reveal) {
                 // 呼吸卡图统一取 displayCode()（本卡公开的卡码），与 isBreathRevealCard 的
@@ -261,7 +275,7 @@ public class FieldCardRenderer {
         } else {
             // 正面朝向相机但尚无卡码（遮蔽的卡组顶、未下发的堆叠卡等）：C++ 此时贴的是空纹理，
             // 本端兜底绘卡背，避免翻转卡组里除顶卡外的其余卡在朝上面前出现空白矩形
-            drawCoverQuad(view.mModel, c.owner != 0, alpha, 1f, 0f);
+            drawCoverQuad(view.mModel, c.controler != 0, alpha, 1f, 0f);
         }
     }
 

@@ -145,6 +145,8 @@ public class GameFieldController extends GameFieldControllerBase {
         if (engine == null) return;
         if (engine.getField() != null) engine.getField().clearSelectionVisuals();
         engine.clearCommandFlags();
+        // 指示物取除会话随决斗结束一并收口（否则 isCounterSelecting 残留会吃掉后续场上点击）
+        select.finishCounterSelect();
         if (viewController != null) {
             viewController.clearHighlight();
             viewController.invalidate();
@@ -238,6 +240,8 @@ public class GameFieldController extends GameFieldControllerBase {
         if (layoutChatMessages != null) layoutChatMessages.setVisibility(View.GONE);
         if (cmdMenuDialog != null) cmdMenuDialog.dismiss();
         if (select.isCardSelecting) select.endCardSelect();
+        // 离场同样结束指示物取除会话，不下发任何应答（会话随局面作废）
+        select.finishCounterSelect();
         // 离场：取消未触发的临时提示到时隐藏，收起覆盖层提示带（hideDuelHint 会 pullHintFromOverlay）
         if (hideHintRunnable != null) mainHandler.removeCallbacks(hideHintRunnable);
         hideDuelHint();
@@ -352,6 +356,19 @@ public class GameFieldController extends GameFieldControllerBase {
         select.beginUnselectCardSelect(items, selectableCount, min, max, finishable, cancelable);
     }
 
+    /**
+     * 开启场上指示物取除会话（MSG_SELECT_COUNTER）：对齐 gframe 桌面版——候选卡已在引擎解析
+     * 消息时标为可选（黄色虚线），玩家直接在场地上点卡逐个取除并组应答，不再弹选择窗
+     */
+    public void beginCounterSelect() {
+        select.beginCounterSelect();
+    }
+
+    /** 当前是否处于指示物取除询问的场上点卡会话（点击路由由 Activity 侧判断是否需要弹卡详） */
+    public boolean isCounterSelecting() {
+        return select.isCounterSelecting;
+    }
+
     public boolean finishCardSelect() {
         return select.finishCardSelect();
     }
@@ -454,6 +471,21 @@ public class GameFieldController extends GameFieldControllerBase {
         Log.d(TAG, "Card click: p=" + player + " loc=" + location + " seq=" + sequence);
         if (engine == null) return;
         GameFieldView fieldView = viewController != null ? viewController.getView() : null;
+        // 指示物取除询问（MSG_SELECT_COUNTER）：点卡即取除一个指示物（对齐 event_handler.cpp
+        // L1536-1556 的场上直接点卡），不弹命令菜单也不走选卡会话；取满后自行组 uint16 数组应答。
+        // 卡详仍按询问期间点卡的既有规格即时刷新（同 C++ 桌面端悬停即出卡详）
+        if (select.isCounterSelecting) {
+            ClientCard counted = engine.getField().getCard(player, location, sequence);
+            select.handleCounterClick(player, location, sequence);
+            if (counted != null && counted.displayCode() > 0) {
+                if (fieldView != null) {
+                    fieldView.post(() -> activity.showCardInfoPanel(counted));
+                } else {
+                    activity.showCardInfoPanel(counted);
+                }
+            }
+            return;
+        }
         if (select.isCardSelecting) {
             // 先于会话应答捕获被点击卡与点击瞬间的「可选」状态：只选 1 张的会话（超量叠放、
             // 单对象选取等）本次点击即自动确认，endCardSelect 的 clearSelect 会把候选的

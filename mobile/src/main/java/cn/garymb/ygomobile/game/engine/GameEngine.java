@@ -642,6 +642,15 @@ public class GameEngine {
     byte[] lastGameMsgBody;
     int retryReplayCount = 0;
 
+    /**
+     * STOC_DECK_COUNT 留存的本视角卡组/额外张数：{@code [0]=我方卡组 [1]=我方额外 [2]=对方卡组 [3]=对方额外}
+     *（与 duelclient.cpp STOC_DECK_COUNT 直接 Initial(0/1) 的本地座位序同构）。
+     * <p>
+     * 猜拳/选先后阶段的场地堆叠即由它建立；观战方与某些只在 MSG_START 里填 0 的服务端
+     * 靠它作为回退，避免开局双方卡组/额外堆叠不显示（见 MessageUIHandler.onStart）。
+     */
+    public final int[] lastDeckCounts = new int[4];
+
     // === 逐局 MSG 录制（实现见 MsgFrameRecorder） ===
 
     void recordMsgFrame(int msgType, byte[] body) { msgRecorder.record(msgType, body); }

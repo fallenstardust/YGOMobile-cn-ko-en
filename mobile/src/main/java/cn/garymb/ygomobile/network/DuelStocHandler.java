@@ -102,6 +102,12 @@ public class DuelStocHandler implements DuelClient.ClientListener {
         // 故此处不经 localPlayer 映射；field 已由 onDuelStart 清空，这里只填充不重复 clear。
         engine.field.initial(0, deck0, extra0, side0);
         engine.field.initial(1, deck1, extra1, side1);
+        // 留存本视角张数（下标按本地座位 0/1 与 initial 同序）：部分服务端 MSG_START 不把
+        // 卡组/额外张数填进去，开局建堆时由 MessageUIHandler.onStart 回退到本缓存
+        engine.lastDeckCounts[0] = deck0;
+        engine.lastDeckCounts[1] = extra0;
+        engine.lastDeckCounts[2] = deck1;
+        engine.lastDeckCounts[3] = extra1;
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onFieldChanged();
         });

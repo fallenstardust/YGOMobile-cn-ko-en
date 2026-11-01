@@ -36,7 +36,6 @@ public class ClientCard {
     public int reason;
     public ClientCard equipCard;
     public List<ClientCard> targetCards = new ArrayList<>();
-    public List<ClientCard> overlayCards = new ArrayList<>();
     public Map<Integer, Integer> counters = new HashMap<>();
     public int turnCounter;
 
@@ -67,6 +66,14 @@ public class ClientCard {
     public boolean is_showequip;
     public boolean is_showtarget;
     public boolean is_showchaintarget;
+    /**
+     * 淡出卡的「原区域」（仅 {@code location==0} 时有意义）：MSG_MOVE cl==0 的离场淡出在本端
+     * 是先把卡从区域列表 structural 移除再淡出（卡片暂存 {@code GameField.fadingCards} 继续绘制），
+     * 而 {@code location} 已被置 0；手卡在绘制分支上靠 {@code location==0x02} 走相机 billboard，
+     * 一旦落到场上卡的 3D 分支就会按手卡姿态（rotX=±0.798/rotY=π）画出一张斜立在手卡行列外的
+     * 幽灵卡。渲染层据此回退到卡离场前的区域，保持与淡出前完全一致的姿态与卡背归属。
+     */
+    public int fadeLocation;
 
     public String atkString = "";
     public String defString = "";
@@ -236,17 +243,28 @@ public class ClientCard {
         descHints.clear();
     }
 
+    /**
+     * client_card.cpp ClientCard::ClearTarget L191-202 逐行等价：双向摘除效果对象关系，
+     * 并关掉对面卡上的对象图标——本卡的 {@code targetCards}（本卡以其为对象的卡）逐个
+     * 清 is_showtarget 并从其 {@code ownerTarget} 中摘掉自己；本卡的 {@code ownerTarget}（以其为
+     * 对象的来源卡）同样清图标并从其 {@code targetCards} 中摘掉自己，最后两个集合均清空。
+     * <p>
+     * 旧实现只扫 {@code targetCards} 并误去动早已不存在的 overlayCards，从不遍历/清空
+     * {@code ownerTarget}：反查关系链因此永久残留（来源卡早已离场/不再以本卡为对象，本卡的
+     * ownerTarget 仍挂着他），点本卡就把过期的来源卡也标上对象图标，表现为「选对象的卡与
+     * 被选对象的卡同时亮 target 图标」。
+     */
     public void clearTarget() {
         for (ClientCard pcard : targetCards) {
             pcard.is_showtarget = false;
-            pcard.overlayCards.remove(this);
+            pcard.ownerTarget.remove(this);
         }
-        for (ClientCard pcard : overlayCards) {
+        for (ClientCard pcard : ownerTarget) {
             pcard.is_showtarget = false;
             pcard.targetCards.remove(this);
         }
         targetCards.clear();
-        overlayCards.clear();
+        ownerTarget.clear();
     }
 
     public void updateQuery(ByteBuffer buf) {
