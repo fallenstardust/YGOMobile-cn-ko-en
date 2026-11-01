@@ -32,6 +32,7 @@ import cn.garymb.ygomobile.render.card.CardDetailPanel;
 import cn.garymb.ygomobile.render.field.TextureLoader;
 import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.ui.cards.deck.CardTypeImage;
+import cn.garymb.ygomobile.ui.cards.deck.DeckHistory;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
 import cn.garymb.ygomobile.ui.cards.deck.MyDeckItem;
@@ -240,33 +241,37 @@ abstract class DeckEditorManagerBase {
     protected void loadDeckFromPath(String deckPath) {
         // 换卡组后三个区的卡片列表整体替新，批量勾选的下标与旧卡组绑定，必须先退出批量模式
         if (batchSelection != null) batchSelection.reset();
-        File deckFile = new File(deckPath);
-        boolean loaded = false;
-        if (deckFile.exists()) {
-            DeckInfo loadedDeck = DeckLoader.readDeck(cardLoader, deckFile);
-            if (loadedDeck != null) {
-                currentDeck.update(loadedDeck);
-                currentDeck.source = deckFile;
-                isModified = false;
-                loaded = true;
+        // 载入期屏蔽快照写入：本方法中途的 notifyDeckChanged / applyPackMode 会把“刚读盘的
+        // 旧内容”推成会话游标，末尾就没有更晚的未保存修改可采纳，还会反过来把对端刷回磁盘版本
+        if (historyPanel != null) historyPanel.beginDeckLoad(deckPath);
+        try {
+            File deckFile = new File(deckPath);
+            boolean loaded = false;
+            if (deckFile.exists()) {
+                DeckInfo loadedDeck = DeckLoader.readDeck(cardLoader, deckFile);
+                if (loadedDeck != null) {
+                    currentDeck.update(loadedDeck);
+                    currentDeck.source = deckFile;
+                    isModified = false;
+                    loaded = true;
+                }
             }
-        }
-        String aiDeckDir = AppsSettings.get().getAiDeckDir();
-        isReadonly = deckPath.startsWith(aiDeckDir);
-        if (loaded) {
-            String packDir = AppsSettings.get().getPackDeckDir();
-            String cacheDeckDir = AppsSettings.get().getCacheDeckDir();
-            boolean packMode = deckPath.startsWith(packDir)
-                    || deckPath.startsWith(cacheDeckDir);
-            if (isPackMode != packMode) {
-                gridLayout.applyPackMode(packMode);
-            } else {
-                notifyDeckChanged();
+            //只读与卡包判定统一取 DeckHistory 的目录口径，与“不参与跨编辑器同步”同一根据
+            isReadonly = DeckHistory.isReadonlyDeck(deckPath);
+            if (loaded) {
+                boolean packMode = DeckHistory.isPackDeck(deckPath);
+                if (isPackMode != packMode) {
+                    gridLayout.applyPackMode(packMode);
+                } else {
+                    notifyDeckChanged();
+                }
             }
+            refreshReadonly();
+        } finally {
+            // 载入收尾必达：读卡或目录解析抛异常时也要解除载入屏蔽，
+            // 否则 recordSnapshot 从此永远短路，本侧再也不会写历史也不会广播
+            if (historyPanel != null) historyPanel.endDeckLoad();
         }
-        refreshReadonly();
-        // 历史换户：按当前 ydk 路径归户（路径变了即清零）并把刚载入的内容定为原点
-        if (historyPanel != null) historyPanel.onDeckLoaded();
     }
 
     /** Solo match 换 side：按席位卡组文件路径载入该副卡组到编辑器，
@@ -504,9 +509,9 @@ abstract class DeckEditorManagerBase {
             String uncatName = activity.getString(R.string.category_Uncategorized);
             currentDeckCategoryName = uncatName;
             isModified = false;
-            //另存为新卡组：历史跟着换户（新路径）并以当前内容定原点
+            //另存为新卡组：会话跟着换户到新路径，并以当前内容定原点
             if (historyPanel != null) {
-                historyPanel.onDeckLoaded();
+                historyPanel.markSavedAs(currentDeckFilePath);
             }
             updateDeckManagerButtonText();
             AppsSettings.get().saveSettings("lastcategory", uncatName);
@@ -654,6 +659,18 @@ abstract class DeckEditorManagerBase {
     }
 
     protected void loadLastDeck() {
+        // 优先打开共享会话里正在编辑的那份卡组：settings 的 lastdeckpath 只由本编辑器写入，
+        // 卡组编辑页切卡组不会更新它，直接沿用它会让两侧停在不同卡组上、看不到对方最后修改
+        String sessionPath = historyPanel != null ? historyPanel.sessionDeckPath() : "";
+        if (!sessionPath.isEmpty() && new File(sessionPath).exists()) {
+            currentDeckFilePath = sessionPath;
+            currentDeckCategoryName = DeckUtil.getDeckTypeName(sessionPath);
+            currentDeckName = new File(sessionPath).getName().replace(".ydk", "");
+            loadDeckFromPath(sessionPath);
+            updateDeckManagerButtonText();
+            return;
+        }
+
         AppsSettings settings = AppsSettings.get();
         String lastDeckPath = settings.getLastDeckPath();
         String lastDeckName = settings.getLastDeckName();

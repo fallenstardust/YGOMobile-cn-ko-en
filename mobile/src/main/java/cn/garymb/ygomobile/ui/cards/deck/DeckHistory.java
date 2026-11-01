@@ -3,6 +3,7 @@ package cn.garymb.ygomobile.ui.cards.deck;
 import java.util.ArrayList;
 import java.util.List;
 
+import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.bean.DeckInfo;
 
 /**
@@ -64,6 +65,33 @@ public final class DeckHistory {
      */
     public static DeckHistory get() {
         return INSTANCE;
+    }
+
+    /** 人机/AI 卡组目录下的只读卡组 */
+    public static boolean isReadonlyDeck(String path) {
+        String aiDeckDir = AppsSettings.get().getAiDeckDir();
+        return path != null && aiDeckDir != null && path.startsWith(aiDeckDir);
+    }
+
+    /** 卡包展示卡组与云端缓存卡组（同为只读的展示态） */
+    public static boolean isPackDeck(String path) {
+        if (path == null) return false;
+        String packDir = AppsSettings.get().getPackDeckDir();
+        String cacheDir = AppsSettings.get().getCacheDeckDir();
+        return (packDir != null && path.startsWith(packDir))
+                || (cacheDir != null && path.startsWith(cacheDir));
+    }
+
+    /**
+     * 不纳入跨编辑器同步范围的卡组：只读（人机/AI）、卡包展示/缓存，以及尚未选定卡组（空路径）。
+     * <p>
+     * 两套编辑器均以此为准：这类卡组既不得被对端的未保存内容盖掉，也不得把自己的载入或浏览
+     * 当成“切换卡组”广播给对方——否则“开局顺手载入一份人机卡组”或“页内看一眼卡包”都会
+     * 清掉另一侧那份卡组的修改历史并把页头抢走。与 DeckEditorManagerBase 置位
+     * isReadonly/isPackMode 同源，保证“不参与联动”与“不可编辑”不会因目录规则改动而走偏。
+     */
+    public static boolean isOutsideSyncScope(String path) {
+        return path == null || path.isEmpty() || isReadonlyDeck(path) || isPackDeck(path);
     }
 
     private final List<DeckInfo> snapshots = new ArrayList<>();

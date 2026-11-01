@@ -51,6 +51,7 @@ import cn.garymb.ygomobile.render.card.CardDetailPanel;
 import cn.garymb.ygomobile.render.gamefieldview.GameFieldView;
 import cn.garymb.ygomobile.render.spec.SpecEffectOverlay;
 import cn.garymb.ygomobile.render.field.TextureLoader;
+import cn.garymb.ygomobile.ui.cards.CardDetailRandom;
 import cn.garymb.ygomobile.ui.dialogs.lobby.CreateHostDialog;
 import cn.garymb.ygomobile.ui.dialogs.duel.DuelLogDialog;
 import cn.garymb.ygomobile.ui.dialogs.lobby.EmotionDialog;
@@ -358,6 +359,11 @@ abstract class YGOProActivityUi extends YGOProActivityBase {
             dialogUtil.repositionHandSelectDialog();
             dialogUtil.repositionTPSelectDialog();
         }
+        // 随机一卡的展示 Toast 是独立窗口、能盖在本 Activity 之上，但不随 setContentView 重定位：
+        // 按用户规格横屏贴左侧、竖屏贴顶部，且只在原定时长内重投（总显示时间不变）。
+        // 挂在本方法而非 onConfigurationChanged：息屏冻结期早退时不会误重定位，
+        // 稍后真正旋转时经同一入口自动补上
+        CardDetailRandom.onOrientationChanged(getResources().getConfiguration().orientation);
         // 主菜单阶段：MainMenuDialog 是独立窗口不受 setContentView 影响，无需回显
     }
     public void toggleEmotionDialog(View anchor) {

@@ -276,9 +276,14 @@ public abstract class DeckManagerFragmentDeck extends DeckManagerFragmentBase {
         // 先取共享会话里属于这份卡组的内容（必须在换户前取：bindDeck 在 key 变化时会清零历史），
         // 再按当前卡组文件换户（切到另一个 ydk 即整段清零并通知对端跟随）
         String path = file != null ? file.getAbsolutePath() : "";
-        DeckInfo shared = !isPack && path.equals(deckHistory.getDeckKey())
+        // 只读（人机/AI）与卡包展示/缓存卡组不入会话（口径与编辑器侧共用 DeckHistory）：
+        // 否则“页内看一眼卡包”会换户清掉自己那份卡组的未保存历史，并把决斗内编辑器的页头抢走
+        boolean inScope = !isPack && !DeckHistory.isOutsideSyncScope(path);
+        DeckInfo shared = inScope && path.equals(deckHistory.getDeckKey())
                 ? deckHistory.current() : null;
-        deckHistory.bindDeck(path, DeckHistory.PUBLISHER_DECK_PAGE);
+        if (inScope) {
+            deckHistory.bindDeck(path, DeckHistory.PUBLISHER_DECK_PAGE);
+        }
         if (shared != null && !deckHistory.currentMatches(deckInfo)) {
             // 另一编辑器（或本页上一轮会话）已有更新的未保存内容：直接加载到最后修改状态，
             // 也不把刚读到的磁盘版本写进历史，否则会截掉对端的修改链
@@ -304,8 +309,12 @@ public abstract class DeckManagerFragmentDeck extends DeckManagerFragmentBase {
      * （DeckHistory 内部已按游标内容去重，回换后本页随后的 push 不会重复新增快照。）
      */
     protected void addDeckToHistory(DeckInfo deckInfo) {
-        File file = deckInfo == null ? null : deckInfo.source;
-        String path = file != null ? file.getAbsolutePath() : "";
+        if (deckInfo == null) return;
+        File ydkFile = mDeckAdapater.getYdkFile();
+        String path = ydkFile != null ? ydkFile.getAbsolutePath() : "";
+        // 只读（人机/AI）与卡包展示/缓存卡组不入会话（口径与编辑器侧共用 DeckHistory）：
+        // 否则“页内看一眼卡包”会换户清掉自己那份卡组的未保存历史，并把决斗内编辑器的页头抢走
+        if (DeckHistory.isOutsideSyncScope(path)) return;
         if (!path.equals(deckHistory.getDeckKey())) {
             deckHistory.bindDeck(path, DeckHistory.PUBLISHER_DECK_PAGE);
         }

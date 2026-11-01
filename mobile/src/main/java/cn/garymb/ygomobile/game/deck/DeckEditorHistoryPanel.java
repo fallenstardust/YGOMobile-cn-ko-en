@@ -28,7 +28,7 @@ import cn.garymb.ygomobile.utils.IOUtils;
  * 与卡组编辑页口径一致：<b>只回退内存与界面，不写 ydk</b>，需用户再点“保存”落盘；
  * isModified 由“游标是否停在原点”回推（原点在载入完成与保存成功时重置）。
  * <p>
- * 换卡组文件必须换户：{@link #onDeckLoaded()} 会调 {@link DeckHistory#bindDeck(String, int)}，
+ * 换卡组文件必须换户：{@link #beginDeckLoad(String)} 会调 {@link DeckHistory#bindDeck(String, int)}，
  * key 变化即整段清零，避免把上一个卡组的快照 undo 进当前卡组。反过来说，key 未变时历史里就躺着
  * 另一侧的未保存修改，因此采纳它就能做到“没打开的那一侧下次打开直接到最后修改状态”。
  * 仅在 UI 线程调用。
@@ -46,6 +46,15 @@ class DeckEditorHistoryPanel implements DeckHistory.Listener {
      * 正在应用另一侧同步过来的内容：期间不向历史写入也不广播，否则两边会互相回响。
      */
     private boolean applyingRemote;
+    /**
+     * 正在执行卡组载入：载入中途的 notifyDeckChanged 不得把刚读盘的旧内容推成会话游标，
+     * 否则会顶掉真正要采纳的未保存修改（并由 endDeckLoad 统一收尾）。
+     */
+    private boolean loadingDeck;
+    /** beginDeckLoad 时快照的会话内容（属于本次要载入的这份卡组时才有值），由 endDeckLoad 采纳 */
+    private DeckInfo pendingShared;
+    /** 本次载入的卡组不在同步范围内（只读/卡包展示/尚未选定），载入全程不得碰会话 */
+    private boolean loadOutsideScope;
 
     DeckEditorHistoryPanel(DeckEditorManager owner) {
         this.owner = owner;
@@ -85,20 +94,43 @@ class DeckEditorHistoryPanel implements DeckHistory.Listener {
     }
 
     /**
-     * 卡组载入完成：先按当前 ydk 路径换户（路径变了即清零并广播切换），再把共享会话里
-     * 属于同一份卡组的未保存内容盖到刚读盘的结果上，最后把当前内容记为第一条快照并定为原点。
+     * 卡组载入开始：先拍下会话里属于这份卡组的未保存内容，再按目标路径换户。
      * <p>
      * 必须先取共享内容再 bindDeck：bindDeck 在 key 变化时会清零历史，先绑后取就什么都拿不到了；
-     * 而 key 未变时 bindDeck 不清零，另一侧的未保存修改就仍然留在历史里等我们采纳。
+     * 而 key 未变时 bindDeck 不清零也不广播，另一侧的未保存修改就仍然留在历史里等我们采纳。
+     * 与 {@link #endDeckLoad()} 成对使用，期间的 recordSnapshot 被屏蔽。
+     * <p>
+     * 不在同步范围内的卡组（人机/AI 与卡包展示）只置屏蔽标志而不换户：否则“开局或换 side
+     * 时顺手载入一份只读卡组”会清掉编辑页那份卡组的修改历史并把页头抢过去。
      */
-    void onDeckLoaded() {
-        String path = owner.currentDeckFilePath;
-        boolean sameDeck = path != null && path.equals(history.getDeckKey());
-        DeckInfo shared = sameDeck ? history.current() : null;
-        history.bindDeck(path, DeckHistory.PUBLISHER_DECK_EDITOR);
-        if (shared != null) {
-            // 另一侧（或本侧上一轮会话）已有更新的内存内容：直接加载到最后修改状态，
-            // 也不把磁盘版本写进历史，否则会截掉对端的修改链
+    void beginDeckLoad(String path) {
+        loadingDeck = true;
+        pendingShared = null;
+        loadOutsideScope = DeckHistory.isOutsideSyncScope(path);
+        if (loadOutsideScope) return;
+        String key = path == null ? "" : path;
+        if (key.equals(history.getDeckKey())) {
+            pendingShared = history.current();
+        }
+        history.bindDeck(key, DeckHistory.PUBLISHER_DECK_EDITOR);
+    }
+
+    /**
+     * 卡组载入收尾：会话里的内容比刚读到的磁盘那份更新时直接采纳（只回退内存，磁盘上并没有
+     * 这些改动，故 isModified 置 true）；否则把当前内容记为第一条快照并定为原点。
+     * <p>
+     * 采纳前必须比一次等值：用户刚保存过的情况下磁盘与会话完全一致，无脑采纳会把 isModified
+     * 错置为 true 并白白重建一次网格。
+     */
+    void endDeckLoad() {
+        loadingDeck = false;
+        DeckInfo shared = pendingShared;
+        pendingShared = null;
+        boolean outside = loadOutsideScope;
+        loadOutsideScope = false;
+        if (outside) return;
+        if (shared != null && !history.currentMatches(owner.currentDeck)) {
+            //也不把磁盘版本写进历史，否则会截掉对端的修改链
             applyRemoteContent(shared);
             return;
         }
@@ -106,26 +138,51 @@ class DeckEditorHistoryPanel implements DeckHistory.Listener {
         history.markOrigin();
     }
 
-    /** 保存 / 另存成功：当前内容成为新的原点 */
+    /** 会话当前归属的卡组路径（空串 = 还没有任何编辑器载入过卡组），供 loadLastDeck 优先打开 */
+    String sessionDeckPath() {
+        return history.getDeckKey();
+    }
+
+    /**
+     * 另存为新卡组：会话跟着换户到新路径，并把当前内容记为第一条快照与原点。
+     */
+    void markSavedAs(String path) {
+        history.bindDeck(path, DeckHistory.PUBLISHER_DECK_EDITOR);
+        history.push(owner.currentDeck, DeckHistory.PUBLISHER_DECK_EDITOR);
+        history.markOrigin();
+    }
+
+    /** 保存成功：当前内容成为新的原点（不换户也不广播，两侧内容本就一致） */
     void markOrigin() {
         history.markOrigin();
     }
 
     /**
      * 卡组内容变化后记一次快照（与游标处内容相同会被 DeckHistory 去重跳过）；
-     * 来自对端同步的刷新不再回写，避免双向回响。
+     * 来自对端同步的刷新与卡组载入中途都不回写，避免双向回响与旧内容顶掉游标。
      * <p>
      * 写入前先确认会话归属：若卡组编辑页已切到另一份卡组而本编辑器拒绝跟随（会话 key = 页的 path），
      * 直接 push 会把本编辑器这份卡组的内容写进对方的时间线并广播过去，造成跨卡组污染；
      * 这里由本侧重新换户回自己的卡组，让两边回到同一份（页若有未保存修改会先弹确认）。
      */
     void recordSnapshot() {
-        if (applyingRemote) return;
+        if (applyingRemote || loadingDeck) return;
         String path = owner.currentDeckFilePath == null ? "" : owner.currentDeckFilePath;
+        if (DeckHistory.isOutsideSyncScope(path)) return;
         if (!path.equals(history.getDeckKey())) {
             history.bindDeck(path, DeckHistory.PUBLISHER_DECK_EDITOR);
         }
         history.push(owner.currentDeck, DeckHistory.PUBLISHER_DECK_EDITOR);
+    }
+
+    /**
+     * 本侧当前是否有权读写这份历史：只读与卡包展示不允许改；会话游标不属于自己这份卡组时
+     * 也不允许动——那是另一侧那份卡组的时间线，隔着界回退等于改人家的卡组。
+     */
+    private boolean canRollback() {
+        if (owner.isReadonly || owner.isPackMode) return false;
+        String path = owner.currentDeckFilePath == null ? "" : owner.currentDeckFilePath;
+        return !DeckHistory.isOutsideSyncScope(path) && path.equals(history.getDeckKey());
     }
 
     @Override
@@ -166,7 +223,8 @@ class DeckEditorHistoryPanel implements DeckHistory.Listener {
     private void syncContentFromSession() {
         if (applyingRemote || owner.currentDeck == null) return;
         String path = owner.currentDeckFilePath;
-        if (path == null || !path.equals(history.getDeckKey())) return;
+        // 只读/卡包展示卡组不吃对端内容：不然一份人机卡组会被编辑页的未保存修改直接盖掉
+        if (DeckHistory.isOutsideSyncScope(path) || !path.equals(history.getDeckKey())) return;
         DeckInfo shared = history.current();
         if (shared == null || history.currentMatches(owner.currentDeck)) return;
         applyRemoteContent(shared);
@@ -194,10 +252,12 @@ class DeckEditorHistoryPanel implements DeckHistory.Listener {
     }
 
     void undo() {
+        if (!canRollback()) return;
         applyState(history.undo());
     }
 
     void redo() {
+        if (!canRollback()) return;
         applyState(history.redo());
     }
 
@@ -218,11 +278,11 @@ class DeckEditorHistoryPanel implements DeckHistory.Listener {
 
     /**
      * 刷新两键：无历史可回退时以 INVISIBLE 占位（保留按钮槽位，避免侧边列抖动）。
+     * 可用态与 undo/redo 入口共用 canRollback，避免“键看得到但一点就动了对方那份卡组”。
      * 包级可见：只读态与卡包展示态切换时由 DeckEditorManagerBase#refreshReadonly 一并调。
      */
     void refresh() {
-        boolean editable = !owner.isReadonly && !owner.isPackMode;
-        boolean hasHistory = editable && history.size() > 1;
+        boolean hasHistory = canRollback() && history.size() > 1;
         setButtonState(owner.btnDeckUndo, hasHistory && history.canUndo());
         setButtonState(owner.btnDeckRedo, hasHistory && history.canRedo());
     }
