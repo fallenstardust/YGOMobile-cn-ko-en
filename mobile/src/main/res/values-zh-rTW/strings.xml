@@ -199,6 +199,7 @@
     <string name="refresh">重新整理</string>
     <string name="select_deck">點擊選擇卡組</string>
     <string name="quit_deck_tip">卡組未儲存，是否退出本應用程式？</string>
+    <string name="deck_discard_switch_tip">此操作將放棄對目前卡組的修改，是否繼續？</string>
     <string name="deck_delete_text">拖到这里刪除</string>
     <string name="question_keep_cur_deck">保留目前卡牌？</string>
     <string name="check_choose_file" formatted="false">確定選擇這個 %s ？</string>

@@ -94,6 +94,7 @@ import cn.garymb.ygomobile.ui.adapters.CardListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.cards.deck.DeckAdapater;
 import cn.garymb.ygomobile.ui.cards.deck.DeckDragDropHelper;
+import cn.garymb.ygomobile.ui.cards.deck.DeckHistory;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItem;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItemTouchHelper;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItemType;
@@ -143,6 +144,8 @@ public abstract class DeckManagerFragmentDeck extends DeckManagerFragmentBase {
      * @param file 包含卡牌数据的文件对象，如果文件不存在或为null则会设置空的卡牌包
      */
     protected void loadDeckFromFile(File file) {
+        // 发起一次载入就推一次序号：异步回调只能在序号未变时落地（防旧读盘结果覆盖对端同步）
+        final int seq = ++deckLoadSeq;
         // 检查卡牌加载器是否打开以及文件是否存在，如果条件不满足则设置空卡牌包
         if (!mCardLoader.isOpen() || file == null || !file.exists()) {
             setCurDeck(new DeckInfo(), false);
@@ -163,6 +166,10 @@ public abstract class DeckManagerFragmentDeck extends DeckManagerFragmentBase {
         }).done((rs) -> {
             // 关闭加载对话框并设置当前卡牌包
             dlg.dismiss();
+            if (seq != deckLoadSeq) {
+                // 期间又发生过一次卡组载入（典型为对端切换组卡的联动跟随），本次旧结果作废
+                return;
+            }
             // 根据资源路径判断是否进入卡包展示模式
             if (rs != null && rs.source != null) {
                 String parentPath = rs.source.getParent();
@@ -182,6 +189,7 @@ public abstract class DeckManagerFragmentDeck extends DeckManagerFragmentBase {
      * @param ydk 卡组文件，可以为null，如果为null则会尝试加载默认卡组文件
      */
     public void init(@Nullable File ydk) {
+        final int seq = ++deckLoadSeq;
         // 显示加载对话框
         DialogPlus dlg = DialogPlus.show(mContext, null, getString(R.string.loading));
 
@@ -221,6 +229,10 @@ public abstract class DeckManagerFragmentDeck extends DeckManagerFragmentBase {
             // 初始化完成后的处理逻辑
             isLoad = true;
             dlg.dismiss();
+            if (seq != deckLoadSeq) {
+                // 期间发生过更新的卡组载入（如对端联动），本次旧结果不再落地
+                return;
+            }
             // 初始化卡片搜索器中的项目列表,为卡片搜索功能准备基础数据
             mCardSearcher.initItems();
             // 根据资源路径判断是否进入卡包展示模式
@@ -261,8 +273,21 @@ public abstract class DeckManagerFragmentDeck extends DeckManagerFragmentBase {
         mDeckAdapater.notifyDataSetChanged();
         isPackMode = isPack;
 
-        // 先按当前卡组文件归户历史（切到另一个 ydk 那么整段清零，同一份则保留），再记录初始快照
-        deckHistory.bindDeck(file != null ? file.getAbsolutePath() : "");
+        // 先取共享会话里属于这份卡组的内容（必须在换户前取：bindDeck 在 key 变化时会清零历史），
+        // 再按当前卡组文件换户（切到另一个 ydk 即整段清零并通知对端跟随）
+        String path = file != null ? file.getAbsolutePath() : "";
+        DeckInfo shared = !isPack && path.equals(deckHistory.getDeckKey())
+                ? deckHistory.current() : null;
+        deckHistory.bindDeck(path, DeckHistory.PUBLISHER_DECK_PAGE);
+        if (shared != null && !deckHistory.currentMatches(deckInfo)) {
+            // 另一编辑器（或本页上一轮会话）已有更新的未保存内容：直接加载到最后修改状态，
+            // 也不把刚读到的磁盘版本写进历史，否则会截掉对端的修改链
+            mDeckAdapater.applySharedDeck(shared);
+            updateUndoRedoButtons();
+            return;
+        }
+
+        // 记录初始快照（内部去重）
         addDeckToHistory(deckInfo);
 
         // 更新按钮状态，初始化完毕后再执行，以便确保所有数据已加载
@@ -271,12 +296,87 @@ public abstract class DeckManagerFragmentDeck extends DeckManagerFragmentBase {
 
     /**
      * 将当前卡组状态记入撤销历史（去重与截尾规则见 {@code DeckHistory#push}）。
-     *
-     * @param deckInfo 当前卡组状态
+     * <p>
+     * 写入前先确认会话归属：若对方已切到另一份卡组而本页拒绝跟随切换（会话 key = 对方的 path），
+     * 直接 push 会把本页 A 卡组的内容写进 B 的时间线并广播给对方，造成跨卡组污染。因此由本页
+     * 重新换户回自己的卡组：对方刚完成切换、并无未保存修改，会静默跟着回到本页这份卡组——
+     * 两边最终停在用户拒绝切换时所看到的那份卡组。
+     * （DeckHistory 内部已按游标内容去重，回换后本页随后的 push 不会重复新增快照。）
      */
     protected void addDeckToHistory(DeckInfo deckInfo) {
-        deckHistory.push(deckInfo);
+        File file = deckInfo == null ? null : deckInfo.source;
+        String path = file != null ? file.getAbsolutePath() : "";
+        if (!path.equals(deckHistory.getDeckKey())) {
+            deckHistory.bindDeck(path, DeckHistory.PUBLISHER_DECK_PAGE);
+        }
+        deckHistory.push(deckInfo, DeckHistory.PUBLISHER_DECK_PAGE);
         // 更新按钮状态
+        updateUndoRedoButtons();
+    }
+
+    /**
+     * 跟随决斗内卡组编辑器切换到同一份卡组。
+     * <p>
+     * 本页有未保存修改（isChanged：当前 mItems 与 ydk 文件的 md5 不一致）时先弹
+     * “此操作将放弃对当前卡组的修改，是否继续”确认；取消则本页停在原卡组，之后对端的内容
+     * 广播会因 path 不匹配被自然忽略（不会反复弹窗），直到本页下一次写入时由
+     * {@link #addDeckToHistory} 把会话换回自己这份卡组。
+     */
+    @Override
+    void onRemoteDeckSwitch(String path) {
+        if (mDeckAdapater == null || path == null || path.isEmpty()) {
+            return;
+        }
+        File current = mDeckAdapater.getYdkFile();
+        if (current != null && path.equals(current.getAbsolutePath())) {
+            return;
+        }
+        File target = new File(path);
+        if (!target.exists()) {
+            //对端卡组文件已被删除或移动：保持现状，不弹无意义的确认
+            return;
+        }
+        if (mDeckAdapater.isChanged()) {
+            confirmDiscardForRemoteSwitch(target);
+            return;
+        }
+        loadDeckFromFile(target);
+    }
+
+    /** 跟随对端切换前的未保存确认弹窗（与退出页、删卡的 DialogPlus 同款交互，左键为继续） */
+    private void confirmDiscardForRemoteSwitch(File target) {
+        if (getContext() == null) return;
+        DialogPlus dialog = new DialogPlus(getContext());
+        dialog.setTitle(R.string.question);
+        dialog.setMessage(getString(R.string.deck_discard_switch_tip));
+        dialog.setMessageGravity(Gravity.CENTER_HORIZONTAL);
+        dialog.setLeftButtonListener((dlg, v) -> {
+            dlg.dismiss();
+            loadDeckFromFile(target);
+        });
+        dialog.setRightButtonListener((dlg, v) -> dlg.dismiss());
+        dialog.show();
+    }
+
+    /**
+     * 跟随决斗内卡组编辑器对本份卡组的修改：以共享会话游标处的内容重建本页卡组网格。
+     * 两边的 path 不一致（典型场景是本页拒绝了跟随切换）时保持不动。
+     */
+    @Override
+    void onRemoteDeckContent() {
+        if (mDeckAdapater == null) {
+            return;
+        }
+        File current = mDeckAdapater.getYdkFile();
+        if (current == null
+                || !current.getAbsolutePath().equals(deckHistory.getDeckKey())) {
+            return;
+        }
+        DeckInfo shared = deckHistory.current();
+        if (shared == null || deckHistory.currentMatches(mDeckAdapater.getCurrentState())) {
+            return;
+        }
+        mDeckAdapater.applySharedDeck(shared);
         updateUndoRedoButtons();
     }
 

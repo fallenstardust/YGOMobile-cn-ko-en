@@ -21,6 +21,7 @@ import android.graphics.drawable.RotateDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.util.Log;
@@ -186,8 +187,39 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
      * 再大就会越接近屏幕下缘而被窗口裁掉。
      */
     private static final float DELETE_ZONE_HIGHLIGHT_SCALE = 1.3f;
-    /** 监听共享卡组历史的快照变化（另一个编辑器也可能写入），用于刷新 undo/redo */
-    private final DeckHistory.Listener historyListener = this::updateUndoRedoButtonVisibility;
+    /**
+     * 共享卡组历史监听：除刷新 undo/redo 可用态外，还承担与决斗内卡组编辑器的实时联动——
+     * 对方切换卡组则本页跟随切换（有未保存修改先弹确认），对方改了内容则本页以会话为准刷新。
+     * <p>
+     * 广播在发起方的 UI 回调栈内同步抵达，本页的卡组重建挂到下一轮消息再做，
+     * 不在对侧 notifyDeckChanged 中途重入其视图树。
+     */
+    private final DeckHistory.Listener historyListener = new DeckHistory.Listener() {
+        @Override
+        public void onDeckHistoryChanged() {
+            updateUndoRedoButtonVisibility();
+        }
+
+        @Override
+        public void onDeckKeyChanged(String key, int publisher) {
+            if (publisher == DeckHistory.PUBLISHER_DECK_PAGE) return;
+            applyRemoteDeckSwitch(key);
+        }
+
+        @Override
+        public void onDeckContentChanged(String key, int publisher) {
+            if (publisher == DeckHistory.PUBLISHER_DECK_PAGE) return;
+            applyRemoteDeckContent();
+        }
+    };
+    /** 联动消息的投递容器，onDestroyView 时整体清空，避免视图销毁后回调陈旧实例 */
+    private final Handler mDeckSyncHandler = new Handler(Looper.getMainLooper());
+    /**
+     * 卡组载入序号：每发起一次载入自增，异步读盘回调只在序号未变时才落地。
+     * 没有这道门，“决斗内切卡组 → 本页 loadDeckFromFile 异步读盘”途中又收到对方的
+     * 内容同步时，迟到的旧读盘结果会把同步好的卡组再覆盖回去。
+     */
+    protected int deckLoadSeq;
     protected String currentCardSearchMessage = "";
 
 
@@ -582,7 +614,9 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
 
     @Override
     public void onDestroyView() {
-        // 共享历史常驻，视图销毁时必须摘除监听，否则随 Fragment 重建累积旧回调
+        // 共享历史与联动广播常驻，视图销毁时必须摘除监听并清空待投递消息，
+        // 否则随 Fragment 重建会累积指向已销毁视图树的旧回调
+        mDeckSyncHandler.removeCallbacksAndMessages(null);
         deckHistory.removeListener(historyListener);
         // 视图销毁时取消进行中的浮动卡片拖拽，避免浮层残留在根布局上
         if (mDeckDragHelper != null) {
@@ -604,8 +638,8 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
 
     @Override
     public void onDragLongPress(int pos) {
-        // 卡组网格长按语义已改为“进入批量勾选模式并勾上该卡”，原长按删除单卡的入口让位；
-        // 删除改由批量模式下把整组拖出卡区后的二次确认完成（confirmBatchDeleteOutside）。
+        // 卡组网格长按语义：未在批量模式时“进入批量勾选模式并勾上该卡”（原长按删单卡入口让位），
+        // 已在批量模式时“删除已勾选的整组卡”，两种行为均在 DeckBatchEditController#onDeckCardLongPress 内分流
         if (mDeckBatchController != null) {
             mDeckBatchController.onDeckCardLongPress(pos);
         }
@@ -671,6 +705,26 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
         }
     }
 
+    /**
+     * 决斗内卡组编辑器切换到另一份卡组：本页也跟着切到同一份。投递到下一轮消息再做，
+     * 不站在对侧的广播调用栈里重建本页视图（实现见链下游 Deck 层，与 loadDeckFromFile /
+     * setCurDeck 等卡组载入逻辑同处）。
+     */
+    protected void applyRemoteDeckSwitch(String path) {
+        mDeckSyncHandler.post(() -> onRemoteDeckSwitch(path));
+    }
+
+    /**
+     * 决斗内卡组编辑器改了当前卡组内容：本页以共享会话游标处的内容为准刷新自身。
+     */
+    protected void applyRemoteDeckContent() {
+        mDeckSyncHandler.post(this::onRemoteDeckContent);
+    }
+
+    /** 以下两个钩子由 DeckManagerFragmentDeck 实现（卡组载入与历史已在该类，联动归同一处） */
+    abstract void onRemoteDeckSwitch(String path);
+    abstract void onRemoteDeckContent();
+
     protected void showSearch(boolean autoClose) {
         if (mDrawerLayout.isDrawerOpen(Constants.CARD_RESULT_GRAVITY)) {
             mDrawerLayout.closeDrawer(Constants.CARD_RESULT_GRAVITY);
@@ -704,6 +758,7 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
     abstract void undo();
     abstract void redo();
     abstract void updateUndoRedoButtonVisibility();
+    abstract void updateUndoRedoButtons();
     abstract void refreshDeckCreditCount();
     abstract int getCreditCount(DeckInfo deckinfo);
     abstract List<File> getYdkFiles();

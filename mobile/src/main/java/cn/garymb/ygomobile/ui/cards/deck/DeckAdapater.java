@@ -254,6 +254,22 @@ public class DeckAdapater extends DeckAdapaterBase {
     }
 
     /**
+     * 应用另一编辑器同步过来的卡组内容：与批量编辑同样走整体重建以同步分隔栏文案与末尾
+     * 占位格，但保留“相对 ydk 文件是否已修改”的 md5 基准与云端 deckId/userId（同步不是
+     * 本侧的编辑动作，不能抹掉本侧的未保存事实），也不主动改动批量勾选模式开关
+     * （setDeck 重建会自然退出批量模式，因为卡片位置已整体变化）。
+     */
+    public void applySharedDeck(DeckInfo state) {
+        if (state == null) return;
+        String prevMd5 = mDeckMd5;
+        state.deckId = deckId;
+        state.userId = userId;
+        setDeck(state, false);
+        mDeckMd5 = prevMd5;
+        notifyDataSetChanged();
+    }
+
+    /**
      * 批量编辑后重建 mItems：搬运/删除不改变“相对 ydk 文件是否已修改”的 md5 基准，
      * 也不改变云端 deckId，因此逐项恢复后再告知列表全量刷新。
      */

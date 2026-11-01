@@ -188,6 +188,7 @@
     <string name="select_deck">Elige un deck</string>
     <string name="solo_mode">Modo solo</string>
     <string name="quit_deck_tip">El deck no está guardado, ¿Salir de la aplicación?</string>
+    <string name="deck_discard_switch_tip">Se descartarán los cambios del mazo actual, ¿continuar?</string>
     <string name="deck_delete_text">Arrastra aquí para eliminar</string>
     <string name="question_keep_cur_deck">¿Mantener las cartas actuales?</string>
     <string name="check_choose_file" formatted="false">¿Confirmar la selección de %s?</string>
