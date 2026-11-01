@@ -33,11 +33,12 @@
         android:layout_marginBottom="1px"
         tools:src="@drawable/unknown" />
 
+    <!-- 禁限 / GeneSys 点数角标按用户规格统一贴卡片左上角 -->
     <ImageView
         android:id="@+id/right_top"
         android:layout_width="@dimen/right_size2"
         android:layout_height="@dimen/right_size2"
-        android:layout_alignParentRight="true"
+        android:layout_alignParentLeft="true"
         android:visibility="visible"
         app:srcCompat="@drawable/ic_close_black_24dp" />
 
@@ -45,19 +46,19 @@
         android:id="@+id/tv_deck_limit_num"
         android:layout_width="@dimen/right_size2"
         android:layout_height="@dimen/right_size2"
-        android:layout_alignParentRight="true"
+        android:layout_alignParentLeft="true"
         android:textSize="8sp"
         android:gravity="center"
         android:textStyle="bold"
         android:visibility="visible" />
 
-    <!-- 批量勾选模式右上角的绿色打勾图标：默认隐藏，声明在最后以叠在卡图与禁限角标之上 -->
+    <!-- 批量勾选模式的左上角绿色打勾图标：默认隐藏，声明在最后以叠在卡图与禁限角标之上 -->
     <ImageView
         android:id="@+id/iv_deck_batch_check"
         android:layout_width="@dimen/right_size2"
         android:layout_height="@dimen/right_size2"
         android:layout_alignParentTop="true"
-        android:layout_alignParentRight="true"
+        android:layout_alignParentLeft="true"
         android:visibility="gone"
         app:srcCompat="@drawable/ic_effect_used_check" />
 

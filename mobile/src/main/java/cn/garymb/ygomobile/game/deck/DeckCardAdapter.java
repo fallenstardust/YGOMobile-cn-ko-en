@@ -383,6 +383,10 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
                             ? Math.abs(dx) > touchSlop && Math.abs(dx) > Math.abs(dy)
                             : Math.abs(dx) > touchSlop || Math.abs(dy) > touchSlop;
                     if (triggered) {
+                        //本事件被接管后 View.onTouchEvent 不再被调用，它自带的“移动超阈值即取消长按”
+                        //也就永远不会触发；不显式 cancelLongPress，按住拖到 500ms 会被当成长按
+                        //（卡组网格上会误入批量勾选模式），体感与原本的单卡拖拽不一致
+                        v.cancelLongPress();
                         //禁止父级（尤其RecyclerView）拦截后续事件，保证拖拽期间持续收到MOVE/UP
                         if (v.getParent() != null) {
                             v.getParent().requestDisallowInterceptTouchEvent(true);

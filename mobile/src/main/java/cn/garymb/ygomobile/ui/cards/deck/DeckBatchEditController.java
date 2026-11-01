@@ -87,6 +87,10 @@ public class DeckBatchEditController implements RecyclerView.OnItemTouchListener
     private final List<int[]> offsets = new ArrayList<>();
     /** 手指相对锚点卡图左上角的抓取偏移 */
     private float grabDX, grabDY;
+    /** 锚点浮层（虚影）尺寸：落点与删除区悬停均按虚影中心判定，而非手指位置 */
+    private float anchorW, anchorH;
+    /** hitPoint 的复用容器，避免每次 MOVE 新建数组 */
+    private final float[] hit = new float[2];
     private float downRawX, downRawY;
     private int anchorPos = RecyclerView.NO_POSITION;
     private boolean dragging;
@@ -144,9 +148,23 @@ public class DeckBatchEditController implements RecyclerView.OnItemTouchListener
                 && rawY >= zoneLoc[1] && rawY <= zoneLoc[1] + zone.getHeight();
     }
 
-    /** 整组拖动过程中跟随手指刷新删除区悬停态（进出各回调一次） */
+    /**
+     * 判定点取锚点虚影的中心而不是手指位置：按住卡片边角起拖时两者可差半张卡，
+     * 按手指判定会出现“虚影明明在某区（或删除区）上、实际却落到另一处”。
+     * 浮层是直接按屏幕坐标 setX/setY 挂在 DecorView 上的，锚点虚影左上角即
+     * “手指坐标 - 抓取偏移”，故直接算而不查 View。
+     */
+    private void hitPoint(float rawX, float rawY) {
+        hit[0] = anchorW > 0f && anchorH > 0f
+                ? rawX - grabDX + anchorW / 2f : rawX;
+        hit[1] = anchorW > 0f && anchorH > 0f
+                ? rawY - grabDY + anchorH / 2f : rawY;
+    }
+
+    /** 整组拖动过程中跟随虚影刷新删除区悬停态（进出各回调一次） */
     private void updateDeleteZoneHover(float rawX, float rawY) {
-        boolean inside = isInsideDeleteZone(rawX, rawY);
+        hitPoint(rawX, rawY);
+        boolean inside = isInsideDeleteZone(hit[0], hit[1]);
         if (inside == hoverInDeleteZone) return;
         hoverInDeleteZone = inside;
         if (callback != null) callback.onBatchDeleteZoneHoverChanged(inside);
@@ -258,26 +276,28 @@ public class DeckBatchEditController implements RecyclerView.OnItemTouchListener
                 updateDeleteZoneHover(e.getRawX(), e.getRawY());
                 break;
             case MotionEvent.ACTION_UP: {
-                float rawX = e.getRawX();
-                float rawY = e.getRawY();
+                //落点先按虚影中心算好：cancelDrag 会清掉虚影尺寸，算晚了只能退到手指位置
+                hitPoint(e.getRawX(), e.getRawY());
+                float dropX = hit[0];
+                float dropY = hit[1];
                 // 先取悬停结论再收浮层（cancelDrag 会把悬停态复位）
-                boolean toDeleteZone = isInsideDeleteZone(rawX, rawY)
+                boolean toDeleteZone = isInsideDeleteZone(dropX, dropY)
                         && deckAdapater.hasBatchChecked();
                 // 浮层与落点无关，先收起再改数据：改数据会触发网格重排，避免浮层与旧位置错帧
                 cancelDrag();
                 if (toDeleteZone) {
-                    //松手在删除区（垃圾桶所在行）：整组批量删除，不做二次确认（可撤销）
+                    //松手时虚影落在删除区（垃圾桶所在行）：整组批量删除，不做二次确认（可撤销）
                     callback.onBatchDeleteRequested();
                     return;
                 }
                 DeckDragDropHelper.DropTarget target =
-                        DeckDragDropHelper.resolveTargetAt(deckGrid, rawX, rawY);
+                        DeckDragDropHelper.resolveTargetAt(deckGrid, dropX, dropY);
                 if (target != null) {
                     DeckAdapater.DragInsertResult result =
                             deckAdapater.batchMoveCheckedTo(target.type, target.insertPos);
                     callback.onBatchMoved(result, target);
                 }
-                //既不在网格内也不在删除区：本次整组拖动作废，卡组保持不变
+                //虚影既不在网格内也不在删除区：本次整组拖动作废，卡组保持不变
                 break;
             }
             case MotionEvent.ACTION_CANCEL:
@@ -310,7 +330,8 @@ public class DeckBatchEditController implements RecyclerView.OnItemTouchListener
     }
 
     /**
-     * 为每张已勾选且可见的卡片生成卡图浮层，锚点卡必须在屏幕上可见，否则返回 false 不进入拖动。
+     * 为每张已勾选且可见的卡片生成卡图浮层，锚点卡必须在屏幕上可见且已有尺寸，
+     * 否则返回 false 不进入拖动（没有锚点虚影就定不出可靠的落点中心）。
      */
     private boolean startGroupDrag(MotionEvent trigger) {
         ImageView anchorImage = cardImageOf(anchorPos);
@@ -322,6 +343,8 @@ public class DeckBatchEditController implements RecyclerView.OnItemTouchListener
         anchorImage.getLocationOnScreen(anchorLoc);
         grabDX = trigger.getRawX() - anchorLoc[0];
         grabDY = trigger.getRawY() - anchorLoc[1];
+        anchorW = anchorImage.getWidth();
+        anchorH = anchorImage.getHeight();
 
         int[] loc = new int[2];
         for (Integer pos : deckAdapater.getBatchCheckedPositions()) {
@@ -402,6 +425,8 @@ public class DeckBatchEditController implements RecyclerView.OnItemTouchListener
         decorView = null;
         dragging = false;
         anchorPos = RecyclerView.NO_POSITION;
+        anchorW = 0f;
+        anchorH = 0f;
         cancelDeleteZoneHover();
     }
     //endregion

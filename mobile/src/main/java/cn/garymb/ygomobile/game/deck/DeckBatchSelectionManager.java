@@ -143,6 +143,12 @@ class DeckBatchSelectionManager implements BatchCardDragHelper.BatchDropHandler 
         private final int index;
         private final CardView cardView;
         private float downX, downY;
+        /**
+         * 本监听器是否亲眼收到过 ACTION_DOWN。进入批量模式时会在手指还按着的这次手势
+         * 中途被换上，此时 downX/downY 还是初始 0，不区分就会把第一个 MOVE 当成“已移动超阈值”
+         * 而凭空起拖（且锚点抓取坐标错乱）。
+         */
+        private boolean sawDown;
 
         BatchTouchListener(DeckInfo.Type type, int index, CardView cardView) {
             this.type = type;
@@ -161,13 +167,25 @@ class DeckBatchSelectionManager implements BatchCardDragHelper.BatchDropHandler 
                 case MotionEvent.ACTION_DOWN:
                     downX = event.getX();
                     downY = event.getY();
+                    sawDown = true;
                     return false;
-                case MotionEvent.ACTION_MOVE:
+                case MotionEvent.ACTION_MOVE: {
                     if (!canEdit() || cardView.getCard() == null) return false;
+                    if (!sawDown) {
+                        //以当前点为起点补算，本次不判拖动；同时取消 View 仍挂着的长按计时，
+                        //否则拖动中途到点会回灌一次 onLongPress 把已拖的卡组又切回批量勾选
+                        v.cancelLongPress();
+                        downX = event.getX();
+                        downY = event.getY();
+                        sawDown = true;
+                        return false;
+                    }
                     if (Math.abs(event.getX() - downX) <= owner.touchSlop
                             && Math.abs(event.getY() - downY) <= owner.touchSlop) {
                         return false;
                     }
+                    //接管本事件后 View.onTouchEvent 不再跑，需自己取消长按，保证“按住=拖动”
+                    v.cancelLongPress();
                     //按住未勾选的卡也先把它勾上，整组包含它
                     if (!isChecked(type, index)) setChecked(type, index, true);
                     List<BatchCardDragHelper.BatchItem> items = buildDragItems();
@@ -177,7 +195,14 @@ class DeckBatchSelectionManager implements BatchCardDragHelper.BatchDropHandler 
                         //禁止父级拦截后续事件，保证拖动期间持续收到 MOVE/UP
                         v.getParent().requestDisallowInterceptTouchEvent(true);
                     }
-                    return batchDragHelper.startDrag(items, anchor, event);
+                    boolean started = batchDragHelper.startDrag(items, anchor, event);
+                    if (!started) sawDown = false;
+                    return started;
+                }
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    sawDown = false;
+                    return false;
                 default:
                     return false;
             }
@@ -192,6 +217,12 @@ class DeckBatchSelectionManager implements BatchCardDragHelper.BatchDropHandler 
      */
     private boolean onLongPress(DeckInfo.Type type, int index) {
         if (!canEdit()) return false;
+        // 手指先小幅移动就会由单卡拖拽助手抢起手（View 的长按计时不会被跳过），此时换上
+        // 触摸监听会让旧的 CardDragHelper 再也收不到 MOVE/UP，卡图阴影永久停在按下点：
+        // 进模式前先把在飞单卡拖拽就地取消，阴影随本帧消失
+        if (owner.dragHelper != null && owner.dragHelper.isDragging()) {
+            owner.dragHelper.cancelDrag();
+        }
         if (!batchMode) {
             batchMode = true;
             clearChecks();
@@ -209,8 +240,10 @@ class DeckBatchSelectionManager implements BatchCardDragHelper.BatchDropHandler 
      * 不重建卡片视图，只按当前模式重新施加每张卡的触摸监听：
      * 批量模式 → 整组拖动；否则 → 原来的单卡拖拽。卡组重建（notifyDeckChanged）时由
      * {@code refreshCardGroupView} 自行分流，这里只处理“模式当场切换”的场景。
+     * 整组拖动进行中不换监听，否则会把正在跟随手指的浮层与事件流一同拆掉。
      */
     private void rebindCardViewTouchListeners() {
+        if (batchDragHelper != null && batchDragHelper.isDragging()) return;
         DeckCardAdapter adapter = batchMode ? null : owner.cardSearcherManager.getSearchAdapter();
         for (DeckInfo.Type zone : ZONE_ORDER) {
             CardGroupView group = groupView(zone);
@@ -462,8 +495,9 @@ class DeckBatchSelectionManager implements BatchCardDragHelper.BatchDropHandler 
         owner.currentDeck.syncCounts();
         owner.isModified = true;
         owner.notifyDeckChanged();
-        // 下标已随搬运整体变化，勾选态无法逐位映射：清空勾选但保留批量模式便于继续操作
-        clearChecks();
+        // 与批量删除同口径：整组搬运落定后立即退出批量勾选模式（拖动已收完成，此处重绑监听安全，
+        // BatchCardDragHelper 在回调本方法前已将 dragging 置 false）
+        reset();
     }
 
     /**

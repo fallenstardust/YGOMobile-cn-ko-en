@@ -67,6 +67,10 @@ public class BatchCardDragHelper {
     private final List<int[]> offsets = new ArrayList<>();
     /** 手指相对锚点卡左上角的抓取偏移 */
     private float grabDX, grabDY;
+    /** 锚点浮层（虚影）尺寸，用于把落点与悬停判定算到虚影中心而非手指位置 */
+    private float anchorW, anchorH;
+    /** hitPoint 的复用容器，避免每次 MOVE 新建数组 */
+    private final float[] hit = new float[2];
     private boolean dragging;
     private View highlightTarget;
 
@@ -104,7 +108,10 @@ public class BatchCardDragHelper {
         grabDY = trigger.getRawY() - anchorLoc[1];
 
         int[] loc = new int[2];
-        for (BatchItem item : items) {
+        anchorW = 0f;
+        anchorH = 0f;
+        for (int i = 0; i < items.size(); i++) {
+            BatchItem item = items.get(i);
             if (item.view == null) continue;
             Bitmap bmp = snapshot(item.view);
             if (bmp == null) continue;
@@ -112,8 +119,14 @@ public class BatchCardDragHelper {
             layers.add(appendLayer(bmp));
             bitmaps.add(bmp);
             offsets.add(new int[]{loc[0] - anchorLoc[0], loc[1] - anchorLoc[1]});
+            if (i == anchorIndex) {
+                anchorW = bmp.getWidth();
+                anchorH = bmp.getHeight();
+            }
         }
-        if (layers.isEmpty()) {
+        // 锚点卡的快照未能出浮层（尺寸为 0 等）时无法定出虚影中心，放弃本次拖动
+        if (layers.isEmpty() || anchorW <= 0f || anchorH <= 0f) {
+            removeLayers();
             content = null;
             return false;
         }
@@ -197,8 +210,19 @@ public class BatchCardDragHelper {
         return null;
     }
 
+    /**
+     * 落点 / 悬停判定点：取锚点虚影的中心而不是手指位置。按住卡片边角起拖时两者可差半张卡，
+     * 按手指判定会出现“虚影明明在某区、实际却落到另一区”。虚影左上角屏幕坐标恒为
+     * “手指坐标 - 抓取偏移”，所以直接算而不查浮层（查 View 会受未生效布局影响的干扰）。
+     */
+    private void hitPoint(float rawX, float rawY) {
+        hit[0] = rawX - grabDX + anchorW / 2f;
+        hit[1] = rawY - grabDY + anchorH / 2f;
+    }
+
     private void updateHighlight(float rawX, float rawY) {
-        View target = findTarget(rawX, rawY);
+        hitPoint(rawX, rawY);
+        View target = findTarget(hit[0], hit[1]);
         if (target == highlightTarget) return;
         clearHighlight();
         highlightTarget = target;
@@ -214,10 +238,14 @@ public class BatchCardDragHelper {
 
     private void performDrop(float rawX, float rawY) {
         if (soundManager != null) soundManager.playSoundEffect(SoundManager.SFX.CARD_DROP);
-        View target = findTarget(rawX, rawY);
+        //先把落点换算成虚影中心，后续命中与插入下标均用该点，与浮层所见完全一致
+        hitPoint(rawX, rawY);
+        float dropX = hit[0];
+        float dropY = hit[1];
+        View target = findTarget(dropX, dropY);
         cancelDrag();
         if (target != null) {
-            dropHandler.onBatchDrop(target, rawX, rawY);
+            dropHandler.onBatchDrop(target, dropX, dropY);
         }
     }
 

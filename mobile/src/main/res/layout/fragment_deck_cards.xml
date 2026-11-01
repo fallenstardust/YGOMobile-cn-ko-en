@@ -12,9 +12,14 @@
         android:layout_height="match_parent"
         tools:openDrawer="left">
 
+        <!-- clipChildren/clipToPadding 放开：批量拖动悬停到删除区时垃圾桶要放大，
+             默认裁剪会把旋转环切成圆弧；本层放开后放大的圆可以完整画到卡网格上方
+             （网格在本 bar 之前声明，z 序在下，不会反过来遮住它） -->
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:clipChildren="false"
+            android:clipToPadding="false">
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/grid_cards"
@@ -27,6 +32,8 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom"
                 android:layout_margin="1dp"
+                android:clipChildren="false"
+                android:clipToPadding="false"
                 android:orientation="horizontal">
 
                 <LinearLayout
@@ -241,15 +248,19 @@
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
+                    android:clipChildren="false"
+                    android:clipToPadding="false"
                     android:orientation="vertical">
                     <!-- 撤销/重做/批量删除一行：本 LinearLayout 同时是批量拖动“拖到此处删除”的落点区（layout_deck_undo_redo）；
-                         进入批量勾选模式时 undo/redo 隐藏、垃圾桶 delete 显示 -->
+                         进入批量勾选模式时 undo/redo 隐藏、垃圾桶 delete 显示；本层不裁剪，保证垃圾桶放大后的圆圈完整 -->
                     <LinearLayout
                         android:id="@+id/layout_deck_undo_redo"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
                         android:layout_marginBottom="20dp"
+                        android:clipChildren="false"
+                        android:clipToPadding="false"
                         android:orientation="horizontal">
 
                         <ImageButton

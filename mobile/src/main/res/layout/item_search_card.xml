@@ -32,11 +32,12 @@
                 android:scaleType="fitXY"
                 tools:src="@drawable/unknown" />
 
+            <!-- 禁限 / GeneSys 点数角标按用户规格统一贴卡片左上角 -->
             <ImageView
                 android:id="@+id/right_top"
                 android:layout_width="@dimen/right_size"
                 android:layout_height="@dimen/right_size"
-                android:layout_alignParentRight="true"
+                android:layout_alignParentLeft="true"
                 android:visibility="visible"
                 tools:src="@drawable/selected_light" />
 
@@ -44,7 +45,7 @@
                 android:id="@+id/tv_limit_num"
                 android:layout_width="@dimen/right_size"
                 android:layout_height="@dimen/right_size"
-                android:layout_alignParentRight="true"
+                android:layout_alignParentLeft="true"
                 android:gravity="center"
                 android:textSize="10sp"
                 android:textStyle="bold"

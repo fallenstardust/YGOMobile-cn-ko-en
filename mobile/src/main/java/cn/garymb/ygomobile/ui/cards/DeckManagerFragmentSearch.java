@@ -484,11 +484,15 @@ public abstract class DeckManagerFragmentSearch extends DeckManagerFragmentDeck 
     }
 
     /**
-     * 批量模式下整组拖动落在卡区内的结果处理：成功则补一次卡组历史快照并刷新撤销/重做
-     * 按钮，失败则按具体原因 toast（整组搬运要么全部生效、要么全部作废）。
+     * 批量模式下整组拖动落在卡区内的结果处理：成功则退出批量模式并补一次卡组历史快照，
+     * 失败则按具体原因 toast（整组搬运要么全部生效、要么全部作废，作废时保留批量模式便于重试）。
      */
     protected void handleBatchMoveResult(DeckAdapater.DragInsertResult result) {
         if (result == DeckAdapater.DragInsertResult.SUCCESS) {
+            //与批量删除同口径：整组搬运落定后立即退出批量勾选模式
+            if (mDeckBatchController != null) {
+                mDeckBatchController.exitBatchMode();
+            }
             addDeckToHistory(mDeckAdapater.getCurrentState());
             updateUndoRedoButtonVisibility();
         } else {

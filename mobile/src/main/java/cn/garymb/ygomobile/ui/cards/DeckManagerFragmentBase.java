@@ -180,8 +180,12 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
     protected ImageButton btnBatchDelete;
     /** undo/redo/垃圾桶所在行：批量拖动悬停在该矩形内松手即批量删除 */
     protected View layoutUndoRedo;
-    /** 悬停在删除区上时垃圾桶图标的放大倍数 */
-    private static final float DELETE_ZONE_HIGHLIGHT_SCALE = 1.6f;
+    /**
+     * 悬停在删除区上时垃圾桶图标的放大倍数。48dp 的键放大到 1.3 倍占 62.4dp（每侧外溢 7.2dp），
+     * 配合 fragment_deck_cards.xml 自 layout_deck_undo_redo 往上几层放开的 clipChildren 能完整画圆；
+     * 再大就会越接近屏幕下缘而被窗口裁掉。
+     */
+    private static final float DELETE_ZONE_HIGHLIGHT_SCALE = 1.3f;
     /** 监听共享卡组历史的快照变化（另一个编辑器也可能写入），用于刷新 undo/redo */
     private final DeckHistory.Listener historyListener = this::updateUndoRedoButtonVisibility;
     protected String currentCardSearchMessage = "";
@@ -636,6 +640,8 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
 
     /**
      * 整组拖动悬停在删除区（undo/redo/垃圾桶行）上时放大垃圾桶图标，离开则还原。
+     * 放大走 View 自身的 scale（以中心为基准），背景旋转环随之变大；图标本体在
+     * 48dp 槽位内不被裁剪，外层已逐级放开 clipChildren。
      */
     protected void applyDeleteZoneHighlight(boolean inside) {
         if (btnBatchDelete == null) return;
