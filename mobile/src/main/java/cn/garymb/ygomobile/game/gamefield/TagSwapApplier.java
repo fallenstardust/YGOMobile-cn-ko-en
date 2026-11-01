@@ -26,7 +26,7 @@ public class TagSwapApplier {
         // 旧实现只 invalidate 不重建列表，导致对手换队友后手卡矩形不显示
         if (data == null || data.remaining() < 9) return;
         data.order(ByteOrder.LITTLE_ENDIAN);
-        final int p = engine.localPlayer(data.get() & 0xFF);
+        final int p = engine.localPlayer(data.get() & 1);
         final int mcount = data.get() & 0xFF;
         final int ecount = data.get() & 0xFF;
         final int pcount = data.get() & 0xFF;

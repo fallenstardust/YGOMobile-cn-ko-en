@@ -250,7 +250,7 @@ public class DeckHandMotionManager {
 
     public void applyShuffleDeck(ByteBuffer data) {
         // duelclient.cpp MSG_SHUFFLE_DECK L2620-2657：卡组不足 2 张直接返回（无声无动画）
-        final int p = engine.localPlayer(data.get() & 0xFF);
+        final int p = engine.localPlayer(data.get() & 1);
         final List<ClientCard> deck = engine.field.players[p].deck;
         if (deck.size() < 2) return;
         final boolean rev = engine.field.deckReversed;
@@ -360,7 +360,7 @@ public class DeckHandMotionManager {
         // 此刻列表已是新布局；动画为 聚拢→停留→换面→回新布局 的单条关键帧动画。
         // 本方法是洗切手卡动画的**唯一入口**：效果入手只揭示不洗切（见 applyMoveToHandReveal），
         // 洗切一律等引擎为「非抽卡入手」发出的 MSG_SHUFFLE_HAND 播放一次，避免重复洗切。
-        final int p = engine.localPlayer(data.get() & 0xFF);
+        final int p = engine.localPlayer(data.get() & 1);
         final int count = data.get() & 0xFF;
         final List<ClientCard> hand = engine.field.players[p].hand;
         // 洗切接管该侧手牌：入手的揭示蚂蚁线到此为止

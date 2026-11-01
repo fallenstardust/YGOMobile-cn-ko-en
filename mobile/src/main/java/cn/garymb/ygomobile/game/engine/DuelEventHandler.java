@@ -249,7 +249,7 @@ public class DuelEventHandler extends DuelEventHandlerBase {
         if (data == null || count <= 0) return;
         final List<ClientCard> lit = new ArrayList<>();
         for (int i = 0; i < count && data.remaining() >= 4; i++) {
-            int ctrl = engine.localPlayer(data.get() & 0xFF);
+            int ctrl = engine.localPlayer(data.get() & 1);
             int loc = data.get() & 0xFF;
             int seq = data.get() & 0xFF;
             int sub = data.get() & 0xFF;

@@ -387,7 +387,7 @@ public class MessageUIHandler {
             int count = dup.get() & 0xFF;
             for (int i = 0; i < count && dup.remaining() >= 9; i++) {
                 dup.getInt(); // code（C++ 读入即弃，卡码由场地既有数据提供）
-                int c = engine.localPlayer(dup.get() & 0xFF);
+                int c = engine.localPlayer(dup.get() & 1);
                 int l = dup.get() & 0xFF;
                 int s = dup.get() & 0xFF;
                 int counter = dup.getShort() & 0xFFFF;
@@ -460,7 +460,7 @@ public class MessageUIHandler {
         try {
             ByteBuffer dup = data.duplicate();
             dup.order(ByteOrder.LITTLE_ENDIAN);
-            int selectingPlayer = engine.localPlayer(dup.get() & 0xFF); // player
+            int selectingPlayer = engine.localPlayer(dup.get() & 1); // player
             dup.get(); // finishable
             dup.get(); // cancelable
             dup.get(); // min
@@ -469,7 +469,7 @@ public class MessageUIHandler {
             boolean hasHand = false;
             for (int i = 0; i < count1 && dup.remaining() >= 8; i++) {
                 dup.getInt(); // code
-                int ctrl = engine.localPlayer(dup.get() & 0xFF);
+                int ctrl = engine.localPlayer(dup.get() & 1);
                 int loc = dup.get() & 0xFF;
                 dup.get(); // seq
                 dup.get(); // subseq

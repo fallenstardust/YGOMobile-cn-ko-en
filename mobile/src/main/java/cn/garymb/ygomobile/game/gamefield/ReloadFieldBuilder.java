@@ -134,11 +134,11 @@ public class ReloadFieldBuilder {
                 break;
             }
             int code = data.getInt();
-            int pcc = engine.localPlayer(data.get() & 0xFF);
+            int pcc = engine.localPlayer(data.get() & 1);
             int pcl = data.get() & 0xFF;
             int pcs = data.get() & 0xFF;
             int subs = data.get() & 0xFF;
-            int cc = engine.localPlayer(data.get() & 0xFF);
+            int cc = engine.localPlayer(data.get() & 1);
             int cl = data.get() & 0xFF;
             int cs = data.get() & 0xFF;
             int desc = data.getInt();

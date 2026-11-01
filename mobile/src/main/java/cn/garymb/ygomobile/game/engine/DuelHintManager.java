@@ -132,7 +132,7 @@ public class DuelHintManager {
                 int count = dup.get() & 0xFF;
                 for (int i = 0; i < count; i++) {
                     dup.getInt(); // code
-                    int c = engine.localPlayer(dup.get() & 0xFF);
+                    int c = engine.localPlayer(dup.get() & 1);
                     int l = dup.get() & 0xFF;
                     dup.get(); // seq
                     dup.get(); // subseq
