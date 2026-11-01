@@ -188,7 +188,7 @@ public final class ReplayMessageSlicer {
                 return takeFixed(buf, 2) && takeFixed(buf, lastU8(buf) * 4);
             case MSG_REFRESH_DECK: case MSG_SWAP_GRAVE_DECK: return takeFixed(buf, 1);
             case MSG_REVERSE_DECK:    return true;   // 无 body（replay_mode.cpp 不推进）
-            case MSG_SHUFFLE_SET_CARD:// player cnt + cnt*8
+            case MSG_SHUFFLE_SET_CARD:// zone cnt + cnt*8（首字节是区域 LOCATION_MZONE/SZONE，非玩家索引）
                 return takeFixed(buf, 2) && takeFixed(buf, lastU8(buf) * 8);
             case MSG_DECK_TOP:        return takeFixed(buf, 6);   // player seq code
             case MSG_SHUFFLE_EXTRA:   // player cnt + cnt*4

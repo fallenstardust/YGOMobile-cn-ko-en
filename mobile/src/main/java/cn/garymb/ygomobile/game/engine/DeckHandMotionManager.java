@@ -564,15 +564,20 @@ public class DeckHandMotionManager {
      * <p>
      * 与 C++ 的唯一差异是时序实现：C++ 阻塞消息线程，本端结构交换必须在派发时同步做完（后续消息
      * 按新格号解读场地），动画则用两段排程复现同样的「聚拢—停留—回位」观感并整段持闸。
+     * <p>
+     * 因此视觉处理放在结构交换之后：正常态起聚拢（聚拢目标 X=3.95 与格号无关，换个位置对可见结果
+     * 无差异）；快进/重算态（{@code instantPlace} 与 {@code replaySkip} 同路）按交换后的新格号一次性
+     * 落位，并把被换走的 partner 一并落位——旧写法在交换前用旧 sequence 定位、partner 完全不管，
+     * 只能靠上游收尾的 {@code refreshAllCards()} 抹平。
      */
     public void applyShuffleSetCard(int zone, int count, ByteBuffer data) {
         if (data == null || count <= 0) return;
         int loc = (zone & CardLocation.MonsterZone.value()) != 0
                 ? CardLocation.MonsterZone.value() : CardLocation.SpellZone.value();
         List<ClientCard> mc = new ArrayList<>();
-        // 前段（L2817-2832）：取卡、洗成不公开卡码、开始聚拢动画
+        // 前段（L2817-2832）：取卡并洗成不公开卡码（聚拢动画推到结构交换后再起，见下方）
         for (int i = 0; i < count && data.remaining() >= 4; i++) {
-            int c = engine.localPlayer(data.get() & 0xFF);
+            int c = engine.localPlayer(data.get() & 1);
             data.get(); // l（与 lst[c][s] 取卡等价，本端按 loc+seq 定卡）
             int s = data.get() & 0xFF;
             data.get(); // ss
@@ -581,12 +586,11 @@ public class DeckHandMotionManager {
             if (card == null) continue;
             card.setCode(0);
             card.is_hovered = false;
-            engine.field.startSetCardGather(card);
         }
         // 后段（L2837-2850）：mc[i] 与新格两格互换，序号 ps 取交换前本卡自己的 sequence
         List<ClientCard> partners = new ArrayList<>();
         for (int i = 0; i < count && data.remaining() >= 4; i++) {
-            int c = engine.localPlayer(data.get() & 0xFF);
+            int c = engine.localPlayer(data.get() & 1);
             int l = data.get() & 0xFF;
             int s = data.get() & 0xFF;
             data.get(); // ss
@@ -609,8 +613,21 @@ public class DeckHandMotionManager {
                 if (!partners.contains(swp)) partners.add(swp);
             }
         }
+        // 结构交换完后才决定视觉：正常态起中场聚拢，快进/重算态（instantPlace 与 replaySkip 同路）
+        // 按新格号直接落位（moveCardAnimated 在 instantPlace 下等价 setCardPos 并同步清 chain_code，
+        // replaySkip 但未置 instantPlace 时则 1 帧归位，不会把卡留在场地中线），
+        // 并兼顾被换到 ps 的 partner（本端比 gframe 多管这一块，否则它像素位置与逻辑格位不一致）
+        final boolean skipAnim = engine.field.instantPlace || engine.replaySkip;
+        for (ClientCard card : mc) {
+            if (card == null) continue;
+            if (skipAnim) engine.field.moveCardAnimated(card, 1);
+            else engine.field.startSetCardGather(card);
+        }
+        if (skipAnim) {
+            for (ClientCard partner : partners) engine.field.moveCardAnimated(partner, 1);
+        }
         postFieldChanged();
-        if (engine.field.instantPlace || engine.replaySkip) return; // 快进重算只落数据（同 C++ isReplaySkiping）
+        if (skipAnim) return; // 快进/重算只落数据与卡码（同 C++ 的 isReplay && isReplaySkiping 分支）
         // ③ 停留段结束才回位并出声（C++ 把 SHUFFLE 音效放在第二段 WaitFrameSignal 之后，
         //   与卡片飞回新格同步；上一提交暂放在此之前的写法不是桌面版时序）
         final List<ClientCard> moving = mc;
