@@ -439,6 +439,9 @@ public class ShowDialogUtil {
         boolean closed = dismissAnnounceDialogs();
         // 连锁场上点击模式复位：关闭询问窗、退出命令上下文并清除高亮，避免脏状态残留到下一局
         YesOrNoDialog.dismissChainQuery();
+        // 知会窗（对位 C++ wMessage）同样收口：不可取消的它若不主动关闭会遮挡返回界面；
+        // 不计入 closed——它不是应答类弹窗，撤回被拒时无需按询问快照重建
+        YesOrNoDialog.dismissNoticeDialog();
         GameFieldController fieldController = fieldCtl();
         if (fieldController != null) fieldController.endChainCommand();
         clearChainSelect();

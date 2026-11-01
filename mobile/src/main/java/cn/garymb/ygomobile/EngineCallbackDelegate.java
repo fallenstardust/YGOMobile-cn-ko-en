@@ -490,6 +490,16 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
         activity.runOnUiThread(() -> activity.fieldCtl.hideDuelHint());
     }
 
+    /**
+     * 知会消息（对齐 C++ Game::addMessageBox 与 HINT_MESSAGE 弹的 wMessage：正文 + 「确定」键，
+     * 弹出时响 INFO 音效）：MSG_SHOW_HINT、自定义消息与连接/卡组错误等经引擎 listener 送达；
+     * 旧实现在本层无接手方（GameEngine.EngineListener 的默认空实现），知会整条丢失。
+     */
+    @Override
+    public void onNoticeMessage(String msg) {
+        activity.runOnUiThread(() -> YesOrNoDialog.showMessageDialog(activity, msg));
+    }
+
     @Override
     public void onReplayData(byte[] data) {
         Log.i(TAG, "Replay data received, size=" + data.length);

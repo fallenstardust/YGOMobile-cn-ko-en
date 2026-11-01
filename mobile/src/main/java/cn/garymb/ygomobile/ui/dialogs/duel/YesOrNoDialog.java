@@ -22,6 +22,7 @@ import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.File;
 import java.nio.ByteBuffer;
@@ -740,5 +741,47 @@ public class YesOrNoDialog extends YesOrNoDialogBase {
     // MSG_SELECT_COUNTER（取除指示物）不再经弹窗应答：对齐 gframe 桌面版由玩家在场上直接
     // 点卡逐个取除（候选登记见 MessageUIHandler.applyCounterCandidates，点卡与应答见
     // FieldSelectManager.handleCounterClick），入口由 ShowDialogUtil.showCounterSelectDialog 转给场上会话。
+
+    /** 当前在显的知会窗（对位 C++ wMessage）：多条知会（MSG_SHOW_HINT、自定义消息、
+     *  连接与卡组错误）逐个弹会众叠并各自响一声 info，故新知会替换旧窗，同屏至多一个 */
+    private static YesOrNoDialog currentNotice;
+
+    /**
+     * 知会弹窗（对齐 C++ {@code Game::addMessageBox} 与 HINT_MESSAGE 的 wMessage：正文 +
+     * 单个「确定」键，键文取 sysString 1211；弹出时由 {@link #show(View)} 既有分支经
+     * PlayDialogSound 语义响 INFO 音效）。点「确定」即关闭（btnPositive 自带 dismiss）。
+     * <p>
+     * 决斗 UI 未显示时（主菜单连不上服务器、启动 AI 失败等）退化为 Toast：wMessage 的
+     * 落点是决斗场区域，菜单态下那块区域未布局、弹窗会看不见，但 INFO 音效仍按 C++ 响。
+     */
+    public static void showMessageDialog(YGOProActivity activity, String text) {
+        if (activity == null || text == null || text.isEmpty()) return;
+        dismissNoticeDialog();
+        View region = gameDialogRegion(activity);
+        if (region == null || !region.isShown()) {
+            Toast.makeText(activity, text, Toast.LENGTH_LONG).show();
+            SoundManager sm = activity.getSoundManager();
+            if (sm != null) sm.playSoundEffect(SoundManager.SFX.INFO);
+            return;
+        }
+        YesOrNoDialog dialog = new YesOrNoDialog(activity);
+        currentNotice = dialog;
+        dialog.setMessage(text)
+                .setType(TYPE_MESSAGE)
+                .setPositiveButtonText(sysText(1211, "确定"))
+                .setCancelable(false)
+                .setCenterInView(region)
+                .setOnDismissListener(() -> {
+                    if (currentNotice == dialog) currentNotice = null;
+                });
+        dialog.show();
+    }
+
+    /** 退出对战 / 决斗结束 / 撤回瞬间收口知会窗（由 ShowDialogUtil.dismissOpenGameDialogs 调用） */
+    public static void dismissNoticeDialog() {
+        YesOrNoDialog dialog = currentNotice;
+        currentNotice = null;
+        if (dialog != null) dialog.dismiss();
+    }
 
 }

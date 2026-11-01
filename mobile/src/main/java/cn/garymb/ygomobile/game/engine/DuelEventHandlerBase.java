@@ -213,13 +213,11 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
     }
 
     @Override
-    public void onShuffleSetCard(int player, int count, ByteBuffer data) {
-        // duelclient.cpp MSG_SHUFFLE_SET_CARD L2847-2848：盖放卡洗牌（向中场聚拢后交换位）必响 shuffle 音效，
-        // 旧实现只重绘不发声；快进重算（instantPlace）与回放快进同 C++ 的 isReplaySkiping 分支，只落数据不演
-        if (!engine.field.instantPlace && !engine.replaySkip) {
-            engine.soundManager.playSoundEffect(SoundManager.SFX.SHUFFLE);
-        }
-        engine.deckMotion.postFieldChanged();
+    public void onShuffleSetCard(int zone, int count, ByteBuffer data) {
+        // duelclient.cpp MSG_SHUFFLE_SET_CARD L2805-2857：卡码抹零 + 中场聚拢 10 帧 + 停留 10 帧
+        // + 两格互换后响 shuffle 并 MoveCard(10) 回新格，全部在 DeckHandMotionManager 实现
+        //（旧实现只 postFieldChanged 一次，既没交换格位也没动画与音效）
+        engine.deckMotion.applyShuffleSetCard(zone, count, data);
     }
 
     @Override

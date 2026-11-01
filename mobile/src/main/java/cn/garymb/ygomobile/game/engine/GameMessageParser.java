@@ -49,7 +49,9 @@ public class GameMessageParser {
         void onShuffleExtra(int player, int count, ByteBuffer data);
         void onRefreshDeck(int player);
         void onSwapGraveDeck(int player);
-        void onShuffleSetCard(int player, int count, ByteBuffer data);
+        /** duelclient.cpp MSG_SHUFFLE_SET_CARD L2805-2857：zone(1，LOCATION_MZONE/SZONE，不是玩家索引！)
+         *  count(1) + 前段 count×[c l s ss] + 后段 count×[c l s ss]，整段载荷交 handler 做两格互换 */
+        void onShuffleSetCard(int zone, int count, ByteBuffer data);
         /** duelclient.cpp MSG_REVERSE_DECK L2782-2791：无载荷（引擎只写 1 字节消息号），效果把整个卡组翻面，handler 内翻转 deckReversed 并逐张重摆双方卡组 */
         void onReverseDeck();
         /** duelclient.cpp MSG_DECK_TOP L2792-2804：player(1) seq(1) code(4)，写入卡组第 seq 张（自顶往下）的卡码，高位置位表示该卡需翻面 */
@@ -260,9 +262,10 @@ public class GameMessageParser {
                 handler.onSwapGraveDeck(buf.get() & 0xFF);
                 break;
             case ShuffleSetCard: {
-                int player = buf.get() & 0xFF;
+                // duelclient.cpp L2807-2808：首字节是区域（MZONE/SZONE），旧实现误当 player
+                int zone = buf.get() & 0xFF;
                 int count = buf.get() & 0xFF;
-                handler.onShuffleSetCard(player, count, buf);
+                handler.onShuffleSetCard(zone, count, buf);
                 break;
             }
             case ReverseDeck:

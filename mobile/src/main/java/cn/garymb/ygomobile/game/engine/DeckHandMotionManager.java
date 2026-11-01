@@ -209,7 +209,7 @@ public class DeckHandMotionManager {
                 // 卡码已在 MSG_MOVE 路径已知（公开区来源入手）时揭示窗口已开，
                 // 不重复播放，本机作为主机的既有观感保持不变
                 if (newlyKnown && loc == CardLocation.Hand.value() && !engine.field.instantPlace) {
-                    applyMoveToHandReveal(lp, pcard, false);
+                    applyMoveToHandReveal(lp, pcard);
                 } else if ((loc & CardLocation.Onfield.value()) != 0
                         && (pcard.position & GameField.POS_FACEDOWN) != 0) {
                     // 盖放到场上的里侧卡（来自卡组/墓地/除外/额外，确认消息把真实卡码送达本区）：
@@ -498,13 +498,12 @@ public class DeckHandMotionManager {
      *
      * <p>不逐张持闸也能工作：统一动画屏障（GameEngine.drainPendingMsgs）在任一消息产生动画后
      * 即关闭并 break，所以连续的 MSG_MOVE 天然串行，无需旧版的 50ms 去抖批次。
+     * <p>
+     * 本路径不播任何音效：duelclient.cpp 的 MSG_MOVE 只在除外/破坏时出声，非抽卡入手无声；
+     * 确认卡类的 reveal 音效统一由 MSG_CONFIRM_DECKTOP / MSG_CONFIRM_EXTRATOP / MSG_CONFIRM_CARDS
+     * 入口发（旧实现在这里额外响一声 REVEAL，与本端自家「翻面确认」观感绑在一起而与桌面版不一致）。
      */
     public void applyMoveToHandReveal(int localPlayer, ClientCard arrivingCard) {
-        applyMoveToHandReveal(localPlayer, arrivingCard, true);
-    }
-
-    /** playSound=false 供 MSG_CONFIRM_CARDS 复用：确认消息入口已播过 REVEAL 音效，不再叠加 */
-    public void applyMoveToHandReveal(int localPlayer, ClientCard arrivingCard, boolean playSound) {
         if (arrivingCard == null || engine.field.instantPlace) return;
         // 冻结待码释放：本卡自 MSG_MOVE 起停在卡组顶坐标等码，现卡码已由
         // MSG_CONFIRM_CARDS 写入——直接以正面从卡组位飞入手卡（翻面进度置满，不走
@@ -527,8 +526,6 @@ public class DeckHandMotionManager {
         // 正面飞入（faceupEntry）的卡全程保持正面，不再归零翻面；
         // 不打断卡片飞入手牌的 is_moving 动画，于是观感为「飞进来 + 边落位边翻开」
         engine.field.startHandReveal(arrivingCard, flip && !faceupEntry);
-        if (playSound && !engine.replaySkip)
-            engine.soundManager.playSoundEffect(SoundManager.SFX.REVEAL);
         
         // 对齐 C++ L2669-2681：对方手卡先进行一次整体聚拢 + 卡背朝外的翻面动画
         if (flip) {
@@ -553,5 +550,85 @@ public class DeckHandMotionManager {
             if (engine.listener != null) engine.listener.onFieldChanged();
         }, hold);
         postFieldChanged();
+    }
+
+    /**
+     * 盖放卡洗牌（对齐 duelclient.cpp MSG_SHUFFLE_SET_CARD L2805-2857）。载荷首字节是
+     * <b>区域</b>（LOCATION_MZONE=0x04 / LOCATION_SZONE=0x08，不是玩家索引！旧实现把它当 player
+     * 用，整条消息只重绘了一次，既没洗牌也没音效），后接 count(1) + 前段 count×[c l s ss]
+     *（洗牌前各卡所在格）+ 后段 count×[c l s ss]（洗牌后目标格）。
+     * <p>
+     * 三段动作同 C++：① 逐张 {@code SetCode(0)}（洗过之后盖放卡身份不再公开）并向中场聚拢 10 帧；
+     * ② 停留至第 20 帧（L2835 {@code WaitFrameSignal(20)} 含聚拢的 10 帧）；③ 按后段做两格互换后响
+     * shuffle，并把本体与各自超量素材 {@code MoveCard(10)} 回到交换后的新格（L2851-2856）。
+     * <p>
+     * 与 C++ 的唯一差异是时序实现：C++ 阻塞消息线程，本端结构交换必须在派发时同步做完（后续消息
+     * 按新格号解读场地），动画则用两段排程复现同样的「聚拢—停留—回位」观感并整段持闸。
+     */
+    public void applyShuffleSetCard(int zone, int count, ByteBuffer data) {
+        if (data == null || count <= 0) return;
+        int loc = (zone & CardLocation.MonsterZone.value()) != 0
+                ? CardLocation.MonsterZone.value() : CardLocation.SpellZone.value();
+        List<ClientCard> mc = new ArrayList<>();
+        // 前段（L2817-2832）：取卡、洗成不公开卡码、开始聚拢动画
+        for (int i = 0; i < count && data.remaining() >= 4; i++) {
+            int c = engine.localPlayer(data.get() & 0xFF);
+            data.get(); // l（与 lst[c][s] 取卡等价，本端按 loc+seq 定卡）
+            int s = data.get() & 0xFF;
+            data.get(); // ss
+            ClientCard card = engine.field.getCard(c, loc, s);
+            mc.add(card);
+            if (card == null) continue;
+            card.setCode(0);
+            card.is_hovered = false;
+            engine.field.startSetCardGather(card);
+        }
+        // 后段（L2837-2850）：mc[i] 与新格两格互换，序号 ps 取交换前本卡自己的 sequence
+        List<ClientCard> partners = new ArrayList<>();
+        for (int i = 0; i < count && data.remaining() >= 4; i++) {
+            int c = engine.localPlayer(data.get() & 0xFF);
+            int l = data.get() & 0xFF;
+            int s = data.get() & 0xFF;
+            data.get(); // ss
+            ClientCard card = i < mc.size() ? mc.get(i) : null;
+            if (card == null || l <= 0) continue; // C++ 的 if (l > 0) 门
+            List<ClientCard> list = engine.field.players[c].getLocationList(loc);
+            if (list == null || s >= list.size()) continue;
+            int ps = card.sequence;
+            if (ps < 0 || ps >= list.size()) continue;
+            ClientCard swp = list.get(s);
+            list.set(ps, swp);
+            list.set(s, card);
+            card.sequence = s;
+            card.controler = c;
+            card.location = loc;
+            if (swp != null) {
+                swp.sequence = ps;
+                // gframe 只对 mc[i] 做 MoveCard，忘了动被换到 ps 的对手牌（于是它旧位置卡在那儿、
+                // 逻辑格位已变）；本端把互换对手牌一并飞回新格，保证看到的格位就是真实格位
+                if (!partners.contains(swp)) partners.add(swp);
+            }
+        }
+        postFieldChanged();
+        if (engine.field.instantPlace || engine.replaySkip) return; // 快进重算只落数据（同 C++ isReplaySkiping）
+        // ③ 停留段结束才回位并出声（C++ 把 SHUFFLE 音效放在第二段 WaitFrameSignal 之后，
+        //   与卡片飞回新格同步；上一提交暂放在此之前的写法不是桌面版时序）
+        final List<ClientCard> moving = mc;
+        final List<ClientCard> swapped = partners;
+        engine.mainHandler.postDelayed(() -> {
+            engine.soundManager.playSoundEffect(SoundManager.SFX.SHUFFLE);
+            for (ClientCard card : moving) {
+                if (card == null) continue;
+                engine.field.moveCardAnimated(card, 10);
+                engine.field.moveOverlayMaterials(card, 10);
+            }
+            for (ClientCard card : swapped) {
+                engine.field.moveCardAnimated(card, 10);
+                engine.field.moveOverlayMaterials(card, 10);
+            }
+            postFieldChanged();
+        }, 20L * 17L);
+        // 整段持闸：聚拢 10 + 停留 10 + 回位 10 + 尾帧，等价 C++ 的 20+11 帧阻塞
+        engine.animHoldUntilMs = System.currentTimeMillis() + 31L * 17L;
     }
 }

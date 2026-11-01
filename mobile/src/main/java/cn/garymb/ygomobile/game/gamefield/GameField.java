@@ -829,6 +829,12 @@ public class GameField {
         motion.startHandShuffle(pcard);
     }
 
+    /** 盖放卡洗牌的中场聚拢单动画（duelclient.cpp MSG_SHUFFLE_SET_CARD L2828-2831）：
+     *  10 帧移到场地中线并逐帧抬高 Z，停留后由调用方 moveCardAnimated 回到交换后的新格 */
+    public void startSetCardGather(ClientCard pcard) {
+        motion.startSetCardGather(pcard);
+    }
+
     /** 卡片经效果入手的揭示：对方手卡从卡背翻到正面供对手确认，己方卡仅亮出不翻面 */
     public void startHandReveal(ClientCard pcard, boolean flip) {
         motion.startHandReveal(pcard, flip);

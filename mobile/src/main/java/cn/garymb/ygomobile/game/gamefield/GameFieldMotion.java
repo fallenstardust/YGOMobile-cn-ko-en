@@ -305,6 +305,47 @@ public class GameFieldMotion extends GameFieldMotionBase {
         pcard.aniFrame = frame;
     }
 
+    /** 盖放卡洗牌的中场聚拢目标 X（C++ L2829 直接用世界中线 3.95f；与 startHandShuffle 的 3.9f 同构不同值） */
+    private static final float SET_CARD_GATHER_X = 3.95f;
+    /** 盖放卡洗牌的每帧 Z 抬高量与聚拢帧数（C++ dPos.Z=0.05f、aniFrame=10，10 帧后共抬高 0.5 叠成一小叠） */
+    private static final float SET_CARD_GATHER_Z_STEP = 0.05f;
+    private static final int SET_CARD_GATHER_FRAMES = 10;
+
+    /**
+     * 盖放卡洗牌的中场聚拢段（对齐 duelclient.cpp MSG_SHUFFLE_SET_CARD L2828-2831：
+     * {@code dPos=((3.95-curPos.X)/10, 0, 0.05f)}、{@code dRot=(0,0,0)}、{@code is_moving=true}、
+     * {@code aniFrame=10}）：10 帧线性移到场地中线并逐帧抬高 Z，停留段结束后由调用方
+     * {@code moveCardAnimated(card, 10)} 回到交换后的新格。旋转保持不变（C++ dRot 置零即不加转动）。
+     * <p>
+     * 回放快进/上一步重算（instantPlace）不聚拢，直接按最终布局落位：结构交换已在消息派发时同步做完。
+     */
+    public void startSetCardGather(ClientCard pcard) {
+        if (pcard == null) return;
+        if (field.instantPlace) {
+            setCardPos(pcard);
+            pcard.is_moving = false;
+            pcard.aniFrame = 0;
+            return;
+        }
+        pcard.animJitterX = 0f;
+        pcard.animDelayFrame = 0;
+        pcard.animFromX = pcard.curX;
+        pcard.animFromY = pcard.curY;
+        pcard.animFromZ = pcard.curZ;
+        pcard.animToX = SET_CARD_GATHER_X;
+        pcard.animToY = pcard.curY;
+        pcard.animToZ = pcard.curZ + SET_CARD_GATHER_Z_STEP * SET_CARD_GATHER_FRAMES;
+        pcard.animFromRotX = pcard.curRotX;
+        pcard.animFromRotY = pcard.curRotY;
+        pcard.animFromRotZ = pcard.curRotZ;
+        pcard.animToRotX = pcard.curRotX;
+        pcard.animToRotY = pcard.curRotY;
+        pcard.animToRotZ = pcard.curRotZ;
+        pcard.animTotalFrame = SET_CARD_GATHER_FRAMES;
+        pcard.is_moving = true;
+        pcard.aniFrame = SET_CARD_GATHER_FRAMES;
+    }
+
     public void setAnimationSpeed(float speed) {
         field.animationSpeed = Math.max(0.25f, speed);
     }
