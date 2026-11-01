@@ -134,16 +134,15 @@ abstract class DeckEditorManagerBase {
     protected Button btnSave, btnSaveAs, btnShuffle, btnSort, btnClear, btnDelete, btnExit;
     protected Button btnDeckManager;
     protected Button btnSideFinish, btnSideShuffle, btnSideSort, btnSideReset;
-    // 卡组编辑侧边按钮列双副本：横屏占位 dock（activity_ygo_game 的 layout_game_content 内，
-    // id=layout_deck_side_buttons_dock，按钮列在左卡组布局在右）/竖屏悬浮
-    // （layout_deck_editor 根末尾，id=layout_deck_side_buttons，横向一行左下角），
-    // 按方向各点亮其一；按钮同 ID 双副本时全树 findViewById 按 DFS 先命中当前方向的
-    // 可见副本（dock 在水平行内先于 deck_editor），故经 activity 绑定）：
-    // 仅接线 设置/音乐 两键，其余四键 XML 静态 INVISIBLE 占位；用独立 ID
-    // （btn_deck_settings 等）避免与决斗场按钮列同名致全树 findViewById 错绑
+    // 卡组编辑侧边按钮列：同一份 layout_deck_side_buttons 按方向限定符各自解析——
+    // 横屏为纵向一列贴界面左下缘（layout_deck_editor 顶层水平行的首列 include），
+    // 竖屏为横向一行贴左下角（layout_deck_editor 根末尾的悬浮 include），
+    // 运行时每个方向只有一份副本（早先描述的 activity_ygo_game 内 dock 双副本机制已不存在）。
+    // 接线只涉及 设置(btn_deck_settings)/音乐(btn_deck_sound) 两键，撤销/重做另见 historyPanel；
+    // 用独立 ID（btn_deck_* 而非决斗场的 btn_settings 等）避免共存视图树下同 ID 错绑
     protected ImageView btnDeckSettings, btnDeckSound;
-    // 卡组编辑侧边按钮列的撤销/重做两键（与卡组编辑页同一语义、共用同一份历史），
-    // 同样双副本：横屏 dock 在设置键上方、竖屏按钮行末尾，由 DeckEditorHistoryPanel 接线
+    // 卡组编辑侧边按钮列的撤销/重做两键（与卡组编辑页同一语义、共用同一份历史）：
+    // 横屏排在设置键上方、竖屏排在可见键行末尾，由 DeckEditorHistoryPanel 接线与点亮
     protected ImageButton btnDeckUndo, btnDeckRedo;
     protected ImageTop mImageTop;
     protected CardTypeImage mCardTypeImage;

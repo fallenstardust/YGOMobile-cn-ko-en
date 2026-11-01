@@ -1,20 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- 卡组编辑器侧边功能按钮列·横屏变体（纵向排列）：
-     按用户规格仅 撤销(btn_deck_undo)/重做(btn_deck_redo)/设置 (btn_deck_settings)/音乐开关
-     (btn_deck_sound) 四键参与显示（前两键按历史可用态点亮），
-     记录/加速/表情/聊天四键保留占位以 INVISIBLE 隐藏。列锚定在界面底部、向上生长，
-     故四个 INVISIBLE 占位排在上端、四枚功能键排在列尾贴住界面下缘。
-     include 位置（双副本机制，root id 经 include tag 覆盖区分）：
-     横屏——layout_game_content 水平行内占位 dock
-     （卡详面板与卡组编辑器之间，id=layout_deck_side_buttons_dock），
-     作为独立容器使用；同时存在于 layout_deck_editor 根末尾的悬浮副本在横屏恒 GONE。
-     竖屏——layout_deck_editor 根末尾悬浮副本（id=layout_deck_side_buttons，
-     见 layout-port 变体）。
-     根节点默认 GONE，进/出卡组编辑器由 DeckEditorViewHost.show/hide 按方向点亮/收起。
+     只有四键：撤销(btn_deck_undo)/重做(btn_deck_redo)/设置(btn_deck_settings)/
+     音乐开关(btn_deck_sound)，前两键按共享卡组历史的游标位置点亮，并带与卡组编辑页
+     undo/redo 同源的 rotate 旋转光环（背景 @drawable/rotate，由 DeckEditorHistoryPanel 起动画）。
+     （曾在此列顶部放 记录/加速/表情/聊天 四个 INVISIBLE 占位，Java 与 XML 均 0 引用，
+     且 INVISIBLE 仍参与测量与布局，已删除）
+     列锚定在界面底部、向上生长，四枚功能键排在列尾贴住界面下缘。
+     include 位置：本变体由 layout_deck_editor 顶层水平 LinearLayout 以首列 include 引入
+     （wrap_content + layout_gravity=bottom），右侧卡组主体 weight=1 占满剩余宽度不重叠；
+     竖屏由 layout-port 同名变体接管（横向一行贴左下角），运行时每个方向只有一份副本。
+     根节点横屏默认 VISIBLE，进/出卡组编辑器由 DeckEditorViewHost.show/hide 点亮/收起。
      ID 必须与决斗场 layout_image_buttons_panel 的 btn_settings 等不同名：
      两套按钮共存于同一 Activity 视图树，同名会让 CardDetailPanel/YGOProActivity
      的全树 findViewById 命中错误副本。
-     点击行为与图标纹理由 DeckEditorManager.setupDeckSideButtons 接线 -->
+     点击行为与图标纹理由 DeckEditorManager.setupDeckSideButtons 与 DeckEditorHistoryPanel 接线 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/layout_deck_side_buttons"
     android:layout_width="wrap_content"
@@ -23,75 +22,13 @@
     android:orientation="vertical"
     android:visibility="visible">
 
-    <!-- 记录/加速/表情/聊天四键占位以 INVISIBLE 隐藏，排在上方不挡可见按钮 -->
-    <ImageButton
-        android:id="@+id/btn_deck_note"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="5dp"
-        android:maxWidth="40dp"
-        android:maxHeight="40dp"
-        android:minWidth="30dp"
-        android:minHeight="30dp"
-        android:adjustViewBounds="true"
-        android:background="@drawable/btn_sci_fi_bg"
-        android:padding="4dp"
-        android:scaleType="fitCenter"
-        android:src="@drawable/ic_note"
-        android:visibility="invisible" />
-
-    <ImageButton
-        android:id="@+id/btn_deck_speed"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="5dp"
-        android:maxWidth="40dp"
-        android:maxHeight="40dp"
-        android:minWidth="30dp"
-        android:minHeight="30dp"
-        android:adjustViewBounds="true"
-        android:background="@drawable/btn_sci_fi_bg"
-        android:padding="4dp"
-        android:scaleType="fitCenter"
-        android:src="@drawable/ic_speed"
-        android:visibility="invisible" />
-
-    <ImageButton
-        android:id="@+id/btn_deck_emote"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="5dp"
-        android:adjustViewBounds="true"
-        android:background="@drawable/btn_sci_fi_bg"
-        android:maxWidth="40dp"
-        android:maxHeight="40dp"
-        android:minWidth="30dp"
-        android:minHeight="30dp"
-        android:padding="4dp"
-        android:scaleType="fitCenter"
-        android:src="@drawable/ic_emoticon"
-        android:visibility="invisible" />
-
-    <ImageButton
-        android:id="@+id/btn_deck_chat"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="5dp"
-        android:adjustViewBounds="true"
-        android:background="@drawable/btn_sci_fi_bg"
-        android:maxWidth="40dp"
-        android:maxHeight="40dp"
-        android:minWidth="30dp"
-        android:minHeight="30dp"
-        android:padding="4dp"
-        android:scaleType="fitCenter"
-        android:src="@drawable/rename"
-        android:visibility="invisible" />
-
-    <!-- 撤销/重做：按用户规格放在设置按钮上方，并与其等同大小。设置键的 src（setting.xml 200dp
-         正方）在 wrap_content + adjustViewBounds + maxWidth/maxHeight=40dp 下必然被夹到 40×40dp，
-         因此这里不再走启发式测量，直接写定 40×40dp：旋转环（rotate→cube2）在正方框内是正圆，
-         外框也与设置键完全一致。padding 由 4dp 提到 10dp，使环内 undo/redo 图标进一步缩小。 -->
+    <!-- 撤销/重做：按用户规格放在设置按钮上方、与其等同大小，并同样带旋转光环。
+         尺寸写定 40×40dp：与设置/音乐键（wrap_content + adjustViewBounds + maxWidth/maxHeight=40dp
+         对 200dp 正方 src）被夹出的实际尺寸一致；不能再走 wrap_content——rotate 背景内层
+         cube2.png 的 intrinsic 尺寸会经 getSuggestedMinimumWidth 计入 wrap_content 测量，
+         而 android:maxWidth 只封顶 src 推导、不封顶背景贡献，会把按钮撑得远大于 40dp。
+         正方框也让 rotate→cube2 光环是正圆；padding=10dp 收窄环内图标。
+         重做键 scaleX=-1 水平镜像；默认 INVISIBLE 占位，由 DeckEditorHistoryPanel 按历史游标点亮。 -->
     <ImageButton
         android:id="@+id/btn_deck_undo"
         android:layout_width="40dp"
@@ -115,9 +52,8 @@
         android:src="@drawable/undo"
         android:visibility="invisible" />
 
-    <!-- 设置/音乐两键按用户规格恢复原本 wrap_content + min/max(30..40dp) + padding=4dp
-         + adjustViewBounds 尺寸（与同列 4 个 invisible 占位同规格）；列纵向锚底，
-         两键排到列尾贴住界面下缘，4 个占位在上不档可见按钮 -->
+    <!-- 设置/音乐两键：wrap_content + min/max(30..40dp) + padding=4dp + adjustViewBounds；
+         列纵向锚底，两键排在列尾贴住界面下缘 -->
     <ImageButton
         android:id="@+id/btn_deck_settings"
         android:layout_width="wrap_content"

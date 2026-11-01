@@ -138,8 +138,8 @@ abstract class DeckEditorManagerMid extends DeckEditorManagerBase {
         btnSideShuffle = root.findViewById(R.id.btn_side_shuffle);
         btnSideSort = root.findViewById(R.id.btn_side_sort);
         btnSideReset = root.findViewById(R.id.btn_side_reset);
-        // 侧边按钮列双副本（横屏 dock 在卡组编辑器子树外），经全树查找：
-        // DFS 先命中当前方向被点亮的可见副本，另一副本恒 GONE 绑定无害
+        // 侧边按钮列在横屏是 layout_deck_editor 顶层水平行的首列、竖屏是根末尾悬浮 include，
+        // 统一经 activity 全树查找，不依赖 rootView 当前的层级位置（每个方向运行时只有一份副本）
         btnDeckSettings = activity.findViewById(R.id.btn_deck_settings);
         btnDeckSound = activity.findViewById(R.id.btn_deck_sound);
     }
