@@ -246,13 +246,18 @@ abstract class YesOrNoDialogBase {
      * {@link #MAX_MENTIONED_CARD_IMAGES}：
      * <ol>
      * <li>协议下发的本询问主卡（{@code cardCode>0} 且其卡名确实出现在文本里）排在最前；</li>
-     * <li>其余取文本里每个 {@code "[XXX]"} 括号内容按卡名解析到的卡码。</li>
+     * <li>其余取文本里每个 {@code "[XXX]"} 括号内容按卡名解析到的卡码；位置名/计数器名等
+     *     匹配不到卡名的括号返回 0，天然被排除（与卡名着色同一口径）。</li>
      * </ol>
-     * 连锁/发动询问的文本常同时含被连锁卡与发动卡等多个卡名（event_string 与询问语拼接、
-     * 或一条效果文提及多卡），旧实现只解析首个括号，故左侧永远只出第一个卡名的那张图
-     * （用户反馈），现按本列表逐张出图。攻击宣言/直接攻击等时点没有 MSG_CHAINING
-     * （{@code cardCode=0}）时，同样按括号卡名回退解析，与旧 firstBracketedCardCode 同语义
-     * 但覆盖文本里的全部括号而非仅首个。
+     * 去重按「是否同一张卡的图」（{@link #sameCardAlreadyListed}）而非「码相等」：主卡项用协议
+     * 下发的实际码，括号项用卡名全表首个命中码，同一张卡在合并库里两者可以不同，旧实现按码去重
+     * 于是单一卡名的询问也出了两张一样的卡图（用户反馈）。
+     * <p>
+     * 本列表同时覆盖多卡名场景：连锁/发动询问的文本常同时含被连锁卡与发动卡等多个卡名
+     *（event_string 与询问语拼接、或一条效果文提及多卡），旧实现只解析首个括号，左侧永远只出
+     * 第一张图（用户反馈），现逐张出图；攻击宣言/直接攻击等时点没有 MSG_CHAINING
+     *（{@code cardCode=0}）时同样按括号卡名回退解析，与旧 firstBracketedCardCode 同语义但
+     * 覆盖文本里的全部括号而非仅首个。
      */
     protected List<Integer> mentionedCardCodes() {
         List<Integer> codes = new ArrayList<>();
@@ -268,17 +273,38 @@ abstract class YesOrNoDialogBase {
             }
             // 位置名/计数器名等匹配不到卡名的括号返回 0，天然被排除（与卡名着色同一口径）
             int code = cardCodeByName(text.substring(i + 1, j));
-            if (code > 0 && !containsMaskedCode(codes, code)) codes.add(code);
+            if (code > 0 && !sameCardAlreadyListed(codes, code)) codes.add(code);
             i = text.indexOf('[', j + 1);
         }
         return codes;
     }
 
-    /** 卡码是否已在列表中（按去掉暗码位后的原码比对，避免同一张卡重复出一张图） */
-    protected static boolean containsMaskedCode(List<Integer> codes, int code) {
+    /**
+     * 候选卡码是否就是列表里已有那张卡的图，三种情形均算重复：
+     * <ol>
+     * <li>去掉暗码位（0x80000000）后同码；</li>
+     * <li>卡名完全相同——卡名→卡码走的是全表首个命中（{@link #cardCodeByName}），而多语言合并库里
+     *     同一张卡常有多个印刷码（名字相同、卡图相同），于是文本里一个卡名会同时解析出与协议
+     *     卡码不同的另一个码；旧实现只按码去重，因此出现了「只写了一个怪兽卡名却出两张相同卡图」；</li>
+     * <li>alias 指向已列卡的码（或已列卡的 alias 指向本码）——ocgcore 以 alias 判同名卡，
+     *     这是同一张卡的不同印数；但两个名字不同的卡即使 alias 相同也不归并，避免把文本里
+     *     确实提及的另一张卡（如「No.」子类）的图误删。</li>
+     * </ol>
+     */
+    protected static boolean sameCardAlreadyListed(List<Integer> codes, int code) {
         int masked = code & 0x7fffffff;
+        Card cand = DataManager.get().getCardManager().getCard(masked);
+        String candName = cand != null ? cand.Name : null;
+        int candAlias = cand != null ? cand.Alias : 0;
         for (int i = 0, n = codes.size(); i < n; i++) {
-            if ((codes.get(i) & 0x7fffffff) == masked) return true;
+            int listed = codes.get(i) & 0x7fffffff;
+            if (listed == masked) return true;
+            // alias 互指：同一张卡的另一个印刷码
+            if (candAlias > 0 && candAlias == listed) return true;
+            Card lc = DataManager.get().getCardManager().getCard(listed);
+            if (lc == null) continue;
+            if (lc.Alias > 0 && lc.Alias == masked) return true;
+            if (candName != null && !candName.isEmpty() && candName.equals(lc.Name)) return true;
         }
         return false;
     }
