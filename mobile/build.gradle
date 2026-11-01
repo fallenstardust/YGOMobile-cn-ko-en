@@ -15,7 +15,7 @@ android {
         buildConfigField 'int', 'PRO_VERSION', '0x1362'
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
-        ndkVersion "21.3.6528147"
+        ndkVersion "29.0.14206865"
         ndk {
             abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
         }

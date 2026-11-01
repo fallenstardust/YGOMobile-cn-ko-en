@@ -198,6 +198,11 @@
             android:name="com.tencent.smtt.export.external.DexClassLoaderProviderService"
             android:label="dexopt"
             android:process=":dexopt" />
+        <!-- 其他应用请求资源分享支持的资源类型最大值，如果增加type应该同时更新该值-->
+        <meta-data
+            android:name="ygomobile.intent.MAX_RESOURCE_TYPE"
+            android:value="4" />
+
         <!-- 如果已经安装过原版YGOMobile，请注释掉或修改成其他，否则会导致无法安装 -->
         <provider
             android:name="cn.garymb.ygomobile.ui.settings.YGOPreferencesProvider"

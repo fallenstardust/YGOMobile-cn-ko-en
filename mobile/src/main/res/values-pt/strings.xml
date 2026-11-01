@@ -499,6 +499,7 @@
     <string name="resource_lflist">· Lista de banidas</string>
     <string name="resource_strings">· Configurações de textos</string>
     <string name="resource_pics">· Arquivo de imagens de cartas</string>
+    <string name="resource_scripts">· Arquivo de scripts</string>
 
     <!-- ajustes de imagem e tela -->
     <string name="follow_bilibili">Seguir o feed do Bilibili</string>
