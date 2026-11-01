@@ -40,6 +40,8 @@ public final class FieldHudRenderer {
     /** CardType.Xyz = 0x800000（阶级玫红）、CardType.Tuner = 0x1000（等级黄），对齐 drawing.cpp DrawStatus */
     private static final int TYPE_XYZ = 0x800000;
     private static final int TYPE_TUNER = 0x1000;
+    /** CardType.Pendulum = 0x1000000（灵摆怪才显示刻度数字） */
+    private static final int TYPE_PENDULUM = 0x1000000;
 
     // === 多色自适应宽度 HUD 文字（ATK/DEF、等级/阶级、灵摆刻度）===
     // 与 makeNumberBitmap 的区别：位图宽度随文本增长而非缩放字号，
@@ -62,6 +64,18 @@ public final class FieldHudRenderer {
      *  使文字抬高到卡片矩形顶点外缘、与同角位的可发动绿点对齐。正交屏 y 向下，故沿顶角背离
      *  卡片中心的一侧偏移。 */
     private static final float SCALE_TOP_LIFT = 0.5f;
+    /**
+     * 用户规格：同列灵摆卡正在显示刻度数字时，把该怪兽格的攻守数字上抬避让。
+     * <p>
+     * 两者本就在同一条分界线的上下同一缝隙里（MR4 怪兽行 1.4 与魔陷行 2.6 相邻，卡片竖向
+     *  CARD_H/2 后两边正好接上）：攻守数字居中压在怪兽卡朝魔陷区的边线上（一半字高垂到卡外），
+     * 刻度数字则从同一条线向上占一个字高（{@link #SCALE_TOP_LIFT} 抬升后中心在线上 0.5h，
+     * 位图内可见半高≈±0.25h），且后绘无深度测试→直接盖住攻守数字的左/右端。
+     * 需上抬量 = 刻度可见顶沿（线上方 0.75·hpx_scale，hpx_scale≈hpx/{@link #STAT_SIZE_SCALE}）
+     * + 攻守自身上半字高 0.25·hpx + 余量，即约 1.15 倍字高；额外叠加 {@link #STAT_SNUG_PX}
+     * 作为不共边的安全间隙。
+     */
+    private static final float STAT_ABOVE_SCALE_RATIO = 1.15f;
 
     /** 横屏 HUD 数字放大（用户真机反馈：横屏决斗场放大后对方（远端）卡片投影偏小，其 ATK/DEF /
      *  卡组数量统计等数字随之缩得很小难读）：把 clamp 后的字高向可读上限回拉——远端小数字增幅明显，
@@ -205,13 +219,13 @@ public final class FieldHudRenderer {
                 try { c = mz.get(seq); } catch (Throwable e) { continue; }
                 if (c == null || c.is_moving) continue;
                 if (c.isFaceUp()) {
-                    drawMonsterStatTexts(p, seq, c);
+                    drawMonsterStatTexts(f, p, seq, c);
                 } else if (c.displayCode() > 0 && hasStatText(c)) {
                     // 用户规格：里侧守备表示的怪兽若卡码已公开（POS_REVEAL 解遮蔽 / 泡影类
                     // MSG_POS_CHANGE 携真实码，经 displayCode() 取到），则同表侧一样显示那只怪兽
                     // 在通讯中的攻击力/守备力文本；里侧卡仍不显示等级等其它文本（见
                     // drawMonsterStatTexts 的 c.isFaceUp() 门控），且守备表示自然使攻击力缩小一号
-                    drawMonsterStatTexts(p, seq, c);
+                    drawMonsterStatTexts(f, p, seq, c);
                 }
             }
             drawPendulumScaleText(f, p, mr4 ? 0 : 6, true);
@@ -220,7 +234,7 @@ public final class FieldHudRenderer {
         GLES30.glEnable(GLES30.GL_DEPTH_TEST);
     }
 
-    private void drawMonsterStatTexts(int p, int seq, ClientCard c) {
+    private void drawMonsterStatTexts(GameField f, int p, int seq, ClientCard c) {
         float[] r = GameField.getZoneRect(p, 0x04, seq);
         if (r == null) return;
         float cx = r[0], cy = r[1];
@@ -271,7 +285,7 @@ public final class FieldHudRenderer {
                     ? new float[]{SMALL_STAT_SCALE, 1f, 1f}
                     : new float[]{1f, 1f, SMALL_STAT_SCALE};
         }
-        drawScreenText(edgeX, edgeY, parts, colors, boldFlags, scales, hpx);
+        drawScreenText(edgeX, edgeY - statScaleAvoidLift(f, p, seq, hpx), parts, colors, boldFlags, scales, hpx);
 
         // 等级(L*/调律黄/阶级玫红)锚定攻击表示卡片矩形的角顶点（不随守备旋转移动）：
         // 我方=屏幕左上角 farL 左对齐向右延伸；对方=屏幕左下角 nearL 左对齐，
@@ -296,14 +310,14 @@ public final class FieldHudRenderer {
     }
 
     /** 灵摆刻度数字：贴卡片矩形屏幕外侧顶角顶点（左侧卡=左上角、右侧卡=右上角），
-     *  与 {@link CardOverlayRenderer} 绿点角位互补（右侧卡绿点让位到左上角）。
+     *  与 {@link cn.garymb.ygomobile.render.card.CardOverlayRenderer} 绿点角位互补（右侧卡绿点让位到左上角）。
      *  屏幕侧按格子中心 mirrorX 后与场地中轴比较；守备表示卡片足迹 hx/hy 对调；
      *  字号与攻守文字同源（CARD_H 竖向投影，不受守备旋转影响） */
     private void drawPendulumScaleText(GameField f, int p, int seq, boolean leftScale) {
         ClientCard c;
         try { c = f.players[p].spellZone.get(seq); } catch (Throwable e) { return; }
         if (c == null || !c.isFaceUp() || c.is_moving) return;
-        if ((c.type & 0x1000000) == 0) return;                // CardType.Pendulum
+        if ((c.type & TYPE_PENDULUM) == 0) return;
         if (c.equipTarget != null) return;                    // 对齐 drawing.cpp !equipTarget
         String txt = leftScale ? c.lscString : c.rscString;   // 左区左刻度 / 右区右刻度
         if (txt == null || txt.isEmpty()) return;
@@ -335,6 +349,56 @@ public final class FieldHudRenderer {
         // 刻度白色（对齐 drawing.cpp 灵摆刻度 0xffffffff）
         drawScreenTextAligned(corner[0], corner[1] - hpx * SCALE_TOP_LIFT,
                 new String[]{txt}, new int[]{HUD_WHITE}, hpx, align);
+    }
+
+    /**
+     * 攻守数字需上抬的屏幕像素量：0=无需避让。仅当本怪兽格所在列的灵摆区那张卡正在显示刻度
+     * 数字、且那个刻度贴在朝向本怪兽格的边缝里时才抬，其它场合攻守数字保持压在边线上。
+     */
+    private float statScaleAvoidLift(GameField f, int p, int seq, float hpx) {
+        if (!pendulumScaleInStatGap(f, p, seq)) return 0f;
+        return hpx * STAT_ABOVE_SCALE_RATIO + STAT_SNUG_PX;
+    }
+
+    /**
+     * 本怪兽格的攻守数字是否与同列灵摆刻度数字争同一缝隙。刻度数字只在两侧灵摆区格显示
+     *（MR4 = 魔陷区 seq0 左刻度 / seq4 右刻度，旧规则 = seq6/seq7），与
+     * {@link #drawFieldCardTexts} 下发给 {@link #drawPendulumScaleText} 的取用完全一致。
+     */
+    private boolean pendulumScaleInStatGap(GameField f, int p, int seq) {
+        float[] mz = GameField.getZoneRect(p, 0x04, seq);
+        if (mz == null) return false;
+        boolean mr4 = f.dInfo.duelRule >= 4;
+        return scaleInGapToward(f, p, mz, mr4 ? 0 : 6, true)
+                || scaleInGapToward(f, p, mz, mr4 ? 4 : 7, false);
+    }
+
+    /**
+     * 指定灵摆区格的刻度数字是否落在与该怪兽格相向的边缝里，三个条件缺一不抬：
+     * ① 与怪兽格同列（世界 X 重叠）——额外怪兽区（MR4 seq5/6）与旧规则侧列灵摆区因此自然排除；
+     * ② 该卡按 {@link #drawPendulumScaleText} 同样的门控确实会画出刻度（表侧灵摆怪、非装备卡、
+     *    不在移动、本侧刻度串非空）；
+     * ③ 刻度恒贴在灵摆卡的 -y 侧顶角，该侧须朝向本怪兽格——我方半场（魔陷行在怪兽行的
+     *    屏幕下方）成立；对方半场的刻度在其魔陷卡的屏幕顶边外侧，与其攻守数字各在一端，不抬。
+     */
+    private boolean scaleInGapToward(GameField f, int p, float[] mz, int szSeq, boolean leftScale) {
+        ClientCard s;
+        try {
+            s = f.players[p].spellZone.get(szSeq);
+        } catch (Throwable e) {
+            return false;
+        }
+        if (s == null || !s.isFaceUp() || s.is_moving || s.equipTarget != null) return false;
+        if ((s.type & TYPE_PENDULUM) == 0) return false;
+        String txt = leftScale ? s.lscString : s.rscString;   // 左区左刻度 / 右区右刻度
+        if (txt == null || txt.isEmpty()) return false;
+        float[] sz = GameField.getZoneRect(p, 0x08, szSeq);
+        if (sz == null) return false;
+        // 同列判定：列间距 1.1 远大于卡宽 0.8，取半卡宽为阈值不会误判邻列
+        if (Math.abs(sz[0] - mz[0]) >= FieldGeometry.CARD_W * 0.5f) return false;
+        // 刻度所在顶角边（-y 侧）是否朝向怪兽行：比较两侧到怪兽格中心的距离
+        float hy = FieldGeometry.CARD_H * 0.5f;
+        return Math.abs((sz[1] - hy) - mz[1]) < Math.abs((sz[1] + hy) - mz[1]);
     }
 
     /** 通讯是否已送达该卡的攻/守数值文本（里侧守备卡卡码公开后据此判定是否显数值；
