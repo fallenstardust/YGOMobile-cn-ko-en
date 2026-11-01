@@ -12,6 +12,16 @@ import ocgcore.enums.CardLocation;
  */
 public class MoveEventApplier {
 
+    /**
+     * ocgcore common.h L161-162：{@code REASON_DESTROY=0x1}（被破坏）、{@code REASON_RELEASE=0x2}（作为解放/解放代价）。
+     * <p>
+     * 旧实现把破坏音效误判在 0x2 上（当年注释也写错为“REASON_DESTROY=0x2”），于是只有「以解放/释放
+     * 为代价离开原区域」的移动会响销毁音；而脚本里真正的破坏一律带 0x1（常与 REASON_EFFECT 0x40、
+     * REASON_BATTLE 0x20 组合），包括手卡被破坏（如针虫的巢窟类）、卡组/额外被破坏送墓、魔陷区的
+     * 灵摆怪（刻度卡）被破坏等，均静默无声——即用户反馈的“一些破坏场景没有音效”。
+     */
+    private static final int REASON_DESTROY = 0x1;
+
     private final GameEngine engine;
 
     public MoveEventApplier(GameEngine engine) {
@@ -234,14 +244,14 @@ public class MoveEventApplier {
                 }
             }
         }
-        // 音效严格对齐 duelclient.cpp MSG_MOVE L2952-2957：仅在真正发生移动（pl!=cl）时，
-        // 除外（目标含 LOCATION_REMOVED=0x20）播 BANISHED，否则因效果破坏（REASON_DESTROY=0x2）播 DESTROYED。
+        // 音效严格对齐 duelclient.cpp MSG_MOVE L2955-2960：仅在真正发生移动（pl!=cl）时，
+        // 目的地含除外位（LOCATION_REMOVED=0x20）播 BANISHED，否则 reason 带破坏位 REASON_DESTROY 播 DESTROYED。
         // C++ 此分支不要求目的地是墓地（破坏回手/回卡组等同样播 DESTROYED），也没有 SUMMON 分支——
         // 召唤/特殊召唤音效由 MSG_SUMMONING/MSG_SPSUMMONING（SummonAnimationManager）负责，此处重复播会错音。
         if (newLoc != oldLoc) {
             if ((newLoc & CardLocation.Removed.value()) != 0) {
                 engine.soundManager.playSoundEffect(SoundManager.SFX.BANISHED);
-            } else if ((reason & 0x2) != 0) {
+            } else if ((reason & REASON_DESTROY) != 0) {
                 engine.soundManager.playSoundEffect(SoundManager.SFX.DESTROYED);
             }
         }
