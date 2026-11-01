@@ -13,6 +13,8 @@ import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.PopupWindow;
 
+import cn.garymb.ygomobile.YGOProActivity;
+import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.ImePopupAdjuster;
 import ocgcore.DataManager;
@@ -108,6 +110,16 @@ public class FirstOrSecondDialog {
             // 极端兜底：找不到锚点时屏幕居中
             popupWindow.showAtLocation(activity.getWindow().getDecorView(), Gravity.CENTER, 0, 0);
             showing = true;
+        }
+        // 弹窗出现提示音（对齐 C++ Game::PopupElement → SoundManager::PlayDialogSound：wFTSelect → QUESTION）；
+        // 放在 show() 末尾而非定位分支内：等待布局的延迟路径与旋转重定位（不走 show）均不会双响
+        playQuestionSound();
+    }
+
+    private void playQuestionSound() {
+        if (context instanceof YGOProActivity) {
+            SoundManager sm = ((YGOProActivity) context).getSoundManager();
+            if (sm != null) sm.playSoundEffect(SoundManager.SFX.QUESTION);
         }
     }
 

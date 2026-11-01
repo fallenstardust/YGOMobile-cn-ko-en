@@ -308,6 +308,14 @@ public class AnnounceNumberDialog {
         }
     }
 
+    /** 弹窗出现提示音（对齐 C++ Game::PopupElement → SoundManager::PlayDialogSound：wANNumber → QUESTION） */
+    private void playQuestionSound() {
+        if (context instanceof YGOProActivity) {
+            SoundManager sm = ((YGOProActivity) context).getSoundManager();
+            if (sm != null) sm.playSoundEffect(SoundManager.SFX.QUESTION);
+        }
+    }
+
     private void playButtonSound() {
         if (context instanceof YGOProActivity) {
             SoundManager sm = ((YGOProActivity) context).getSoundManager();
@@ -349,6 +357,7 @@ public class AnnounceNumberDialog {
                 // 输入法抬升联动（用户规格）：抬键盘时本弹窗底边贴聊天输入框上沿，
                 // 收起后回到 layout_game_right 中央，逻辑统一在 ImePopupAdjuster
                 ImePopupAdjuster.attach(popupWindow);
+                playQuestionSound();   // 宣言窗弹出响 question 音（对齐 PlayDialogSound）
             } catch (Exception e) {
                 // Token expired or window already showing
             }

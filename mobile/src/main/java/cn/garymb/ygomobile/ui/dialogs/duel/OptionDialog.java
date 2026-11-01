@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cn.garymb.ygomobile.YGOProActivity;
+import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.DialogScale;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
@@ -228,6 +229,7 @@ public class OptionDialog {
             DraggablePopupHelper.centerPopupInRegion(popupWindow, null);
             draggableHelper.showPopup(popupWindow, decor);
             ImePopupAdjuster.attach(popupWindow);
+            playQuestionSound();
             showing = true;
         }
     }
@@ -292,6 +294,18 @@ public class OptionDialog {
         // 输入法抬升联动（用户规格）：抬键盘时本弹窗底边贴聊天输入框上沿，
         // 收起后回到 layout_game_right 中央，逻辑统一在 ImePopupAdjuster
         ImePopupAdjuster.attach(popupWindow);
+        playQuestionSound();
+    }
+
+    /**
+     * 弹窗出现提示音（对齐 C++ Game::PopupElement → SoundManager::PlayDialogSound：
+     * wOptions 与 wQuery、wSurrender、wAN 系列、wReplaySave、wFTSelect 同归 QUESTION）。
+     */
+    private void playQuestionSound() {
+        if (context instanceof YGOProActivity) {
+            SoundManager sm = ((YGOProActivity) context).getSoundManager();
+            if (sm != null) sm.playSoundEffect(SoundManager.SFX.QUESTION);
+        }
     }
 
     /**

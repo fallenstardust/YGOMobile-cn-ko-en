@@ -242,6 +242,38 @@ public class DuelEventHandler extends DuelEventHandlerBase {
     }
 
     @Override
+    public void onRandomSelected(int count, ByteBuffer data) {
+        // duelclient.cpp MSG_RANDOM_SELECTED L3462-3486：逐条 (c,l,s,ss) 取被选卡（overlay 取素材），
+        // 非回放快进时响 DICE 并 is_highlighting 青框 30 帧后收回——旧实现连消息都未解析，
+        // 随机选卡（如随机丢弃/随机除外/轮盘类效果）既无声也无高亮，与桌面版不一致
+        if (data == null || count <= 0) return;
+        final List<ClientCard> lit = new ArrayList<>();
+        for (int i = 0; i < count && data.remaining() >= 4; i++) {
+            int ctrl = engine.localPlayer(data.get() & 0xFF);
+            int loc = data.get() & 0xFF;
+            int seq = data.get() & 0xFF;
+            int sub = data.get() & 0xFF;
+            ClientCard c = (loc & CardLocation.Overlay.value()) != 0
+                    ? engine.field.getCard(ctrl, loc & 0x7f, seq, sub)
+                    : engine.field.getCard(ctrl, loc, seq);
+            if (c != null && !lit.contains(c)) lit.add(c);
+        }
+        // C++ 的 isReplay && isReplaySkiping 分支只吃包不演：本端由 instantPlace/replaySkip 同义把握，
+        // 快进重算只取卡不响也不亮框
+        if (lit.isEmpty() || engine.field.instantPlace || engine.replaySkip) return;
+        engine.soundManager.playSoundEffect(SoundManager.SFX.DICE);
+        for (ClientCard c : lit) c.is_highlighting = true;
+        engine.mainHandler.post(() -> {
+            if (engine.listener != null) engine.listener.onFieldChanged();
+        });
+        // L3484-3486 WaitFrameSignal(30) 后逐张取消高亮（青框不参与闸门判定，必须自带收尾）
+        engine.mainHandler.postDelayed(() -> {
+            for (ClientCard c : lit) c.is_highlighting = false;
+            if (engine.listener != null) engine.listener.onFieldChanged();
+        }, 30L * 17L);
+    }
+
+    @Override
     public void onAnnounceRace(int player, int count, int availableRaces) {
         // duelclient.cpp MSG_ANNOUNCE_RACE L3996-4014：player 已消费，打包 count+available 转发
         ByteBuffer buf = ByteBuffer.allocate(5).order(ByteOrder.LITTLE_ENDIAN);

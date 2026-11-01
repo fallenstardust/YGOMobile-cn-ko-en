@@ -81,6 +81,12 @@ public class DuelStocHandler implements DuelClient.ClientListener {
     @Override
     public void onPlayerChange(int status) {
         Log.i(TAG, "Player change: " + String.format("0x%02X", status));
+        // 对齐 duelclient.cpp STOC_HS_PLAYER_CHANGE L1189-1191：低 4 位状态 < 8（即新人入座引起的席位重排；
+        // OBSERVE=8/READY=9/NOTREADY=a/LEAVE=b 不响）时播玩家进入音效，与 STOC_HS_PLAYER_ENTER 同响——
+        // 旧实现只在 ENTER 包响，换位时无声
+        if ((status & 0xf) < 8) {
+            engine.soundManager.playSoundEffect(SoundManager.SFX.PLAYER_ENTER);
+        }
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onPlayerChange(status);
         });

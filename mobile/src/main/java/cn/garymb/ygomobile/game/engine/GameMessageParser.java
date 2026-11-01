@@ -108,6 +108,9 @@ public class GameMessageParser {
         void onPlayerHint(int player, int hintType, int value);
         /** duelclient.cpp MSG_BECOME_TARGET L3486-3497：count(1) + count×[ctrl1 loc1 seq1 ss1(忽略)] */
         void onBecomeTarget(int count, ByteBuffer data);
+        /** duelclient.cpp MSG_RANDOM_SELECTED L3462-3486：player(1) count(1) + count×[ctrl1 loc1 seq1 ss1]，
+         *  随机选卡时响骰子音并把被选卡青框高亮 30 帧（旧实现整条消息未解析，无声也无高亮） */
+        void onRandomSelected(int count, ByteBuffer data);
         /** duelclient.cpp MSG_TAG_SWAP L4175-4287：player(1) mcount(1) ecount(1) pcount(1) hcount(1) topcode(4) + hcount×code(4) + ecount×code(4)，整段载荷交 handler 重建双方堆区 */
         void onTagSwap(ByteBuffer data);
         /** duelclient.cpp MSG_RELOAD_FIELD L4287-4441：duel_rule(1) + 双方[lp(4) + MZone7×(present+position+ovc) + SZone8×(present+position) + deck/hand/grave/removed/extra各[cnt+cnt×无详情] + extra_p_count(1)] + refreshAll + chains[cnt + cnt×15字节]，载荷解析全部在 handler 内做 */
@@ -409,6 +412,13 @@ public class GameMessageParser {
                 // duelclient.cpp MSG_BECOME_TARGET L3488-3497：目标写入 current_chain.target
                 int btCount = buf.get() & 0xFF;
                 handler.onBecomeTarget(btCount, buf);
+                break;
+            }
+            case RandomSelected: {
+                // duelclient.cpp MSG_RANDOM_SELECTED L3465-3470：player 读入即弃，count 后接 count×4 字节
+                buf.get(); // player
+                int rsCount = buf.get() & 0xFF;
+                handler.onRandomSelected(rsCount, buf);
                 break;
             }
             case Draw: {

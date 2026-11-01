@@ -5,7 +5,6 @@ import android.util.Log;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.game.gamefield.ClientCard;
 import cn.garymb.ygomobile.game.gamefield.GameField;
 import cn.garymb.ygomobile.ui.dialogs.duel.DuelLogDialog;
@@ -74,7 +73,7 @@ public class MessageUIHandler {
             case 9: {
                 String acText = DuelLogDialog.sysFormat(1512, "已选择数字：%d", data);
                 DuelLogDialog.addLog(acText);
-                engine.soundManager.playSoundEffect(SoundManager.SFX.NEGATE);
+                // C++ 本分支不播任何音效（旧实现额外响一声 NEGATE，会把「宣告数字」听成「效果被无效」）
                 showActionMessage(acText);
                 return;
             }

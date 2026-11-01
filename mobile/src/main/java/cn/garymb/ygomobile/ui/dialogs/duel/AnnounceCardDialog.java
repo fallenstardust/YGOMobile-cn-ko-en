@@ -495,6 +495,14 @@ public class AnnounceCardDialog {
         }
     }
 
+    /** 弹窗出现提示音（对齐 C++ Game::PopupElement → SoundManager::PlayDialogSound：wANCard → QUESTION） */
+    private void playQuestionSound() {
+        if (context instanceof YGOProActivity) {
+            SoundManager sm = ((YGOProActivity) context).getSoundManager();
+            if (sm != null) sm.playSoundEffect(SoundManager.SFX.QUESTION);
+        }
+    }
+
     private void playButtonSound() {
         if (context instanceof YGOProActivity) {
             SoundManager sm = ((YGOProActivity) context).getSoundManager();
@@ -580,6 +588,7 @@ public class AnnounceCardDialog {
                 // （收缩成横条会藏起输入框无法打字，用户反馈）；焦点在本弹窗搜索框时
                 // 工具完全不介入，保留原生 ADJUST_RESIZE 输入路径
                 ImePopupAdjuster.attach(popupWindow);
+                playQuestionSound();   // 宣言窗弹出响 question 音（对齐 PlayDialogSound）
             } catch (Exception e) {
                 // Token expired or window already showing
             }
