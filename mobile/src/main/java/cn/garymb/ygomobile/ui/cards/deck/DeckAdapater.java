@@ -16,8 +16,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
+import java.util.TreeSet;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
@@ -41,6 +43,262 @@ public class DeckAdapater extends DeckAdapaterBase {
 
     public DeckAdapater(Context context, RecyclerView recyclerView, ImageLoader imageLoader) {
         super(context, recyclerView, imageLoader);
+    }
+
+    // === 批量勾选模式（长按卡组网格卡片进入 / 点击勾选 / 按住整组拖动）===
+
+    /** 是否处于批量勾选模式：模式下 ItemTouchHelper 的单卡拖拽被接管（见 DeckItemTouchHelper） */
+    private boolean mBatchMode;
+    /** 已勾选卡片在 mItems 中的绝对下标（含分隔栏与占位格的下标会被过滤，不可勾选） */
+    private final TreeSet<Integer> mBatchChecked = new TreeSet<>();
+
+    public boolean isBatchMode() {
+        return mBatchMode;
+    }
+
+    /**
+     * 切换批量勾选模式：退出时一并清空勾选，下次进入从空集开始。
+     */
+    public void setBatchMode(boolean batchMode) {
+        if (mBatchMode == batchMode) return;
+        mBatchMode = batchMode;
+        mBatchChecked.clear();
+        notifyDataSetChanged();
+    }
+
+    public boolean isBatchChecked(int pos) {
+        return mBatchMode && mBatchChecked.contains(pos);
+    }
+
+    public boolean hasBatchChecked() {
+        return !mBatchChecked.isEmpty();
+    }
+
+    /** 当前已勾选的卡片绝对下标（升序） */
+    public List<Integer> getBatchCheckedPositions() {
+        return new ArrayList<>(mBatchChecked);
+    }
+
+    /**
+     * 切换某格的勾选态：分隔栏与占位格不可勾选。
+     *
+     * @return 切换后是否为已勾选，参数非法返回 false
+     */
+    public boolean toggleBatchCheck(int pos) {
+        if (batchCardAt(pos) == null) return false;
+        if (mBatchChecked.remove(pos)) {
+            notifyItemChanged(pos);
+            return false;
+        }
+        mBatchChecked.add(pos);
+        notifyItemChanged(pos);
+        return true;
+    }
+
+    /** 保证该格处于已勾选状态（按住未勾选的卡准备整组拖动时先补勾上） */
+    public void ensureBatchChecked(int pos) {
+        if (batchCardAt(pos) == null) return;
+        if (mBatchChecked.add(pos)) notifyItemChanged(pos);
+    }
+
+    /** 清空勾选但保留批量模式（整组搬运后下标己变，无法逐位映射） */
+    public void clearBatchChecks() {
+        if (mBatchChecked.isEmpty()) return;
+        List<Integer> old = new ArrayList<>(mBatchChecked);
+        mBatchChecked.clear();
+        for (Integer pos : old) notifyItemChanged(pos);
+    }
+
+    /** 安全取卡片型条目：越界、分隔栏、占位格均返回 null（同包的 DeckBatchEditController 用它判定可勾选位） */
+    public Card batchCardAt(int pos) {
+        if (pos < 0 || pos >= mItems.size()) return null;
+        DeckItem item = mItems.get(pos);
+        return item == null ? null : item.getCardInfo();
+    }
+
+    /**
+     * 整组搬运一次完成：把已勾选的卡按类型与容量规则移到目标卡区的落点处。
+     * <ul>
+     * <li>目标为主卡组：只能放额外卡组的卡（融合 / 同调 / 超量 / 连接）保持原位不动，
+     *     剩下的卡整组搬；若整组都是额外卡组卡则一张也不动并返回原因供上层提示。</li>
+     * <li>目标为额外卡组：主卡组向的卡保持原位不动，其余整组搬。</li>
+     * <li>目标为副卡组：全部整组搬。</li>
+     * <li>搬运前先预演三区张数，任一区会超出上限则整组作废并返回具体原因，不做部分生效。</li>
+     * </ul>
+     * 不改变卡组总张数（只在三个区之间搬运），因此不走 checkLimit 禁限/积分校验。
+     *
+     * @param targetType 落点卡区类型
+     * @param insertPos  落点在 mItems 中的绝对下标（分隔栏落点已由调用方换为区域末尾）
+     * @return 与单卡拖拽同口径的结果枚举，SUCCESS 表示已整体重建卡组视图
+     */
+    public DragInsertResult batchMoveCheckedTo(DeckItemType targetType, int insertPos) {
+        if (!mBatchMode || targetType == null || mBatchChecked.isEmpty()) {
+            return DragInsertResult.FAILED;
+        }
+        DeckInfo state = getCurrentState();
+        List<Card> main = state.getMainCards();
+        List<Card> extra = state.getExtraCards();
+        List<Card> side = state.getSideCards();
+
+        // 1. 勾选位→（源列表、区内下标、卡片），越界或已失效的勾选自动忽略
+        List<BatchPick> picks = new ArrayList<>();
+        collectBatchPicks(state, picks);
+        if (picks.isEmpty()) return DragInsertResult.FAILED;
+
+        // 2. 按落点卡区剔掉不允许进入的卡（保持原位）
+        List<BatchPick> movable = new ArrayList<>(picks.size());
+        for (BatchPick pick : picks) {
+            if (acceptsInZone(targetType, pick.card)) movable.add(pick);
+        }
+        if (movable.isEmpty()) {
+            return targetType == DeckItemType.MainCard
+                    ? DragInsertResult.WRONG_PLACE_MAIN : DragInsertResult.WRONG_PLACE_EXTRA;
+        }
+        List<Card> targetList = zoneList(state, targetType);
+
+        // 3. 张数上限预演：各区减去被摘除数，落点区加上插入数（同区时净为零）
+        int outMain = 0, outExtra = 0, outSide = 0;
+        for (BatchPick pick : movable) {
+            if (pick.source == main) outMain++;
+            else if (pick.source == extra) outExtra++;
+            else outSide++;
+        }
+        int newMain = main.size() - outMain + (targetType == DeckItemType.MainCard ? movable.size() : 0);
+        int newExtra = extra.size() - outExtra + (targetType == DeckItemType.ExtraCard ? movable.size() : 0);
+        int newSide = side.size() - outSide + (targetType == DeckItemType.SideCard ? movable.size() : 0);
+        if (newMain > Constants.DECK_MAIN_MAX) return DragInsertResult.MAIN_FULL;
+        if (newExtra > Constants.DECK_EXTRA_MAX) return DragInsertResult.EXTRA_FULL;
+        if (newSide > Constants.DECK_SIDE_MAX) return DragInsertResult.SIDE_FULL;
+
+        // 4. 落点区内下标：扣除“同区内已摘除且位于落点之前”的条目，否则插入点整体后移
+        int rel = insertPos - zoneStart(targetType);
+        int shift = 0;
+        for (BatchPick pick : movable) {
+            if (pick.source == targetList && pick.index < rel) shift++;
+        }
+        int insert = Math.max(0, Math.min(rel - shift, targetList.size()));
+
+        // 5. 同一源列表按下标降序摘除，避免前面的摘除影响后面的下标
+        List<BatchPick> descending = new ArrayList<>(movable);
+        descending.sort(Comparator.comparingInt((BatchPick p) -> p.index).reversed());
+        for (BatchPick pick : descending) {
+            if (pick.index < pick.source.size()) pick.source.remove(pick.index);
+        }
+        // 6. 按原来的勾选顺序（主→额外→副、区内升序）依次插入落点，保持组内相对顺序
+        for (BatchPick pick : movable) {
+            targetList.add(Math.min(insert, targetList.size()), pick.card);
+            insert++;
+        }
+
+        // 7. 回到 mItems：走整体重建以同步分隔栏文案与末尾占位格
+        rebuildAfterBatchEdit(state);
+        return DragInsertResult.SUCCESS;
+    }
+
+    /**
+     * 删除全部已勾选的卡（批量模式下把整组拖到卡区之外的二次确认入口）。
+     * 与整组搬运同口径：先由 mItems 反推三个区的卡片列表、剔除勾选项，再整体重建 mItems
+     * 以同步分隔栏文案与末尾占位格。
+     *
+     * @return 实际删除的张数；无有效勾选时返回 0
+     */
+    public int batchDeleteChecked() {
+        if (!mBatchMode || mBatchChecked.isEmpty()) return 0;
+        DeckInfo state = getCurrentState();
+        // 勾选位 →（源列表、区内下标），越界或已失效的勾选自动忽略
+        List<BatchPick> picks = new ArrayList<>();
+        collectBatchPicks(state, picks);
+        if (picks.isEmpty()) return 0;
+        // 同一源列表按下标降序剔除，避免前面的剔除影响后面的下标
+        picks.sort(Comparator.comparingInt((BatchPick p) -> p.index).reversed());
+        for (BatchPick pick : picks) {
+            if (pick.index < pick.source.size() && pick.source.get(pick.index) == pick.card) {
+                pick.source.remove(pick.index);
+            }
+        }
+        rebuildAfterBatchEdit(state);
+        return picks.size();
+    }
+
+    /**
+     * 把当前勾选位汇总成（源列表、区内下标、卡片）条目，越界或下标上已不是原先那张卡
+     * 的勾选均丢弃，保证批量操作只会作用于原本被勾上的那些卡。
+     *
+     * @param state 本次批量操作要在上面改写的卡组快照（三个区的卡片列表）
+     * @param out   收集结果
+     */
+    private void collectBatchPicks(DeckInfo state, List<BatchPick> out) {
+        List<Card> main = state.getMainCards();
+        List<Card> extra = state.getExtraCards();
+        List<Card> side = state.getSideCards();
+        for (Integer pos : mBatchChecked) {
+            Card card = batchCardAt(pos);
+            if (card == null) continue;
+            List<Card> source;
+            int index;
+            if (DeckItemUtils.isMain(pos)) {
+                source = main;
+                index = pos - DeckItem.MainStart;
+            } else if (DeckItemUtils.isExtra(pos)) {
+                source = extra;
+                index = pos - DeckItem.ExtraStart;
+            } else if (DeckItemUtils.isSide(pos)) {
+                source = side;
+                index = pos - DeckItem.SideStart;
+            } else {
+                continue;
+            }
+            if (index < 0 || index >= source.size() || source.get(index) != card) continue;
+            out.add(new BatchPick(source, index, card));
+        }
+    }
+
+    /**
+     * 批量编辑后重建 mItems：搬运/删除不改变“相对 ydk 文件是否已修改”的 md5 基准，
+     * 也不改变云端 deckId，因此逐项恢复后再告知列表全量刷新。
+     */
+    private void rebuildAfterBatchEdit(DeckInfo state) {
+        String prevMd5 = mDeckMd5;
+        state.deckId = deckId;
+        state.userId = userId;
+        setDeck(state, false);
+        mDeckMd5 = prevMd5;
+        mBatchMode = true;
+        mBatchChecked.clear();
+        notifyDataSetChanged();
+    }
+
+    /** 卡片能否落入目标卡区：主卡组不收额外卡组卡，额外卡组只收额外卡组卡，副卡组两者皆收 */
+    private static boolean acceptsInZone(DeckItemType zone, Card card) {
+        boolean extraOnly = card.isExtraCard();
+        if (zone == DeckItemType.MainCard) return !extraOnly;
+        if (zone == DeckItemType.ExtraCard) return extraOnly;
+        return true;
+    }
+
+    private static List<Card> zoneList(DeckInfo state, DeckItemType zone) {
+        if (zone == DeckItemType.MainCard) return state.getMainCards();
+        if (zone == DeckItemType.ExtraCard) return state.getExtraCards();
+        return state.getSideCards();
+    }
+
+    private static int zoneStart(DeckItemType zone) {
+        if (zone == DeckItemType.MainCard) return DeckItem.MainStart;
+        if (zone == DeckItemType.ExtraCard) return DeckItem.ExtraStart;
+        return DeckItem.SideStart;
+    }
+
+    /** 一个勾选搬运条目：源卡区列表 + 区内下标 + 卡片 */
+    private static final class BatchPick {
+        final List<Card> source;
+        final int index;
+        final Card card;
+
+        BatchPick(List<Card> source, int index, Card card) {
+            this.source = source;
+            this.index = index;
+            this.card = card;
+        }
     }
 
     /**
@@ -264,6 +522,9 @@ public class DeckAdapater extends DeckAdapaterBase {
     }
 
     protected void loadData(DeckInfo deckInfo, boolean isPack) {
+        // 卡组内容整体替新（加载/ undo/redo / 卡包展示），旧勾选下标已全部失去原义：退出批量模式
+        mBatchMode = false;
+        mBatchChecked.clear();
         deckId = null;
         userId = null;
         mCount.clear();
@@ -412,6 +673,10 @@ public class DeckAdapater extends DeckAdapaterBase {
                 }
             }
         }
+        // 批量勾选打勾图标最后统一施加：上面任何分支（卡图/占位/分隔栏）都可能已重置过它，
+        // holder 复用时必须以当前勾选集为准
+        holder.setBatchChecked(mBatchMode && item.getCardInfo() != null
+                && mBatchChecked.contains(position));
     }
 
     @Override

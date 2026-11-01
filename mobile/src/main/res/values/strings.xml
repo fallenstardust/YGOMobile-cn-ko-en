@@ -180,6 +180,10 @@
     <string name="tip_drag_side_full" formatted="false">Side deck is full (max %d)</string>
     <string name="tip_drag_extra_in_main">Extra deck cards can not be placed in the main deck</string>
     <string name="tip_drag_normal_in_extra">Normal cards can not be placed in the extra deck</string>
+    <string name="batch_mode_hint">Batch mode: tap a card to check it, hold to drag the whole group; drop on the trash bin or long-press again to delete the checked cards, Back to exit</string>
+    <string name="batch_mode_hint_editor">Batch mode: tap a card to check it, hold to drag the whole group; drop on the search result list to delete the checked cards, Back to exit</string>
+    <string name="batch_delete_done" formatted="false">%d cards deleted</string>
+    <string name="batch_delete_none">No cards are checked</string>
     <string name="file_exist">file is exist</string>
     <string name="share_deck">Share Deck</string>
     <string name="no_share_app">no find share app</string>
@@ -348,7 +352,7 @@
     <string name="guide_search_result_count">here shows search result count</string>
     <string name="guide_button_search_result">click to see search result\n also here will shows favorite cards</string>
     <string name="guide_view_deck_manager">click to change Decks\n you can manage deck categories here</string>
-    <string name="guide_view_move_card">press a card to move it to other place\nlong-press this card to delete it</string>
+    <string name="guide_view_move_card">press a card to move it to other place\nlong-press a card to enter batch mode: move or delete as a group</string>
     <string name="guide_view_banner">Mycard News, you can click to see\only in Chinese now, Sorry</string>
     <string name="title_delete_ex">delete expansions</string>
     <string name="about_delete_ex">if you need to delete all expansion cards</string>

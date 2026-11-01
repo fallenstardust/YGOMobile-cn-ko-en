@@ -333,7 +333,7 @@
     <string name="guide_search_result_count">カード数の検査結果を示す</string>
     <string name="guide_button_search_result">検査結果を示す\nブックマークカードを常に表示する</string>
     <string name="guide_view_deck_manager">デッキを変更する\nデッキ分類も管理できます</string>
-    <string name="guide_view_move_card">カードを長押しながら移動できます\nカードを長押しで削除できます</string>
+    <string name="guide_view_move_card">カードを長押ししながら移動できます\n長押しで一括選択モード：一括移動／削除</string>
     <string name="guide_view_banner">MYCARDニュース，クリックして確認する</string>
     <string name="title_delete_ex">非公式データを削除</string>
     <string name="ask_delete_ex">クリアを確認してください</string>
@@ -391,6 +391,10 @@
     <string name="tip_drag_side_full" formatted="false">サイドデッキが上限（%d枚）に達しました</string>
     <string name="tip_drag_extra_in_main">エクストラデッキのカードはメインデッキに置けません</string>
     <string name="tip_drag_normal_in_extra">通常モンスター・魔法・罠カードはエクストラデッキに置けません</string>
+    <string name="batch_mode_hint">一括選択モード：カードをタップで選択、長押しで一括移動；ゴミ箱にドロップまたは再度長押しで選択分を削除、戻るキーで終了</string>
+    <string name="batch_mode_hint_editor">一括選択モード：カードをタップで選択、長押しで一括移動；検索結果リストにドロップで選択分を削除、戻るキーで終了</string>
+    <string name="batch_delete_done" formatted="false">%d枚のカードを削除しました</string>
+    <string name="batch_delete_none">カードが選択されていません</string>
     <string name="point_cost">ポイント消費</string>
     <string name="credit_limit">ポイント上限</string>
     <string name="switch_genesys_mode">起源点数モード</string>

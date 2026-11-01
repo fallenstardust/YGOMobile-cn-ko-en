@@ -180,6 +180,10 @@
     <string name="tip_drag_side_full" formatted="false">副卡组已满（上限%d）</string>
     <string name="tip_drag_extra_in_main">额外卡组的卡片不能放入主卡组</string>
     <string name="tip_drag_normal_in_extra">普通卡片不能放入额外卡组</string>
+    <string name="batch_mode_hint">批量勾选模式：点击卡片勾选，按住可整组拖动；拖到垃圾桶或再次长按即可批量删除，按返回键退出</string>
+    <string name="batch_mode_hint_editor">批量勾选模式：点击卡片勾选，按住可整组拖动；拖到搜索结果列表即可批量删除，按返回键退出</string>
+    <string name="batch_delete_done" formatted="false">已删除 %d 张卡</string>
+    <string name="batch_delete_none">尚未勾选任何卡片</string>
     <string name="file_exist">文件已经存在</string>
     <string name="share_deck">分享卡组</string>
     <string name="code_share">卡组码分享</string>
@@ -351,7 +355,7 @@
     <string name="guide_search_result_count">这里显示搜索结果卡片数量</string>
     <string name="guide_button_search_result">点击显示搜索结果\n默认显示收藏的卡片</string>
     <string name="guide_view_deck_manager">点击切换卡组\n也可以在此管理多个卡组分类</string>
-    <string name="guide_view_move_card">按住一张卡片可以拖动到其他位置\n长按这张卡片即可删除它</string>
+    <string name="guide_view_move_card">按住一张卡片可以拖动到其他位置\n长按卡片进入批量勾选：可整组拖动或删除</string>
     <string name="guide_view_banner">萌卡新闻轮播，可以点击查看内容</string>
     <string name="title_delete_ex">删除扩展卡包</string>
     <string name="ask_delete_ex">点击确认以清空</string>

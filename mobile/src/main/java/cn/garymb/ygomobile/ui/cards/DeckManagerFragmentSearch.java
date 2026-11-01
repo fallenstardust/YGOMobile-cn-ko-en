@@ -204,6 +204,10 @@ public abstract class DeckManagerFragmentSearch extends DeckManagerFragmentDeck 
 
     @Override
     public void onItemClick(View view, int pos) {
+        // 批量勾选模式：卡组网格上的点击只切换勾选，不再弹卡片详情
+        if (mDeckBatchController != null && mDeckBatchController.onDeckCardTap(pos)) {
+            return;
+        }
         if (isShowDrawer()) {
             return;
         }
@@ -212,12 +216,20 @@ public abstract class DeckManagerFragmentSearch extends DeckManagerFragmentDeck 
 
     @Override
     public void onItemLongClick(View view, int pos) {
+        // 批量勾选模式下再次长按：直接删除当前已勾选的整组卡（进模式后的长按只可能从
+        // 本回调发出，因为单卡拖拽标志位已置 0，ItemTouchHelperPlus 那条长按链路不会启动）
+        if (mDeckBatchController != null) {
+            mDeckBatchController.onDeckCardLongPress(pos);
+        }
     }
 
     @Override
     public void onItemDoubleClick(View view, int pos) {
         //拖拽中，就不显示
         if (isShowDrawer()) {
+            return;
+        }
+        if (mDeckBatchController != null && mDeckBatchController.isBatchMode()) {
             return;
         }
         if (Constants.DECK_SINGLE_PRESS_DRAG) {
@@ -441,7 +453,7 @@ public abstract class DeckManagerFragmentSearch extends DeckManagerFragmentDeck 
     }
 
     /**
-     * 根据拖拽插入失败原因toast提示
+     * 根据拖拽插入失败原因（单卡拖入与整组搬运共用） toast 提示
      */
     protected void showDragInsertFailToast(DeckAdapater.DragInsertResult result) {
         int msgRes;
@@ -471,6 +483,73 @@ public abstract class DeckManagerFragmentSearch extends DeckManagerFragmentDeck 
         YGOUtil.showTextToast(getString(msgRes));
     }
 
+    /**
+     * 批量模式下整组拖动落在卡区内的结果处理：成功则补一次卡组历史快照并刷新撤销/重做
+     * 按钮，失败则按具体原因 toast（整组搬运要么全部生效、要么全部作废）。
+     */
+    protected void handleBatchMoveResult(DeckAdapater.DragInsertResult result) {
+        if (result == DeckAdapater.DragInsertResult.SUCCESS) {
+            addDeckToHistory(mDeckAdapater.getCurrentState());
+            updateUndoRedoButtonVisibility();
+        } else {
+            showBatchMoveFailToast(result);
+        }
+    }
+
+    /**
+     * 批量整组搬运失败原因 toast：与单卡拖入同一批文案，但张数上限按常量带参格式化
+     */
+    protected void showBatchMoveFailToast(DeckAdapater.DragInsertResult result) {
+        switch (result) {
+            case WRONG_PLACE_MAIN:
+                YGOUtil.showTextToast(getString(R.string.tip_drag_extra_in_main));
+                break;
+            case WRONG_PLACE_EXTRA:
+                YGOUtil.showTextToast(getString(R.string.tip_drag_normal_in_extra));
+                break;
+            case MAIN_FULL:
+                YGOUtil.showTextToast(getString(R.string.tip_drag_main_full, Constants.DECK_MAIN_MAX));
+                break;
+            case EXTRA_FULL:
+                YGOUtil.showTextToast(getString(R.string.tip_drag_extra_full, Constants.DECK_EXTRA_MAX));
+                break;
+            case SIDE_FULL:
+                YGOUtil.showTextToast(getString(R.string.tip_drag_side_full, Constants.DECK_SIDE_MAX));
+                break;
+            default:
+                YGOUtil.showTextToast(R.string.add_card_tip_fail);
+                break;
+        }
+    }
+
+    /**
+     * 批量模式下删除当前全部已勾选的卡，三个入口共用：直接点击垃圾桶键、拖到垃圾桶
+     * 所在行松手、批量模式内再次长按卡片。删除不弹二次确认（回退已由历史兼顾），
+     * 删完立即退出批量模式并把新状态计入撤销/重做历史。
+     */
+    protected void performBatchDelete() {
+        if (mDeckAdapater == null || !mDeckAdapater.isBatchMode()) {
+            return;
+        }
+        if (!mDeckAdapater.hasBatchChecked()) {
+            //直接点了垃圾桶但还没勾选任何卡：给明确反馈，并保留批量模式让用户继续勾选
+            YGOUtil.showTextToast(getString(R.string.batch_delete_none));
+            return;
+        }
+        int removed = mDeckAdapater.batchDeleteChecked();
+        //无论实际删了几张，都按用户规格退出批量勾选模式
+        if (mDeckBatchController != null) {
+            mDeckBatchController.exitBatchMode();
+        }
+        if (removed <= 0) {
+            return;
+        }
+        //删卡计入卡组历史，可用刚出现的 undo 直接回退
+        addDeckToHistory(mDeckAdapater.getCurrentState());
+        updateUndoRedoButtons();
+        YGOUtil.showTextToast(getString(R.string.batch_delete_done, removed));
+    }
+
     public void askBeforeQuit() {
         File ydk = mDeckAdapater.getYdkFile();
         if (ydk != null && ydk.exists()) {
@@ -491,6 +570,11 @@ public abstract class DeckManagerFragmentSearch extends DeckManagerFragmentDeck 
 
     @Override
     public boolean onBackPressed() {
+        // 批量勾选模式优先：返回键只用于退出批量模式（清空勾选与浮层），不关抽屉也不退页面
+        if (mDeckBatchController != null && mDeckBatchController.isBatchMode()) {
+            mDeckBatchController.exitBatchMode();
+            return true;
+        }
         if (mDrawerLayout.isDrawerOpen(Constants.CARD_RESULT_GRAVITY)) {
             mDrawerLayout.closeDrawer(Constants.CARD_RESULT_GRAVITY);
         } else if (mDrawerLayout.isDrawerOpen(Constants.CARD_SEARCH_GRAVITY)) {

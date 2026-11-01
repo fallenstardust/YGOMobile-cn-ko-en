@@ -59,6 +59,8 @@ import ocgcore.enums.LimitType;
  * - {@link DeckGridLayoutApplier}：网格卡面尺寸计算与卡包展示模式版面
  * - {@link DeckStatsPanel}：张数 / 分类计数 / GeneSys 起源点数统计刷新
  * - {@link DeckDropHandler}：拖放落点（网格内换位、跳网格移动、搜索拖入、拖回搜索区删除）
+ * - {@link DeckBatchSelectionManager}：长按进入的批量勾选模式与整组拖动
+ * - {@link DeckEditorHistoryPanel}：侧边按钮列上的撤销/重做（与卡组编辑页共用同一份历史）
  */
 public class DeckEditorManager extends DeckEditorManagerMid implements CardDragHelper.DropHandler {
 
@@ -76,9 +78,13 @@ public class DeckEditorManager extends DeckEditorManagerMid implements CardDragH
         this.gridLayout = new DeckGridLayoutApplier(this);
         this.statsPanel = new DeckStatsPanel(this);
         this.dropHandler = new DeckDropHandler(this);
+        this.batchSelection = new DeckBatchSelectionManager(this);
+        this.historyPanel = new DeckEditorHistoryPanel(this);
     }
     public void initialize(View rootView) {
         bindAndSetupViews(rootView);
+        // 新视图树上的卡片实例已全部重建，批量勾选的旧下标与旧视图引用均失效，一律退出批量模式
+        batchSelection.reset();
         loadLastDeck();
         statsPanel.updateCounts();
         isModified = false;
@@ -91,6 +97,9 @@ public class DeckEditorManager extends DeckEditorManagerMid implements CardDragH
      * 而加载到另一个卡组/卡包（丢卡包展示）。
      */
     public void rebindAfterRotation(View rootView) {
+        // 旋转后卡片视图已全部重建，批量勾选的旧下标与旧视图引用失效：先退出批量模式，
+        // 再绑新视图树，避免 bindAndSetupViews 期间的刷新把旧勾选施加到新网格上
+        batchSelection.reset();
         bindAndSetupViews(rootView);
         // 当前卡组名/分类/按钮文本随实例保留，仅需刷到新视图树的控件上
         updateDeckManagerButtonText();
@@ -121,6 +130,8 @@ public class DeckEditorManager extends DeckEditorManagerMid implements CardDragH
         setupLabels();
         setupRecyclerViews();
         dropHandler.setup();
+        batchSelection.setup();
+        historyPanel.setup();
         setupButtons();
         cardSearcherManager.bindViews(rootView);
         cardSearcherManager.setupLabels();
@@ -146,5 +157,30 @@ public class DeckEditorManager extends DeckEditorManagerMid implements CardDragH
     @Override
     public void onCardDrop(View target, DeckInfo.Type source, int index, Card card, float rawX, float rawY) {
         dropHandler.onCardDrop(target, source, index, card, rawX, rawY);
+    }
+
+    // === 批量勾选模式：对外入口（返回键退出、模式查询）===
+
+    /** 当前是否处于长按进入的批量勾选模式 */
+    public boolean isBatchSelectionMode() {
+        return batchSelection != null && batchSelection.isBatchMode();
+    }
+
+    /**
+     * 返回键专用的批量模式退出入口：处于批量模式时清空勾选、恢复单卡拖拽语义并返回 true
+     * （表示本次返回键已被消费，不应继续退出编辑器/应用）；否则返回 false 交给上层继续派发。
+     */
+    public boolean exitBatchSelectionMode() {
+        if (batchSelection == null || !batchSelection.isBatchMode()) return false;
+        batchSelection.reset();
+        return true;
+    }
+
+    /**
+     * 退出卡组编辑时摘除对共享历史 {@link DeckHistory} 的监听（单例常驻，不摘会随
+     * Activity 重建累积指向旧视图树的回调）；下次进入编辑器经 setup 重新挂上。
+     */
+    public void releaseHistoryListener() {
+        if (historyPanel != null) historyPanel.release();
     }
 }

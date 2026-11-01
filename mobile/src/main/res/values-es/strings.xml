@@ -331,7 +331,7 @@
     <string name="guide_search_result_count">Muestra el número de resultados</string>
     <string name="guide_button_search_result">Toca para ver resultados\nPor defecto muestra cartas favoritas</string>
     <string name="guide_view_deck_manager">Toca para cambiar decks\ny gestionar categorías</string>
-    <string name="guide_view_move_card">Arrastra cartas para moverlas\nMantén presionado para eliminar</string>
+    <string name="guide_view_move_card">Arrastra cartas para moverlas\nMantén pulsada una carta para entrar en modo por lotes: mover o eliminar en grupo</string>
     <string name="guide_view_banner">Noticias de MyCard, toca para ver detalles</string>
     <string name="title_delete_ex">Eliminar paquete de expansión</string>
     <string name="ask_delete_ex">Toca para confirmar</string>
@@ -388,6 +388,10 @@
     <string name="tip_drag_side_full" formatted="false">El side deck está lleno (máx. %d)</string>
     <string name="tip_drag_extra_in_main">Las cartas del mazo extra no pueden colocarse en el mazo principal</string>
     <string name="tip_drag_normal_in_extra">Las cartas normales no pueden colocarse en el mazo extra</string>
+    <string name="batch_mode_hint">Modo por lotes: toca para marcar, mantén para mover el grupo; suéltalo en la papelera o vuelve a mantener pulsado para eliminar las marcadas; Atrás para salir</string>
+    <string name="batch_mode_hint_editor">Modo por lotes: toca para marcar, mantén para mover el grupo; suéltalo en la lista de resultados para eliminar las marcadas; Atrás para salir</string>
+    <string name="batch_delete_done" formatted="false">%d cartas eliminadas</string>
+    <string name="batch_delete_none">No hay cartas marcadas</string>
     <string name="point_cost">Consumo de puntos</string>
     <string name="credit_limit">Límite de puntos</string>
     <string name="switch_genesys_mode">GENESYS</string>

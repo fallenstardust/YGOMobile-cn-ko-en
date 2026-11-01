@@ -25,6 +25,8 @@ class DeckViewHolder extends RecyclerView.ViewHolder {
     private final TextView tv_deck_limit_num;
     public final ImageView cardImage;
     private final ImageView rightImage;
+    //批量勾选模式右上角的绿色打勾图标
+    private final ImageView batchCheck;
 
     private long mCardType;
     private DeckItemType mItemType;
@@ -42,6 +44,7 @@ class DeckViewHolder extends RecyclerView.ViewHolder {
         labelText = $(R.id.label);
         textlayout = $(R.id.layout_label);
         tv_deck_limit_num = $(R.id.tv_deck_limit_num);
+        batchCheck = $(R.id.iv_deck_batch_check);
         headView = null;// $(R.id.head);
     }
 
@@ -163,6 +166,18 @@ class DeckViewHolder extends RecyclerView.ViewHolder {
         // 同时隐藏禁限数字
         if (tv_deck_limit_num != null) {
             tv_deck_limit_num.setVisibility(View.GONE);
+        }
+        // 占位格与分隔栏不保留批量勾选打勾图标（holder 复用防遗留）
+        setBatchChecked(false);
+    }
+
+    /**
+     * 批量勾选模式：右上角显示 / 隐藏绿色打勾图标。每次 onBind 都要显式施加，
+     * 避免 holder 复用把上一张卡的勾选态带过来。
+     */
+    public void setBatchChecked(boolean checked) {
+        if (batchCheck != null) {
+            batchCheck.setVisibility(checked ? View.VISIBLE : View.GONE);
         }
     }
 

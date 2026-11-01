@@ -93,8 +93,9 @@ import cn.garymb.ygomobile.ui.activities.WebActivity;
 import cn.garymb.ygomobile.ui.adapters.CardListAdapter;
 import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerAdapter;
 import cn.garymb.ygomobile.ui.cards.deck.DeckAdapater;
+import cn.garymb.ygomobile.ui.cards.deck.DeckBatchEditController;
 import cn.garymb.ygomobile.ui.cards.deck.DeckDragDropHelper;
-import cn.garymb.ygomobile.ui.cards.deck.DeckItem;
+import cn.garymb.ygomobile.ui.cards.deck.DeckHistory;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItemTouchHelper;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItemType;
 import cn.garymb.ygomobile.ui.cards.deck.DeckLayoutManager;
@@ -157,21 +158,32 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
     //region ui onCreate/onDestroy
     protected RecyclerView mRecyclerView;
     protected BaseActivity mContext;
-    // 历史记录列表，用于存储卡组状态
-    protected final List<DeckInfo> deckHistory = new ArrayList<>();
-    // 当前历史记录索引
-    protected int historyIndex = -1;
+    /**
+     * 卡组撤销/重做历史：进程内单例，与决斗内卡组编辑器 DeckEditorManager 共用同一份快照列表；
+     * 以当前 ydk 文件路径为归属 key，换卡组文件时由 DeckHistory#bindDeck 自动清零。
+     */
+    protected final DeckHistory deckHistory = DeckHistory.get();
     protected boolean isPackMode;
     protected File mPreLoadFile;//预加载卡组，用于外部打开ydk文件或通过卡组广场预览卡组时，值为file。当未通过预加载打开ydk（打开卡组时），值为null
     protected DeckItemTouchHelper mDeckItemTouchHelper;
     // 搜索结果卡片长按拖拽到卡组的浮层拖拽辅助
     protected DeckDragDropHelper mDeckDragHelper;
+    // 卡组网格长按进入的批量勾选模式（点击勾选 / 按住整组拖动）
+    protected DeckBatchEditController mDeckBatchController;
     protected TextView tv_add_1, tv_deck, tv_credit_limit, tv_credit_remain, tv_result_count, tv_credit_count;
     protected LinearLayout ll_genesys_scoreboard;
     protected AppCompatSpinner mCardSearchLimitSpinner;
     protected CardDetail mCardDetail;
     protected DialogPlus mDialog, builderShareLoading;
     protected ImageButton btnUndo, btnRedo;
+    /** 批量勾选模式的垃圾桶删除键，与 undo/redo 同处一行（该行同时也是整组拖动的删除落点区） */
+    protected ImageButton btnBatchDelete;
+    /** undo/redo/垃圾桶所在行：批量拖动悬停在该矩形内松手即批量删除 */
+    protected View layoutUndoRedo;
+    /** 悬停在删除区上时垃圾桶图标的放大倍数 */
+    private static final float DELETE_ZONE_HIGHLIGHT_SCALE = 1.6f;
+    /** 监听共享卡组历史的快照变化（另一个编辑器也可能写入），用于刷新 undo/redo */
+    private final DeckHistory.Listener historyListener = this::updateUndoRedoButtonVisibility;
     protected String currentCardSearchMessage = "";
 
 
@@ -315,6 +327,43 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
         // 添加RecyclerView的点击监听器
         mRecyclerView.addOnItemTouchListener(new RecyclerViewItemListener(mRecyclerView, this));
 
+        // 初始化卡组网格的批量勾选模式控制器（挂在 RecyclerView 上观察手势，
+        // 与上面的点击监听共存：只有“按住已勾选卡移动超过阈值”时才接管本次手势）
+        mDeckBatchController = new DeckBatchEditController(activity, mRecyclerView, mDeckAdapater,
+                new DeckBatchEditController.Callback() {
+                    @Override
+                    public boolean isBatchModeAllowed() {
+                        // 卡包展示不可编辑卡组，不开放批量模式
+                        return !isPackMode;
+                    }
+
+                    @Override
+                    public void onBatchModeChanged(boolean enabled) {
+                        if (enabled) {
+                            YGOUtil.showTextToast(getString(R.string.batch_mode_hint));
+                        }
+                        //批量模式决定了本行“undo/redo 与垃圾桶”的互斥显隐
+                        updateUndoRedoButtonVisibility();
+                    }
+
+                    @Override
+                    public void onBatchMoved(DeckAdapater.DragInsertResult result,
+                                             DeckDragDropHelper.DropTarget target) {
+                        handleBatchMoveResult(result);
+                    }
+
+                    @Override
+                    public void onBatchDeleteRequested() {
+                        performBatchDelete();
+                    }
+
+                    @Override
+                    public void onBatchDeleteZoneHoverChanged(boolean inside) {
+                        applyDeleteZoneHighlight(inside);
+                    }
+                });
+        mDeckBatchController.install();
+
         // 初始化弹出菜单按钮及相关导航按钮点击事件
         initBoomMenuButton(layoutView.findViewById(R.id.bmb));
         layoutView.findViewById(R.id.btn_nav_search).setOnClickListener((v) -> doMenu(R.id.action_search));
@@ -352,13 +401,22 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
                     requireActivity().getSupportFragmentManager(), this, 0, null);
         });
 
-        // 初始化撤销/重做按钮
+        // 初始化撤销/重做按钮，并按同一行加入批量模式的垃圾桶删除键
         btnUndo = layoutView.findViewById(R.id.btn_undo);
         animRotate(btnUndo);
         btnRedo = layoutView.findViewById(R.id.btn_redo);
         animRotate(btnRedo);
         btnUndo.setOnClickListener(v -> undo());
         btnRedo.setOnClickListener(v -> redo());
+        layoutUndoRedo = layoutView.findViewById(R.id.layout_deck_undo_redo);
+        btnBatchDelete = layoutView.findViewById(R.id.btn_deck_batch_delete);
+        animRotate(btnBatchDelete);
+        btnBatchDelete.setOnClickListener(v -> performBatchDelete());
+        // 整组拖动的“拖到此处删除”落点：指向 undo/redo/垃圾桶所在行
+        mDeckBatchController.setDeleteZone(layoutUndoRedo);
+        // 历史为两个编辑器共用的单例，对方新增快照时本面也需刷新按钮可用态
+        deckHistory.addListener(historyListener);
+        applyBatchDeleteButtonVisibility();
 
         mContext = (BaseActivity) getActivity();
 
@@ -520,10 +578,17 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
 
     @Override
     public void onDestroyView() {
+        // 共享历史常驻，视图销毁时必须摘除监听，否则随 Fragment 重建累积旧回调
+        deckHistory.removeListener(historyListener);
         // 视图销毁时取消进行中的浮动卡片拖拽，避免浮层残留在根布局上
         if (mDeckDragHelper != null) {
             mDeckDragHelper.cancel();
             mDeckDragHelper = null;
+        }
+        // 同理摘除批量勾选控制器并收起整组拖动的浮层
+        if (mDeckBatchController != null) {
+            mDeckBatchController.uninstall();
+            mDeckBatchController = null;
         }
         super.onDestroyView();
     }
@@ -535,35 +600,11 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
 
     @Override
     public void onDragLongPress(int pos) {
-        // 检查位置索引有效性
-        if (pos < 0) return;
-        if (Constants.DEBUG)
-            Log.d(TAG, "delete " + pos);
-        // 获取要删除的卡组项
-        DeckItem deckItem = mDeckAdapater.getItem(pos);
-        if (deckItem == null || deckItem.getCardInfo() == null) {
-            return;
+        // 卡组网格长按语义已改为“进入批量勾选模式并勾上该卡”，原长按删除单卡的入口让位；
+        // 删除改由批量模式下把整组拖出卡区后的二次确认完成（confirmBatchDeleteOutside）。
+        if (mDeckBatchController != null) {
+            mDeckBatchController.onDeckCardLongPress(pos);
         }
-        // 根据设置决定删除方式：弹窗确认删除 或 直接显示删除头部视图
-        if (mSettings.isDialogDelete()) {
-            // 创建并显示删除确认对话框
-            DialogPlus dialogPlus = new DialogPlus(getContext());
-            dialogPlus.setTitle(R.string.question);
-            dialogPlus.setMessage(getString(R.string.delete_card, deckItem.getCardInfo().Name));
-            dialogPlus.setMessageGravity(Gravity.CENTER_HORIZONTAL);
-            dialogPlus.setLeftButtonListener((dlg, v) -> {
-                dlg.dismiss();
-                mDeckItemTouchHelper.remove(pos);
-            });
-            dialogPlus.show();
-        } else {
-            mDeckItemTouchHelper.remove(pos);
-            // 直接显示删除头部视图
-            mDeckAdapater.showHeadView();
-        }
-        // 添加到历史记录
-        addDeckToHistory(mDeckAdapater.getCurrentState());
-
     }
 
     @Override
@@ -590,6 +631,37 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
         // 关闭左侧抽屉（如果已打开）
         if (mDrawerLayout.isDrawerOpen(Gravity.LEFT)) {
             mDrawerLayout.closeDrawer(Gravity.LEFT);
+        }
+    }
+
+    /**
+     * 整组拖动悬停在删除区（undo/redo/垃圾桶行）上时放大垃圾桶图标，离开则还原。
+     */
+    protected void applyDeleteZoneHighlight(boolean inside) {
+        if (btnBatchDelete == null) return;
+        float scale = inside ? DELETE_ZONE_HIGHLIGHT_SCALE : 1f;
+        btnBatchDelete.animate().scaleX(scale).scaleY(scale).setDuration(120).start();
+    }
+
+    /**
+     * 垃圾桶删除键仅在批量勾选模式占位：非批量模式直接 GONE 不占行宽，
+     * 顺便把图标缩放态还原，避免上一轮拖动的悬停放大残留。
+     * <p>
+     * 进入批量模式时显式拉回可点与置顶：本行与卡组网格同属一个 FrameLayout，
+     * 只靠 XML 属性在某些 ROM 上会被当成装饰视图而不接点击，而垃圾桶本身就是
+     * “直接点它批量删除”的第三个入口，这里保证它一定能接住点击。
+     */
+    protected void applyBatchDeleteButtonVisibility() {
+        if (btnBatchDelete == null) return;
+        boolean batch = mDeckBatchController != null && mDeckBatchController.isBatchMode();
+        if (batch) {
+            btnBatchDelete.setVisibility(View.VISIBLE);
+            btnBatchDelete.setEnabled(true);
+            btnBatchDelete.setClickable(true);
+            btnBatchDelete.bringToFront();
+        } else {
+            btnBatchDelete.setVisibility(View.GONE);
+            applyDeleteZoneHighlight(false);
         }
     }
 
@@ -635,6 +707,8 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
     abstract void animRotate(View view);
     abstract void showNewbieGuide(String scene);
     abstract void handleDeckCardDropped(Card card, DeckDragDropHelper.DropTarget target);
+    abstract void handleBatchMoveResult(DeckAdapater.DragInsertResult result);
+    abstract void performBatchDelete();
     abstract void onCardClick(View view, Card cardInfo, int pos);
     abstract void onCardLongClick(View view, Card cardInfo, int pos);
 

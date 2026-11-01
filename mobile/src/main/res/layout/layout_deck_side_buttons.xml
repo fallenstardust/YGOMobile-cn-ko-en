@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- 卡组编辑器侧边功能按钮列·横屏变体（纵向排列）：
-     按用户规格仅 设置 (btn_deck_settings)/音乐开关 (btn_deck_sound) 两键 VISIBLE，
+     按用户规格仅 撤销(btn_deck_undo)/重做(btn_deck_redo)/设置 (btn_deck_settings)/音乐开关
+     (btn_deck_sound) 四键参与显示（前两键按历史可用态点亮），
      记录/加速/表情/聊天四键保留占位以 INVISIBLE 隐藏。列锚定在界面底部、向上生长，
-     故四个 INVISIBLE 占位排在上端、两枚可见键排在列尾贴住界面下缘。
+     故四个 INVISIBLE 占位排在上端、四枚功能键排在列尾贴住界面下缘。
      include 位置（双副本机制，root id 经 include tag 覆盖区分）：
      横屏——layout_game_content 水平行内占位 dock
      （卡详面板与卡组编辑器之间，id=layout_deck_side_buttons_dock），
@@ -85,6 +86,33 @@
         android:padding="4dp"
         android:scaleType="fitCenter"
         android:src="@drawable/rename"
+        android:visibility="invisible" />
+
+    <!-- 撤销/重做：按用户规格放在设置按钮上方，并与其等同大小。设置键的 src（setting.xml 200dp
+         正方）在 wrap_content + adjustViewBounds + maxWidth/maxHeight=40dp 下必然被夹到 40×40dp，
+         因此这里不再走启发式测量，直接写定 40×40dp：旋转环（rotate→cube2）在正方框内是正圆，
+         外框也与设置键完全一致。padding 由 4dp 提到 10dp，使环内 undo/redo 图标进一步缩小。 -->
+    <ImageButton
+        android:id="@+id/btn_deck_undo"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginBottom="5dp"
+        android:background="@drawable/rotate"
+        android:padding="10dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/undo"
+        android:visibility="invisible" />
+
+    <ImageButton
+        android:id="@+id/btn_deck_redo"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginBottom="5dp"
+        android:background="@drawable/rotate"
+        android:padding="10dp"
+        android:scaleType="fitCenter"
+        android:scaleX="-1"
+        android:src="@drawable/undo"
         android:visibility="invisible" />
 
     <!-- 设置/音乐两键按用户规格恢复原本 wrap_content + min/max(30..40dp) + padding=4dp

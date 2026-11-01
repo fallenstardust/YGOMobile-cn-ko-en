@@ -261,8 +261,8 @@ public abstract class DeckManagerFragmentDeck extends DeckManagerFragmentBase {
         mDeckAdapater.notifyDataSetChanged();
         isPackMode = isPack;
 
-        // 清空历史记录并添加初始状态
-        clearDeckHistory();
+        // 先按当前卡组文件归户历史（切到另一个 ydk 那么整段清零，同一份则保留），再记录初始快照
+        deckHistory.bindDeck(file != null ? file.getAbsolutePath() : "");
         addDeckToHistory(deckInfo);
 
         // 更新按钮状态，初始化完毕后再执行，以便确保所有数据已加载
@@ -270,67 +270,42 @@ public abstract class DeckManagerFragmentDeck extends DeckManagerFragmentBase {
     }
 
     /**
-     * 清空卡组历史记录
-     */
-    protected void clearDeckHistory() {
-        deckHistory.clear();
-        historyIndex = -1;
-    }
-
-    /**
-     * 将当前卡组状态添加到历史记录中（仅当与上一个状态不同时）
+     * 将当前卡组状态记入撤销历史（去重与截尾规则见 {@code DeckHistory#push}）。
      *
      * @param deckInfo 当前卡组状态
      */
     protected void addDeckToHistory(DeckInfo deckInfo) {
-        // 如果当前不在历史记录的最新位置，需要删除之后的历史记录
-        if (historyIndex < deckHistory.size() - 1) {
-            deckHistory.subList(historyIndex + 1, deckHistory.size()).clear();
-        }
-
-        // 检查当前状态是否与最近的历史记录相同
-        boolean isSameAsLast = false;
-        if (!deckHistory.isEmpty()) {
-            DeckInfo lastState = deckHistory.get(deckHistory.size() - 1);
-            // 这里将DeckInfo.toLongString来实现了 equals 方法来比较内容
-            isSameAsLast = lastState.toLongString().equals(deckInfo.toLongString());
-        }
-
-        // 只有在状态不同时才添加新的历史记录
-        if (!isSameAsLast) {
-            deckHistory.add(deckInfo);
-            historyIndex = deckHistory.size() - 1;
-        }
+        deckHistory.push(deckInfo);
         // 更新按钮状态
         updateUndoRedoButtons();
     }
 
     /**
-     * 撤销操作
+     * 撤销操作：回到上一个快照（仅回退内存与界面，不写 ydk）
      */
     protected void undo() {
-        if (canUndo()) {
-            historyIndex--;
-            DeckInfo previousState = deckHistory.get(historyIndex);
-            mDeckAdapater.setDeck(previousState, false);
-            mDeckAdapater.notifyDataSetChanged();
-            // 更新按钮状态
-            updateUndoRedoButtons();
+        DeckInfo previousState = deckHistory.undo();
+        if (previousState == null) {
+            return;
         }
+        mDeckAdapater.setDeck(previousState, false);
+        mDeckAdapater.notifyDataSetChanged();
+        // 更新按钮状态
+        updateUndoRedoButtons();
     }
 
     /**
-     * 重做操作
+     * 重做操作：前进到下一个快照
      */
     protected void redo() {
-        if (canRedo()) {
-            historyIndex++;
-            DeckInfo nextState = deckHistory.get(historyIndex);
-            mDeckAdapater.setDeck(nextState, false);
-            mDeckAdapater.notifyDataSetChanged();
-            // 更新按钮状态
-            updateUndoRedoButtons();
+        DeckInfo nextState = deckHistory.redo();
+        if (nextState == null) {
+            return;
         }
+        mDeckAdapater.setDeck(nextState, false);
+        mDeckAdapater.notifyDataSetChanged();
+        // 更新按钮状态
+        updateUndoRedoButtons();
     }
 
     /**
@@ -339,7 +314,7 @@ public abstract class DeckManagerFragmentDeck extends DeckManagerFragmentBase {
      * @return 如果可以撤销返回true，否则返回false
      */
     protected boolean canUndo() {
-        return historyIndex > 0;
+        return deckHistory.canUndo();
     }
 
     /**
@@ -348,16 +323,22 @@ public abstract class DeckManagerFragmentDeck extends DeckManagerFragmentBase {
      * @return 如果可以重做返回true，否则返回false
      */
     protected boolean canRedo() {
-        return historyIndex < deckHistory.size() - 1;
+        return deckHistory.canRedo();
     }
 
     /**
      * 更新撤销/重做按钮的状态和可见性
      */
     protected void updateUndoRedoButtons() {
+        //垃圾桶键与 undo/redo 同位互斥：批量模式只亮垃圾桶
+        applyBatchDeleteButtonVisibility();
+        boolean batchMode = mDeckBatchController != null && mDeckBatchController.isBatchMode();
         if (btnUndo != null && btnRedo != null) {
-            // 只有历史记录大于1且不是卡包展示模式时才显示按钮
-            if (deckHistory.size() > 1 && !isPackMode) {
+            if (batchMode) {
+                //批量模式下本行留给垃圾桶，undo/redo 不占位也不可点
+                btnUndo.setVisibility(View.GONE);
+                btnRedo.setVisibility(View.GONE);
+            } else if (deckHistory.size() > 1 && !isPackMode) {
                 btnUndo.setVisibility(View.VISIBLE);
                 btnRedo.setVisibility(View.VISIBLE);
 
@@ -383,7 +364,15 @@ public abstract class DeckManagerFragmentDeck extends DeckManagerFragmentBase {
     }
 
     protected void updateUndoRedoButtonVisibility() {
+        //垃圾桶键仅在批量模式可见
+        applyBatchDeleteButtonVisibility();
         if (btnUndo == null || btnRedo == null) return;
+        // 批量勾选模式：本行改为只亮垃圾桶，undo/redo 直接不可见不可点
+        if (mDeckBatchController != null && mDeckBatchController.isBatchMode()) {
+            btnUndo.setVisibility(View.GONE);
+            btnRedo.setVisibility(View.GONE);
+            return;
+        }
         boolean drawerOpen = mDrawerLayout.isDrawerOpen(Constants.CARD_SEARCH_GRAVITY)
                 || mDrawerLayout.isDrawerOpen(Constants.CARD_RESULT_GRAVITY);
         if (drawerOpen) {

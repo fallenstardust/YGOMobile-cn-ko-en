@@ -328,7 +328,7 @@
     <string name="guide_search_result_count">Aqui é mostrado a contagem de resultados da busca</string>
     <string name="guide_button_search_result">Tocar para ver o resultado da busca. \nTambém serão exibidas as cartas favoritas.</string>
     <string name="guide_view_deck_manager">Tocar para mudar os decks. \nVocê pode gerenciar as categorias dos decks aqui.</string>
-    <string name="guide_view_move_card">Pressione e arraste uma carta para movê-la para outro lugar. \nMantenha pressionada a carta para excluí-la.</string>
+    <string name="guide_view_move_card">Pressione e arraste uma carta para movê-la para outro lugar.\nSegure uma carta para entrar no modo em lote: mover ou excluir em grupo.</string>
     <string name="guide_view_banner">Noticias do MyCard, Você pode tocar para ver. \nApenas em chinês por enquanto, desculpe.</string>
     <string name="title_delete_ex">Excluir Expansões</string>
     <string name="about_delete_ex">Se precisar excluir todas as cartas de expansão, use esta opção</string>
@@ -388,6 +388,10 @@
     <string name="tip_drag_side_full" formatted="false">O side deck está cheio (limite %d)</string>
     <string name="tip_drag_extra_in_main">Cartas do extra deck não podem ser colocadas no deck principal</string>
     <string name="tip_drag_normal_in_extra">Cartas normais não podem ser colocadas no extra deck</string>
+    <string name="batch_mode_hint">Modo em lote: toque para marcar, segure para mover o grupo; solte na lixeira ou segure novamente para excluir os marcados; Voltar para sair</string>
+    <string name="batch_mode_hint_editor">Modo em lote: toque para marcar, segure para mover o grupo; solte na lista de resultados para excluir os marcados; Voltar para sair</string>
+    <string name="batch_delete_done" formatted="false">%d cards excluídos</string>
+    <string name="batch_delete_none">Nenhum card marcado</string>
     <string name="point_cost">Consumo de pontos</string>
     <string name="credit_limit">Limite de pontos</string>
     <string name="switch_genesys_mode">Modo de GENESYS</string>

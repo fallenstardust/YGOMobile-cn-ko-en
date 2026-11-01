@@ -178,11 +178,25 @@ public class DeckDragDropHelper {
      * @return 落点解析结果，坐标不在网格或不在有效卡区范围内时返回null
      */
     private DropTarget resolveTarget(float screenX, float screenY) {
+        return resolveTargetAt(deckGrid, screenX, screenY);
+    }
+
+    /**
+     * 落点解析的共用实现：把屏幕坐标映射为卡组网格里的目标卡区与插入下标。
+     * 包级静态：搜索结果单卡拖入（本类）与批量勾选的整组拖动
+     * （{@link DeckBatchEditController}）共用同一套落点口径，避免两处判定随时间漂移。
+     *
+     * @return 落点解析结果，坐标不在网格或不在有效卡区范围内时返回 null
+     */
+    static DropTarget resolveTargetAt(RecyclerView deckGrid, float screenX, float screenY) {
+        if (deckGrid == null) {
+            return null;
+        }
         int[] loc = new int[2];
         deckGrid.getLocationOnScreen(loc);
         int localX = (int) (screenX - loc[0]);
         int localY = (int) (screenY - loc[1]);
-        View child = findChildUnder(localX, localY);
+        View child = findChildUnder(deckGrid, localX, localY);
         if (child == null) {
             return null;
         }
@@ -221,7 +235,7 @@ public class DeckDragDropHelper {
     /**
      * 在卡组网格当前可见子view中查找坐标所在的item
      */
-    private View findChildUnder(int x, int y) {
+    private static View findChildUnder(RecyclerView deckGrid, int x, int y) {
         for (int i = deckGrid.getChildCount() - 1; i >= 0; i--) {
             View child = deckGrid.getChildAt(i);
             if (x >= child.getLeft() && x < child.getRight()

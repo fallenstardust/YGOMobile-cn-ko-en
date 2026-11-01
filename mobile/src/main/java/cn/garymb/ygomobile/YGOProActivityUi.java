@@ -549,9 +549,15 @@ abstract class YGOProActivityUi extends YGOProActivityBase {
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                // 已禁用返回键响应：用户需要细化每个场景的返回键操作需求，当前保持返回键无效
-                // （避免在决斗进行中意外弹出退出询问对话框，或影响其他场景的交互）
-                // TODO: 后续根据用户规格细化返回键行为（主菜单/决斗中/回放中等不同场景）
+                // 卡组编辑批量勾选模式：返回键唯一语义是退出批量模式（清空勾选、恢复单卡拖拽），
+                // 此处消费后不再下传；除此之外仍保持返回键无效（避免决斗中误弹退出询问，
+                // TODO: 后续根据用户规格细化其他场景的返回键行为）
+                boolean deckEditorShowing = layoutDeckEditor != null
+                        && layoutDeckEditor.getVisibility() == View.VISIBLE;
+                if (deckEditorShowing && deckEditorManager != null
+                        && deckEditorManager.exitBatchSelectionMode()) {
+                    return;
+                }
             }
         });
     }

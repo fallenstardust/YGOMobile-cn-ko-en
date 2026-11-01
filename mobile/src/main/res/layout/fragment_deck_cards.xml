@@ -242,8 +242,10 @@
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:orientation="vertical">
-                    <!-- 撤销/重做按钮 -->
+                    <!-- 撤销/重做/批量删除一行：本 LinearLayout 同时是批量拖动“拖到此处删除”的落点区（layout_deck_undo_redo）；
+                         进入批量勾选模式时 undo/redo 隐藏、垃圾桶 delete 显示 -->
                     <LinearLayout
+                        android:id="@+id/layout_deck_undo_redo"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
@@ -276,6 +278,23 @@
                             android:scaleType="fitCenter"
                             android:scaleX="-1"
                             android:src="@drawable/undo" />
+
+                        <!-- 批量勾选模式的垃圾桶删除键：仅批量模式可见，与同列 undo/redo 同样带旋转背景；
+                             三个删除入口共用：①整组拖动悬停在本行时放大图标、松手即删 ②批量模式内再次长按卡片
+                             ③直接点击本键 → performBatchDelete；显式声明 clickable 保证点击不被当作装饰视图 -->
+                        <ImageButton
+                            android:id="@+id/btn_deck_batch_delete"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:layout_marginLeft="5dp"
+                            android:adjustViewBounds="true"
+                            android:background="@drawable/rotate"
+                            android:clickable="true"
+                            android:gravity="center"
+                            android:padding="12dp"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/ic_del"
+                            android:visibility="gone" />
                     </LinearLayout>
 
                     <LinearLayout

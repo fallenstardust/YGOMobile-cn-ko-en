@@ -147,6 +147,12 @@ class DeckEditorViewHost {
     }
 
     void hide() {
+        // 退出卡组编辑：收口批量勾选模式（清空勾选与打勾图标，下次进入编辑器回到单卡语义），
+        // 并摘除对共享卡组历史的监听（下次 show 经 initialize/rebind 重新挂上）
+        if (activity.deckEditorManager != null) {
+            activity.deckEditorManager.exitBatchSelectionMode();
+            activity.deckEditorManager.releaseHistoryListener();
+        }
         if (activity.layoutDeckEditor != null) {
             activity.layoutDeckEditor.setVisibility(View.GONE);
         }

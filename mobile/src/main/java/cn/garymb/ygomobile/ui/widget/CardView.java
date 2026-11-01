@@ -26,6 +26,8 @@ import ocgcore.enums.LimitType;
 public class CardView extends FrameLayout {
     private final ImageView mCardView, mTopImage;
     private final ImageView mAvailImage;
+    //批量勾选模式右上角的绿色打勾图标（与禁限角标同尺寸，右上角叠加绘制在最上层）
+    private final ImageView mBatchCheck;
     private final TextView mLimitNum;
     private Card mCard;
     private int mOverlaySize;
@@ -45,6 +47,7 @@ public class CardView extends FrameLayout {
         mCardView = new ImageView(context);
         mTopImage = new ImageView(context);
         mAvailImage = new ImageView(context);
+        mBatchCheck = new ImageView(context);
         mLimitNum = new TextView(context);
         initCountView(Math.round(width / 9.0f * 4.0f));
     }
@@ -54,6 +57,7 @@ public class CardView extends FrameLayout {
         mCardView = new ImageView(context);
         mTopImage = new ImageView(context);
         mAvailImage = new ImageView(context);
+        mBatchCheck = new ImageView(context);
         mLimitNum = new TextView(context);
         initCountView((int) getResources().getDimension(R.dimen.right_size2));
     }
@@ -87,6 +91,14 @@ public class CardView extends FrameLayout {
         mAvailImage.setAdjustViewBounds(true);
         mAvailImage.setVisibility(View.GONE);
         addView(mAvailImage, lp4);
+
+        //批量勾选打勾图标：右上角，尺寸与禁限角标一致；最后加入以保证盖在卡图与角标之上
+        LayoutParams lp5 = new LayoutParams(w, w);
+        lp5.gravity = Gravity.RIGHT | Gravity.TOP;
+        mBatchCheck.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        mBatchCheck.setImageResource(R.drawable.ic_effect_used_check);
+        mBatchCheck.setVisibility(View.GONE);
+        addView(mBatchCheck, lp5);
     }
 
     /**
@@ -117,7 +129,19 @@ public class CardView extends FrameLayout {
         lp3.height = mOverlaySize;
         mLimitNum.setLayoutParams(lp3);
 
+        LayoutParams lp5 = (LayoutParams) mBatchCheck.getLayoutParams();
+        lp5.width = mOverlaySize;
+        lp5.height = mOverlaySize;
+        mBatchCheck.setLayoutParams(lp5);
+
         setLimitNumTextSize(mLimitNumScale);
+    }
+
+    /**
+     * 批量勾选态：右上角显示/隐藏绿色打勾图标。卡组网格每次刷新（卡片视图重建）后需重新施加。
+     */
+    public void setBatchChecked(boolean checked) {
+        mBatchCheck.setVisibility(checked ? View.VISIBLE : View.GONE);
     }
 
     private void setLimitNumTextSize(float scale) {

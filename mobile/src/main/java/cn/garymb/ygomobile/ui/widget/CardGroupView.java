@@ -348,6 +348,37 @@ public class CardGroupView extends FrameLayout {
     }
 
     /**
+     * 批量勾选模式：按勾选下标集合刷新网格内每张卡右上角的打勾图标。
+     * 卡组每次重建（removeAllCards + addCard）后都需重新调用，勾选态才不会随视图刷新丢失。
+     *
+     * @param checkedIndexes 已勾选的卡片下标（越界的下标自动忽略），null 视为全部取消
+     */
+    public void applyBatchChecked(java.util.Set<Integer> checkedIndexes) {
+        int count = getChildCount();
+        for (int i = 0; i < count; i++) {
+            if (getChildAt(i) instanceof CardView) {
+                ((CardView) getChildAt(i)).setBatchChecked(
+                        checkedIndexes != null && checkedIndexes.contains(i));
+            }
+        }
+    }
+
+    /**
+     * 批量勾选模式：取消网格内所有卡片的打勾图标
+     */
+    public void clearBatchChecked() {
+        applyBatchChecked(null);
+    }
+
+    /**
+     * 批量勾选模式：按下标取该位置的卡片视图，越界返回 null
+     */
+    public CardView getCardViewAt(int index) {
+        View child = getChildAt(index);
+        return child instanceof CardView ? (CardView) child : null;
+    }
+
+    /**
      * 设置卡背图片，addCardBack 添加的占位卡使用该图片显示
      */
     public void setCardBackImage(Bitmap bitmap) {

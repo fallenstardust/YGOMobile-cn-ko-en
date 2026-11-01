@@ -8,6 +8,7 @@ import android.os.Looper;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -141,6 +142,9 @@ abstract class DeckEditorManagerBase {
     // 仅接线 设置/音乐 两键，其余四键 XML 静态 INVISIBLE 占位；用独立 ID
     // （btn_deck_settings 等）避免与决斗场按钮列同名致全树 findViewById 错绑
     protected ImageView btnDeckSettings, btnDeckSound;
+    // 卡组编辑侧边按钮列的撤销/重做两键（与卡组编辑页同一语义、共用同一份历史），
+    // 同样双副本：横屏 dock 在设置键上方、竖屏按钮行末尾，由 DeckEditorHistoryPanel 接线
+    protected ImageButton btnDeckUndo, btnDeckRedo;
     protected ImageTop mImageTop;
     protected CardTypeImage mCardTypeImage;
     protected ImageView ivMainMonsterType, ivMainSpellType, ivMainTrapType;
@@ -163,6 +167,10 @@ abstract class DeckEditorManagerBase {
     protected DeckGridLayoutApplier gridLayout;
     protected DeckStatsPanel statsPanel;
     protected DeckDropHandler dropHandler;
+    /** 长按进入的批量勾选模式（点击勾选、按住整组拖动），与单卡拖拽互斥协作 */
+    protected DeckBatchSelectionManager batchSelection;
+    /** 侧边按钮列上的撤销/重做，与卡组编辑页共用 DeckHistory 单例 */
+    protected DeckEditorHistoryPanel historyPanel;
 
     public CardSearcherManager getCardSearcherManager() {
         return cardSearcherManager;
@@ -231,6 +239,8 @@ abstract class DeckEditorManagerBase {
     }
 
     protected void loadDeckFromPath(String deckPath) {
+        // 换卡组后三个区的卡片列表整体替新，批量勾选的下标与旧卡组绑定，必须先退出批量模式
+        if (batchSelection != null) batchSelection.reset();
         File deckFile = new File(deckPath);
         boolean loaded = false;
         if (deckFile.exists()) {
@@ -256,6 +266,8 @@ abstract class DeckEditorManagerBase {
             }
         }
         refreshReadonly();
+        // 历史换户：按当前 ydk 路径归户（路径变了即清零）并把刚载入的内容定为原点
+        if (historyPanel != null) historyPanel.onDeckLoaded();
     }
 
     /** Solo match 换 side：按席位卡组文件路径载入该副卡组到编辑器，
@@ -467,6 +479,8 @@ abstract class DeckEditorManagerBase {
         boolean result = DeckUtils.save(currentDeck, deckFile);
         if (result) {
             isModified = false;
+            //已落盘内容成为历史原点：undo 回到这里时不再算“已修改”
+            if (historyPanel != null) historyPanel.markOrigin();
             if (soundManager != null) soundManager.playSoundEffect(SoundManager.SFX.BUTTON);
             YGOUtil.showTextToast(DataManager.get().getStringManager().getSystemString(1335, "保存成功"));
             if (listener != null) listener.onDeckSaved();
@@ -491,6 +505,10 @@ abstract class DeckEditorManagerBase {
             String uncatName = activity.getString(R.string.category_Uncategorized);
             currentDeckCategoryName = uncatName;
             isModified = false;
+            //另存为新卡组：历史跟着换户（新路径）并以当前内容定原点
+            if (historyPanel != null) {
+                historyPanel.onDeckLoaded();
+            }
             updateDeckManagerButtonText();
             AppsSettings.get().saveSettings("lastcategory", uncatName);
             AppsSettings.get().saveSettings("lastdeck", name);
@@ -551,6 +569,8 @@ abstract class DeckEditorManagerBase {
         setBtnState(btnShuffle, disabled, textColor);
         setBtnState(btnSort, disabled, textColor);
         setBtnState(btnDelete, disabled, textColor);
+        // 只读与卡包展示不可回退，同步收起侧边撤销/重做两键
+        if (historyPanel != null) historyPanel.refresh();
     }
 
     protected void setBtnState(Button btn, boolean disabled, int textColor) {
@@ -574,6 +594,8 @@ abstract class DeckEditorManagerBase {
     }
 
     public void onDeckCardClicked(DeckInfo.Type type, int position) {
+        // 批量勾选模式：点击只切换勾选，不再清除单选框、也不再显示卡片详情
+        if (batchSelection != null && batchSelection.handleTap(type, position)) return;
         if (cgvMain != null) cgvMain.clearSelection();
         if (cgvExtra != null) cgvExtra.clearSelection();
         if (cgvSide != null) cgvSide.clearSelection();
@@ -598,6 +620,10 @@ abstract class DeckEditorManagerBase {
         refreshCardGroupView(cgvMain, currentDeck.mainCards, DeckInfo.Type.Main);
         refreshCardGroupView(cgvExtra, currentDeck.extraCards, DeckInfo.Type.Extra);
         refreshCardGroupView(cgvSide, currentDeck.sideCards, DeckInfo.Type.Side);
+        // 网格卡片视图已整体重建，批量勾选的打勾图标需按当前勾选集合重新施加
+        if (batchSelection != null) batchSelection.applyChecks();
+        // 卡组内容变化即记一次快照（与游标相同会被去重），供两个编辑器共用的 undo/redo 使用
+        if (historyPanel != null) historyPanel.recordSnapshot();
         if (listener != null) listener.onDeckModified();
     }
 
@@ -608,14 +634,23 @@ abstract class DeckEditorManagerBase {
         groupView.updateTopImage(mImageTop, mLimitList);
         groupView.updateAvail(mImageTop, availLm);
         int count = groupView.getChildCount();
+        boolean batchMode = batchSelection != null && batchSelection.isBatchMode();
         for (int i = 0; i < count; i++) {
             CardView cardView = (CardView) groupView.getChildAt(i);
             final int index = i;
             cardView.setOnClickListener(v -> onDeckCardClicked(type, index));
-            DeckCardAdapter adapter = cardSearcherManager.getSearchAdapter();
-            if (adapter != null) {
-                cardView.setOnTouchListener(adapter.createDragTouchListener(type, index, cardView.getCard(), touchSlop, isReadonly || isPackMode));
+            // 批量模式下拖动语义变为“整组搬运”，由 batchSelection 提供触摸监听；
+            // 未进入批量模式时维持原单卡拖拽路径不变
+            if (batchMode) {
+                cardView.setOnTouchListener(batchSelection.createBatchTouchListener(type, index, cardView));
+            } else {
+                DeckCardAdapter adapter = cardSearcherManager.getSearchAdapter();
+                if (adapter != null) {
+                    cardView.setOnTouchListener(adapter.createDragTouchListener(type, index, cardView.getCard(), touchSlop, isReadonly || isPackMode));
+                }
             }
+            // 长按入口（进入批量模式）与打勾态随视图重建一并施加
+            if (batchSelection != null) batchSelection.attachCardView(cardView, type, index);
         }
     }
 

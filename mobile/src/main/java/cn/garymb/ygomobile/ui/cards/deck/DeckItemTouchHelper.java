@@ -50,6 +50,12 @@ public class DeckItemTouchHelper extends ItemTouchHelperPlus.Callback2 {
     @Override
     public int getMovementFlags(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder) {
         int id = viewHolder.getAdapterPosition();
+        // 批量勾选模式下单卡拖拽语义让位给“整组拖动”（由 DeckBatchEditController 接管），
+        // 这里一律返回 0 标志位，ItemTouchHelper 不会 grab 本次手势，
+        // 点击与长按才能正常回到 RecyclerViewItemListener
+        if (deckAdapater.isBatchMode()) {
+            return makeMovementFlags(0, 0);
+        }
         if (DeckItemUtils.isLabel(id)) {
             return makeMovementFlags(0, 0);
         }

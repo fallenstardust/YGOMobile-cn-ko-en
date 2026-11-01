@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?><!-- 卡组编辑器侧边按钮列·竖屏变体（横屏 layout/ 为纵向贴卡组编辑器左缘）：
-     按用户规格竖屏改为和决斗态类似的底部横向一行——设置(btn_deck_settings)/音乐开关
-     (btn_deck_sound) 两键 VISIBLE 靠左紧贴界面左下缘，记录/加速/表情/聊天四键保留占位
-     以 INVISIBLE 隐藏排在两键右侧（横向不占视觉空档，仅保留槽位结构）。
+     按用户规格竖屏改为和决斗态类似的底部横向一行——撤销(btn_deck_undo)/重做(btn_deck_redo)
+     按用户规格放在按钮行最右侧，设置(btn_deck_settings)/音乐开关(btn_deck_sound) 两键 VISIBLE
+     靠左紧贴界面左下缘，记录/加速/表情/聊天四键保留占位
+     以 INVISIBLE 隐藏排在右侧（横向不占视觉空档，仅保留槽位结构）。
      与横屏变体同文件名同 ID（btn_deck_*），按方向限定符各自解析；竖屏宿主是
      layout_deck_editor 根 FrameLayout 末尾的悬浮 include（root id=layout_deck_side_buttons）：
      横向一行贴界面左下角且不挤压版面（若作为水平 LinearLayout 首格会占列宽致卡组内容
@@ -40,6 +41,35 @@
         android:padding="3dp"
         android:scaleType="fitCenter"
         android:src="@drawable/ic_volume_on" />
+
+    <!-- 撤销/重做：按用户规格放在按钮行最右侧（紧跟可见的设置/音乐两键之后，四个
+         INVISIBLE 占位不抢视觉）。旋转背晕与卡组编辑页 undo/redo 同源（rotate），重做键
+         scaleX=-1 镜像；默认 INVISIBLE 占位，由 DeckEditorHistoryPanel 按共享卡组历史点亮。
+         尺寸取 30×30dp 正方（高度与本行设置/音乐键同为 30dp）：rotate 环背景在40×30
+         的非正方框里会被拉成椭圆，按用户规格 “竖屏 undo/redo 为正圆形” 改回正方；
+         padding 由 3dp 提到 8dp，使环内图标进一步缩小 -->
+    <ImageButton
+        android:id="@+id/btn_deck_undo"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_marginEnd="5dp"
+        android:background="@drawable/rotate"
+        android:padding="8dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/undo"
+        android:visibility="invisible" />
+
+    <ImageButton
+        android:id="@+id/btn_deck_redo"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_marginEnd="5dp"
+        android:background="@drawable/rotate"
+        android:padding="8dp"
+        android:scaleType="fitCenter"
+        android:scaleX="-1"
+        android:src="@drawable/undo"
+        android:visibility="invisible" />
 
     <ImageButton
         android:id="@+id/btn_deck_note"
