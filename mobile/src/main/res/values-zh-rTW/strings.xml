@@ -502,6 +502,7 @@
     <string name="resource_lflist">· 禁卡表</string>
     <string name="resource_strings">· 字段等配置</string>
     <string name="resource_pics">· 卡圖壓縮包</string>
+    <string name="resource_scripts">· 腳本壓縮包</string>
 
     <!-- 圖片與螢幕設定 -->
     <string name="follow_bilibili">關注B站動態</string>

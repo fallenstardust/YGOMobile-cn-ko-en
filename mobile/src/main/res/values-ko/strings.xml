@@ -517,6 +517,7 @@
     <string name="resource_lflist">· 금지리스트</string>
     <string name="resource_strings">· 텍스트 및 설정</string>
     <string name="resource_pics">· 카드 이미지 압축 파일</string>
+    <string name="resource_scripts">· 스크립트 압축 파일</string>
 
     <!-- 이미지 및 화면 설정 -->
     <string name="follow_bilibili">Bilibili 피드 팔로우</string>

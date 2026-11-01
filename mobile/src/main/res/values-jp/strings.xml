@@ -501,6 +501,7 @@
     <string name="resource_lflist">· リミットレギュレーション</string>
     <string name="resource_strings">· 文字列などの設定</string>
     <string name="resource_pics">· カード画像アーカイブ</string>
+    <string name="resource_scripts">· スクリプトアーカイブ</string>
 
     <!-- 画像と画面の設定 -->
     <string name="follow_bilibili">Bilibili のフィードをフォロー</string>

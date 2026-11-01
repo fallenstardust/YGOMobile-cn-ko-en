@@ -2,10 +2,12 @@ package cn.garymb.ygomobile.ui.activities;
 
 import static cn.garymb.ygomobile.Constants.CORE_LIMIT_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_PICS_ZIP;
+import static cn.garymb.ygomobile.Constants.CORE_SCRIPTS_ZIP;
 import static cn.garymb.ygomobile.Constants.CORE_STRING_PATH;
 import static cn.garymb.ygomobile.Constants.RESOURCE_CDB;
 import static cn.garymb.ygomobile.Constants.RESOURCE_LFLIST;
 import static cn.garymb.ygomobile.Constants.RESOURCE_PICS;
+import static cn.garymb.ygomobile.Constants.RESOURCE_SCRIPTS;
 import static cn.garymb.ygomobile.Constants.RESOURCE_STRINGS;
 
 import android.app.Activity;
@@ -174,6 +176,10 @@ public class ResourceShareActivity extends Activity implements ResCheckTask.ResC
                     file = new File(AppsSettings.get().getResourcePath(), CORE_PICS_ZIP);
                     name = getString(R.string.resource_pics);
                     break;
+                case RESOURCE_SCRIPTS:
+                    file = new File(AppsSettings.get().getResourcePath(), CORE_SCRIPTS_ZIP);
+                    name = getString(R.string.resource_scripts);
+                    break;
             }
             if (file != null && file.exists()) {
                 resourceFiles.put(type, file);
@@ -188,7 +194,7 @@ public class ResourceShareActivity extends Activity implements ResCheckTask.ResC
         }
 
         String requestingApp = getRequestingAppName();
-        String message = getString(R.string.resource_share_message, requestingApp, TextUtils.join(", ", resourceNames));
+        String message = getString(R.string.resource_share_message, requestingApp, TextUtils.join("\n", resourceNames));
 
         DialogPlus dialog = new DialogPlus(this);
         dialog.setTitle(R.string.resource_share_title);

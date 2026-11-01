@@ -255,7 +255,7 @@ public interface Constants {
      */
     String ACTION_OPEN_GAME = "ygomobile.intent.action.GAME";
     /***
-     * 用于应用间分享ygo资源（cdb、lflist、strings、pics）
+     * 用于应用间分享ygo资源（cdb、lflist、strings、pics、scripts）
      * <p>
      * Intent intent = new Intent("ygomobile.intent.action.SHARE_RESOURCE");
      * intent.putExtra("resources", new int[]{Constants.RESOURCE_CDB, Constants.RESOURCE_PICS});
@@ -266,6 +266,10 @@ public interface Constants {
      * ARG_RESOURCE_URIS - Bundle, 包含各资源文件对应的Uri
      * ARG_VERSION_CODE - int, 分享方应用版本号
      * ARG_PACKAGE_NAME - String, 分享方包名
+     * <p>
+     * 当前支持的资源类型最大值可通过 application meta-data 查询：
+     * ApplicationInfo info = getPackageManager().getApplicationInfo("cn.garymb.ygomobile", PackageManager.GET_META_DATA);
+     * int maxType = info.metaData.getInt("ygomobile.intent.MAX_RESOURCE_TYPE");
      */
     String ACTION_SHARE_RESOURCE = "ygomobile.intent.action.SHARE_RESOURCE";
     String ARG_RESOURCES = "resources";
@@ -278,6 +282,7 @@ public interface Constants {
     int RESOURCE_LFLIST = 1;
     int RESOURCE_STRINGS = 2;
     int RESOURCE_PICS = 3;
+    int RESOURCE_SCRIPTS = 4;
 
     /***
      * 用于从其他应用接收并保存卡组文件
