@@ -471,6 +471,18 @@ abstract class GameRoomMid extends GameRoomBase {
         byte[] obCount = tagMode
                 ? PlayerDeck.deckCountPayload(decks[0], decks[2], 0)
                 : PlayerDeck.deckCountPayload(decks[0], decks[1], 0);
+        // 观战的这份预览不带副卡组那两栏：sidec 会被客户端当成里侧占位卡立在除外区
+        //（DuelStocHandler.onDeckCount → GameField.initial 的 sidec 分支），而此刻先攻选择还没定档：
+        // 一换席位（ServerDuelBase.startDuel 里的 swapPlayersAndDecks）观战的本地视角就会与这份载荷
+        // 左右相反，表现为「对方除外区附近多出一张点不动又移不走的里侧卡」。副卡组数量只服务
+        // 决斗位自己的换备卡预览，观战无意义；它的开局前堆叠由 ServerDuelBase.startDuel 在
+        // MSG_START 前按当时正确的视角再补发一份。
+        if (obCount.length >= 12) {
+            obCount[4] = 0;
+            obCount[5] = 0;   // s0（int16 LE）
+            obCount[10] = 0;
+            obCount[11] = 0;  // s1
+        }
         for (ServerConnection o : observers) {
             o.send(STOC_DECK_COUNT, obCount);
         }

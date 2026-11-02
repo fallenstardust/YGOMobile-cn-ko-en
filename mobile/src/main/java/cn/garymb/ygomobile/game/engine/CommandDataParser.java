@@ -1,6 +1,7 @@
 package cn.garymb.ygomobile.game.engine;
 import cn.garymb.ygomobile.game.gamefield.ClientCard;
 import cn.garymb.ygomobile.game.gamefield.EffectActivatableHints;
+import cn.garymb.ygomobile.game.gamefield.GameField;
 import cn.garymb.ygomobile.render.card.CardDetailPanel;
 
 import java.nio.ByteBuffer;
@@ -8,6 +9,7 @@ import java.nio.ByteOrder;
 import java.util.List;
 
 import ocgcore.enums.CardLocation;
+import ocgcore.enums.CardPosition;
 import ocgcore.enums.CardType;
 
 /**
@@ -34,6 +36,10 @@ public class CommandDataParser {
         List<ClientCard> list = engine.field.players[player].getLocationList(location);
         if (list == null) return;
         boolean fixedSlots = (location == 0x04 || location == 0x08);
+        if (location == CardLocation.Hand.value()) {
+            // 手卡区先把张数对平再按位写入（观战补建占位卡与真实卡混排时不分先后必错位）
+            reconcileHandCount(player, list, data);
+        }
         for (int i = 0; i < list.size(); i++) {
             ClientCard card = list.get(i);
             if (card == null && !fixedSlots) continue;
@@ -48,6 +54,71 @@ public class CommandDataParser {
             }
             data.position(next);
         }
+    }
+
+    /**
+     * 手卡区的张数对平：MSG_UPDATE_DATA(LOCATION_HAND) 载荷里每个非空槽一个 len 前缀块，
+     * <b>块数就是服务端此刻该席位的手卡张数</b>（引擎按区域逐卡查询，遮蔽只清块内容不减块数），
+     * 所以它是本端唯一可用的手卡权威值。
+     * <p>
+     * 为何必须对平：观战端手卡是按 MSG_START 起手数补建的背面占位卡，占位数与真实张数
+     * 只要差一张（房间配置与引擎实际起手不同、遮蔽版 MSG_MOVE 来源序号在本端落空而
+     * 伪造卡片送墓、发动后离场的卡与占位卡彼此错位），本端手卡列表就长期多出一张；而下面
+     * 那个循环是“逐块对非空槽按位写入”，于是那张多出的占位卡会接到本应写给别人的卡码，
+     * 表现为用户反馈的「从手卡发动效果后那张卡一直留在手卡并保持公开」——真正该走的那张卡
+     * 反而被当成没走。这里先把张数拉平：多了就从尾部摘掉仍是背面（code==0）的卡，
+     * 少了就补背面占位，再把块按位写下去，码自然落在对的卡上。
+     * <p>
+     * 决斗位自己的手卡张数本来就与块数一致，本对平不产生任何增删；带真实卡码的卡也不强摘，
+     * 避免把已揭示的卡抹成不存在（宁可多显一张，不可谎报少一张）。
+     */
+    private void reconcileHandCount(int player, List<ClientCard> hand, ByteBuffer data) {
+        int blocks = 0;
+        ByteBuffer scan = data.duplicate().order(ByteOrder.LITTLE_ENDIAN);
+        while (scan.remaining() >= 4) {
+            int len = scan.getInt();
+            int next = scan.position() + (len - 4);
+            if (len < 4 || next < scan.position() || next > scan.limit()) break;
+            scan.position(next);
+            blocks++;
+        }
+        if (blocks <= 0) return;
+        int owned = engine.field.getCardCount(player, CardLocation.Hand.value());
+        boolean changed = false;
+        while (owned > blocks) {
+            int victim = -1;
+            for (int i = hand.size() - 1; i >= 0; i--) {
+                ClientCard c = hand.get(i);
+                if (c != null && c.code == 0) { victim = i; break; }
+            }
+            if (victim < 0) break;
+            hand.set(victim, null);
+            owned--;
+            changed = true;
+        }
+        while (owned < blocks) {
+            int slot = -1;
+            for (int i = 0; i < hand.size(); i++) {
+                if (hand.get(i) == null) { slot = i; break; }
+            }
+            if (slot < 0) {
+                if (hand.size() >= GameField.MAX_HAND) break;//已到上限不再撑长
+                hand.add(null);
+                slot = hand.size() - 1;
+            }
+            ClientCard c = new ClientCard();
+            c.owner = player;
+            c.controler = player;
+            c.location = CardLocation.Hand.value();
+            c.position = CardPosition.FaceDownDefence.value();
+            hand.set(slot, c);
+            owned++;
+            changed = true;
+        }
+        if (!changed) return;
+        // 序号与列表下标对齐（getCard 与后续 MSG_MOVE 的来源序号都依赖它），并按新张数重排整行
+        engine.field.resetSequence(hand, false);
+        engine.field.updateHandLayout(player, 10);
     }
 
     /**

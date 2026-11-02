@@ -95,10 +95,13 @@ public class BatchCardDragHelper {
      * @return 是否真正进入了拖动状态（无有效锚点视图时返回 false）
      */
     public boolean startDrag(List<BatchItem> items, int anchorIndex, MotionEvent trigger) {
-        if (dragging || items == null || items.isEmpty()) return false;
+        if (items == null || items.isEmpty()) return false;
         if (anchorIndex < 0 || anchorIndex >= items.size()) return false;
         View anchorView = items.get(anchorIndex).view;
         if (anchorView == null) return false;
+        //上一次整组拖动的抬手丢了（被弹窗/重绑抢事件）时，残影先清掉再开新一轮，不早退
+        if (dragging) cancelDrag();
+        DragLayers.sweep();
         content = activity.findViewById(android.R.id.content);
         if (content == null) return false;
 
@@ -174,6 +177,7 @@ public class BatchCardDragHelper {
         layer.setImageBitmap(bmp);
         layer.setAlpha(0.85f);
         content.addView(layer, new FrameLayout.LayoutParams(bmp.getWidth(), bmp.getHeight()));
+        DragLayers.add(layer, content);
         return layer;
     }
 
@@ -251,7 +255,7 @@ public class BatchCardDragHelper {
 
     private void removeLayers() {
         for (ImageView layer : layers) {
-            if (content != null) content.removeView(layer);
+            DragLayers.remove(layer);
         }
         layers.clear();
         offsets.clear();

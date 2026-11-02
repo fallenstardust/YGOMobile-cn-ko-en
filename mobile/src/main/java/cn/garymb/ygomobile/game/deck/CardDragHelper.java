@@ -66,7 +66,11 @@ public class CardDragHelper {
      * 后续触摸事件经{@link #onTouchEvent}继续转发。
      */
     public void startDrag(View shadowView, DeckInfo.Type source, int index, Card card, MotionEvent trigger) {
-        if (dragging || card == null) return;
+        if (card == null) return;
+        //上一次的拖动没收过抬手（拖到一半被弹窗/重绑抢走事件）时残留的虚影先清掉再继续，
+        //不能因 dragging 还挂着就直接早退
+        if (dragging) cancelDrag();
+        DragLayers.sweep();
         content = activity.findViewById(android.R.id.content);
         if (content == null) return;
 
@@ -77,6 +81,8 @@ public class CardDragHelper {
         dragLayer.setAlpha(0.85f);
         content.addView(dragLayer, new FrameLayout.LayoutParams(
                 dragBitmap.getWidth(), dragBitmap.getHeight()));
+        //登记到跨实例活浮层表：抬手丢失时由下一次按下或新拖动的 sweep 自愈
+        DragLayers.add(dragLayer, content);
 
         int[] cloc = new int[2];
         content.getLocationOnScreen(cloc);
@@ -198,7 +204,8 @@ public class CardDragHelper {
 
     private void removeDragLayer() {
         if (dragLayer != null) {
-            if (content != null) content.removeView(dragLayer);
+            //经登记处摘除：父容器已换（旋转/重建）时按当前父容器也能摘干净
+            DragLayers.remove(dragLayer);
             dragLayer = null;
         }
         if (dragBitmap != null) {

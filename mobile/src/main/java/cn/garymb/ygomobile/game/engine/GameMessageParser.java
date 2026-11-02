@@ -15,8 +15,15 @@ public class GameMessageParser {
         void onRetry();
         void onHint(int type, int player, int data);
         void onWaiting();
-        void onStart(int playerType, int duelRule, int lp0, int lp1,
-                     int deck0, int extra0, int deck1, int extra1);
+        void onStart(int playerType, int duelRule, int lp0, int lp1, int deck0, int extra0,
+                     int deck1, int extra1);
+
+        /**
+         * MSG_START 扩展帧（起手数与每回合抽卡数，按引擎席序下发）：先于 onStart 回调，
+         * 供开局补建手卡堆叠；服务端未带扩展时四项均为 0。
+         */
+        default void onStartExtras(int hand0, int hand1, int draw0, int draw1) {
+        }
         void onWin(int player, int reason);
         void onUpdateData(int player, int location, ByteBuffer data);
         void onUpdateCard(int player, int location, int sequence, ByteBuffer data);
@@ -151,6 +158,15 @@ public class GameMessageParser {
                 int extra0 = buf.getShort() & 0xFFFF;
                 int deck1 = buf.getShort() & 0xFFFF;
                 int extra1 = buf.getShort() & 0xFFFF;
+                // 内置服务端在本机发的 START 帧尾追加 4×uint16：双方起手数与每回合抽卡数
+                //（观战席位收不到开局发牌的 MSG_MOVE，只能靠这几个数补手卡堆叠）；
+                // 远端 ygopro 服务端没这一段，留 0 由客户端按官方默认值回退
+                if (buf.remaining() >= 8) {
+                    handler.onStartExtras(buf.getShort() & 0xFFFF, buf.getShort() & 0xFFFF,
+                            buf.getShort() & 0xFFFF, buf.getShort() & 0xFFFF);
+                } else {
+                    handler.onStartExtras(0, 0, 0, 0);
+                }
                 handler.onStart(playerType, duelRule, lp0, lp1, deck0, extra0, deck1, extra1);
                 break;
             }

@@ -650,6 +650,14 @@ public class GameEngine {
      * 靠它作为回退，避免开局双方卡组/额外堆叠不显示（见 MessageUIHandler.onStart）。
      */
     public final int[] lastDeckCounts = new int[4];
+    /**
+     * MSG_START 扩展帧里的双方起手数与每回合抽卡数（席序 [0]=引擎 P0、[1]=引擎 P1）。
+     * 开局发牌属隐私，引擎不会给观战席位下发手卡的 MSG_MOVE，观战端只能靠这几个数补出
+     * 两侧手卡堆叠（用户新规格）；连远端 ygopro 服务端时帧尾没这一段，此时为 0。
+     */
+    public final int[] startHandCounts = new int[2];
+    /** 同上，每回合抽卡数（由房间规则配置，与起手数同批下发） */
+    public final int[] drawCountsPerTurn = new int[2];
 
     // === 逐局 MSG 录制（实现见 MsgFrameRecorder） ===
 

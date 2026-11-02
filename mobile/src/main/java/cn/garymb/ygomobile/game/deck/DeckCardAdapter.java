@@ -371,6 +371,10 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
                 case MotionEvent.ACTION_DOWN:
                     downX = event.getX();
                     downY = event.getY();
+                    //上一张卡的拖拽阴影若因抬手丢失（被父级抢事件、弹窗、重绑换监听）而留在
+                    //内容层上，就是玩家目击的「场上残留一个点不动的卡片矩形」；本监听没在拖时
+                    //任何按下都先清扫一次，让残影在下一碰卡片时自愈
+                    DragLayers.sweep();
                     if (disallowIntercept && v.getParent() != null) {
                         v.getParent().requestDisallowInterceptTouchEvent(true);
                     }

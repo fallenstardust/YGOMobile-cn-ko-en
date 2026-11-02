@@ -168,6 +168,8 @@ class DeckBatchSelectionManager implements BatchCardDragHelper.BatchDropHandler 
                     downX = event.getX();
                     downY = event.getY();
                     sawDown = true;
+                    //与单卡拖拽同源：按下先清扫可能残留的整组拖动虚影（抬手丢失时它点不动也删不掉）
+                    DragLayers.sweep();
                     return false;
                 case MotionEvent.ACTION_MOVE: {
                     if (!canEdit() || cardView.getCard() == null) return false;
