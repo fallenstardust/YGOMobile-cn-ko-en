@@ -158,7 +158,8 @@ public abstract class DeckManagerFragmentSearch extends DeckManagerFragmentDeck 
     protected void onCardLongClick(View view, Card cardInfo, int pos) {
         // 长按搜索结果列表中的卡片：收起左侧结果抽屉，在手指位置生成可拖动的浮动卡片，
         // 松手后根据停留位置插入主卡组/额外卡组/副卡组（校验与提示在handleDeckCardDropped中处理）
-        if (cardInfo == null || isPackMode || mDeckDragHelper == null || mDeckDragHelper.isDragging()) {
+        // 只读分类（人机卡组/卡包展示）不起拖，与决斗内编辑器把搜索结果卡片拖拽置为只读同口径
+        if (cardInfo == null || !isDeckEditable() || mDeckDragHelper == null || mDeckDragHelper.isDragging()) {
             return;
         }
         int[] loc = new int[2];
@@ -317,8 +318,15 @@ public abstract class DeckManagerFragmentSearch extends DeckManagerFragmentDeck 
                 });
             }
 
-            // 显示添加按钮
-            mCardDetail.showAdd();
+            // 添加按钮：只读分类（人机卡组/卡包展示）收起“加入主/副卡组”两键，
+            // 与决斗内编辑器只读/卡包态置灰保存、清空、排序、删除同口径；
+            // 必须走 hideAdd 而不是“不调 showAdd”：mShowAdd 一旦置真，setCardInfo 会按它
+            // 重新把两键拉回可见，只靠默认态盖不住上一次的显示残留
+            if (isDeckEditable()) {
+                mCardDetail.showAdd();
+            } else {
+                mCardDetail.hideAdd();
+            }
 
             // 初始化对话框（如果尚未初始化）
             if (mDialog == null) {
@@ -381,6 +389,10 @@ public abstract class DeckManagerFragmentSearch extends DeckManagerFragmentDeck 
      * @return 添加成功返回true，添加失败返回false
      */
     protected boolean addSideCard(Card cardInfo) {
+        // 只读分类（人机卡组/卡包展示）不受理加卡
+        if (blockEditIfReadonlyDeck()) {
+            return false;
+        }
         // 检查卡片添加限制
         if (checkLimit(cardInfo)) {
             // 执行添加卡片操作
@@ -404,6 +416,10 @@ public abstract class DeckManagerFragmentSearch extends DeckManagerFragmentDeck 
      * @return 添加成功返回true，否则返回false
      */
     protected boolean addMainCard(Card cardInfo) {
+        // 只读分类（人机卡组/卡包展示）不受理加卡
+        if (blockEditIfReadonlyDeck()) {
+            return false;
+        }
         // 检查卡片添加限制
         if (checkLimit(cardInfo)) {
             boolean rs;
@@ -436,6 +452,10 @@ public abstract class DeckManagerFragmentSearch extends DeckManagerFragmentDeck 
      */
     protected void handleDeckCardDropped(Card card, DeckDragDropHelper.DropTarget target) {
         if (card == null || target == null) {
+            return;
+        }
+        // 兜底拦截：只读分类本不起拖，仍有路径递来落点时按统一文案提示并丢弃本次插入
+        if (blockEditIfReadonlyDeck()) {
             return;
         }
         // 卡片数量/积分限制校验（失败原因已由checkLimit内部toast）
@@ -533,6 +553,11 @@ public abstract class DeckManagerFragmentSearch extends DeckManagerFragmentDeck 
      */
     protected void performBatchDelete() {
         if (mDeckAdapater == null || !mDeckAdapater.isBatchMode()) {
+            return;
+        }
+        // 只读分类进不了批量模式（见 isBatchModeAllowed），三个删除入口本已一起失效；
+        // 这里再兜一道，避免垃圾桶键在模式位与卡组切换的夹缝里把删卡动作落到只读卡组上
+        if (!isDeckEditable()) {
             return;
         }
         if (!mDeckAdapater.hasBatchChecked()) {

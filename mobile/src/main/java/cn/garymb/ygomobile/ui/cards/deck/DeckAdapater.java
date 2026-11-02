@@ -512,6 +512,24 @@ public class DeckAdapater extends DeckAdapaterBase {
         }
     }
 
+    /**
+     * 当前卡组是否可编辑：人机/AI 卡组分类（{@link DeckHistory#isReadonlyDeck}）与卡包展示/在线缓存
+     * 分类（{@link DeckHistory#isPackDeck}）只供查看，加卡、删卡、拖拽改序一律禁止。
+     * <p>
+     * 判定口径与决斗内卡组编辑器 DeckEditorManagerBase 置位 isReadonly/isPackMode 同源（都取
+     * DeckHistory 的目录规则），也与“不参与跨编辑器同步”同一根据。这里按 ydk 现路径即时推导，
+     * 不另存状态位：卡组一换（含新建、另存为、重命名后重载）编辑能力就跟着现路径走，
+     * 不会出现在某条载入路径上漏置位而把只读卡组当成可编辑的情况。
+     *
+     * @return 可编辑返回 true；没有卡组文件（新建/空卡组）同样返回 true
+     */
+    public boolean isEditable() {
+        File ydk = getYdkFile();
+        if (ydk == null) return true;
+        String path = ydk.getAbsolutePath();
+        return !DeckHistory.isReadonlyDeck(path) && !DeckHistory.isPackDeck(path);
+    }
+
     public void setDeck(DeckInfo deckinfo, boolean isPack) {
         mDeckInfo = deckinfo;
         if (deckinfo != null) {

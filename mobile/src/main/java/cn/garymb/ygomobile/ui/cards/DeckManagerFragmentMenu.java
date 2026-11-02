@@ -197,8 +197,8 @@ public abstract class DeckManagerFragmentMenu extends DeckManagerFragmentSearch 
                     if (mDeckAdapater.getYdkFile() == null) {
                         inputDeckName(null, null, true);
                     } else {
-                        if (TextUtils.equals(mDeckAdapater.getYdkFile().getParent(), mSettings.getAiDeckDir()) ||
-                                TextUtils.equals(mDeckAdapater.getYdkFile().getParent(), mSettings.getPackDeckDir())) {
+                        // 只读分类（人机/AI 与卡包展示、在线缓存）不得落盘改写，口径与本页加卡/拖拽/删除统一
+                        if (!isDeckEditable()) {
                             YGOUtil.showTextToast(R.string.donot_edit_Deck);
                         } else {
                             save(mDeckAdapater.getYdkFile(), false); // 保存卡组文件
@@ -236,8 +236,7 @@ public abstract class DeckManagerFragmentMenu extends DeckManagerFragmentSearch 
                     YGOUtil.showTextToast(R.string.unable_to_edit_empty_deck);
                     return true;
                 }
-                if (TextUtils.equals(mDeckAdapater.getYdkFile().getParent(), mSettings.getAiDeckDir()) ||
-                        TextUtils.equals(mDeckAdapater.getYdkFile().getParent(), mSettings.getPackDeckDir())) {
+                if (!isDeckEditable()) {
                     YGOUtil.showTextToast(R.string.donot_edit_Deck);
                 } else {
                     inputDeckName(mDeckAdapater.getYdkFile(), mDeckAdapater.getYdkFile().getParent(), false);
@@ -248,7 +247,10 @@ public abstract class DeckManagerFragmentMenu extends DeckManagerFragmentSearch 
                 createDeck(null);
                 break;
             case R.id.action_clear_deck: {
-                // 清空当前卡组内容
+                // 清空当前卡组内容：只读分类（人机卡组/卡包展示）不受理，与决斗内编辑器 clearDeck 同口径
+                if (blockEditIfReadonlyDeck()) {
+                    return true;
+                }
                 builder.setTitle(R.string.question);
                 builder.setMessage(R.string.question_clear_deck);
                 builder.setMessageGravity(Gravity.CENTER_HORIZONTAL);
@@ -266,8 +268,7 @@ public abstract class DeckManagerFragmentMenu extends DeckManagerFragmentSearch 
                     YGOUtil.showTextToast(R.string.unable_to_edit_empty_deck);
                     return true;
                 }
-                if (TextUtils.equals(mDeckAdapater.getYdkFile().getParent(), mSettings.getAiDeckDir()) ||
-                        TextUtils.equals(mDeckAdapater.getYdkFile().getParent(), mSettings.getPackDeckDir())) {
+                if (!isDeckEditable()) {
                     YGOUtil.showTextToast(R.string.donot_edit_Deck);
                 } else {
                     builder.setTitle(R.string.question);
@@ -309,11 +310,17 @@ public abstract class DeckManagerFragmentMenu extends DeckManagerFragmentSearch 
             }
             break;
             case R.id.action_unsort:
-                // 打乱卡组顺序
+                // 打乱卡组顺序：只读分类不受理（同样对齐编辑器的 shuffleDeck）
+                if (blockEditIfReadonlyDeck()) {
+                    return true;
+                }
                 mDeckAdapater.unSort();
                 break;
             case R.id.action_sort:
-                // 对卡组进行排序
+                // 对卡组进行排序：只读分类不受理（同样对齐编辑器的 sortDeck）
+                if (blockEditIfReadonlyDeck()) {
+                    return true;
+                }
                 mDeckAdapater.sort();
                 break;
             default:

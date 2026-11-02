@@ -369,8 +369,9 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
                 new DeckBatchEditController.Callback() {
                     @Override
                     public boolean isBatchModeAllowed() {
-                        // 卡包展示不可编辑卡组，不开放批量模式
-                        return !isPackMode;
+                        // 卡包展示与人机（AI）分类均为只读卡组：不开批量模式，
+                        // 于是长按勾选、整组搬运、垃圾桶批量删除一起失效
+                        return isDeckEditable();
                     }
 
                     @Override
@@ -670,6 +671,29 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
         if (mDrawerLayout.isDrawerOpen(Gravity.LEFT)) {
             mDrawerLayout.closeDrawer(Gravity.LEFT);
         }
+    }
+
+    /**
+     * 当前卡组是否可编辑：人机（AI）卡组分类与卡包展示分类只供查看，拖拽改序、加卡、删卡一律禁用。
+     * <p>
+     * 判定按当前 ydk 路径即时推导（见 {@link DeckAdapater#isEditable()}），口径与决斗内卡组编辑器
+     * DeckEditorManager 的 isReadonly/isPackMode 及 {@code DeckHistory#isOutsideSyncScope} 同源：
+     * “不参与跨编辑器同步”与“不可编辑”始终按同一批目录规则走，不随目录改动而偏离。
+     */
+    protected boolean isDeckEditable() {
+        return mDeckAdapater != null && mDeckAdapater.isEditable();
+    }
+
+    /**
+     * 由用户动作直接发起的编辑入口共用的拦截：只读分类（人机卡组/卡包展示）toast
+     * “请勿更改此分类下的卡组”并返回 true，调用方据此中止本次动作；可编辑时返回 false 放行。
+     */
+    protected boolean blockEditIfReadonlyDeck() {
+        if (isDeckEditable()) {
+            return false;
+        }
+        YGOUtil.showTextToast(R.string.donot_edit_Deck);
+        return true;
     }
 
     /**

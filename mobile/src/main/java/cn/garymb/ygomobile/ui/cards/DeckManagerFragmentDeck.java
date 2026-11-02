@@ -486,6 +486,11 @@ public abstract class DeckManagerFragmentDeck extends DeckManagerFragmentBase {
      * 撤销操作：回到上一个快照（仅回退内存与界面，不写 ydk）
      */
     protected void undo() {
+        // 只读分类（人机卡组/卡包展示）不入会话：历史里那条快照可能还属于上一份可编辑卡组，
+        // 在这里回退会把别人的内容灌进这份只读卡组的视图（与按钮可见性口径保持一致）
+        if (!isDeckEditable()) {
+            return;
+        }
         DeckInfo previousState = deckHistory.undo();
         if (previousState == null) {
             return;
@@ -500,6 +505,10 @@ public abstract class DeckManagerFragmentDeck extends DeckManagerFragmentBase {
      * 重做操作：前进到下一个快照
      */
     protected void redo() {
+        // 同 undo：只读分类不得采纳属于别份卡组的历史游标
+        if (!isDeckEditable()) {
+            return;
+        }
         DeckInfo nextState = deckHistory.redo();
         if (nextState == null) {
             return;
@@ -540,7 +549,7 @@ public abstract class DeckManagerFragmentDeck extends DeckManagerFragmentBase {
                 //批量模式下本行留给垃圾桶，undo/redo 不占位也不可点
                 btnUndo.setVisibility(View.GONE);
                 btnRedo.setVisibility(View.GONE);
-            } else if (deckHistory.size() > 1 && !isPackMode) {
+            } else if (deckHistory.size() > 1 && isDeckEditable()) {
                 btnUndo.setVisibility(View.VISIBLE);
                 btnRedo.setVisibility(View.VISIBLE);
 
@@ -556,7 +565,7 @@ public abstract class DeckManagerFragmentDeck extends DeckManagerFragmentBase {
                     btnRedo.setVisibility(View.INVISIBLE);
                 }
             } else {
-                // 历史记录小于等于1或为卡包展示模式时隐藏按钮
+                // 历史记录小于等于1，或当前是不可编辑的只读卡组（人机/卡包展示）时隐藏按钮
                 btnUndo.setVisibility(View.INVISIBLE);
                 btnRedo.setVisibility(View.INVISIBLE);
             }
@@ -582,7 +591,7 @@ public abstract class DeckManagerFragmentDeck extends DeckManagerFragmentBase {
             btnRedo.setVisibility(View.INVISIBLE);
         } else {
             // 抽屉关闭时，根据原有逻辑恢复按钮状态
-            if (deckHistory.size() > 1 && !isPackMode) {
+            if (deckHistory.size() > 1 && isDeckEditable()) {
                 btnUndo.setVisibility(canUndo() ? View.VISIBLE : View.INVISIBLE);
                 btnRedo.setVisibility(canRedo() ? View.VISIBLE : View.INVISIBLE);
             } else {

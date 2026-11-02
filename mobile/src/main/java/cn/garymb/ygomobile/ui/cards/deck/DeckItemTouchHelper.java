@@ -50,6 +50,12 @@ public class DeckItemTouchHelper extends ItemTouchHelperPlus.Callback2 {
     @Override
     public int getMovementFlags(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder) {
         int id = viewHolder.getAdapterPosition();
+        // 人机/AI 与卡包展示/缓存分类的卡组只读：不给任何拖拽标志位，ItemTouchHelper 连本次手势
+        // 都不 grab（hasDragFlag 为假即不会进入拖拽选择态），卡片既不能区内改序也不能跨区搬运；
+        // 点击与详情展示不走这条链，仍照常可用
+        if (!deckAdapater.isEditable()) {
+            return makeMovementFlags(0, 0);
+        }
         // 批量勾选模式下单卡拖拽语义让位给“整组拖动”（由 DeckBatchEditController 接管），
         // 这里一律返回 0 标志位，ItemTouchHelper 不会 grab 本次手势，
         // 点击与长按才能正常回到 RecyclerViewItemListener

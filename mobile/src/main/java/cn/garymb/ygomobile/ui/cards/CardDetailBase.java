@@ -176,6 +176,16 @@ abstract class CardDetailBase extends BaseAdapterPlus.BaseViewHolder {
         addMain.setVisibility(View.VISIBLE);
     }
 
+    /**
+     * 与 {@link #showAdd()} 对称：卡组不可编辑（人机卡组/卡包展示分类）时收起“加入主/副卡组”两键。
+     * mShowAdd 同步置假，否则 setCardInfo 里“按 mShowAdd 重新显隐”的分支会在换卡展示时把两键拉回来。
+     */
+    public void hideAdd() {
+        mShowAdd = false;
+        addSide.setVisibility(View.INVISIBLE);
+        addMain.setVisibility(View.INVISIBLE);
+    }
+
     public void hideRelatedButton() {
         mHideRelatedButton = true;
         btn_related.setVisibility(View.INVISIBLE);
