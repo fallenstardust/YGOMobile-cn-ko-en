@@ -1,6 +1,7 @@
 package cn.garymb.ygomobile.game.engine;
 import cn.garymb.ygomobile.game.gamefield.EffectActivationLedger;
 import cn.garymb.ygomobile.game.gamefield.GameField;
+import cn.garymb.ygomobile.game.gamefield.SummonPledgeLedger;
 
 import android.util.Log;
 
@@ -201,7 +202,7 @@ class UndoClientCoordinator {
             boolean droppedWhileArmed = undoBarrierDropped;
             releaseUndoResponseBarrier();
             if (droppedWhileArmed) restorePendingQuestionUi();
-            postUndoHint("撤回不可用：没有可撤回的操作，或该操作不是你这方做出的");
+            // 撤回被拒不弹任何确认窗（用户规格）：局面未变、待答询问仍在原位，只把它恢复回去即可
             // 通知界面恢复点击撤回时即时隐藏的询问弹窗：丢弃过应答时询问已由上方
             // restorePendingQuestionUi 按新询问重新派发（旧快照不得再恢复，否则两窗叠加），
             // 未丢弃时询问仍在原弹窗上待答，不恢复就永久不可见
@@ -228,15 +229,11 @@ class UndoClientCoordinator {
         undoResyncChainEvents = chainEvents;
         // 记下 ACK 到达时刻：它与其后的 MSG_RELOAD_FIELD 同源同序，超过时限仍未被消费即自愈
         undoResyncLatchAtMs = System.currentTimeMillis();
-        postUndoHint(result == YGOProtocol.UNDO_ACK_REBUILT
-                ? "撤回失败：已按原局面重建并重同步" : "已撤回上一步操作");
+        // 撤回结果不弹确认窗（用户规格）：局面自行回退就是反馈，REBUILT 与 OK 同样只走重同步
+        if (result == YGOProtocol.UNDO_ACK_REBUILT) {
+            Log.w(TAG, "undo rebuilt from pre-undo state: round=" + ackRound + " turn=" + turn);
+        }
         if (engine.listener != null) engine.listener.onUndoResync();
-    }
-
-    private void postUndoHint(String text) {
-        engine.mainHandler.post(() -> {
-            if (engine.listener != null) engine.listener.onNoticeMessage(text);
-        });
     }
 
     // === 重同步落点 ===
@@ -263,6 +260,9 @@ class UndoClientCoordinator {
         undoKeptChainEvents = chainEvents;
         if (chainEvents >= 0) {
             EffectActivationLedger.dropBeyond(chainEvents);
+            // 召唤誓约账本同一根轴回退（条目携带落账时的发动条数戳）：被回退那一段里的
+            // 召唤不再列入「持续适用中效果」
+            SummonPledgeLedger.dropBeyond(chainEvents);
         }
         CardDetailPanel.refreshCardDetailMarks();
         if (undoResyncPlayer >= 0) {

@@ -15,6 +15,7 @@ import cn.garymb.ygomobile.game.gamefield.ClientCard;
 import cn.garymb.ygomobile.game.gamefield.EffectActivationLedger;
 import cn.garymb.ygomobile.game.gamefield.GameFieldController;
 import cn.garymb.ygomobile.game.gamefield.GameTopInfoManager;
+import cn.garymb.ygomobile.game.gamefield.SummonPledgeLedger;
 import cn.garymb.ygomobile.game.replay.ReplayPlayer;
 import cn.garymb.ygomobile.game.select.ShowDialogUtil;
 import cn.garymb.ygomobile.lite.R;
@@ -61,6 +62,7 @@ public class CardDetailPanel extends CardDetailPanelMid {
     public static void notifyViewpointSwapped() {
         EffectActivationLedger.swapSides();
         EffectActivatableHints.swapSides();
+        SummonPledgeLedger.swapSides();
         CardInfoBinder.notifyViewpointSwapped();
         GameTopInfoManager.refreshApplyingEffects();
     }

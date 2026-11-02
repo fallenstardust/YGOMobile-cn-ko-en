@@ -2,8 +2,10 @@ package cn.garymb.ygomobile.game.engine;
 import cn.garymb.ygomobile.game.gamefield.ClientCard;
 import cn.garymb.ygomobile.game.gamefield.EffectActivationLedger;
 import cn.garymb.ygomobile.game.gamefield.GameField;
+import cn.garymb.ygomobile.game.gamefield.GameTopInfoManager;
 import cn.garymb.ygomobile.game.gamefield.MoveEventApplier;
 import cn.garymb.ygomobile.game.gamefield.ReloadFieldBuilder;
+import cn.garymb.ygomobile.game.gamefield.SummonPledgeLedger;
 import cn.garymb.ygomobile.game.gamefield.TagSwapApplier;
 
 import android.util.Log;
@@ -77,10 +79,11 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
 
     @Override
     public void onStart(int playerType, int duelRule, int lp0, int lp1, int deck0, int extra0, int deck1, int extra1) {
-        // 新一局/回放从头重播：清空已发动效果账本并把当前回合号复位到 0（实况与回放同走本链路）；
+        // 新一局/回放从头重播：清空已发动效果账本与召唤誓约账本并把当前回合号复位到 0（实况与回放同走本链路）；
         // 随后刷新正在展示的卡详，清除上一局/上一轮重播残留的标记文本
         EffectActivationLedger.clear();
         EffectActivationLedger.setCurrentTurn(0);
+        SummonPledgeLedger.clear();
         CardDetailPanel.refreshCardDetailMarks();
         engine.messageParser.onStart(playerType, duelRule, lp0, lp1, deck0, extra0, deck1, extra1);
     }
@@ -90,6 +93,7 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
         // 用户规格：胜负（当前一局结束信息）出现即清空全部发动标记——「决斗中只能使用1次」
         // 类持续标记的寿命终点就是本局结束；新一局 MSG_START 会重发并再次复位
         EffectActivationLedger.clear();
+        SummonPledgeLedger.clear();
         CardDetailPanel.refreshCardDetailMarks();
         engine.messageParser.onWin(player, reason);
     }
@@ -153,21 +157,27 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
     @Override
     public void onSelectUnselectCard(ByteBuffer data) { engine.messageParser.onSelectUnselectCard(data); }
 
-    // ==== 召唤动画类转发（实现在 SummonAnimationManager） ====
+    // ==== 召唤动画类转发（实现在 SummonAnimationManager）====
+    //   同时给召唤誓约账本挂账（用户新规格2）：通常/反转/特殊召唤都不入连锁、不产生
+    //   MSG_CHAINING，而『把这张卡特殊召唤的回合，○○』『○○召唤成功的回合，○○』这类誓约
+    //   正是玩家「现在不能做什么」的直接原因；*SUMMONING 先挂账，真正成功（*SUMMONED）才落账
 
     @Override
     public void onSummoning(int code, int controler, int location, int sequence) {
         engine.summonAnim.onSummoning(code, controler, location, sequence);
+        SummonPledgeLedger.addPending(code, engine.localPlayer(controler & 1));
     }
 
     @Override
     public void onSpSummoning(int code, int controler, int location, int sequence) {
         engine.summonAnim.onSpSummoning(code, controler, location, sequence);
+        SummonPledgeLedger.addPending(code, engine.localPlayer(controler & 1));
     }
 
     @Override
     public void onFlipSummoning(int code, int controler, int location, int sequence, int position) {
         engine.summonAnim.onFlipSummoning(code, controler, location, sequence, position);
+        SummonPledgeLedger.addPending(code, engine.localPlayer(controler & 1));
     }
 
     // ==== 场地事件实现 ====
@@ -248,6 +258,8 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
         // 卡详发动标记随回合轮转过期（用户规格：1回合1次类标记在回合结束轮转时清除，
         // 「决斗中只能使用1次」类由渲染方按描述文本判定后持续）：同步账本回合号并刷新正在展示的卡详
         EffectActivationLedger.setCurrentTurn(engine.field.turnCount);
+        // 挂账而未落账的召唤不带到下个回合（一次召唤的 *SUMMONING→*SUMMONED 在本回合内必闭合）
+        SummonPledgeLedger.dropPending();
         CardDetailPanel.refreshCardDetailMarks();
         // HINT_ZONE 纵列玫红标注清除：无限泡影类无效效果均携 RESET_PHASE+PHASE_END 于
         // 发动回合结束时失效，而客户端无显式失效通讯，下一个 MSG_NEW_TURN 即已跨过
@@ -292,6 +304,10 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
     @Override
     public void onMove(int code, int oldCtrl, int oldLoc, int oldSeq, int oldPos,
                        int newCtrl, int newLoc, int newSeq, int position, int reason) {
+        // 召唤被无效的确定性信号（用户新规格2 的配套）：ocgcore 只在召唤真正成功时发 *SUMMONED，
+        // 无效召唤的分支直接结束（operations.cpp special_summon_step），被召唤的卡随即被 MSG_MOVE
+        // 送回手卡/额外/墓地——此时把尚在挂账的同一卡码从 pending 里撤掉，不当作召唤成功登记誓约
+        SummonPledgeLedger.cancelPending(code, newLoc);
         moveApplier.applyMove(code, oldCtrl, oldLoc, oldSeq, oldPos,
                 newCtrl, newLoc, newSeq, position, reason);
     }
@@ -319,6 +335,8 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
     @Override
     public void onSummoned() {
         engine.hintManager.setEventString(1604, "怪兽召唤成功");
+        SummonPledgeLedger.commitPending();
+        GameTopInfoManager.refreshApplyingEffects();
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onFieldChanged();
         });
@@ -332,6 +350,9 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
         engine.field.pendulumPreludeL = null;
         engine.field.pendulumPreludeR = null;
         engine.field.pendulumSelectPending = false;
+        // 灵摆/同步/超量/连接等多张一批特殊召唤也在本消息统一落账（逐张的 SPSUMMONING 已全部挂账）
+        SummonPledgeLedger.commitPending();
+        GameTopInfoManager.refreshApplyingEffects();
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onFieldChanged();
         });
@@ -340,6 +361,8 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
     @Override
     public void onFlipSummoned() {
         engine.hintManager.setEventString(1608, "怪兽反转召唤成功");
+        SummonPledgeLedger.commitPending();
+        GameTopInfoManager.refreshApplyingEffects();
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onFieldChanged();
         });
@@ -504,12 +527,31 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
     public void onChainNegated(int chainCount) {
         engine.soundManager.playSoundEffect(SoundManager.SFX.NEGATE);
         engine.summonAnim.postNegatedAnimation(chainCount);
+        markPledge(chainCount, false);
     }
 
     @Override
     public void onChainDisabled(int chainCount) {
         engine.soundManager.playSoundEffect(SoundManager.SFX.NEGATE);
         engine.summonAnim.postNegatedAnimation(chainCount);
+        markPledge(chainCount, true);
+    }
+
+    /**
+     * 把链的结算结果映射到发动账本条目（用户新规格：被无效的效果，其誓约部分不起作用，
+     * 不该出现在「持续适用中效果」列表里）：按 {@link #onChainSolving} 同款口径取
+     * {@code chains.get(ct-1)} 的 卡码/段落/半场，标到 {@link EffectActivationLedger} 对应条目上
+     * 并刷新徽标与已展开的列表（档位过滤在 {@code ContinuousEffectApplier} 里做）。
+     * 取不到链（越界/已被 CHAIN_END 清理）时静默跳过：宁可多留一条也不误清仍在适用的誓约。
+     */
+    private void markPledge(int chainCount, boolean disabled) {
+        List<GameField.ChainInfo> chains = engine.field.chains;
+        if (chainCount < 1 || chainCount > chains.size()) return;
+        GameField.ChainInfo ci = chains.get(chainCount - 1);
+        if (ci == null || ci.code <= 0) return;
+        EffectActivationLedger.markPledgeNegated(ci.code, ci.desc & 0xf, ci.controler,
+                engine.field.turnCount, disabled);
+        GameTopInfoManager.refreshApplyingEffects();
     }
 
     @Override

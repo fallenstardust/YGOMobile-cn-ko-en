@@ -62,19 +62,27 @@ public class GameTopInfoManager extends GameTopInfoManagerBase {
     private static GameTopInfoManager sLive;
 
     /**
-     * 持续适用中效果徽标的统一刷新入口（引擎派发线程可调）：重新解算两侧条目并切徽标闪动。
-     * 调用点与卡详已发动标记完全对齐（MSG_CHAINING 登记 / MSG_NEW_TURN / MSG_START / MSG_WIN /
-     * 撤回回退 / 视角互换），保证两处对「哪些效果还在适用」的口径不会分叉。
+     * 持续适用中效果徽标的统一刷新入口（引擎派发线程与主线程均可调）：重新解算两侧条目并切徽标
+     * 闪动。调用点与卡详已发动标记完全同源（MSG_CHAINING 登记 / MSG_NEW_TURN / MSG_START / MSG_WIN /
+     * 撤回回退 / 视角互换），叠加召唤成功（*SUMMONED，召唤誓约不入连锁只能跟召唤事件走）与
+     * 链无效（MSG_CHAIN_NEGATED / MSG_CHAIN_DISABLED），
+     * 保证两处对「哪些效果还在适用」的口径不会分叉。
+     * <p>合批：一次事件可能连投多次请求，remove+post 只留最后一次真跑（与
+     * {@link ApplyingEffectsPopup#show} 的条目指纹短路同一目的，避免重复重解与重复刷窗）。
      */
     public static void refreshApplyingEffects() {
         GameTopInfoManager m = sLive;
         if (m == null) return;
-        m.mainHandler.post(m::refreshApplyingEffectsNow);
+        m.mainHandler.removeCallbacks(m.applyingRefreshTask);
+        m.mainHandler.post(m.applyingRefreshTask);
     }
+
+    /** {@link #refreshApplyingEffects()} 的实体（持有固定对象引用才能被 removeCallbacks 命中） */
+    private final Runnable applyingRefreshTask = this::refreshApplyingEffectsNow;
 
     /**
      * 主线程解算并落地：两侧条目缓存→徽标闪动→已展开的下拉列表同步（该侧条目清空则收起，
-     * 否则重建行以反映新发动/已过期的效果）。
+     * 否则原地刷新行以反映新发动/被无效/已过期的效果与新落账的召唤誓约）。
      */
     private void refreshApplyingEffectsNow() {
         applyingMe = ContinuousEffectApplier.forSide(0);
@@ -108,7 +116,7 @@ public class GameTopInfoManager extends GameTopInfoManagerBase {
         openApplyingPopup(side, items);
     }
 
-    /** 展开指定侧的下拉列表（锚 layout_top_info 下缘、横向对齐该侧血条面板） */
+    /** 展开指定侧的下拉列表（锚 layout_top_info 下缘、横向对齐该侧血条面板；已在展示则只原地刷新行） */
     private void openApplyingPopup(int side, List<ContinuousEffectApplier.Applying> items) {
         if (applyingPopup == null) {
             applyingPopup = new ApplyingEffectsPopup(activity, activity.getImageLoader());
