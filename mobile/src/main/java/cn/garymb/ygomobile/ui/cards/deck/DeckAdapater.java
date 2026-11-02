@@ -109,6 +109,19 @@ public class DeckAdapater extends DeckAdapaterBase {
         for (Integer pos : old) notifyItemChanged(pos);
     }
 
+    /**
+     * 撤销刚误入的批量模式，<b>不做整表重建</b>：{@link #setBatchMode} 里的 notifyDataSetChanged
+     * 会把 ItemTouchHelper 正在拖着的条目回收掉，卡片当场定在手指下既换不了位也松不掉，
+     * 故「长按进了模式、手指随即又变成拖卡」这条路径只翻模式位 + 按位归位勾选。
+     */
+    public void rollbackBatchMode() {
+        if (!mBatchMode && mBatchChecked.isEmpty()) return;
+        List<Integer> old = new ArrayList<>(mBatchChecked);
+        mBatchMode = false;
+        mBatchChecked.clear();
+        for (Integer pos : old) notifyItemChanged(pos);
+    }
+
     /** 安全取卡片型条目：越界、分隔栏、占位格均返回 null（同包的 DeckBatchEditController 用它判定可勾选位） */
     public Card batchCardAt(int pos) {
         if (pos < 0 || pos >= mItems.size()) return null;

@@ -602,7 +602,10 @@ public abstract class ItemTouchHelperPlusBase extends RecyclerView.ItemDecoratio
                 // 检测到真正的拖拽移动，设置拖拽状态并取消长按
                 if ((Math.abs(dX) > mDx || Math.abs(dY) > mDy) && !isDragging) {
                     isDragging = true;
-                    if (!isLongPressMode() && !isLongPressCancel) {
+                    //位移一旦超过拖拽阈值，本次手势就是「拖动」而不是「按住不动」：长按模式必须就地退出。
+                    //原先“已进长按模式就不再退出”的写法会让 canDropOver 一直被长按模式挡着，
+                    //卡片跟着手指却换不了位；宿主侧据此把长按语义（如批量勾选）从本次手势上撤销。
+                    if (!isLongPressCancel) {
                         isLongPressCancel = true;
                         endLongPressMode();
                     }
@@ -644,6 +647,8 @@ public abstract class ItemTouchHelperPlusBase extends RecyclerView.ItemDecoratio
                 if (!isDragging && System.currentTimeMillis() - longPressTime >= mLongTime) {
                     mLongPressMode = true;
                     if (getOnDragListener() != null && mSelectId >= 0) {
+                        //长按当场触发（用户规格：不是抬手才触发）；若之后手指真的起拖，
+                        //父类会就地退出长按模式并由 onDragLongPressEnd 通知宿主收尾
                         getOnDragListener().onDragLongPress(mSelectId);
                     }
                 }

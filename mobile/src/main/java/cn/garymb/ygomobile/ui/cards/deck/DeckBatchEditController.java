@@ -42,6 +42,16 @@ public class DeckBatchEditController implements RecyclerView.OnItemTouchListener
         boolean isBatchModeAllowed();
 
         /**
+         * 卡组网格的单卡拖拽是否已经真的拖动起来（位移超过长按手抖容差）。
+         * <p>
+         * 本控制器自己的 {@code onInterceptTouchEvent} 在拖拽被 ItemTouchHelper 接管后就拿不到
+         * 后续事件了，而宿主的另一条长按链（{@code RecyclerViewItemListener} 的 GestureDetector）
+         * 定时器按按下时刻起算、不能取消，仍会在拖动过程中到点回调长按；因此“本次手势其实是
+         * 拖卡”这个结论必须由宿主递进来，在批量模式入口当场拒绝。
+         */
+        boolean isDeckCardDragging();
+
+        /**
          * 模式刚被激活或退出，供宿主刷新界面（如收起抽屉、提示文案）
          */
         void onBatchModeChanged(boolean enabled);
@@ -94,6 +104,13 @@ public class DeckBatchEditController implements RecyclerView.OnItemTouchListener
     private float downRawX, downRawY;
     private int anchorPos = RecyclerView.NO_POSITION;
     private boolean dragging;
+    /**
+     * 本次手势是否刚把批量模式从「关」开到（用户新规格：进模式是长按当场触发，不是抬手才触发）。
+     * <p>手指在进模式之后又起拖，说明本次手势其实是要拖这张卡：本标志是该撤销的唯一依据，
+     * 撤销走 {@link #rollbackGestureBatchMode()}（不整表重建，避免打断 ItemTouchHelper 己抢到的拖拽），
+     * 而不会走成整组拖动。手势结束（UP/CANCEL/新 DOWN）即复位。
+     */
+    private boolean enteredBatchByCurrentGesture;
     /** 上一条长按的处理时刻，用于吃掉同一次手势的重复长按回调 */
     private long lastLongPressHandledAt;
     private static final long LONG_PRESS_DEBOUNCE_MS = 300L;
@@ -124,6 +141,19 @@ public class DeckBatchEditController implements RecyclerView.OnItemTouchListener
 
     public boolean isDragging() {
         return dragging;
+    }
+
+    /**
+     * 撤销「本次手势刚误入的批量模式」：只清模式位与勾选、按位 notifyItemChanged，
+     * 不走 {@link #exitBatchMode} 的整表重建路径（那时 ItemTouchHelper 手里还有本次手势在拖）。
+     * <p>公开给宿主：拖拽一旦真的移动起来，宿主从拖拽回调这一侧直接调本方法撤销，
+     * 不必等本控制器的 {@code onInterceptTouchEvent}（那个事件流在拖拽期间已不属于它）。
+     */
+    public void rollbackGestureBatchMode() {
+        enteredBatchByCurrentGesture = false;
+        if (!deckAdapater.isBatchMode()) return;
+        deckAdapater.rollbackBatchMode();
+        if (callback != null) callback.onBatchModeChanged(false);
     }
 
     /** 设定“拖到此处即批量删除”的落点视图（传 null 则关闭该入口） */
@@ -182,6 +212,14 @@ public class DeckBatchEditController implements RecyclerView.OnItemTouchListener
      */
     public boolean onDeckCardLongPress(int pos) {
         if (callback == null || !callback.isBatchModeAllowed() || dragging) return false;
+        // 本次手势（或上一次拖卡遗留的同类手势）已经把卡片拖动了：语义是「拖这张卡」，
+        // 不是「按住不动进批量」。这里既不能进模式，还要把刚刚被另一条长按链误置上的批量模式
+        // 当场撤销（不整表重建，不打断正跟着手指的拖拽）；不走下面的防抖，否则拖完紧接着的
+        // 一次真长按会被 300ms 窗口误吃掉
+        if (callback.isDeckCardDragging()) {
+            rollbackGestureBatchMode();
+            return false;
+        }
         //同一手势可能被两条长按链路先后回调，短窗口内只认第一次
         long now = android.os.SystemClock.uptimeMillis();
         if (now - lastLongPressHandledAt < LONG_PRESS_DEBOUNCE_MS) return false;
@@ -191,6 +229,8 @@ public class DeckBatchEditController implements RecyclerView.OnItemTouchListener
             deckAdapater.setBatchMode(true);
             callback.onBatchModeChanged(true);
             deckAdapater.ensureBatchChecked(pos);
+            //长按当场进模式：记下「本次手势刚进模式」，手指随即起拖时据此撤销
+            enteredBatchByCurrentGesture = true;
             return true;
         }
         if (!deckAdapater.hasBatchChecked()) return false;
@@ -214,6 +254,7 @@ public class DeckBatchEditController implements RecyclerView.OnItemTouchListener
 
     /** 退出批量模式：收起浮层与删除区高亮、清空勾选并通知宿主（返回键专用） */
     public void exitBatchMode() {
+        enteredBatchByCurrentGesture = false;
         cancelDrag();
         if (deckAdapater.isBatchMode()) {
             deckAdapater.setBatchMode(false);
@@ -223,6 +264,7 @@ public class DeckBatchEditController implements RecyclerView.OnItemTouchListener
 
     /** 卡组被外部整体替换（撤销/重做/重载）后同步退出批量模式，不通知宿主以免多余弹窗 */
     public void reset() {
+        enteredBatchByCurrentGesture = false;
         cancelDrag();
         cancelDeleteZoneHover();
         deckAdapater.setBatchMode(false);
@@ -240,6 +282,7 @@ public class DeckBatchEditController implements RecyclerView.OnItemTouchListener
         // ItemTouchHelperPlus 的同样写法），此处一并交给 onTouchEvent 收尾；
         // onTouchEvent 以 dragging 作门，重复调用不会二次落子
         if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+            enteredBatchByCurrentGesture = false;
             onTouchEvent(rv, e);
             return false;
         }
@@ -251,11 +294,18 @@ public class DeckBatchEditController implements RecyclerView.OnItemTouchListener
                 anchorPos = resolveAnchorPos(e);
                 downRawX = e.getRawX();
                 downRawY = e.getRawY();
+                enteredBatchByCurrentGesture = false;
                 return false;
             case MotionEvent.ACTION_MOVE: {
                 if (anchorPos < 0) return false;
                 if (Math.abs(e.getRawX() - downRawX) <= touchSlop
                         && Math.abs(e.getRawY() - downRawY) <= touchSlop) {
+                    return false;
+                }
+                //长按刚当场进了模式、手指随即又拖动：本次手势其实是「拖这张卡」，
+                //撤销模式并把手势交回 ItemTouchHelper，不起整组拖动（用户新规格）
+                if (enteredBatchByCurrentGesture) {
+                    rollbackGestureBatchMode();
                     return false;
                 }
                 //按住未勾选的卡也先把它勾上，整组包含它

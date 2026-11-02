@@ -217,8 +217,8 @@ public abstract class DeckManagerFragmentSearch extends DeckManagerFragmentDeck 
 
     @Override
     public void onItemLongClick(View view, int pos) {
-        // 批量勾选模式下再次长按：直接删除当前已勾选的整组卡（进模式后的长按只可能从
-        // 本回调发出，因为单卡拖拽标志位已置 0，ItemTouchHelperPlus 那条长按链路不会启动）
+        // 卡组网格的另一条长按链（GestureDetector）：与 ItemTouchHelperPlus 那条同走控制器，
+        // 同一手势两条先后到达由控制器的 300ms 防抖只认第一次；进模式与模式内删除同样在内分流
         if (mDeckBatchController != null) {
             mDeckBatchController.onDeckCardLongPress(pos);
         }

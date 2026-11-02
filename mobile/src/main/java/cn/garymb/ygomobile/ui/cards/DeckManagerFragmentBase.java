@@ -375,6 +375,15 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
                     }
 
                     @Override
+                    public boolean isDeckCardDragging() {
+                        // 单卡拖拽已经真的移动起来了：本次手势是「拖卡」而不是「按住不动」。
+                        // RecyclerViewItemListener 那条长按链在拖拽被 ItemTouchHelper 接管后
+                        // 再也收不到后续事件，它的定时器不能取消，仍会按按下那一刻的旧坐标到点
+                        // 回调长按，必须靠这个信号在批量模式入口当场拒绝
+                        return mDeckItemTouchHelper != null && mDeckItemTouchHelper.isCardDragging();
+                    }
+
+                    @Override
                     public void onBatchModeChanged(boolean enabled) {
                         if (enabled) {
                             YGOUtil.showTextToast(getString(R.string.batch_mode_hint));
@@ -400,6 +409,14 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
                     }
                 });
         mDeckBatchController.install();
+        // 卡片真的被拖起来那一瞬间（位移首次超过长按手抖容差）：当场撤销本次手势误入的批量勾选模式。
+        // 拖拽期间控制器自己的 onInterceptTouchEvent 再也看不到 MOVE（事件流已被 ItemTouchHelper 独占），
+        // 所以只能由拖拽回调这一侧主动报；撤销走不整表重建的路径，不会打断正跟着手指的那次拖卡
+        mDeckItemTouchHelper.setOnDragMovedListener(() -> {
+            if (mDeckBatchController != null) {
+                mDeckBatchController.rollbackGestureBatchMode();
+            }
+        });
 
         // 初始化弹出菜单按钮及相关导航按钮点击事件
         initBoomMenuButton(layoutView.findViewById(R.id.bmb));
@@ -639,8 +656,10 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
 
     @Override
     public void onDragLongPress(int pos) {
-        // 卡组网格长按语义：未在批量模式时“进入批量勾选模式并勾上该卡”（原长按删单卡入口让位），
-        // 已在批量模式时“删除已勾选的整组卡”，两种行为均在 DeckBatchEditController#onDeckCardLongPress 内分流
+        // 卡组网格长按语义（用户规格：长按当场触发，不是抬手才触发）：未在批量模式时
+        // “进入批量勾选模式并勾上该卡”，已在模式时“删除已勾选的整组卡”，两种行为均在
+        // DeckBatchEditController#onDeckCardLongPress 内分流；按住又起拖的撤销也在控制器里按
+        // 「本次手势刚进模式」标志位做（见 rollbackGestureBatchMode）
         if (mDeckBatchController != null) {
             mDeckBatchController.onDeckCardLongPress(pos);
         }
