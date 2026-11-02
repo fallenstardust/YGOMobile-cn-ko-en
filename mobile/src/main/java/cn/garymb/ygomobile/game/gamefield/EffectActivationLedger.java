@@ -24,6 +24,9 @@ import ocgcore.data.Card;
  * 维护的 field.turnCount）：普通记录只在发动当回合可见（回合轮转即「过期」），
  * 「决斗中只能使用1次」类限制由 CardInfoBinder 渲染时按 cdb 描述文本条款判定，
  * 命中则跨回合持续标记，直到胜负（MSG_WIN）/新一局（MSG_START）整体清空。
+ * <p>链结算结果（用户新规格）：MSG_CHAIN_NEGATED / MSG_CHAIN_DISABLED 经 {@link #markPledgeNegated}
+ * 回到对应条目上，供「持续适用中效果」按 OCG Rule《誓约》的两档收紧显示（括号内誓约被无效仍适用，
+ * 『发动的回合』只看发动是否被无效，『这个回合/发动后/发动过的回合』类附加处理被无效即不适用）。
  * <p>线程模型：引擎派发线程写（record/setCurrentTurn）、UI/后台绑定线程读；
  * ConcurrentHashMap + CopyOnWrite 集合 + volatile 回合号，无需外部同步；
  * 撤回回退（dropBeyond）沿追加日志剪除后缀条目，与 record 共用 LOG 监视器串行。
@@ -31,11 +34,19 @@ import ocgcore.data.Card;
 public final class EffectActivationLedger {
 
     /** 单条发动记录：效果段落锚点 offset + 发动半场（本地索引 0=我方 1=对方）+ 发动回合号。
-     *  side 非 final：视角互换就地翻转（保持对象身份，使 {@link #LOG} 里的引用仍可精确剪除） */
+     *  side 非 final：视角互换就地翻转（保持对象身份，使 {@link #LOG} 里的引用仍可精确剪除）。
+     *  negated/disabled 也非 final 且不进 equals/hashCode：它们是链的结算结果（状态）而不是
+     *  发动本身的身份，同键的另一条已存在记录仍应归一 */
     public static final class Activation {
         public final int offset;
         public int side;
         public final int turn;
+        /** 本次发动的链被无效（MSG_CHAIN_NEGATED）：按 OCG Rule《誓约》，效果的附加处理与
+         *  『发动的回合，○○』都不再适用，仅括号内『（这个回合，○○）』仍适用 */
+        public boolean negated;
+        /** 本次发动成功但效果被无效（MSG_CHAIN_DISABLED）：『不是效果』的誓约仍适用，
+         *  只有「效果的附加处理」类不适用 */
+        public boolean disabled;
 
         Activation(int offset, int side, int turn) {
             this.offset = offset;
@@ -147,6 +158,30 @@ public final class EffectActivationLedger {
     /** 当前回合号（渲染时判「本回合发动」与否的基准） */
     public static int getCurrentTurn() {
         return currentTurn;
+    }
+
+    /**
+     * 把链的结算结果回到发动条目上（用户新规格：被无效的效果，其誓约部分不应继续显示为适用中）：
+     * {@code disabled=false} 为 MSG_CHAIN_NEGATED（发动被无效），{@code true} 为 MSG_CHAIN_DISABLED
+     *（发动成功但效果被无效）。按 卡码×段落×半场×回合 命中，异画镜像的等值条目一并标上；
+     * 只改状态不新建对象，{@link #dropBeyond} 按对象身份剪除的机制不受影响。
+     */
+    public static void markPledgeNegated(int code, int offset, int side, int turn, boolean disabled) {
+        if (code <= 0) return;
+        Card c = DataManager.get().getCardManager().getCard(code);
+        int alias = c != null ? c.Alias : 0;
+        for (int key = 0; key < 2; key++) {
+            int k = key == 0 ? code : alias;
+            if (k <= 0 || k == code && key == 1) continue;
+            Set<Activation> s = BY_CODE.get(k);
+            if (s == null) continue;
+            for (Activation a : s) {
+                if (a.offset == offset && a.side == side && a.turn == turn) {
+                    if (disabled) a.disabled = true;
+                    else a.negated = true;
+                }
+            }
+        }
     }
 
     /** 账本全量条目（卡码 + 该条发动记录），供「持续适用中效果」按半场整体枚举 */
