@@ -262,6 +262,11 @@ public class ConnectionManager {
                 String windbotArgs = "WindBotHost:" + host + " Port:" + port
                         + " Name:WindBot"                    + (botCommand != null && !botCommand.isEmpty() ? " " + botCommand : "");
                 Log.i(TAG, "Launching WindBot: " + windbotArgs);
+                // 人机席位不实现 MSG_RELOAD_FIELD：预先标记本房间，服务端对它的撤回重同步改用整局重放
+                server = localServer;
+                if (server != null) {
+                    server.markPeerNeedsReplayResync();
+                }
 
                 engine.mainHandler.post(() -> {
                     try {
@@ -327,6 +332,11 @@ public class ConnectionManager {
             }
             String windbotArgs = sb.toString();
             Log.i(TAG, "Launching WindBot: " + windbotArgs);
+            // 同上：人机作为第二玩家加入本房间，标记它靠整局重放接受撤回后的重同步
+            server = localServer;
+            if (server != null) {
+                server.markPeerNeedsReplayResync();
+            }
             engine.mainHandler.post(() -> {
                 try {
                     Intent intent = new android.content.Intent();

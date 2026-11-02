@@ -46,6 +46,14 @@ abstract class DuelAnalyzerBase implements YGOProtocol {
     boolean recordSuppressed;
     /** 静默重放期间捕获的终端询问消息原字节（撤回后原样重发给待应答方）。 */
     byte[] silentTerminal;
+    /**
+     * 撤回整局重放的接收连接：本机拉起的人机席位（见 {@code GameRoomBase#peerNeedsReplayResync}）。
+     * 非空时静默重放不再只录不发，而是把整段消息流按原屏蔽语义发给它，使它的本地局面跟着回到回退点；
+     * 仅在 {@code ServerDuel#undoLastResponse} 的「重建重放 + reload 重同步」窗口内非空，窗口结束即置回 null。
+     */
+    ServerConnection undoReplaySink;
+    /** 此刻正处于 {@link UndoQuestionGuard#resyncAfterUndo} 的 reload/refresh 批内：{@link #undoReplaySink} 整批跳过（它已由重放同步）。 */
+    boolean undoResyncBurst;
     /** waitforResponse 已置位、等待下一条 sendToPlayer 作为终端询问的标记。 */
     boolean silentWaitPending;
     /** 最近一次下发给某席位的询问报文原字节（MSG_SELECT_*，首字节 10..26）；询问权威源在服务端，RETRY 时靠它原样重发。 */

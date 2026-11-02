@@ -38,6 +38,18 @@ public final class GameRoom extends GameRoomMid {
      * {@link LanGameServer} 在房间创建前后先行处理。
      */
     void handlePacket(ServerConnection conn, int proto, ByteBuffer body) {
+        // 撤回整局重放的欠账闸门（先于状态门）：人机对重放里那些旧询问的答复一律吞掉并计数递减——
+        // 它们到达时间比状态门的 STATE_NONE 留白更晚（它消化整段重放需要时间），若任其通过就会被当成
+        // 对引擎当前询问的应答喂进去；吞掉后交给同一个自愈入口，引擎真在等它时会把询问重新挂回去
+        if (proto == CTOS_RESPONSE && conn.replayAnswerDebt > 0) {
+            conn.replayAnswerDebt--;
+            Log.i(TAG, "CTOS_RESPONSE dropped (undo replay debt): seat=" + conn.type
+                    + " left=" + conn.replayAnswerDebt);
+            if (duelStage == DUEL_STAGE_DUELING && duel != null) {
+                duel.onResponseDropped(conn);
+            }
+            return;
+        }
         // 状态门：投降/聊天/撤回不受限；其余包要求 state==自由(0) 或 state==本包类型。
         // CTOS_UNDO 必须豁免：发起撤回的连接此刻处于 STATE_NONE（它刚应答完，或对方正在等待），
         // 按常规门会被直接丢弃；撤回的合法条件（决斗中/有可撤回记录/权限）全部在服务端内部校验。

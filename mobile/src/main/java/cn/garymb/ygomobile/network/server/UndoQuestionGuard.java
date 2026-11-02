@@ -38,6 +38,12 @@ final class UndoQuestionGuard implements YGOProtocol {
      */
     void resyncAfterUndo(byte[] reloadField) {
         analyzer.recordSuppressed = true;
+        // 整批 reload/refresh 对整局重放席位跳过（两个出站口共用这一个闸门，见 DuelViewBroadcaster#emit/sendToPlayer）
+        analyzer.undoResyncBurst = true;
+        if (analyzer.undoReplaySink != null) {
+            Log.i(TAG, "undo 重同步：席位 " + analyzer.undoReplaySink.type
+                    + " 已靠整局重放回到回退点，reload/refresh 批不再发给它");
+        }
         try {
             analyzer.broadcastMsg(reloadField);
             // 素材卡码只可能来自这次 Mzone 刷新（reload 载荷不含），故此处用带 QUERY_OVERLAY_CARD
@@ -98,6 +104,7 @@ final class UndoQuestionGuard implements YGOProtocol {
             // 挂出之间留出一个往返窗口，被丢弃那一段里已在路上的应答全部落进 STATE_NONE 而被状态门丢弃
             analyzer.undoAskResponder = responder;
         } finally {
+            analyzer.undoResyncBurst = false;
             analyzer.recordSuppressed = false;
         }
     }

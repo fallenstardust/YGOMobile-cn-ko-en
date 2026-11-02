@@ -102,6 +102,11 @@ final class DuelViewBroadcaster implements YGOProtocol {
         if (dp == null) {
             return;
         }
+        // 整局重放同步过的席位：撤回的 reload/refresh 全量重同步批不得再发给它（它不实现 MSG_RELOAD_FIELD，
+        // 重放已把它带回回退点；重发一份会把它已有卡的属性改坏）
+        if (analyzer.undoResyncBurst && dp == analyzer.undoReplaySink) {
+            return;
+        }
         // 录像：广播类与发给 players[0] 的提示/选择消息在此按主机视角录制（本就含完整
         // 公开信息）；含隐藏卡码的遮蔽类分支不经此路径，改由 sendDualViewAndRecord 录全量帧
         if (!analyzer.recordSuppressed && dp == analyzer.room.players[0] && analyzer.owner.replay != null) {
@@ -112,6 +117,15 @@ final class DuelViewBroadcaster implements YGOProtocol {
             if (analyzer.silentWaitPending) {
                 analyzer.silentTerminal = data;
                 analyzer.silentWaitPending = false;
+            }
+            // 整局重放：静默重放的每条消息同时按原屏蔽语义送给人机席位，它的本地局面随之逐帧回到回退点
+            if (dp == analyzer.undoReplaySink) {
+                dp.send(STOC_GAME_MSG, data);
+                // 重放里每挂出一条询问就是一笔迟早到达的旧答复欠账，由状态门之外的丢弃闸门按数吞掉
+                int qtype = data != null && data.length > 0 ? (data[0] & 0xFF) : -1;
+                if (qtype >= EngineMessage.MSG_SELECT_BATTLECMD && qtype <= EngineMessage.MSG_SELECT_UNSELECT_CARD) {
+                    dp.replayAnswerDebt++;
+                }
             }
             return;
         }
@@ -149,11 +163,21 @@ final class DuelViewBroadcaster implements YGOProtocol {
         emitObservers(data);
     }
 
-    /** 统一出站口：静默重放（撤回）期只录不发。 */
+    /** 统一出站口：静默重放（撤回前的重建重放）期只录不发，但整局重放的人机席位除外；reload 重同步批不再发给它。 */
     void emit(ServerConnection dp, byte[] data) {
-        if (dp != null && !analyzer.silent) {
-            dp.send(STOC_GAME_MSG, data);
+        if (dp == null) {
+            return;
         }
+        if (analyzer.silent) {
+            if (dp == analyzer.undoReplaySink) {
+                dp.send(STOC_GAME_MSG, data);
+            }
+            return;
+        }
+        if (analyzer.undoResyncBurst && dp == analyzer.undoReplaySink) {
+            return;
+        }
+        dp.send(STOC_GAME_MSG, data);
     }
 
     /** 观战统一出站口：静默重放期只录不发。 */

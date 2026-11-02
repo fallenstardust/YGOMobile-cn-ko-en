@@ -52,6 +52,12 @@ public final class ServerConnection {
     public int state = STATE_FREE;
     /** 是否房主（对齐 C++ host_player 判定，仅用于 STOC_TYPE_CHANGE 的 0x10 位）。 */
     public boolean host;
+    /**
+     * 撤回整局重放的答复欠账：重放期间服务端把人机已见过的每条询问又发了一遍，它对这些询问的答复
+     * 一律晚于撤回落地，不能当成对新挂出询问的应答喂进引擎。故重放每挂出一条询问在此计数，
+     * 它的 CTOS_RESPONSE 一律丢弃并递减（见 {@code GameRoom#handlePacket}），同时延后重挂直到欠账清零。
+     */
+    public int replayAnswerDebt;
 
     public ServerConnection(Socket socket, Sink sink) throws IOException {
         this.socket = socket;

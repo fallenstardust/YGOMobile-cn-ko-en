@@ -109,6 +109,15 @@ abstract class GameRoomBase implements YGOProtocol {
     /** 进行中的决斗引擎，TPResult 时创建，EndDuel 后置空。 */
     ServerDuel duel;
 
+    /**
+     * 本房间的对席由本机拉起（WindBot 人机），不接受撤回的全量重同步：libWindbot 的引擎消息注册表
+     * 里没有 {@code MSG_RELOAD_FIELD}(162)，其 {@code OnPacket} 对未注册消息整条静默丢弃，于是 reload 之后
+     * 它的场面模型仍停在「被撤掉的那个动作之后」，随后按回退后的区/序号取卡会直接抛异常并弄死它的收包
+     * 线程（socket 却不关，症状是人机不再行动而投降仍可用）。置真后服务端改用「整局重放」把它带回回退点，
+     * 见 {@code ServerDuel#replayResyncPeer}。双人局域网对局不置真，照旧走 reload 重同步。
+     */
+    boolean peerNeedsReplayResync = false;
+
 
     GameRoomBase(LanGameServer server) {
         this.server = server;

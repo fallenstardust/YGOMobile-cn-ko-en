@@ -369,6 +369,26 @@ public final class LanGameServer implements YGOProtocol {
         return r != null && r.hostPlayer != null;
     }
 
+    /**
+     * 标记“本房间稍后入座的对席是本机拉起的人机”（由 {@code ConnectionManager} 在广播启动 WindBot 前调用）：
+     * 它不实现 {@code MSG_RELOAD_FIELD}，服务端将改用整局重放为它重同步局面（见 {@code GameRoomBase#peerNeedsReplayResync}）。
+     * <p>投递到房间执行器，与 JOIN_GAME/开局串行，不会与入席判定争抢；本标记不依赖对席何时连入，
+     * 取用方在撤回时按席位当场解析。
+     */
+    public void markPeerNeedsReplayResync() {
+        post(() -> {
+            GameRoom r = room;
+            if (r == null) {
+                Log.w(TAG, "人机房间标记失败：房间尚未建好（撤回将退回 reload 重同步）");
+                return;
+            }
+            if (!r.peerNeedsReplayResync) {
+                r.peerNeedsReplayResync = true;
+                Log.i(TAG, "人机房间：对席撤回后改用整局重放重同步（WindBot 不接受 MSG_RELOAD_FIELD）");
+            }
+        });
+    }
+
     private void cleanup() {
         closeQuietly(serverSocket);
         closeQuietly(udpSocket);

@@ -174,6 +174,12 @@ abstract class ServerDuelBase implements YGOProtocol {
         undoOpt = opt;
         undoStartFrame = null;
         undoSteps.clear();
+        // 新一局开局：上一局撤回重放欠下的旧答复计数不再适用，清零以免吞掉本局人机的正常应答
+        for (ServerConnection pl : room.players) {
+            if (pl != null) {
+                pl.replayAnswerDebt = 0;
+            }
+        }
         replay.writeInt32(hi.startLp);
         replay.writeInt32(hi.startHand);
         replay.writeInt32(hi.drawCount);
@@ -594,6 +600,9 @@ abstract class ServerDuelBase implements YGOProtocol {
 
     /** 询问重挂前的留白：足够覆盖一次局域网往返，使被丢弃那段的在路上的应答先落地并被状态门吞掉。 */
     protected static final long UNDO_HANG_DELAY_MS = 400L;
+    /** 整局重放后等人机把旧答复欠账发完的时限与复查周期：超时则照常挂询问，宁慢不卡（欠账继续由闸门吞）。 */
+    protected static final long REPLAY_DEBT_DRAIN_TIMEOUT_MS = 5000L;
+    protected static final long REPLAY_DEBT_POLL_MS = 100L;
     /** 保活心跳周期。 */
     protected static final long QUESTION_KEEPALIVE_TICK_MS = 1000L;
     /**
