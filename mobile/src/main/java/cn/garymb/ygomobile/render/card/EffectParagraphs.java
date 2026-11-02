@@ -155,26 +155,62 @@ public final class EffectParagraphs {
 
     /**
      * 该段所在「段落块」内是否存在归属本段的「决斗中只能使用1次」类条款：段落块 = 该段全部行
-     * + 段首上方紧邻的连续背景行（发动限制语句惯写在段首之前，如「这个卡名的②的效果在决斗中
-     * 只能使用1次。」）。命中即该段的发动标记跨回合持续（{@link CardInfoBinder} 的已发动置灰、
-     * {@code ContinuousEffectApplier} 的整局适用中判定共用此门控）。
+     * + 段首上方紧邻的连续背景行（发动限制语句与誓约句惯写在段首之前，如「这个卡名的②的效果在决斗中
+     * 只能使用1次。」/「这张卡发动的回合自己不能特殊召唤。」）。命中即该段的发动标记跨回合持续
+     * （{@link CardInfoBinder} 的已发动置灰、{@code ContinuousEffectApplier} 的整局适用中判定共用此门控）。
      */
     public boolean isPerDuel(int offset) {
-        if (!hasParagraph(offset)) return false;
-        int lo = Integer.MAX_VALUE, hi = -1;
-        for (int k = 0; k < paraOf.length; k++) {
-            if (paraOf[k] == offset) {
-                if (k < lo) lo = k;
-                if (k > hi) hi = k;
-            }
-        }
-        if (hi < 0) return false;
-        while (lo - 1 >= 0 && paraOf[lo - 1] < 0) lo--;
+        int[] range = blockRange(offset);
+        if (range == null) return false;
         char anchorCh = (char) (0x2460 + paraAnchor[offset]);
-        for (int k = lo; k <= hi; k++) {
+        for (int k = range[0]; k <= range[1]; k++) {
             if (lineMarksPerDuel(lineAt(k), anchorCh)) return true;
         }
         return false;
+    }
+
+    /**
+     * 该段的「段落块」行区间 {@code [lo, hi]}：本段全部行的上下界，再往上吞掉紧邻的连续背景行
+     * （{@code paraOf<0} 的发动限制句/誓约句/框标题行/分隔线）；段不存在时返回 {@code null}。
+     * <p>OCG Rule《誓约》明确『发动的回合，○○』这类誓约「有的放在了效果序号之前，而有的放在了
+     * 序号之后，没有区别」，故抽句与条款判定都必须把段首上方的紧邻行一并纳入。
+     */
+    private int[] blockRange(int offset) {
+        if (!hasParagraph(offset)) return null;
+        int lo = Integer.MAX_VALUE, hi = -1;
+        for (int k = 0; k < paraOf.length; k++) {
+            if (paraOf[k] != offset) continue;
+            if (k < lo) lo = k;
+            if (k > hi) hi = k;
+        }
+        if (hi < 0) return null;
+        while (lo - 1 >= 0 && paraOf[lo - 1] < 0) lo--;
+        return new int[]{lo, hi};
+    }
+
+    /**
+     * 该段所在段落块的全文（含段首上方紧邻的连续背景行，即写在序号之前的誓约句），行间以换行符
+     * 连接；框标题行与分隔线自身不归任何段，此处按同一口径剔除（它们只是版式，不是效果文本）。
+     * <p>与 {@link #isPerDuel} 的块口径严格一致；段不存在时返回空串。
+     */
+    public String blockText(int offset) {
+        int[] range = blockRange(offset);
+        if (range == null) return "";
+        StringBuilder sb = new StringBuilder();
+        for (int k = range[0]; k <= range[1]; k++) {
+            String raw = lineAt(k);
+            String trimmed = raw.trim();
+            if (trimmed.isEmpty() || isDividerLine(trimmed) || isFrameTitleLine(trimmed)) continue;
+            if (sb.length() > 0) sb.append('\n');
+            sb.append(raw);
+        }
+        return sb.toString();
+    }
+
+    /** 框标题行（【灵摆效果】/【怪兽效果】一类，与 {@link #build} 的判定口径一致） */
+    private static boolean isFrameTitleLine(String trimmed) {
+        return leadingCircledIndex(trimmed) < 0
+                && (trimmed.indexOf('【') >= 0 || trimmed.indexOf('[') >= 0);
     }
 
     /** 「决斗中只能使用1次」类限制条款关键词（实测 7 套语言 cdb）：中文「决斗中只能…」、
