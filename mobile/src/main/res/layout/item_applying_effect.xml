@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?><!--
   持续适用中效果的列表行（用户规格：左边卡片图缩小版，右边效果文字）。
-  文字只取携时长语的子句（如「这个回合，…」），字号硬 9sp 与决斗内聊天行一致（用户新规格：
+  文字只取携时长语的子句（如「这个回合，…」），字号硬 6sp（用户新规格：显示文字再缩小一档，
   不随 HUD 系数放大，否则长句在窄面板里显示不完）；卡图缩略版按 177:254 原比例，宽高由
   ApplyingEffectsPopup 按 HUD 系数等比设定。整行可点 → 在卡详面板看该卡完整描述与已打勾序号段。
 -->
@@ -34,5 +34,5 @@
         android:ellipsize="end"
         android:maxLines="3"
         android:textColor="@color/white"
-        android:textSize="9sp" />
+        android:textSize="6sp" />
 </LinearLayout>

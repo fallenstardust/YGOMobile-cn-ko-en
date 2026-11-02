@@ -4,7 +4,7 @@
   setZOrderOnTop(true) 的 GLSurfaceView，普通子 View 会被场地/卡片纹理遮挡（同 LP 浮字、
   聊天行的图层约定）。本文件只定义面板骨架，列表行按当前侧条目动态填充进
   @+id/layout_applying_rows；行高与卡图随 GameTopInfoManager 的 HUD 系数缩放，
-  文字固定 9sp（与决斗内聊天行同基准，不随 HUD 放大）。
+  文字固定 6sp（用户新规格：显示文字再缩小一档，不随 HUD 放大）。
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/layout_applying_effects"
@@ -25,7 +25,7 @@
         android:gravity="center_vertical"
         android:maxLines="1"
         android:textColor="@color/white"
-        android:textSize="9sp"
+        android:textSize="6sp"
         android:textStyle="bold" />
 
     <ScrollView
