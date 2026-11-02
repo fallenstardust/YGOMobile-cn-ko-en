@@ -47,6 +47,11 @@ public final class EffectActivationLedger {
         /** 本次发动成功但效果被无效（MSG_CHAIN_DISABLED）：『不是效果』的誓约仍适用，
          *  只有「效果的附加处理」类不适用 */
         public boolean disabled;
+        /** 本次发动已走到「适用与否已成定局」的时点（用户新规格：持续适用列表只收已适用的条目，
+         *  不是一挂上连锁就有）：MSG_CHAIN_SOLVED（效果处理完成）或 MSG_CHAIN_NEGATED /
+         *  MSG_CHAIN_DISABLED（链已结算完毕，按 OCG Rule 括号内誓约仍适用）时置位；
+         *  状态不入 equals/hashCode（同 negated/disabled：它们是结算结果而非发动身份） */
+        public boolean applied;
 
         Activation(int offset, int side, int turn) {
             this.offset = offset;
@@ -165,8 +170,39 @@ public final class EffectActivationLedger {
      * {@code disabled=false} 为 MSG_CHAIN_NEGATED（发动被无效），{@code true} 为 MSG_CHAIN_DISABLED
      *（发动成功但效果被无效）。按 卡码×段落×半场×回合 命中，异画镜像的等值条目一并标上；
      * 只改状态不新建对象，{@link #dropBeyond} 按对象身份剪除的机制不受影响。
+     * <p>被无效的链也已「结算完毕」：括号内『（这个回合，○○）』档按文档仍适用，
+     * 所以本方法同时置 {@code applied}（否则被无效后反而永不入列）。
      */
     public static void markPledgeNegated(int code, int offset, int side, int turn, boolean disabled) {
+        forEachMatch(code, offset, side, turn, new MatchAction() {
+            @Override
+            public void apply(Activation a) {
+                if (disabled) a.disabled = true;
+                else a.negated = true;
+                a.applied = true;
+            }
+        });
+    }
+
+    /**
+     * 链效果处理成功（MSG_CHAIN_SOLVED）：把该笔发动标为「已适用」（用户新规格：持续适用中效果的
+     * 条目与金色徽标要从「效果成功适用」那一刻起才出现，而不是刚挂上连锁就亮）。
+     */
+    public static void markApplied(int code, int offset, int side, int turn) {
+        forEachMatch(code, offset, side, turn, new MatchAction() {
+            @Override
+            public void apply(Activation a) {
+                a.applied = true;
+            }
+        });
+    }
+
+    private interface MatchAction {
+        void apply(Activation a);
+    }
+
+    /** 按 卡码×段落×半场×回合 命中主码与 alias 镜像条目，对其执行同一状态变更 */
+    private static void forEachMatch(int code, int offset, int side, int turn, MatchAction action) {
         if (code <= 0) return;
         Card c = DataManager.get().getCardManager().getCard(code);
         int alias = c != null ? c.Alias : 0;
@@ -176,10 +212,7 @@ public final class EffectActivationLedger {
             Set<Activation> s = BY_CODE.get(k);
             if (s == null) continue;
             for (Activation a : s) {
-                if (a.offset == offset && a.side == side && a.turn == turn) {
-                    if (disabled) a.disabled = true;
-                    else a.negated = true;
-                }
+                if (a.offset == offset && a.side == side && a.turn == turn) action.apply(a);
             }
         }
     }

@@ -44,6 +44,12 @@ import ocgcore.data.Card;
  * {@link EffectActivationLedger.Activation#disabled} 时保留括号档与『发动的回合』档。
  * <p>誓约句与序号位置无关（文档明载「有的放在效果序号之前，有的放在之后，没有区别」），故抽句一律
  * 取 {@link EffectParagraphs#blockText} 的「段落块」而非单段。
+ * <p>时长语<b>落在括号里</b>的句子只截括号内那一句（用户新规格）：
+ * 「②：把墓地的这张卡除外才能发动（这个效果发动的回合，自己不是机械族怪兽不能特殊召唤）。」
+ * 列表里只要括号内的限制句，前面的发动正文不列（见 {@link #clipToBracket}）。
+ * <p>时长语一律按小写比较（{@link #lowerForSearch}）：官方英/西/葡卡文把句首字母大写
+ * （"During the turn this card was activated…"/"El turno en el que activas…"），按原文大小写找词
+ * 会整批漏掉拉丁语系；中/日/韩文小写化不变长、不改变下标，命中面与原一致。
  * <p>整局轴上另排除「决斗中只能使用1次」这类<b>使用限制</b>小句：它只限制发动次数、本身不产生
  * 持续适用的效果，命中该小句不算数（见 {@link #marksDuelDuration}）。
  * <p>列表文字（用户新规格）：不列整段序号文本，只取该段落里携时长语的子句；玩家要看完整效果与
@@ -102,6 +108,7 @@ public final class ContinuousEffectApplier {
             "此回合", "发动此卡的回合", "发动了此卡的回合", "发动此效果的回合",
             "此卡发动的回合", "此效果发动的回合", "此效果发动过的回合", "此效果发动后",
             "直至回合结束",
+            "直到下个回合",
             // 誓约句式族（OCG Rule《誓约》校准，并在实库 cards.cdb 上逐词量过命中面：
             // 『这张卡/这个效果的发动后，○○』460 句、『把这张卡特殊召唤的回合，○○』93 句、
             // 『○○召唤成功的回合，○○』51 句、『这个方法特殊召唤过的回合，○○』14 句、
@@ -112,43 +119,69 @@ public final class ContinuousEffectApplier {
             // 「这个方法特殊召唤的这张卡的攻击力变成…」的常驻描述，属在场就一直适用而不属本回合）、
             // 『发动过的场合』（3 句多为召唤条件）。「下次的自己回合」族单独入
             // {@link #NEXT_TURN_MARKS}（跨回合到期，不影响是不是适用句的判定）。
-            "的发动后", "特殊召唤的回合", "召唤成功的回合", "特殊召唤过的回合",
-            "这个效果发动的场合",
+            "的发动后", "效果发动后", "卡在发动后", "发动后", "特殊召唤的回合", "召唤成功的回合",
+            "特殊召唤过的回合", "这个效果发动的场合",
             // 繁中
             "這個回合", "這張卡發動的回合", "這個效果發動的回合", "這個效果發動過的回合",
             "這個效果的發動後", "直至回合結束", "回合結束時", "發動的回合", "發動過的回合",
+            "直到下個回合", "直至下個回合",
             // 誓约句式族（繁中同族，剔除规则同简中）
-            "的發動後", "特殊召喚的回合", "召喚成功的回合",
+            "的發動後", "效果發動後", "卡在發動後", "發動後", "特殊召喚的回合", "召喚成功的回合",
             "特殊召喚過的回合", "這個效果發動的場合",
             // 日（用「を発動…ターン」主干涵盖卡/效果/卡的效果各主语变体）
             "このターン", "ターン終了時まで", "このターンのエンドフェイズ", "ターン中",
             "を発動したターン", "を発動するターン", "この効果の発動後",
-            // 誓约句式族（日：只入特殊召唤誓约主干；『を発動した場合』与中文裸「发动的场合」
-            // 同为发动条件高发写法，不入表。本机 cdb 只有简中，日/韩/英形态按官方记述惯例录入，
-            // 未逐词在实库上验证）
-            "を特殊召喚したターン", "で特殊召喚したターン", "召喚に成功したターン",
+            // 誓约句式族（日，已在本机 assets/jp cards.cdb 上逐词量过命中面：
+            // 「このカードを特殊召喚するターン、自分は通常召喚できない」1 句、「このカードは
+            // 召喚・反転召喚・特殊召喚したターンには攻撃できない」14 句、「このカードはＬ召喚された
+            // ターンにはＬ素材にできない」12 句、「このカードの発動後、次のターンの終了時まで…」13 句、
+            // 「①：自分ターンの間、…」15 句；『を発動した場合』与中文裸「发动的场合」同为发动
+            // 条件高发写法，仍不入表。本主干去掉格助词「を/で」是为了接住「召喚・特殊召喚したターン」
+            // 「この方法で特殊召喚したターン」等变体；带「発動できる」的发动时机句仍由
+            // {@link #ACTIVATION_CUES} 剔除）
+            "特殊召喚したターン", "特殊召喚するターン", "召喚に成功したターン", "召喚されたターン",
+            "の発動後", "は発動後", "発動後", "ターンの終了時まで", "ターンの間",
             // 韩（同样用主干涵盖变体）
             "이 턴", "턴 종료시", "턴 종료시까지", "를 발동한 턴", "를 발동하는 턴",
             "이 효과의 발동 후",
-            // 誓约句式族（韩：只入特殊召唤誓约主干，『을 발동할 경우』同裸「发动的场合」不入表）
-            "를 특수 소환한 턴", "을 특수 소환한 턴", "소환에 성공한 턴",
+            // 誓约句式族（韩，已在本机 assets/kor cards.cdb 上逐词量过命中面：「이 방법으로 특수 소환한
+            // 턴에, 자신은 … 몬스터밖에 특수 소환할 수 없다」18 句、「이 카드를 일반 소환 / 특수 소환하는
+            // 턴에 …」、「이 카드는 링크 소환된 턴에는 링크 소재로 할 수 없다」12 句、「이 카드의 발동 후,
+            // 다음 턴의 종료시까지 …」11 句；主干同样去宾格词「를/을」以涵盖「方法로 소환한 턴」与
+            // 「일반 소환 / 특수 소환한 턴」；『을 발동할 경우』同裸「发动的场合」不入表）
+            "특수 소환한 턴", "특수 소환하는 턴", "소환에 성공한 턴", "소환된 턴",
+            "의 발동 후", "는 발동 후", "발동 후", "턴의 종료시",
             // 英
-            "this turn", "rest of this turn", "end of this turn",
+            "this turn", "rest of this turn", "end of this turn", "end of the turn",
             "the turn you activate", "the turn you activated",
             "the turn this card was activated", "the turn this effect was activated",
+            // 英官方记述另用被动式（"…during the turn this card is activated"/"Cannot attack
+            // the turn it is Summoned."），已在本机 assets/en cards.cdb 上逐词量过：前者 15 句、
+            // 后者 55 句（带 "except the turn it was sent there" 的除外式靠发动提示语剔除）
+            "the turn this card is activated", "the turn it is activated", "the turn it was activated",
+            "the turn it is Summoned", "the turn it was Summoned",
             "after you activate this effect", "after activating this effect",
+            "after activating this card", "after this card is activated", "after this effect is activated",
+            "after the activation", "this card is activated",
             "if you activate this effect",
+            "the end of your next turn",
             // 誓约句式族（英官方记述：The turn this card is / was Special Summoned …）
             "the turn this card is Special Summoned", "the turn this card was Special Summoned",
             "the turn you Special Summon",
-            // 西
-            "este turno", "resto de este turno", "final de este turno",
+            // 西（主干「turno en el que」涵盖 activas/activaste/es Invocado/fue mandada 各变体，
+            // 已在本机 assets/es cards.cdb 上逐词量过；「excepto en el turno en el que…」这类除外式靠
+            // 发动提示语剔除，「No puede atacar en el turno en el que es Invocado.」靠否定式保住）
+            "este turno", "resto de este turno", "final de este turno", "final del turno",
+            "turno en el que", "próximo turno",
             "el turno en el que activas", "el turno en el que activaste",
             "durante el turno en el que", "después de activar este efecto",
-            // 葡
-            "este turno", "restante deste turno", "final deste turno",
+            "después de activar", "después de la activación", "tras activar",
+            // 葡（同上，主干「turno em que」涵盖 for Invocado/ativar/for ativado 各变体）
+            "este turno", "restante deste turno", "final deste turno", "final do turno",
+            "turno em que", "próximo turno",
             "no turno em que ativar", "o turno em que ativar",
             "turno em que você ativar", "após ativar este efeito",
+            "após ativar", "após a ativação", "depois de ativar",
             // 法
             "ce tour", "reste de ce tour", "fin de ce tour",
             "le tour où vous activez", "le tour où vous avez activé",
@@ -166,6 +199,9 @@ public final class ContinuousEffectApplier {
             "这场决斗中", "這個決鬥中", "这次决斗", "這次決鬥", "这场决斗", "決鬥中", "决斗中", "デュエル中", "듀얼",
             "this duel", "duel this", "per duel", "por duelo", "du duel",
             "during the duel", "for the rest of the duel", "rest of the duel",
+            // 西/葡官方记述用「durante el/este Duelo」「el resto del Duelo」「restante do Duelo」
+            "este duelo", "durante el duelo", "resto del duelo",
+            "durante o duelo", "restante do duelo",
             "resto de este duelo", "reste de ce duel", "resto di questo duello"
     };
     /** 「只能使用1次」类限定词：与整局词同现的小句是使用限制而非持续适用，不计入列表 */
@@ -212,6 +248,7 @@ public final class ContinuousEffectApplier {
             "を発動したターン", "を発動するターン",
             "를 발동한 턴", "를 발동하는 턴",
             "the turn you activate", "the turn you activated", "the turn this card was activated",
+            "the turn this card is activated", "the turn it is activated", "the turn it was activated",
             "el turno en el que activas", "el turno en el que activaste",
             "no turno em que ativar", "le tour où vous activez", "turno in cui attivi"
     };
@@ -224,10 +261,10 @@ public final class ContinuousEffectApplier {
     private static final String[] SUMMON_PLEDGE_MARKS = {
             "特殊召唤的回合", "召唤成功的回合", "特殊召唤过的回合",
             "特殊召喚的回合", "召喚成功的回合", "特殊召喚過的回合",
-            "を特殊召喚したターン", "で特殊召喚したターン", "召喚に成功したターン",
-            "를 특수 소환한 턴", "을 특수 소환한 턴", "소환에 성공한 턴",
+            "特殊召喚したターン", "特殊召喚するターン", "召喚に成功したターン", "召喚されたターン",
+            "특수 소환한 턴", "특수 소환하는 턴", "소환에 성공한 턴", "소환된 턴",
             "the turn this card is Special Summoned", "the turn this card was Special Summoned",
-            "the turn you Special Summon"
+            "the turn you Special Summon", "the turn it is Summoned", "the turn it was Summoned"
     };
     /**
      * 跨回合族（用户新规格：这类誓约要跨多回合显示）：『直到下次的自己回合…』『下次的自己回合的
@@ -235,8 +272,8 @@ public final class ContinuousEffectApplier {
      * 判定，只在句子已被认定后决定是否把存续期延长到 {@code 发动回合 + }{@link #NEXT_TURN_SPAN}。
      */
     private static final String[] NEXT_TURN_MARKS = {
-            "下次的自己回合", "下次的自己的回合", "次の自分のターン",
-            "다음의 자신의 턴", "your next turn"
+            "下次的自己回合", "下次的自己的回合", "下个回合", "次の自分のターン", "次のターン",
+            "다음의 자신의 턴", "다음 턴", "your next turn", "next turn", "próximo turno"
     };
     /** 『直到下次的自己回合』的到期回合跨度：1v1 里自己的下个回合＝回合计数 +2（tag 下偏差一个回合，取同值） */
     private static final int NEXT_TURN_SPAN = 2;
@@ -262,6 +299,18 @@ public final class ContinuousEffectApplier {
     /** 读句分隔符（与 EffectParagraphs 的 per-duel 小句拆分口径一致） */
     private static final String CLAUSE_SPLIT = "[，,、。．；;]";
 
+    static {
+        //词表入口统一小写化：命中一律走小写比较（lowerForSearch / containsAny），而拉丁语系官方记述
+        //把 Summoned / Special 这类词写成大写（“the turn this card is Special Summoned”），不归一
+        //则整条永远匹配不到；中/日/韩文取 Locale.ROOT 小写不变，不影响既有命中面。
+        for (String[] table : new String[][]{TURN_DURATION_MARKS, DUEL_DURATION_MARKS, DUEL_LIMIT_WORDS,
+                ACTIVATION_CUES, NEGATION_TOKENS, TURN_PLEDGE_MARKS, SUMMON_PLEDGE_MARKS, NEXT_TURN_MARKS}) {
+            for (int i = 0; i < table.length; i++) {
+                table[i] = table[i].toLowerCase(Locale.ROOT);
+            }
+        }
+    }
+
     /** 段落模型按卡码缓存：cdb 描述在运行期不变，避免每次刷新重复拆行分段 */
     private static final HashMap<Integer, EffectParagraphs> MODEL_CACHE = new HashMap<>();
 
@@ -277,6 +326,9 @@ public final class ContinuousEffectApplier {
         for (EffectActivationLedger.Entry e : EffectActivationLedger.snapshot()) {
             EffectActivationLedger.Activation a = e.activation;
             if (a == null || a.side != side || e.code <= 0) continue;
+            // 门控0（用户新规格）：效果「成功适用」前不入列表也不亮徽标——刚挂上连锁（MSG_CHAINING）
+            // 时本条目被跳过，到 MSG_CHAIN_SOLVED（或链被无效而结算完毕）时才置 applied
+            if (!a.applied) continue;
             Card cd = DataManager.get().getCardManager().getCard(e.code);
             // alias 归一：异画卡与本卡共用效果段落与账本镜像条目，同一笔发动只列一行；
             // 归一码同时决定展示卡图与 str 取用
@@ -297,6 +349,9 @@ public final class ContinuousEffectApplier {
             int maxGrade = a.negated ? GRADE_BRACKET : (a.disabled ? GRADE_TURN_PLEDGE : GRADE_ALL);
             String clause = durationClause(paragraph, maxGrade);
             if (clause.isEmpty()) clause = durationClause(str, maxGrade);
+            // 兜底（用户新规格：同类描述不许漏）：段落序能解出句子时不走——只有账本里的 offset
+            // 对不上本次文本（脚本序与文本圆圈序不一致、辅动/让位槽 offset 越界）且整卡恰好一句适用句时才用它
+            if (clause.isEmpty()) clause = uniqueCardClause(model.desc, maxGrade);
             if (clause.isEmpty()) continue;
             // 子句里含整局词即归整局级（寿命跨回合）；否则若携跨回合族，寿命延到下个自己回合
             boolean duel = marksDuelDuration(clause);
@@ -308,6 +363,8 @@ public final class ContinuousEffectApplier {
                     && !(span && nowTurn <= untilTurn)) continue;
             String text = clause.trim();
             if (text.isEmpty()) continue;
+            // 兜底路径可能把同码多个 offset 归到同一句，同句不重复成行
+            if (listsSameText(out, canonical, text)) continue;
             out.add(new Applying(canonical, a.offset, side, a.turn, text, duel, untilTurn));
         }
         appendSummonEntries(side, out, seen, nowTurn);
@@ -340,6 +397,14 @@ public final class ContinuousEffectApplier {
         }
     }
 
+    /** 同码行里已有相同展示文本（兜底抽取与整卡唯一句会撞车，不重复成行） */
+    private static boolean listsSameText(List<Applying> rows, int code, String text) {
+        for (Applying r : rows) {
+            if (r.code == code && text.equals(r.text)) return true;
+        }
+        return false;
+    }
+
     /** 排序：整局级在前（其寿命覆盖全局，玩家更需先看），其内按发动回合、再按卡码稳定排列 */
     private static final Comparator<Applying> BY_TURN_THEN_CODE = new Comparator<Applying>() {
         @Override
@@ -360,6 +425,10 @@ public final class ContinuousEffectApplier {
      * /「During your Main Phase, if this card was activated this turn: You can …」。
      * <p>而时长语后紧跟逗号的，是独立状语从句、在陈述本回合持续成立的状态，即使同句带发动提示语也保留，
      * 如「②：把墓地的这张卡除外才能发动（这个效果发动的回合，自己不是机械族怪兽不能特殊召唤）。」
+     * <p>时机句的剔除只在<b>时长语所在范围</b>内判提示语：时长语在括号里时，提示语只算同括号内
+     * 出现的——主句那侧的「才能发动 / you can」是在交代这次发动的代价与时机，与括号里的持续限制无关
+     *（实库回归：英/西/葡「negate its effects (until the end of this turn), then you can …」
+     * 这类括号内时长语被整句的 you can 连坐删掉，三套库共 18 句）。
      * <p>档位：时长语落在括号内 → {@link #GRADE_BRACKET}（文档：即使那个发动被无效仍然适用）；
      * 命中 {@link #TURN_PLEDGE_MARKS}（『…发动的回合，○○』）→ {@link #GRADE_TURN_PLEDGE}
      *（文档：这个发动被无效的场合，这种描述不再适用）；其余 → {@link #GRADE_APPENDAGE}
@@ -367,44 +436,146 @@ public final class ContinuousEffectApplier {
      */
     private static int pledgeGrade(String sentence) {
         if (TextUtils.isEmpty(sentence)) return -1;
+        String hay = lowerForSearch(sentence);
         boolean hasMark = false;
         boolean commaLedMark = false;
-        boolean bracketed = false;
+        int markOpen = -1, markClose = -1;
         for (String m : TURN_DURATION_MARKS) {
             int from = 0;
             int i;
-            while ((i = sentence.indexOf(m, from)) >= 0) {
+            while ((i = hay.indexOf(m, from)) >= 0) {
                 hasMark = true;
-                if (followedByComma(sentence, i + m.length())) commaLedMark = true;
-                if (!bracketed) bracketed = isBracketed(sentence, i);
+                if (followedByComma(hay, i + m.length())) commaLedMark = true;
+                if (markOpen < 0) {
+                    int[] pair = bracketAround(hay, i);
+                    if (pair != null) {
+                        markOpen = pair[0];
+                        markClose = pair[1];
+                    }
+                }
                 from = i + m.length();
             }
         }
         for (String m : DUEL_DURATION_MARKS) {
             int from = 0;
             int i;
-            while ((i = sentence.indexOf(m, from)) >= 0) {
+            while ((i = hay.indexOf(m, from)) >= 0) {
                 hasMark = true;
-                if (followedByComma(sentence, i + m.length())) commaLedMark = true;
-                if (!bracketed) bracketed = isBracketed(sentence, i);
+                if (followedByComma(hay, i + m.length())) commaLedMark = true;
+                if (markOpen < 0) {
+                    int[] pair = bracketAround(hay, i);
+                    if (pair != null) {
+                        markOpen = pair[0];
+                        markClose = pair[1];
+                    }
+                }
                 from = i + m.length();
             }
         }
         if (!hasMark) return -1;
-        if (!commaLedMark && hasActivationCue(sentence)) return -1;
-        if (bracketed) return GRADE_BRACKET;
+        if (!commaLedMark) {
+            //时长语在括号内（括号没闭合时到句末）就只在这一段里找发动提示语
+            String scope = sentence;
+            if (markOpen >= 0) {
+                scope = sentence.substring(markOpen + 1, markClose > markOpen ? markClose : sentence.length());
+            }
+            if (hasActivationCue(scope)) return -1;
+        }
+        if (markOpen >= 0) return GRADE_BRACKET;
         return containsAny(sentence, TURN_PLEDGE_MARKS) ? GRADE_TURN_PLEDGE : GRADE_APPENDAGE;
     }
 
-    /** 时长语出现处是否被括号包住：从其位置向左退，先撞右括号则不在括号内，先撞左括号则在内 */
-    private static boolean isBracketed(String s, int at) {
-        for (int i = at - 1; i >= 0; i--) {
+    /**
+     * 时长语出现处所在的说明括号区间（{@code [左括号, 右括号]}），不在任何说明括号内时返回 null。
+     * <p>只认引号外的括号：韩/英/葡卡文里卡名常写成 "GMX(제노믹스)"、"PSY(싸이)프레임"，
+     * 里面的圆括号是卡名的一部分（且常不闭合），当成说明括号会把时长语误判为「括号内」，
+     * 截取时还会把切点落在卡名上（实库例：kor 2618725）。判据：左括号前出现奇数个引号
+     * 即它在引号里面；括号内自带引号（如 (but you cannot apply that same effect of "X" again this turn)）
+     * 不影响它自成为一个说明括号对。
+     */
+    private static int[] bracketAround(String s, int at) {
+        int[] best = null;
+        List<Integer> stack = new ArrayList<>();
+        int quotes = 0;
+        for (int i = 0; i < s.length(); i++) {
             char ch = s.charAt(i);
-            if (BRACKET_CLOSE.indexOf(ch) >= 0) return false;
-            if (BRACKET_OPEN.indexOf(ch) >= 0) return true;
+            if (ch == '"') {
+                quotes++;
+            } else if (BRACKET_OPEN.indexOf(ch) >= 0) {
+                if (quotes % 2 == 0) stack.add(Integer.valueOf(i));
+            } else if (BRACKET_CLOSE.indexOf(ch) >= 0 && quotes % 2 == 0 && !stack.isEmpty()) {
+                int[] pair = new int[]{stack.remove(stack.size() - 1).intValue(), i};
+                //嵌套时取最外层（包含本位置的左括号最小、右括号最大那一对）
+                if (pair[0] <= at && at < pair[1]
+                        && (best == null || pair[0] < best[0] || (pair[0] == best[0] && pair[1] > best[1]))) {
+                    best = pair;
+                }
+            }
         }
-        return false;
+        return best;
     }
+
+    /**
+     * 小写比较用的副本：{@code Locale.ROOT} 下长度不变才敢拿它的小标回原句取值（否则变长会
+     * 把括号/逗号定位带到错位的地方）；个别语言变音符号导致变长时退回原句，代价只是本句
+     * 按原文大小写找词（中文/日文/韩文不会走到退回分支）。
+     */
+    private static String lowerForSearch(String sentence) {
+        if (sentence == null) return "";
+        String low = sentence.toLowerCase(Locale.ROOT);
+        return low.length() == sentence.length() ? low : sentence;
+    }
+
+    /**
+     * 句子只截括号里那一句（用户新规格）：时长语在括号内时，整句往往还带着
+     * 「②：把墓地的这张卡除外才能发动」这样的发动正文，而括号里的『这个效果发动的回合，○○』
+     * 才是适用中的限制，列表只该看到后者。
+     * <p>只在该句<b>所有</b>时长语命中都在括号内时才裁剪；有一处在括号外就保持整句（否则
+     * 「①：这张卡召唤成功的回合，……（……）」这类括号内外的两层适用句会被裁丢一层）。
+     * 同句里并列多个括号时逐组截取并以空格拼接，不把两组括号之间的正文一起拉进来。
+     * <p>括号字符只看全/半角圆括号（{@link #BRACKET_OPEN} / {@link #BRACKET_CLOSE}），且只认引号外
+     * 的说明括号（{@link #bracketAround}）；【】与 [] 是灵摆/怪兽框标题的版式，不能当截取边界。
+     */
+    private static String clipToBracket(String sentence) {
+        if (TextUtils.isEmpty(sentence)) return sentence;
+        String hay = lowerForSearch(sentence);
+        List<int[]> spans = new ArrayList<>();
+        boolean outsideBracketHit = false;
+        for (String[] table : new String[][]{TURN_DURATION_MARKS, DUEL_DURATION_MARKS}) {
+            for (String m : table) {
+                int from = 0;
+                int i;
+                while ((i = hay.indexOf(m, from)) >= 0) {
+                    int[] pair = bracketAround(hay, i);
+                    //命中不在说明括号里：整句保留，不能只裁到一半
+                    if (pair == null) outsideBracketHit = true;
+                    else spans.add(pair);
+                    from = i + m.length();
+                }
+            }
+        }
+        if (outsideBracketHit || spans.isEmpty()) return sentence;
+        Collections.sort(spans, BY_BRACKET_OPEN);
+        StringBuilder sb = new StringBuilder();
+        int consumedTo = -1;
+        for (int[] sp : spans) {
+            if (sp[0] < consumedTo) continue;   //同一括号里的多个时长语只取一次
+            String inner = sentence.substring(sp[0] + 1, sp[1]).trim();
+            if (inner.isEmpty()) continue;
+            if (sb.length() > 0) sb.append(' ');
+            sb.append(inner);
+            consumedTo = sp[1] + 1;
+        }
+        return sb.length() == 0 ? sentence : sb.toString();
+    }
+
+    /** 括号区间按左括号排序，供 {@link #clipToBracket} 合并同一括号内的多个时长语命中 */
+    private static final Comparator<int[]> BY_BRACKET_OPEN = new Comparator<int[]>() {
+        @Override
+        public int compare(int[] x, int[] y) {
+            return x[0] - y[0];
+        }
+    };
 
     /** 该句是否带「才能发动」类发动提示语：含否定式时一律不算（否定句是在陈述限制而非发动可能） */
     private static boolean hasActivationCue(String sentence) {
@@ -425,20 +596,64 @@ public final class ContinuousEffectApplier {
      * 并排除「这张卡发动的回合的…阶段才能发动」这类发动时机句）：
      * 按句终止符（。．！？!?；; 与换行）切句，保留 {@link #pledgeGrade} 命中且档位不高于
      * {@code maxGrade} 的句子并以空格拼接；逗号/顿号不断句（「这个回合，」与后半句必须同现）。
+     * 命中句里的时长语全在括号内时，只截括号内那一句（{@link #clipToBracket}）。
      * 无命中时返回空串（被无效到不剩一句时，整行不列）。
      */
     public static String durationClause(String text, int maxGrade) {
         if (TextUtils.isEmpty(text)) return "";
         StringBuilder sb = new StringBuilder();
-        for (String sentence : splitSentences(text)) {
+        for (String sentence : applyingSentences(text)) {
             int grade = pledgeGrade(sentence);
             if (grade < 0 || grade > maxGrade) continue;
-            String trimmed = sentence.trim();
+            String trimmed = clipToBracket(sentence).trim();
             if (trimmed.isEmpty()) continue;
             if (sb.length() > 0) sb.append(' ');
             sb.append(trimmed);
         }
         return sb.toString();
+    }
+
+    /**
+     * 逐句取候选（用户新规格：黑点不列）：按行推进，一旦进入以项目符（●○•…　{@link
+     * EffectParagraphs#isBulletChar}）起头的子项，就跳过本子项及其续行——黑点句里抽出的时长语
+     * 无法回指它属于哪个效果（一张卡常并列多个 ●，列表只看到一句「这个回合，○○」而不知是谁的限制），
+     * 直到下一个 ①②③ 圆圈序号行才重新回到可列段落。召唤来源与发动来源同一口径。
+     */
+    private static List<String> applyingSentences(String text) {
+        List<String> out = new ArrayList<>();
+        if (TextUtils.isEmpty(text)) return out;
+        boolean inBullet = false;
+        for (String line : text.split("\n")) {
+            String t = line.trim();
+            if (t.isEmpty()) continue;
+            if (EffectParagraphs.leadingCircledIndex(t) >= 0) {
+                inBullet = false;
+            } else if (EffectParagraphs.isBulletChar(t.charAt(0))) {
+                inBullet = true;
+            }
+            if (inBullet) continue;
+            out.addAll(splitSentences(line));
+        }
+        return out;
+    }
+
+    /**
+     * 整卡唯一适用句（用户新规格：同类描述不许漏）：当发动账本里的段落序对不上本次文本
+     * （脚本 {@code aux.Stringid} 偏移与文本圆圈序不一致、或辅动/让位槽 offset 越界）时，
+     * 整卡里恰好只有一句适用句则用它；多句（歧义，不知是哪条）或零句时不列。
+     * <p>本方法只用于兜底，段落序能解出句子时一律不走，不会把另一个效果的誓约当成本次发动的。
+     */
+    private static String uniqueCardClause(String text, int maxGrade) {
+        String first = null;
+        for (String sentence : applyingSentences(text)) {
+            int grade = pledgeGrade(sentence);
+            if (grade < 0 || grade > maxGrade) continue;
+            String trimmed = clipToBracket(sentence).trim();
+            if (trimmed.isEmpty()) continue;
+            if (first != null) return "";   //多句歧义 → 不列
+            first = trimmed;
+        }
+        return first == null ? "" : first;
     }
 
     /**
@@ -450,10 +665,10 @@ public final class ContinuousEffectApplier {
     private static String summonPledgeClause(String text, List<Applying> sameCodeRows, int canonical) {
         if (TextUtils.isEmpty(text)) return "";
         StringBuilder sb = new StringBuilder();
-        for (String sentence : splitSentences(text)) {
+        for (String sentence : applyingSentences(text)) {
             if (pledgeGrade(sentence) < 0) continue;
             if (!containsAny(sentence, SUMMON_PLEDGE_MARKS)) continue;
-            String trimmed = sentence.trim();
+            String trimmed = clipToBracket(sentence).trim();
             if (trimmed.isEmpty()) continue;
             boolean dup = false;
             for (Applying r : sameCodeRows) {
@@ -477,14 +692,48 @@ public final class ContinuousEffectApplier {
     /** 句终止符（含全/半角与换行；逗号、顿号不在此列，时长语前导逗号属于同一小句） */
     private static final String SENTENCE_ENDS = "。．！!？?；;.\n";
 
-    /** 按句终止符切句，终止符本身归入前句（连续终止符如「。\n」并成一句） */
+    /**
+     * 按句终止符切句，终止符本身归入前句（连续终止符如「。\n」并成一句）。
+     * <p>括号内的终止符不断句（英/西/葡官方记述把整条持续限制放在括号里，如
+     * 「(The effects remain negated until the end of this turn.)」，按句点切开会截不出括号、
+     * 只剩个带半个括号的残句）；但换行是卡文的硬边界，括号没闭合时也照切，
+     * 避免一个未闭合左括号吞掉后面整段描述。
+     */
     private static List<String> splitSentences(String text) {
         List<String> out = new ArrayList<>();
         int start = 0;
-        for (int i = start; i < text.length(); i++) {
-            if (SENTENCE_ENDS.indexOf(text.charAt(i)) < 0) continue;
+        int depth = 0;
+        int quotes = 0;
+        for (int i = 0; i < text.length(); i++) {
+            char ch = text.charAt(i);
+            if (ch == '"') {
+                quotes++;
+                continue;
+            }
+            //引号里的圆括号是卡名的一部分（"GMX(제노믹스)" 一类，且常不闭合），不计入括号深度
+            if (BRACKET_OPEN.indexOf(ch) >= 0) {
+                if (quotes % 2 == 0) depth++;
+                continue;
+            }
+            if (BRACKET_CLOSE.indexOf(ch) >= 0) {
+                if (quotes % 2 == 0 && depth > 0) depth--;
+                continue;
+            }
+            //括号里的句号不算句结束（换行除外），否则会把括号内的一句拆残
+            if (ch != '\n' && depth != 0) continue;
+            if (SENTENCE_ENDS.indexOf(ch) < 0) continue;
             int end = i + 1;
-            while (end < text.length() && SENTENCE_ENDS.indexOf(text.charAt(end)) >= 0) end++;
+            while (end < text.length()) {
+                char nx = text.charAt(end);
+                if (nx == '\n') {
+                    end++;
+                    continue;
+                }
+                //括号字符留给下一轮循环统计深度，不在终止符归并里吞掉
+                if (depth != 0 || BRACKET_OPEN.indexOf(nx) >= 0 || BRACKET_CLOSE.indexOf(nx) >= 0
+                        || SENTENCE_ENDS.indexOf(nx) < 0) break;
+                end++;
+            }
             out.add(text.substring(start, end));
             start = end;
             i = end - 1;

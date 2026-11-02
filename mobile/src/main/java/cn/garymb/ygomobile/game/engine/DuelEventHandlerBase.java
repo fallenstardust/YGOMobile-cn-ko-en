@@ -502,7 +502,24 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
 
     @Override
     public void onChainSolved(int chainCount) {
+        // 用户新规格：「持续适用中效果」的条目与金色徽标从效果**成功适用**那一刻才出现（而不是
+        // MSG_CHAINING 刚挂上连锁就有）：本消息即该链效果处理完成，标条目为已适用并刷一次
+        // 徽标/已展开的列表（列表从无到有时正好触发一次闪动）
+        markApplied(chainCount);
+    }
 
+    /**
+     * 把刚结算完的这条链的发动条目标为「已适用」（与 {@link #markPledge} 同一取链口径：
+     * {@code chains.get(ct-1)} 的 卡码/段落/半场）；取不到链时静默跳过，
+     * 不报错也亮不了徽标，比误标另一条目安全。
+     */
+    private void markApplied(int chainCount) {
+        List<GameField.ChainInfo> chains = engine.field.chains;
+        if (chainCount < 1 || chainCount > chains.size()) return;
+        GameField.ChainInfo ci = chains.get(chainCount - 1);
+        if (ci == null || ci.code <= 0) return;
+        EffectActivationLedger.markApplied(ci.code, ci.desc & 0xf, ci.controler, engine.field.turnCount);
+        GameTopInfoManager.refreshApplyingEffects();
     }
 
     @Override
