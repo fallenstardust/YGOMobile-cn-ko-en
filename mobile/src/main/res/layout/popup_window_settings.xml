@@ -55,6 +55,15 @@
                 android:textSize="9sp" />
 
             <CheckBox
+                android:id="@+id/chkAskIdleCmd"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:text="召唤、盖放、灵摆发动前询问"
+                android:textColor="@color/white"
+                android:textSize="9sp" />
+
+            <CheckBox
                 android:id="@+id/chkRandomPos"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"

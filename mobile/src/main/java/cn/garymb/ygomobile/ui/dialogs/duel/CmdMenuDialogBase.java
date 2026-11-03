@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
+import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.game.engine.GameEngine;
 import cn.garymb.ygomobile.game.gamefield.GameField;
@@ -29,6 +30,7 @@ import cn.garymb.ygomobile.render.card.CardDetailPanel;
 import cn.garymb.ygomobile.render.gamefieldview.GameFieldView;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
+import ocgcore.data.Card;
 import ocgcore.enums.CardType;
 
 /**
@@ -80,6 +82,8 @@ abstract class CmdMenuDialogBase {
     protected static final int MODE_SPSUMMON = 2;
     protected static final int LOC_MZONE = 0x04;
     protected static final int LOC_OVERLAY = 0x80;
+    /** 手卡（ocgcore LOCATION_HAND）：手卡灵摆怪兽「发动」确认闸门按此区域判定 */
+    protected static final int LOC_HAND = 0x02;
 
     protected final YGOProActivity activity;
     protected final PopupWindow popupWindow;
@@ -155,7 +159,15 @@ abstract class CmdMenuDialogBase {
                 if (idx >= 0) {
                     options.add(sysString(SYS_SUMMON));
                     final int summonIdx = idx;
-                    actions.add(() -> activity.sendResponseInt(summonIdx << 16));
+                    // 应答编码 summonIdx<<16。上级召唤（当前等级 >4）点下去先进入解放选卡，
+                    // 那一步本就可中断，不再二次询问；4 星及以下的召唤一击即终态，才过确认闸门
+                    actions.add(() -> {
+                        if (needsTribute(card)) {
+                            activity.sendResponseInt(summonIdx << 16);
+                        } else {
+                            confirmAndSend(R.string.ask_cmd_summon_confirm, card, summonIdx << 16);
+                        }
+                    });
                 }
             }
 
@@ -190,7 +202,8 @@ abstract class CmdMenuDialogBase {
                 if (idx >= 0) {
                     options.add(sysString(SYS_SET));
                     final int msetIdx = idx;
-                    actions.add(() -> activity.sendResponseInt((msetIdx << 16) + 3));
+                    // 怪兽盖放：应答 (msetableCards索引<<16)+3 一击即终态，一律过确认闸门
+                    actions.add(() -> confirmAndSend(R.string.ask_cmd_set_confirm, card, (msetIdx << 16) + 3));
                 }
             }
 
@@ -200,11 +213,63 @@ abstract class CmdMenuDialogBase {
                     boolean isMonster = (card.type & CardType.Monster.getId()) != 0;
                     options.add(sysString(isMonster ? SYS_SET_MONSTER : SYS_SET));
                     final int ssetIdx = idx;
-                    actions.add(() -> activity.sendResponseInt((ssetIdx << 16) + 4));
+                    // 只速攻魔法的盖过确认闸门：速攻盖下去当回合还能再发动，误盖直接亏一次节奏；
+                    // 普通魔法/陷阱盖放与「怪兽盖到魔陷区」按用户口径不加询问。
+                    // 编码不变，仍 (ssetableCards索引<<16)+4
+                    final boolean quickPlay = (card.type & CardType.QuickPlay.getId()) != 0;
+                    actions.add(() -> {
+                        if (quickPlay) {
+                            confirmAndSend(R.string.ask_cmd_set_confirm, card, (ssetIdx << 16) + 4);
+                        } else {
+                            activity.sendResponseInt((ssetIdx << 16) + 4);
+                        }
+                    });
                 }
             }
         }
     }
+    /**
+     * 主阶段命令的确认闸门（对应决斗设置「主阶段命令前询问」，键 chkAskIdleCmd）。
+     * 覆盖范围：非上级召唤的通常召唤、怪兽盖放、速攻魔法盖放、手卡灵摆怪兽发动——这几条都是
+     * 点一下就向 MSG_SELECT_IDLECMD 发出终态应答、没有任何可中断中间步骤的动作，触屏误触代价
+     * 远高于鼠标，故统一先问一句。
+     * <p>「是」执行 onConfirm，「否」与关窗一律不做任何应答——通讯仍停在 IDLECMD，玩家可改选
+     * 别的命令或直接切阶段（与 gframe 点「否」只收询问窗一致）。
+     * <p>不复刻 PC ask_mset 的待发应答全局变量：那份 {@code current_mset_param} 从不清零，
+     * 之后任何一次在 IDLECMD 下点「是」都会把旧命令的应答重发一遍；这里用闭包捕获，一次性且不可复用。
+     */
+    protected void confirmIdleCommand(int messageResId, ClientCard card, Runnable onConfirm) {
+        AppsSettings settings = AppsSettings.get();
+        // 主键缺省时继承老键 chkAskMSet（该开关由「仅盖放」拓宽而来），与设置页的读法保持一致
+        if (settings.getIntSettings("chkAskIdleCmd", settings.getIntSettings("chkAskMSet", 0)) != 1) {
+            onConfirm.run();
+            return;
+        }
+        int code = card != null ? card.code : 0;
+        String cardName = code > 0 ? DataManager.get().getName(code) : "";
+        String confirm = activity.getString(messageResId, cardName);
+        YesOrNoDialog dialog = new YesOrNoDialog(activity);
+        if (code > 0) {
+            //卡名按类型着色并在左侧带出卡图（与是/否询问窗其它入口一致）
+            dialog.setMessageWithCardName(confirm, code, cardName).setCardCode(code);
+        } else {
+            dialog.setMessage(confirm);
+        }
+        dialog.asYesNo()
+                .setSwapButtonPositions(settings.getIntSettings("swapButtonPositions", 0) == 1)
+                .setPositiveButton(v -> onConfirm.run())
+                .setNegativeButton(v -> {
+                    // 否：不发任何应答，等玩家在本阶段另做操作
+                })
+                .setCenterInView(activity.findViewById(R.id.layout_game_right))
+                .show();
+    }
+
+    /** 确认闸门 + 直接发出 IDLECMD 应答（召唤 / 盖放两条一次性命令用） */
+    protected void confirmAndSend(int messageResId, ClientCard card, int responseParam) {
+        confirmIdleCommand(messageResId, card, () -> activity.sendResponseInt(responseParam));
+    }
+
     /**
      * 堆叠区 / 超量怪兽入口的「位置命令」菜单。
      * 发动 / 特殊召唤 → 列出该位置对应可操作卡片，单击即向通讯发送对应响应进入下一步；
@@ -543,9 +608,46 @@ abstract class CmdMenuDialogBase {
     /**
      * 发动：单条直接应答，多条弹 OptionDialog 列出各效果脚本提示文字
      *（对齐 client_field.cpp ShowSelectOption + event_handler.cpp BUTTON_OPTION → SetResponseSelectedOption）。
+     * <p>手卡灵摆怪兽的「发动」在这里先过确认闸门：单效果时本方法会一路直发应答，
+     * 玩家点一下就已完成宣告并把怪兽压进灵摆区，没有任何可中断的中间步骤。
      */
     protected void showActivateOptions(int cmdContext, List<GameEngine.CmdCardInfo> infos) {
+        ClientCard card = (infos == null || infos.isEmpty()) ? null : infos.get(0).card;
+        if (isHandPendulumActivate(card, cmdContext)) {
+            confirmIdleCommand(R.string.ask_cmd_pendulum_confirm, card,
+                    () -> showOptionListForMode(cmdContext, infos, MODE_ACTIVATE));
+            return;
+        }
         showOptionListForMode(cmdContext, infos, MODE_ACTIVATE);
+    }
+
+    /**
+     * 手卡灵摆怪兽的「发动」：仅主阶段、卡在手卡、同时具有 怪兽+灵摆 类型才算。
+     * 灵摆效果是起动效果（咒速1），只可能在 MSG_SELECT_IDLECMD 下出现；连锁上下文一律不拦，
+     * 以免「否」之后把玩家挡在连锁选择之外（连锁窗口的取消另有「取消操作」链路负责）。
+     */
+    protected static boolean isHandPendulumActivate(ClientCard card, int cmdContext) {
+        if (card == null || cmdContext != CMD_CONTEXT_IDLE) return false;
+        if (card.location != LOC_HAND) return false;
+        return (card.type & CardType.Monster.getId()) != 0
+                && (card.type & CardType.Pendulum.getId()) != 0;
+    }
+
+    /**
+     * 通常召唤是否需要解放（判定「上级召唤」）：取当前等级（受等级变动效果影响，与核心结算同源），
+     * 手卡未回填等级时回退卡表打印等级；两者都取不到（0）时按需要解放处理——宁可少问一次，
+     * 也不给上级召唤套上双窗。
+     * <p>已知局限：场上存在「解放不要」类适用效果（如王虎）时，高等级怪兽的通常召唤在这里仍被
+     * 当作上级召唤而不询问；客户端拿不到核心的召唤费用，无法进一步校正。
+     */
+    protected static boolean needsTribute(ClientCard card) {
+        if (card == null) return true;
+        int lv = card.level & 0xff;
+        if (lv == 0) {
+            Card cdb = DataManager.get().getCardManager().getCard(card.code);
+            lv = cdb == null ? 0 : cdb.getStar() & 0xff;
+        }
+        return lv <= 0 || lv > 4;
     }
 
     /**

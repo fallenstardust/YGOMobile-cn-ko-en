@@ -187,6 +187,10 @@
     <string name="file_exist">文件已经存在</string>
     <string name="share_deck">分享卡组</string>
     <string name="code_share">卡组码分享</string>
+    <string name="ask_idle_cmd_label">召唤、盖放、灵摆发动前询问</string>
+    <string name="ask_cmd_summon_confirm" formatted="false">是否确定召唤[%s]？</string>
+    <string name="ask_cmd_set_confirm" formatted="false">是否确定盖放[%s]？</string>
+    <string name="ask_cmd_pendulum_confirm" formatted="false">是否确定将[%s]在灵摆区域发动？</string>
     <string name="screenshoot">图片分享</string>
     <string name="ydk_share">文件分享</string>
     <string name="no_share_app">没有找到分享应用</string>

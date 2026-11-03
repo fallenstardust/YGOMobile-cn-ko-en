@@ -167,6 +167,10 @@
     <string name="file_exist">ファイルはすでに存在します</string>
     <string name="share_deck">デッキ共有</string>
     <string name="code_share">デッキコード共有</string>
+    <string name="ask_idle_cmd_label">召喚・セット・ペンデュラム発動前に確認</string>
+    <string name="ask_cmd_summon_confirm" formatted="false">[%s]を召喚しますか？</string>
+    <string name="ask_cmd_set_confirm" formatted="false">[%s]を伏せてセットしますか？</string>
+    <string name="ask_cmd_pendulum_confirm" formatted="false">[%s]をペンデュラムゾーンで発動しますか？</string>
     <string name="screenshoot">スクリーンショット共有</string>
     <string name="ydk_share">ydk共有</string>
     <string name="no_share_app">共アプリは見つかりません</string>

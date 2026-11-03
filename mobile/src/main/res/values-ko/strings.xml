@@ -316,6 +316,10 @@
     <string name="done">완료\！</string>
     <string name="donot_edit_Deck">이 분류의 카드 그룹을 변경하지 마십시오</string>
     <string name="code_share">코드 공유</string>
+    <string name="ask_idle_cmd_label">소환·세트·펜듈럼 발동 전 확인</string>
+    <string name="ask_cmd_summon_confirm" formatted="false">[%s](을)를 소환할까요?</string>
+    <string name="ask_cmd_set_confirm" formatted="false">[%s](을)를 덮어서 세트할까요?</string>
+    <string name="ask_cmd_pendulum_confirm" formatted="false">[%s](을)를 펜듈럼 존에서 발동할까요?</string>
     <string name="screenshoot">아트 공유</string>
     <string name="ydk_share">파일 공유</string>
     <string name="unable_to_edit_empty_deck">비어있는 덱을 사용할 수 없습니다</string>

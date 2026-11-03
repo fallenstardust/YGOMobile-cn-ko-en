@@ -185,6 +185,10 @@
     <string name="file_exist">檔案已經存在</string>
     <string name="share_deck">分享卡組</string>
     <string name="code_share">卡組碼分享</string>
+    <string name="ask_idle_cmd_label">召喚、蓋放、靈擺發動前詢問</string>
+    <string name="ask_cmd_summon_confirm" formatted="false">是否確定召喚[%s]？</string>
+    <string name="ask_cmd_set_confirm" formatted="false">是否確定蓋放[%s]？</string>
+    <string name="ask_cmd_pendulum_confirm" formatted="false">是否確定將[%s]在靈擺區域發動？</string>
     <string name="screenshoot">圖片分享</string>
     <string name="ydk_share">檔案分享</string>
     <string name="no_share_app">找不到分享應用程式</string>

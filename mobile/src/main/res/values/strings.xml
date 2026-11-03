@@ -313,6 +313,10 @@
     <string name="done">done\！</string>
     <string name="donot_edit_Deck">Do not change decks of this category</string>
     <string name="code_share">Code Share</string>
+    <string name="ask_idle_cmd_label">Ask before summon, set and Pendulum activation</string>
+    <string name="ask_cmd_summon_confirm" formatted="false">Summon [%s]?</string>
+    <string name="ask_cmd_set_confirm" formatted="false">Set [%s] face-down?</string>
+    <string name="ask_cmd_pendulum_confirm" formatted="false">Activate [%s] in the Pendulum Zone?</string>
     <string name="screenshoot">Share Art</string>
     <string name="ydk_share">File share</string>
     <string name="unable_to_edit_empty_deck">unable to edit empty deck</string>

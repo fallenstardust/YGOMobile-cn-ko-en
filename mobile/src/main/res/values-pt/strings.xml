@@ -163,6 +163,10 @@
     <string name="file_exist">O arquivo já existe</string>
     <string name="share_deck">Compartilhar deck</string>
     <string name="code_share">Compartilhar código</string>
+    <string name="ask_idle_cmd_label">Confirmar antes de invocar, colocar ou ativar pêndulos</string>
+    <string name="ask_cmd_summon_confirm" formatted="false">Deseja invocar [%s]?</string>
+    <string name="ask_cmd_set_confirm" formatted="false">Deseja colocar [%s] com a face para baixo?</string>
+    <string name="ask_cmd_pendulum_confirm" formatted="false">Deseja ativar [%s] na Zona de Pêndulo?</string>
     <string name="screenshoot">Compartilhar captura de tela</string>
     <string name="ydk_share">Compartilhar arquivo ydk</string>
     <string name="no_share_app">Nenhum aplicativo para compartilhar foi encontrado</string>

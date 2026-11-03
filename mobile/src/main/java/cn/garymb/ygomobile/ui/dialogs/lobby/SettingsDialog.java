@@ -127,6 +127,10 @@ public class SettingsDialog {
         chkMAutoPos.setText(stringManager.getSystemString(1274, ""));
         CheckBox chkSTAutoPos = rootLayout.findViewById(R.id.chkSTAutoPos);
         chkSTAutoPos.setText(stringManager.getSystemString(1278, ""));
+        CheckBox chkAskIdleCmd = rootLayout.findViewById(R.id.chkAskIdleCmd);
+        // 不用 strings.conf 1268/1368：本机各语言包里 1368 是「分享录像」，1268 只有部分语言收录且含义不一，
+        // 主阶段命令确认的文案一律走 app 资源（七份 strings.xml 同步），避免随外部卡表包漂移
+        chkAskIdleCmd.setText(context.getString(R.string.ask_idle_cmd_label));
         CheckBox chkRandomPos = rootLayout.findViewById(R.id.chkRandomPos);
         chkRandomPos.setText(stringManager.getSystemString(1275, ""));
         CheckBox chkAutoChain = rootLayout.findViewById(R.id.chkAutoChain);
@@ -171,6 +175,10 @@ public class SettingsDialog {
         
         chkMAutoPos.setChecked(appsSettings.getIntSettings("chkMAutoPos", 0) == 1);
         chkSTAutoPos.setChecked(appsSettings.getIntSettings("chkSTAutoPos", 0) == 1);
+        // 开关覆盖面由「仅盖放」拓宽到「召唤/盖放/灵摆发动」，键名随之改叫 chkAskIdleCmd；
+        // 老键 chkAskMSet 仅作初值继承一次，内测里已勾过的用户不会被静默关掉
+        chkAskIdleCmd.setChecked(appsSettings.getIntSettings("chkAskIdleCmd",
+                appsSettings.getIntSettings("chkAskMSet", 0)) == 1);
         chkRandomPos.setChecked(appsSettings.getIntSettings("chkRandomPos", 0) == 1);
         chkAutoChain.setChecked(appsSettings.getIntSettings("chkAutoChain", 0) == 1);
         chkWaitChain.setChecked(appsSettings.getIntSettings("chkWaitChain", 0) == 1);
@@ -196,6 +204,7 @@ public class SettingsDialog {
         // 勾选状态变化时立即保存
         bindInstantSave(appsSettings, chkMAutoPos, "chkMAutoPos");
         bindInstantSave(appsSettings, chkSTAutoPos, "chkSTAutoPos");
+        bindInstantSave(appsSettings, chkAskIdleCmd, "chkAskIdleCmd");
         bindInstantSave(appsSettings, chkRandomPos, "chkRandomPos");
         bindInstantSave(appsSettings, chkAutoChain, "chkAutoChain");
         bindInstantSave(appsSettings, chkWaitChain, "chkWaitChain");
