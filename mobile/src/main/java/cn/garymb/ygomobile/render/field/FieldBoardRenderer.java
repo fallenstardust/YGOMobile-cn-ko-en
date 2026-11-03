@@ -18,8 +18,9 @@ public final class FieldBoardRenderer {
 
     private final GameFieldView view;
 
-    // === 总攻击力 bar 底图纹理键（矩形布局单一真值见 FieldGeometry.totalAtkRect）===
-    private static final long TOTAL_ATK_KEY = -3L;
+    // 总攻击力 bar 底图纹理键（矩形布局单一真值见 FieldGeometry.totalAtkRect）：需避开 -1/-2/-3（FieldTextureManager 的 cover/cover2/unknown 基础纹理键），
+    // 原用 -3 与 unknown.jpg 撞同一纹理缓存，总攻击力条先上传就会使场上 unknown 卡被画成 totalAtk.png（反向则底图变 unknown.jpg），故改用未占用的 -6
+    private static final long TOTAL_ATK_KEY = -6L;
     // 区域发动 / conti_act 旋转提示图标（materials: act.png），对齐 drawing.cpp DrawMisc 的 tAct + act_rot
     private static final long ACT_TEX_KEY = -4L;
     // HINT_ZONE 玫红标注格下方的半透明无效徽记（materials: negated.png，tNegated）
