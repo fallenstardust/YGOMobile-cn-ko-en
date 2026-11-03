@@ -649,23 +649,6 @@ public class GameEngine {
     byte[] lastGameMsgBody;
     int retryReplayCount = 0;
 
-    /**
-     * STOC_DECK_COUNT 留存的本视角卡组/额外张数：{@code [0]=我方卡组 [1]=我方额外 [2]=对方卡组 [3]=对方额外}
-     *（与 duelclient.cpp STOC_DECK_COUNT 直接 Initial(0/1) 的本地座位序同构）。
-     * <p>
-     * 猜拳/选先后阶段的场地堆叠即由它建立；观战方与某些只在 MSG_START 里填 0 的服务端
-     * 靠它作为回退，避免开局双方卡组/额外堆叠不显示（见 MessageUIHandler.onStart）。
-     */
-    public final int[] lastDeckCounts = new int[4];
-    /**
-     * MSG_START 扩展帧里的双方起手数与每回合抽卡数（席序 [0]=引擎 P0、[1]=引擎 P1）。
-     * 开局发牌属隐私，引擎不会给观战席位下发手卡的 MSG_MOVE，观战端只能靠这几个数补出
-     * 两侧手卡堆叠（用户新规格）；连远端 ygopro 服务端时帧尾没这一段，此时为 0。
-     */
-    public final int[] startHandCounts = new int[2];
-    /** 同上，每回合抽卡数（由房间规则配置，与起手数同批下发） */
-    public final int[] drawCountsPerTurn = new int[2];
-
     // === 逐局 MSG 录制（实现见 MsgFrameRecorder） ===
 
     void recordMsgFrame(int msgType, byte[] body) { msgRecorder.record(msgType, body); }
@@ -689,6 +672,13 @@ public class GameEngine {
 
     /** 串行派发待处理消息：闸门开启时逐条处理，某条触发动画则停止循环；实现见 MsgDispatchGate */
     void drainPendingMsgs() { gate.drainPendingMsgs(); }
+
+    /**
+     * 把一次性动作排到通讯队列尾部执行，使其与 {@code MSG_*} 同序（对齐 C++ ClientAnalyze 的单条串行链）。
+     * 供会清空/重建场地的 {@code STOC_*}（STOC_DUEL_START / STOC_CHANGE_SIDE / STOC_WAITING_SIDE）使用，
+     * 避免观战积压时清场插到「下一局 MSG_START 已建好的堆叠」之后；实现见 MsgDispatchGate。
+     */
+    public void postOnMsgQueue(Runnable action) { gate.postSerialized(action); }
 
     /** 确认卡片对话框显示时持有消息闸门（对齐 C++ MSG_CONFIRM_CARDS 显示面板后 actionSignal.Wait()）；实现见 MsgDispatchGate */
     public void holdMsgGateForDialog() { gate.holdMsgGateForDialog(); }

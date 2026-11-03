@@ -1,4 +1,6 @@
 package cn.garymb.ygomobile.game.engine;
+import android.util.Log;
+
 import cn.garymb.ygomobile.game.gamefield.ClientCard;
 import cn.garymb.ygomobile.game.gamefield.EffectActivatableHints;
 import cn.garymb.ygomobile.game.gamefield.GameField;
@@ -19,6 +21,9 @@ import ocgcore.enums.CardType;
  * 为多方共享状态，保留在 GameEngine 门面上，本类经 engine 读写。
  */
 public class CommandDataParser {
+
+    // 保持拆分前日志标识，便于与旧版日志比对
+    private static final String TAG = "GameEngine";
 
     private final GameEngine engine;
 
@@ -123,7 +128,11 @@ public class CommandDataParser {
 
     /**
      * MSG_UPDATE_CARD（client_field.cpp UpdateCard 真值格式）：
-     * int32 len 前缀，len>8 时才解析 query（对现有卡对象更新，绝不整卡替换）
+     * int32 len 前缀，len>8 时才解析 query（对现有卡对象更新，绝不整卡替换）。
+     * <p>卡对象不存在时按 C++（client_field.cpp UpdateCard L300-306 的 {@code if (pcard && ...)}）
+     * 直接跳过：本方法只在既有卡上补写查询字段，从不建卡。旧写法在此 {@code new ClientCard()} 并
+     * {@code addCard} 落位，会在观战席位（中途接入、没有对方开局发牌）的除外区/场上凭空立出
+     * 一张卡码为 0、点不动也移不走的幽灵卡。
      */
     public void parseUpdateCard(int player, int location, int sequence, ByteBuffer data) {
         if (data.remaining() < 4) return;
@@ -131,11 +140,9 @@ public class CommandDataParser {
         if (len <= 8) return;
         ClientCard card = engine.field.getCard(player, location, sequence);
         if (card == null) {
-            card = new ClientCard();
-            card.controler = player;
-            card.location = location;
-            card.sequence = sequence;
-            engine.field.addCard(player, location, sequence, card);
+            Log.d(TAG, "update card skipped: no such card at " + player + "/0x"
+                    + Integer.toHexString(location) + "/" + sequence);
+            return;
         }
         ByteBuffer sub = data.slice().order(ByteOrder.LITTLE_ENDIAN);
         sub.limit(Math.min(sub.limit(), len - 4));

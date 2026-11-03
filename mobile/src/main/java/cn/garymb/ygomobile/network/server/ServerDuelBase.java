@@ -46,7 +46,7 @@ abstract class ServerDuelBase implements YGOProtocol {
     protected int[] undoSeed;
     /** 开局 start_duel 的 option（duelRule 位移 + PSEUDO_SHUFFLE / TAG 位）。 */
     protected int undoOpt;
-    /** 开局写入录像的 MSG_START 帧副本（19 字节本帧 + 8 字节起手/抽卡扩展），重建重放时按原顺序补回消息流。 */
+    /** 开局写入录像的 MSG_START 帧副本（19 字节，与 gframe 同长），重建重放时按原顺序补回消息流。 */
     protected byte[] undoStartFrame;
     /** 重放装载卡组时冻结录像 base 段写入（卡组名/卡码已在首次开局录好，不可重复写）。 */
     protected boolean baseRecordFrozen;
@@ -201,10 +201,11 @@ abstract class ServerDuelBase implements YGOProtocol {
             loadDeckToEngine(room.decks[1], 1);
         }
 
-        // MSG_START（19 字节）+ 本机扩展 8 字节（双方起手数与各 2 字节、每回合抽卡数 2 字节）：
-        // 开局发牌属隐私，引擎不给观战席位下发手卡的 MSG_MOVE，观战端要靠这几个数把两侧
-        // 手卡堆叠补建出来（用户新规格）。远端 ygopro 服务端只发 19 字节，客户端读不到即按规则默认。
-        final int startLen = 27;
+        // MSG_START（19 字节，与 single_duel.cpp L462-481 逐字节同构）：帧内已带双方卡组/额外张数，
+        // 观战的堆叠就靠它建立。本端不给观战席位补任何私有字段——开局发牌属隐私，引擎不给观战下发
+        // 手卡的 MSG_MOVE，观战端因此看不到双方手卡堆叠，与桌面 gframe 表现一致（用户规格：观战
+        // 完全对齐 C++，不要多余的补发）。
+        final int startLen = 19;
         byte[] startBuf = new byte[startLen];
         ByteBuffer sb = ByteBuffer.wrap(startBuf).order(ByteOrder.LITTLE_ENDIAN);
         sb.put((byte) EngineMessage.MSG_START);
@@ -216,11 +217,6 @@ abstract class ServerDuelBase implements YGOProtocol {
         sb.putShort((short) OcgDuelEngine.queryFieldCount(pduel, 0, OcgDuelEngine.LOCATION_EXTRA));
         sb.putShort((short) OcgDuelEngine.queryFieldCount(pduel, 1, OcgDuelEngine.LOCATION_DECK));
         sb.putShort((short) OcgDuelEngine.queryFieldCount(pduel, 1, OcgDuelEngine.LOCATION_EXTRA));
-        // 扩展段：[起手数席0][起手数席1][每回合抽卡数席0][每回合抽卡数席1]
-        sb.putShort((short) hi.startHand);
-        sb.putShort((short) hi.startHand);
-        sb.putShort((short) hi.drawCount);
-        sb.putShort((short) hi.drawCount);
         // 录像：手工 MSG_START 不经 DuelAnalyzer.sendToPlayer，主机视角变体单独入消息流
         replay.writeMessage(startBuf, startLen);
         // 撤回重建需按原顺序补回这一帧（此后 startBuf[1] 会被改写，故在此处取副本）
@@ -237,17 +233,8 @@ abstract class ServerDuelBase implements YGOProtocol {
             room.sendGameMsg(room.players[1], Arrays.copyOf(startBuf, startLen));
             startBuf[1] = (byte) (swapped ? 0x11 : 0x10);
         }
-        // 观战的张数包紧跟在它的 MSG_START 之前补发一份：整场只有第一局在
-        // GameRoomMid#startDuel 发过一份，而局间的 STOC_WAITING_SIDE 已把观战场地清空，
-        // 第二、三局开局前就没任何卡组/额外堆叠。本处的 which 按“换位后 + 观战即将收到的
-        // playertype”算出（playertype 低一位为 1 时本端 duelIsFirst=false → localPlayer 翻转），
-        // 与紧接的 MSG_START 完全同序：堆叠先按字面席位建好，MSG_START 再按同一张数
-        // clear+重建，画面不再出现“先出堆叠→又空场→像重新开局”的闪动。
-        byte[] obCount = PlayerDeck.deckCountPayload(room.decks[0],
-                room.tagMode ? room.decks[2] : room.decks[1], swapped ? 1 : 0);
-        for (ServerConnection o : room.observers) {
-            o.send(STOC_DECK_COUNT, obCount);
-        }
+        // 观战只收这一条 MSG_START（对齐 single_duel.cpp L480-481 的 observers 循环）：不再补发
+        // STOC_DECK_COUNT，三局两胜与单局/TAG 因此走的是同一条建堆通道。
         for (ServerConnection o : room.observers) {
             o.send(STOC_GAME_MSG, Arrays.copyOf(startBuf, startLen));
         }

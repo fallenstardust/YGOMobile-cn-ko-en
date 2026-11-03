@@ -114,6 +114,19 @@ public class MsgDispatchGate {
         }
     }
 
+    /**
+     * 把一个一次性动作排到待派发通讯队列的尾部执行：与 {@code MSG_*} 走同一条串行链，
+     * 因此它一定排在当前已入队（含被动画/确认弹窗闸门持住）的消息之后。用于会清空/重建场地的
+     * {@code STOC_*}（见 {@code DuelStocHandler}）——C++ 的 {@code duelclient.cpp ClientAnalyze}
+     * 对 STOC 与 MSG 只有单条按到达顺序的链（动画期用 WaitFrameSignal 阻塞消息线程），STOC 不可能
+     * 插到队列中间；本端 STOC 原先在主线程即时执行，观战积压时局间的 {@code field.clear()} 会插到
+     * 「下一局 MSG_START 已建好的卡组/额外堆叠」之后，把堆叠抹成空场且再不重建（用户反馈的 match 重置）。
+     */
+    void postSerialized(Runnable action) {
+        engine.pendingMsgs.offer(action);
+        drainPendingMsgs();
+    }
+
     /** 串行派发待处理消息：闸门开启时逐条处理，某条触发动画（closeAnimGate）则停止循环 */
     void drainPendingMsgs() {
         if (engine.dispatchingMsg || engine.animGateClosed) return;

@@ -121,22 +121,6 @@ public class MessageUIHandler {
         engine.hintManager.startWaitHint();
     }
 
-    /** 远端服务端不下发起手数时的回退值（ygopro 官方对局默认起手 5 张） */
-    private static final int DEFAULT_OBSERVER_HAND = 5;
-
-    /**
-     * MSG_START 扩展帧（内置服务端追加在本机发的 19 字节本帧尾）：双方起手数与每回合抽卡数。
-     * 先于 onStart 回调，开局补建观战手卡堆叠时取用；远端 ygopro 服务端没带这一段时为 0。
-     */
-    public void onStartExtras(int hand0, int hand1, int draw0, int draw1) {
-        engine.startHandCounts[0] = hand0;
-        engine.startHandCounts[1] = hand1;
-        engine.drawCountsPerTurn[0] = draw0;
-        engine.drawCountsPerTurn[1] = draw1;
-        // 房间没预先填过抽卡数时（本机建房路径已填），以通讯值为准
-        if (draw0 > 0 && engine.gameDrawCount <= 0) engine.gameDrawCount = draw0;
-    }
-
     public void onStart(int playerType, int duelRule, int lp0, int lp1, int deck0, int extra0, int deck1, int extra1) {
         engine.field.clear();
         engine.inDuel = true;
@@ -167,30 +151,12 @@ public class MessageUIHandler {
         engine.field.dInfo.startLp = Math.max(lp0, lp1);
         engine.field.dInfo.lp[p0] = lp0;
         engine.field.dInfo.lp[p1] = lp1;
-        // ClientField::Initial：为双方卡组/额外创建全部 ClientCard（背面朝下、带堆叠高度）
-        // 张数回退：部分服务端在 MSG_START 里不填卡组/额外张数（留 0），此时拿 STOC_DECK_COUNT
-        // 留存的本视角张数补齐；两边都拿不到时开局整场没有卡组/额外堆叠（观战方无 DECK_COUNT
-        // 时由内置服务端向观战补发同一包保障）
-        int deckForP0 = deck0, extraForP0 = extra0, deckForP1 = deck1, extraForP1 = extra1;
-        if (deckForP0 == 0 && extraForP0 == 0) {
-            deckForP0 = engine.lastDeckCounts[p0 * 2];
-            extraForP0 = engine.lastDeckCounts[p0 * 2 + 1];
-        }
-        if (deckForP1 == 0 && extraForP1 == 0) {
-            deckForP1 = engine.lastDeckCounts[p1 * 2];
-            extraForP1 = engine.lastDeckCounts[p1 * 2 + 1];
-        }
-        engine.field.initial(p0, deckForP0, extraForP0, 0);
-        engine.field.initial(p1, deckForP1, extraForP1, 0);
-        // 观战开局补建两侧手卡堆叠（用户新规格）：开局发牌属隐私，引擎不给观战席位下发手卡的
-        // MSG_MOVE，观战端场上一直没手卡。起手数取 MSG_START 扩展帧（内置服务端下发），
-        // 连远端 ygopro 没带扩展时按官方默认 5 张回退；玩家席位不动（自己手卡照旧由 MOVE 建，
-        // 提前补建会与之重复）
-        if ((playerType & 0xF0) != 0) {
-            int hand = observerStartHand();
-            engine.field.initialHand(p0, hand);
-            engine.field.initialHand(p1, hand);
-        }
+        // ClientField::Initial（duelclient.cpp L1644-1652）：帧内 deckc/extrac 直接用，为双方卡组/
+        // 额外创建全部 ClientCard（背面朝下、带堆叠高度）。与 C++ 一致，本端不留任何张数缓存、
+        // 不做回退：服务端把帧内张数留 0 时就同样不建堆叠。观战席位也不补建手卡——开局发牌属隐私，
+        // 引擎不给观战下发手卡的 MSG_MOVE，桌面 gframe 同样不显示双方手卡。
+        engine.field.initial(p0, deck0, extra0, 0);
+        engine.field.initial(p1, deck1, extra1, 0);
         // 回放（含带消息流录像 MSG_START）不切 DUELING 状态：该状态会经 EngineCallbackDelegate 弹底部行动区，回放左侧面板只应显示录像控制条
         if (!engine.replayMode) {
             engine.setState(GameEngine.GameState.DUELING);
@@ -202,12 +168,6 @@ public class MessageUIHandler {
                 engine.listener.onPlayerInfoUpdated(1);
             }
         });
-    }
-
-    /** 观战补建手卡用的起手数：两侧起手数在房间配置里相同，取任一非零扩展值，都没带时按官方默认 5 张 */
-    private int observerStartHand() {
-        int h = engine.startHandCounts[0] > 0 ? engine.startHandCounts[0] : engine.startHandCounts[1];
-        return h > 0 ? h : DEFAULT_OBSERVER_HAND;
     }
 
     public void onWin(int player, int reason) {

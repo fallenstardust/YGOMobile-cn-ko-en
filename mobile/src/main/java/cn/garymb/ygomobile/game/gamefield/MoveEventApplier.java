@@ -1,6 +1,8 @@
 package cn.garymb.ygomobile.game.gamefield;
 import cn.garymb.ygomobile.game.engine.GameEngine;
 
+import android.util.Log;
+
 import java.nio.ByteBuffer;
 
 import cn.garymb.ygomobile.audio.SoundManager;
@@ -11,6 +13,8 @@ import ocgcore.enums.CardLocation;
  * （自 DuelEventHandler 平移，逻辑零改；对齐 gframe duelclient.cpp ClientAnalyze 各分支）。
  */
 public class MoveEventApplier {
+
+    private static final String TAG = "GameField";
 
     /**
      * ocgcore common.h L161-162：{@code REASON_DESTROY=0x1}（被破坏）、{@code REASON_RELEASE=0x2}（作为解放/解放代价）。
@@ -28,6 +32,23 @@ public class MoveEventApplier {
         this.engine = engine;
     }
 
+    /**
+     * 「源卡查无此卡」时，本条 MSG_MOVE 是否允许新建一张卡片落位。
+     * <p>C++ 端只有 {@code pl == 0} 的新建分支会 {@code CreateCard}（duelclient.cpp L2962-2975），
+     * 普通移动分支拿到 {@code GetCard} 的结果就直接用，<b>从不为查无此卡凭空造卡</b>——它的模型里
+     * 源卡恒在（开局发牌与各次入手都已按 pl==0 / MSG_DRAW 建过）。本端唯一会缺源卡的情形是观战席位
+     * 中途接入：它没赶上开局发牌，之后对方「从手卡」的移动在本地无卡可搬；此时照旧造一张卡塞进
+     * 目的地，就留下一张卡码为 0、点不动、也再没有任何消息把它移走的空卡（用户反馈的「场上横向摆放
+     * 没卡图的空卡」与「对方除外区竖着的里侧影」）。
+     * <p>故只在下述两种情形仍建卡：①本条消息带真实卡码（公开信息，等同 pl==0 的新建语义，观战照常
+     * 看得到对手从手卡召唤/特召/盖放的怪）；②目的地是手卡（张数由 MSG_UPDATE_DATA 的块数经
+     * {@code reconcileHandCount} 对平、卡码由 MSG_CONFIRM_CARDS 补写，不会永久残留）。
+     * 其余（遮蔽移动落到场上/墓地/除外/卡组/额外）一律忽略这条移动，宁可不画也不留幽灵卡。
+     */
+    private static boolean canMaterializeMissingSource(int code, int newLoc) {
+        return code != 0 || (newLoc & 0x7f) == CardLocation.Hand.value();
+    }
+
     public void applyMove(int code, int oldCtrl, int oldLoc, int oldSeq, int oldPos,
                    int newCtrl, int newLoc, int newSeq, int position, int reason) {
         oldCtrl = engine.localPlayer(oldCtrl);
@@ -38,7 +59,13 @@ public class MoveEventApplier {
         if (newOverlay && !oldOverlay) {
             // 作为超量素材叠放到超量怪兽下方（duelclient.cpp L3055-3095）
             ClientCard card = engine.field.getCard(oldCtrl, oldLoc & 0x7f, oldSeq);
-            if (card == null) card = new ClientCard();
+            if (card == null) {
+                // 源卡不在本端模型里：只有带卡码（或目的地为手卡）的消息才允许建卡，其余按
+                // canMaterializeMissingSource 的判据忽略，避免凭空造出一张永远移不走的 0 码素材
+                if (!canMaterializeMissingSource(code, newLoc)) return;
+                card = new ClientCard();
+                card.owner = oldCtrl;
+            }
             if (code != 0) card.code = code;
             // 对齐 duelclient.cpp MSG_MOVE 素材入 overlay 分支（L3055-3095）：C++ 此分支绝不改写
             // pcard->position，素材保留其在场上的表侧表示，叠放后正面朝上。旧实现用协议 cp 覆盖 position
@@ -126,7 +153,19 @@ public class MoveEventApplier {
             engine.field.fadeCard(card, 255, GameField.APPEAR_FRAME);
         } else {
             ClientCard card = engine.field.getCard(oldCtrl, oldLoc, oldSeq);
-            if (card == null) card = new ClientCard();
+            if (card == null) {
+                // C++ 的普通移动分支（duelclient.cpp L2994-3023）拿到 GetCard 结果直接用，绝不为
+                // 查无此卡造卡；本端一旦凭空造一张塞进目的地，就长出点不动也移不走的 0 码幽灵卡
+                //（场上横向空卡、对方除外区里侧竖影）。判据与被忽略原因见 canMaterializeMissingSource。
+                if (!canMaterializeMissingSource(code, newLoc)) {
+                    Log.i(TAG, "MSG_MOVE ignored: source card absent (mid-join spectator) src="
+                            + oldCtrl + "/0x" + Integer.toHexString(oldLoc) + "/" + oldSeq
+                            + " dst=" + newCtrl + "/0x" + Integer.toHexString(newLoc) + "/" + newSeq);
+                    return;
+                }
+                card = new ClientCard();
+                card.owner = oldCtrl;
+            }
             // 对齐 duelclient.cpp MSG_MOVE L2994：仅 code!=0 或回额外卡组(cl==0x40，服务端里侧回插
             // 时 code=0)才 SetCode；SetCode(0) 会把原卡码存入 chain_code（飞行中仍按原卡面绘制），
             // 旧实现无条件覆写 code 使其它隐藏信息移动误清卡码

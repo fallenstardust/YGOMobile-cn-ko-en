@@ -585,46 +585,8 @@ public class GameField {
     }
 
     /**
-     * 观战开局的补建手卡堆叠（用户新规格）：开局发牌是隐藏信息，引擎不给观战席位发手卡的
-     * MSG_MOVE/MSG_DRAW，观战端场上永远没有起手手卡；这里按通讯里的起手数以背面卡补出。
-     * <p>
-     * <b>必须按空位落座而不是末尾追加</b>：{@code PlayerField} 构造时就把 hand 预填成
-     * {@code MAX_HAND} 个 null（与 deck/extra 同构，{@code addCard}/{@code getCard}/{@code removeCard}
-     * 均按列表下标寻卡），旧写法 {@code for (i = hand.size(); i < handc; i++)} 在
-     * size(20) &gt; handc(5) 下一张也不补，补建形同空转。
-     * <p>
-     * 这一张张占位卡同时是“场上/除外区永久残影”的根因修复：观战收到的是遮蔽版 MSG_MOVE
-     *（向手卡/卡组的移动、里侧离场一律清零卡码），而本端手卡为空时
-     * {@code MoveEventApplier} 按 C++ 语义 {@code getCard(...)==null → new ClientCard()} 伪造一张
-     * 0 码卡塞进目的地——0 码卡点不动、也没有任何后续消息把它移出，于是永远横在怪兽格
-     *（横置矩形）或立在对方除外区（里侧竖矩形）。补齐起手位后来源可寻，移动改为搬运这张
-     * 占位卡（公开来源还会被写入真卡码），幽灵不再产生。
-     * <p>幂等：只填空位、绝不覆盖已有卡（开局后由 MSG_DRAW/MSG_MOVE 逐张换入真卡）。
+     * 序号与列表下标对齐（getCard 三参/四参寻卡依赖），可选同时把堆叠高度归回 0.01 一层。
      */
-    public void initialHand(int player, int handc) {
-        if (player < 0 || player > 1 || handc <= 0) return;
-        List<ClientCard> hand = players[player].hand;
-        final int handLoc = CardLocation.Hand.value();
-        int owned = getCardCount(player, handLoc);
-        for (int slot = 0; slot < handc && owned < handc; slot++) {
-            while (hand.size() <= slot) hand.add(null);//兼容列表曾被撑短：先腾出槽位
-            if (hand.get(slot) != null) continue;//已有真卡（含上一补建被换入的卡）：不覆盖
-            ClientCard pcard = new ClientCard();
-            pcard.owner = player;
-            pcard.controler = player;
-            pcard.location = handLoc;
-            //卡码未知：取背面守备表示，渲染按卡背画（同卡组/额外堆叠）
-            pcard.position = CardPosition.FaceDownDefence.value();
-            hand.set(slot, pcard);
-            owned++;
-        }
-        if (owned <= 0) return;
-        // 序号与列表下标对齐（getCard 依赖），再按最终张数整排重摆：
-        // 逐张落位时张数还在增长，先补的那几张会按较小的 count 算间距而排不齐
-        resetSequence(hand, false);
-        updateHandLayout(player, 0);
-    }
-
     public void resetSequence(List<ClientCard> list, boolean resetHeight) {
         int seq = 0;
         for (ClientCard pcard : list) {

@@ -445,6 +445,8 @@ abstract class GameRoomMid extends GameRoomBase {
                 return;
             }
         }
+        // 对齐 single_duel.cpp / tag_duel.cpp StartDuel 的 NetServer::StopListen()：开局即停监听，
+        // 决斗进行中不接受任何新连接（观战也只在开局前入座，本局中途接入无通讯可补）。
         server.stopListen();
         players[0].send(STOC_DUEL_START, null);
         if (!soloMode) {
@@ -463,29 +465,9 @@ abstract class GameRoomMid extends GameRoomBase {
         if (!soloMode) {
             players[1].send(STOC_DECK_COUNT, PlayerDeck.deckCountPayload(decks[0], decks[1], 1));
         }
-        // 观战同步补发卡组/额外/副卡组数量：内置服务端仅向两个决斗位发 STOC_DECK_COUNT 时，
-        // 观战方在猜拳/选先后阶段场上没有卡组与额外卡组堆叠（决斗玩家已先由本包建好堆叠），
-        // 直到 MSG_START 才突然出现。观战的本地视角与 players[0] 同侧（bindViewNames 固定座位 0
-        // 在左/下，MSG_START 的 playertype 0x10 亦按先动方为我方），故直接复用 players[0] 的载荷。
-        //（gframe 桌面版此处也只发两个决斗位，本端为使观战与对战玩家开场画面一致而扩展）
-        byte[] obCount = tagMode
-                ? PlayerDeck.deckCountPayload(decks[0], decks[2], 0)
-                : PlayerDeck.deckCountPayload(decks[0], decks[1], 0);
-        // 观战的这份预览不带副卡组那两栏：sidec 会被客户端当成里侧占位卡立在除外区
-        //（DuelStocHandler.onDeckCount → GameField.initial 的 sidec 分支），而此刻先攻选择还没定档：
-        // 一换席位（ServerDuelBase.startDuel 里的 swapPlayersAndDecks）观战的本地视角就会与这份载荷
-        // 左右相反，表现为「对方除外区附近多出一张点不动又移不走的里侧卡」。副卡组数量只服务
-        // 决斗位自己的换备卡预览，观战无意义；它的开局前堆叠由 ServerDuelBase.startDuel 在
-        // MSG_START 前按当时正确的视角再补发一份。
-        if (obCount.length >= 12) {
-            obCount[4] = 0;
-            obCount[5] = 0;   // s0（int16 LE）
-            obCount[10] = 0;
-            obCount[11] = 0;  // s1
-        }
-        for (ServerConnection o : observers) {
-            o.send(STOC_DECK_COUNT, obCount);
-        }
+        // STOC_DECK_COUNT 只发两个决斗位（对齐 single_duel.cpp L346-351 / tag_duel.cpp L303-309）：
+        // 观战席位不收本包，它的卡组/额外堆叠由 TPResult 里发给它的那条 MSG_START 按帧内 deckc/
+        // extrac 建立，与桌面 gframe 完全一致。
         if (soloMode) {
             // Skip rock-paper-scissors: directly ask host to choose first/second
             players[0].send(STOC_SELECT_TP, null);
