@@ -598,6 +598,17 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
     }
 
     @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+        // 底部页签切走：HomeActivity.switchFragment 以 hide 本页使根视图 GONE，而搜索面板（抽屉内的
+        // CardSearcher）的关键词记录下拉是独立窗体不会随之消失，会卡在切换后的页面上，
+        // 故本页退场时主动收起自己那份下拉
+        if (hidden && mCardSearcher != null) {
+            mCardSearcher.dismissKeywordDropdown();
+        }
+    }
+
+    @Override
     public void onFirstUserVisible() {
     }
 

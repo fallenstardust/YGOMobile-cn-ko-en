@@ -720,6 +720,16 @@ public abstract class CardSearcherFilterHistory extends CardSearcherBase {
         }
     }
 
+    /**
+     * 收起关键词记录下拉：下拉窗体独立于宿主视图树，宿主 Fragment 被 hide（切到底部其他页签）
+     * 时不会自行消失，必须由宿主退场时主动收起；只收本 CardSearcher 自己的下拉。
+     */
+    public void dismissKeywordDropdown() {
+        if (keyWord != null) {
+            keyWord.dismissDropDown();
+        }
+    }
+
 
 
     // cross-layer hook: implemented by downstream CardSearcher leaf

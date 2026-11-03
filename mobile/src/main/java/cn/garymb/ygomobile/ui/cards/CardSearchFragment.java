@@ -138,6 +138,16 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
 
     }
 
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+        // 底部页签切走：HomeActivity.switchFragment 以 hide 本页使根视图 GONE，而关键词记录的下拉
+        // 是独立窗体不会随之消失，会卡在切换后的页面上，故本页退场时主动收起自己那份下拉
+        if (hidden && mCardSearcher != null) {
+            mCardSearcher.dismissKeywordDropdown();
+        }
+    }
+
     private void intentSearch(String searchMessage) {
         //如果要求搜索的关键字为空，就搜索决斗助手保存的卡查关键字
         if (TextUtils.isEmpty(searchMessage)) {
