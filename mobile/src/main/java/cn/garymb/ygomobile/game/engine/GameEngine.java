@@ -95,6 +95,13 @@ public class GameEngine {
         /** 猜拳结果（STOC_HAND_RESULT），均为本方视角的手势常量（1=剪刀 2=石头 3=布） */
         void onHandResult(int myHand, int oppHand);
 
+        /**
+         * MSG_HAND_RES(133)：决斗中脚本猜拳（如「变则齿轮」）的双方手势结果，手势常量同上、
+         * 均已按本方视角换算。与握手层的 {@link #onHandResult} 分开：后者携带开局猜拳的状态机
+         *（rpsResultShown / handSelectDialog / 平局重挂），把对局内结果写进去会跨阶段串扰。
+         */
+        default void onDuelRpsResult(int myHand, int oppHand) {}
+
         /** 召唤居中动画（MSG_SUMMONING/SPSUMMONING/FLIPSUMMONING）：summonType 取 SUMMON_NORMAL/SPECIAL/FLIP */
         void onSummonAnimation(int code, int summonType);
 

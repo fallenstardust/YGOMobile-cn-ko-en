@@ -387,6 +387,12 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
                 case 27:
                     showDialogUtil.showConfirmCardsDialog(data);
                     break;
+                case 132:
+                    // MSG_ROCK_PAPER_SCISSORS：决斗中脚本猜拳（duelclient.cpp L3973-3980 弹 wHand），
+                    // 应答为 CTOS_RESPONSE int32；与 switch 开头的两个握手层入口（0=STOC_SELECT_HAND、
+                    // 1=STOC_SELECT_TP）走的是不同弹窗与不同协议，不可归并
+                    showDialogUtil.showInDuelRpsDialog();
+                    break;
                 case 140:
                     showDialogUtil.showAnnounceRaceDialog(data);
                     break;
@@ -559,6 +565,16 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
     @Override
     public void onHandResult(int myHand, int oppHand) {
         activity.runOnUiThread(() -> activity.getDialogUtil().onHandResult(myHand, oppHand));
+    }
+
+    @Override
+    public void onDuelRpsResult(int myHand, int oppHand) {
+        // MSG_HAND_RES(133)：走居中特效层的 drawspec case 100 渲染器（与 C++ drawing.cpp L1422-1433
+        // 同一入口，渲染器早已存在只是仍没人接得上）。不另起一套 RPSDialog 动画：汇入串行特效队列后
+        // isBusy() 置真，统一动画闸门据此暂缓后续消息，天然复现 duelclient.cpp L3996 的
+        // WaitFrameSignal(60)；且回放渲染冻结期的 setSuppressed(true) 会直接拒新入队，与 C++ 的
+        // isReplaySkiping 早退同一效果。手势取本方视角的 1/2/3（与 RPSDialog.HAND_* 同值）。
+        activity.runOnUiThread(() -> specEffect().showRpsResult(myHand, oppHand));
     }
 
     // === 玩家等待界面转发（引擎回调 → playerWaitingDialog.handleXxx） ===

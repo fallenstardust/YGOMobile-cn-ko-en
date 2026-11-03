@@ -107,6 +107,15 @@ public class GameMessageParser {
         void onMissedEffect(int code, int controler, int location, int sequence, int effectId);
         void onTossCoin(int player, int count, ByteBuffer results);
         void onTossDice(int player, int count, ByteBuffer results);
+        /** duelclient.cpp MSG_ROCK_PAPER_SCISSORS L3973-3980：player(1)。core 侧
+         *  operations.cpp field::rock_paper_scissors L6577-6588 每步只写 1 字节席位号（步0=P0、步1=P1），
+         *  写完即停在 PROCESSOR_ROCK_PAPER_SCISSORS 等该席位给 int32 应答（1=剪刀 2=石头 3=布，
+         *  对齐 event_handler.cpp BUTTON_HAND L42-46 的 SetResponseI(id - BUTTON_HAND1 + 1)）；
+         *  旧实现整条消息未解析，「变则齿轮」(58297729) 一类把对局永久挂死 */
+        void onRockPaperScissors(int player);
+        /** duelclient.cpp MSG_HAND_RES L3982-3997：res(1)，低 2bit=引擎 P0 手势、其后 2bit=引擎 P1 手势
+         *  （各取 1..3，core L6593-6594 写 hand0 + (hand1 << 2)），无需应答的纯展示消息 */
+        void onHandRes(int res);
         void onAnnounceRace(int player, int count, int availableRaces);
         void onAnnounceAttrib(int player, int count, int availableAttribs);
         void onAnnounceCard(int player, ByteBuffer data);
@@ -474,6 +483,19 @@ public class GameMessageParser {
                 handler.onEquip(0, eqCtrl, eqLoc, eqSeq, tCtrl, tLoc, tSeq);
                 break;
             }
+            case LpUpdate: {
+                // duelclient.cpp MSG_LPUPDATE L3656-3672：player(1) + lp(4)。此消息由 core 侧
+                // Duel.SetLP（libduel.cpp duel_set_lp L46-58）写出，表示把基本分「直接设为某值」，
+                // 与伤害(MSG_DAMAGE)/回复(MSG_RECOVER)/支付(MSG_PAY_LPCOST)三条增减通道并列但不同源：
+                // 那三条下发的是变化量，本条下发的是终值，故 handler 不做加减算、只按终值刷新血条。
+                // 旧实现整条消息未解析（落到 default 仅记日志），使「那之后…对方基本分变成一半」
+                // 这类 CNo.104 假面魔蹈士 阴影② 的附加处理只走了随机送墓、基本分在本端一动不动，
+                // 看起来像效果应答后处理没跑完（C++ 客户端有本分支故表现正常）。
+                int player = buf.get() & 0xFF;
+                int lp = buf.getInt();
+                handler.onLpUpdate(player, lp);
+                break;
+            }
             case Unequip: {
                 int ctrl = buf.get() & 0xFF;
                 int loc = buf.get() & 0xFF;
@@ -574,6 +596,18 @@ public class GameMessageParser {
                 int player = buf.get() & 0xFF;
                 int count = buf.get() & 0xFF;
                 handler.onTossDice(player, count, buf);
+                break;
+            }
+            case RockPaperScissors: {
+                // duelclient.cpp L3973-3980：仅 player(1)，无后续字节（core 每步只 write_buffer8 席位号）；
+                // 席位号在 C++ 侧读入即弃（询问只发给被问席位，见 DuelAnalyzer 的 sendToPlayer），
+                // 本端一律弹窗等应答与桌面版同构
+                handler.onRockPaperScissors(buf.get() & 0xFF);
+                break;
+            }
+            case HandRes: {
+                // duelclient.cpp L3982-3983：仅 res(1)，两手势各占 2bit 打包在同一字节里
+                handler.onHandRes(buf.get() & 0xFF);
                 break;
             }
             case AnnounceRace: {

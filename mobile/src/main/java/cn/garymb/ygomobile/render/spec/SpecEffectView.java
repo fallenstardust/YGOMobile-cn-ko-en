@@ -383,20 +383,26 @@ class SpecEffectView extends View {
     }
 
     // --- case 100：猜拳双手势自上下向中央靠拢 ---
+    // param 包序对齐 duelclient.cpp MSG_HAND_RES L3989-3992：低 16 位=我方手势（下方往上）、
+    // 高 16 位=对方手势（上方往下），均已减 1 成 0..2 图索引；旧命名把两者叫反（高 16 位被
+    // 命名为 my），本段渲染器此前无调用点，现由 MSG_HAND_RES(133) 接入，故按语义改名防误读
     private void drawRps(Canvas canvas) {
-        int myIdx = clamp((param >> 16) & 0x3, 0, 2);
-        int oppIdx = clamp(param & 0x3, 0, 2);
+        int oppIdx = clamp((param >> 16) & 0x3, 0, 2);
+        int myIdx = clamp(param & 0x3, 0, 2);
         Bitmap my = skin("f" + (myIdx + 1) + ".jpg");
         Bitmap opp = skin("f" + (oppIdx + 1) + ".jpg");
         float handH = s * 128f;
         float handW = handH * (89f / 128f);
         float left = cx - handW / 2f, right = cx + handW / 2f;
-        float myTop = vOriginY + dif * s;
-        float oppTop = vOriginY + (540f - dif) * s;
-        if (my != null)
-            canvas.drawBitmap(my, null, new RectF(left, myTop, right, myTop + handH), bmpPaint);
+        // 落点对齐 drawing.cpp L1424-1425：高 16 位（对方）画在 y=showcarddif（自上方往下靠拢），
+        // 低 16 位（我方）画在 y=540-showcarddif（自下方往上靠拢），与 RPSDialog.playResultAnimation
+        // 的「我方上升、对方倒置下降」同一方位约定
+        float topY = vOriginY + dif * s;
+        float bottomY = vOriginY + (540f - dif) * s;
         if (opp != null)
-            canvas.drawBitmap(opp, null, new RectF(left, oppTop, right, oppTop + handH), bmpPaint);
+            canvas.drawBitmap(opp, null, new RectF(left, topY, right, topY + handH), bmpPaint);
+        if (my != null)
+            canvas.drawBitmap(my, null, new RectF(left, bottomY, right, bottomY + handH), bmpPaint);
     }
 
     // --- case 101：阶段/胜负文字，淡入→停留→淡出并横向滑入滑出 ---

@@ -242,6 +242,36 @@ public class DuelEventHandler extends DuelEventHandlerBase {
     }
 
     @Override
+    public void onRockPaperScissors(int player) {
+        // duelclient.cpp MSG_ROCK_PAPER_SCISSORS L3973-3980：席位号在 C++ 侧读入即弃并弹 wHand，
+        // 本端同样一律弹猜拳窗（内置服务端只把该询问发给被问席位，见 DuelAnalyzer L731-737）；
+        // 应答是 CTOS_RESPONSE 的 int32 1/2/3，不是开局握手层的 CTOS_HAND_RESULT
+        //（区分源 event_handler.cpp BUTTON_HAND L42-58：curMsg==MSG_ROCK_PAPER_SCISSORS 走 SetResponseI，
+        // 否则才 SendPacketToServer(CTOS_HAND_RESULT)）。
+        // 回放无需在此早退：isSelectable(132) 已为真→ isNoFeed 拦在投喂层，由录制响应直接喂回引擎
+        //（对齐 replay_mode.cpp L758-761 的 ReadReplayResponse 而非 ClientAnalyze）
+        engine.mainHandler.post(() -> {
+            if (engine.listener != null) engine.listener.onSelectRequired(132, null);
+        });
+    }
+
+    @Override
+    public void onHandRes(int res) {
+        // duelclient.cpp MSG_HAND_RES L3982-3997：低 2bit 为引擎 P0 手势、其后 2bit 为引擎 P1 手势
+        //（各取 1=剪刀 2=石头 3=布，与 RPSDialog.HAND_* 常量同值），C++ 按 dInfo.isFirst 定出「我方」
+        // 再塞进 showcardcode 低/高 16 位走 showcard=100 绘制；此处同构换算为本方/对方手势后交 UI 播动画
+        if (engine.field.instantPlace || engine.replaySkip) return; // C++ 的 isReplaySkiping 分支只吃包不演
+        int hand0 = res & 0x3;
+        int hand1 = (res >> 2) & 0x3;
+        final boolean first = engine.isDuelFirst();
+        final int myHand = first ? hand0 : hand1;
+        final int oppHand = first ? hand1 : hand0;
+        engine.mainHandler.post(() -> {
+            if (engine.listener != null) engine.listener.onDuelRpsResult(myHand, oppHand);
+        });
+    }
+
+    @Override
     public void onRandomSelected(int count, ByteBuffer data) {
         // duelclient.cpp MSG_RANDOM_SELECTED L3462-3486：逐条 (c,l,s,ss) 取被选卡（overlay 取素材），
         // 非回放快进时响 DICE 并 is_highlighting 青框 30 帧后收回——旧实现连消息都未解析，

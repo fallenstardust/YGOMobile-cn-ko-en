@@ -317,14 +317,14 @@ public class ServerUtil {
     public static String downloadUrl() {
         String url;
         url = (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Chinese.code)
-                ? URL_SUPERPRE_CN_FILE : "https://raw.githubusercontent.com/ElderLich/TransSuperpre/refs/heads/main/" + getLanguageId() + "/ygopro-super-pre.ypk";
+                ? URL_SUPERPRE_CN_FILE : "https://raw.githubusercontent.com/ElderLich/Pre-Release-Translations/refs/heads/main/" + getLanguageId() + "/ygopro-super-pre.ypk";
         return url;
     }
 
     public static String preCardListJson() {
         String json;
         json = (AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Chinese.code)
-                ? URL_PRE_CARD : "https://raw.githubusercontent.com/ElderLich/TransSuperpre/refs/heads/main/" + getLanguageId() + "/test-release.json";
+                ? URL_PRE_CARD : "https://raw.githubusercontent.com/ElderLich/Pre-Release-Translations/refs/heads/main/" + getLanguageId() + "/test-release.json";
         return json;
     }
     public enum ExCardState {

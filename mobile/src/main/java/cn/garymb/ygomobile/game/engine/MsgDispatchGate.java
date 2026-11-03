@@ -39,10 +39,11 @@ public class MsgDispatchGate {
             engine.lastGameMsgType = msgType;
             engine.lastGameMsgBody = body;
             engine.retryReplayCount = 0;
-            // 单独留存最近一条需本端应答的询问（MSG_SELECT_* = 10..26 与宣言类
-            // MSG_ANNOUNCE_* = 140..143）快照：撤回被拒/超时时据此重派发重建同一张待答弹窗。
-            // 宣言类一并留存是因为它们同样只能靠弹窗应答，撤回瞬间被收口后若无快照可重建
-            // 就再也无法应答（与 AskWatchdog.isAnswerableQuestion 同一口径）
+            // 单独留存最近一条需本端应答的询问（MSG_SELECT_* = 10..26、宣言类
+            // MSG_ANNOUNCE_* = 140..143 与决斗中猜拳 MSG_ROCK_PAPER_SCISSORS = 132）快照：
+            // 撤回被拒/超时时据此重派发重建同一张待答弹窗（重派发走的仍是 parse 那一条链，
+            // 132 因此无需额外重建代码）。宣言类一并留存是因为它们同样只能靠弹窗应答，
+            // 撤回瞬间被收口后若无快照可重建就再也无法应答（与 AskWatchdog.isAnswerableQuestion 同一口径）
             if (AskWatchdog.isAnswerableQuestion(msgType)) {
                 engine.undoCoord.lastQuestionType = msgType;
                 engine.undoCoord.lastQuestionBody = body;

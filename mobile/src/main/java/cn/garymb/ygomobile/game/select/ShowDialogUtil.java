@@ -65,6 +65,13 @@ public class ShowDialogUtil {
     private boolean rpsAnimating;
     private boolean pendingHandSelect;
     private FirstOrSecondDialog tpSelectDialog;
+    /**
+     * 决斗中脚本猜拳（MSG_ROCK_PAPER_SCISSORS=132，如「变则齿轮」58297729）的弹窗载体：与开局握手用的
+     * {@link #handSelectDialog} 分实例持有——后者绑着一整套开局猜拳状态机（rpsResultShown / lastHandSent /
+     * rpsAnimating / pendingHandSelect，平局还要重挂窗），而对局内的应答走 CTOS_RESPONSE、结果不决定
+     * 先后攻，混用会让两个阶段互相串扰。结果动画（133）不归本实例，走 SpecEffectOverlay 的 case 100。
+     */
+    private RPSDialog inDuelRpsDialog;
 
     // === 同包协作类（构造时注入 this，经包级私有直连上述依赖） ===
 
@@ -177,6 +184,11 @@ public class ShowDialogUtil {
         if (handSelectDialog != null && handSelectDialog.isShowing()) {
             handSelectDialog.repositionAfterRotation();
         }
+        // 决斗中猜拳窗同样以 showAsDropDown 相对 layout_game_right 定位、不经 DraggablePopupHelper
+        // 包装，旋转重建后必须按新视图重算偏移，否则横竖屏切换后停在左下角
+        if (inDuelRpsDialog != null && inDuelRpsDialog.isShowing()) {
+            inDuelRpsDialog.repositionAfterRotation();
+        }
     }
 
     /**
@@ -213,6 +225,36 @@ public class ShowDialogUtil {
                 }
             });
         }
+    }
+
+    /**
+     * MSG_ROCK_PAPER_SCISSORS(132)：决斗中脚本发起的猜拳（duelclient.cpp L3973-3980 弹 wHand）。
+     * 复用 {@link RPSDialog} 的三个手势按钮，但点击后走 {@link #sendResponseInt}：core 侧
+     * field::rock_paper_scissors 停在 PROCESSOR_ROCK_PAPER_SCISSORS 读 int32 应答，与开局握手层的
+     * CTOS_HAND_RESULT 是两条不同协议路径（区分源 event_handler.cpp BUTTON_HAND L42-58 按 curMsg 分流）。
+     * 去重与「延迟到布局完成再显示」的实例持有沿用 showHandSelectDialog 口径：绝不创建第二个实例，
+     * 否则前一个窗无人持有引用、点不掉。结果动画由紧随的 MSG_HAND_RES 走特效层，不依赖本窗实例。
+     */
+    public void showInDuelRpsDialog() {
+        if (inDuelRpsDialog != null) {
+            // 已显示、或已创建并等布局完成后显示（延迟分支）：复用，不重建第二个窗
+            if (inDuelRpsDialog.isShowing()) return;
+            inDuelRpsDialog.dismiss();
+            inDuelRpsDialog = null;
+        }
+        RPSDialog dialog = new RPSDialog(activity);
+        inDuelRpsDialog = dialog;
+        dialog.setCancelable(false)
+                .setOnResultListener(result -> {
+                    // 点中即先收窗再发应答（弹窗已在按钮 ACTION_UP 里 dismiss，此处再收一次保证
+                    // 动画窗与尺寸监听一并释放），与开局握手窗同一时序约定
+                    dialog.dismiss();
+                    sendResponseInt(result);
+                });
+        // 猜拳无「取消/放弃」语义（core 只收 1/2/3），上一选择会话残留的 cancelOrFinish 在此既无
+        // 作用又会遮挡弹窗，按是/否询问窗同一口径收起
+        panel().hideCancelOrFinishButton();
+        dialog.show();
     }
 
     public void showTPSelectDialog() {
@@ -437,6 +479,13 @@ public class ShowDialogUtil {
         // 一并关闭选项弹窗与全部宣言/表示形式弹窗（选项/属性/数字/种族/卡片/形式），与退出对战同口径：
         // 这些弹窗不可取消，决斗结束或撤回时若仍在显示会残留遮挡，且按钮已发不出应答，故统一主动关闭
         boolean closed = dismissAnnounceDialogs();
+        // 决斗中猜拳窗（MSG_ROCK_PAPER_SCISSORS）：结果动画属特效层，由 releaseSpecOverlayForRebuild /
+        // hide 收口，此处只管弹窗。计入 closed——132 现已属可应答询问（有快照），被撤回收口后需按快照重派发
+        if (inDuelRpsDialog != null) {
+            closed |= inDuelRpsDialog.isShowing();
+            inDuelRpsDialog.dismiss();
+            inDuelRpsDialog = null;
+        }
         // 连锁场上点击模式复位：关闭询问窗、退出命令上下文并清除高亮，避免脏状态残留到下一局
         YesOrNoDialog.dismissChainQuery();
         // 知会窗（对位 C++ wMessage）同样收口：不可取消的它若不主动关闭会遮挡返回界面；

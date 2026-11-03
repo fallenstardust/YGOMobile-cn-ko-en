@@ -24,7 +24,8 @@ class AskWatchdog {
 
     private volatile long lastAskRxAt;
     /**
-     * 最近一条「需要本端应答」的询问（MSG_SELECT_* 与宣言类 MSG_ANNOUNCE_*）到达时刻：
+     * 最近一条「需要本端应答」的询问（MSG_SELECT_*、宣言类 MSG_ANNOUNCE_* 与决斗中猜拳
+     * MSG_ROCK_PAPER_SCISSORS）到达时刻：
      * 与 {@link #lastResponseTxAt} 比较即得「当前是否仍有一条询问待答」（见
      * {@link #isQuestionPending()}），撤回被拒时据此决定能否按询问快照重派发重建弹窗。
      * 不能复用 lastAskRxAt：它含 MSG_WAITING，等待提示会把已答完的旧询问误判为待答。
@@ -85,8 +86,9 @@ class AskWatchdog {
     }
 
     /**
-     * 询问/等待提示到达：求援计数作废；msgType 为需本端应答的询问（MSG_SELECT_* = 10..26
-     * 或宣言类 MSG_ANNOUNCE_* = 140..143）时另记待答询问时戳，供 {@link #isQuestionPending()}。
+     * 询问/等待提示到达：求援计数作废；msgType 为需本端应答的询问（MSG_SELECT_* = 10..26、
+     * 宣言类 MSG_ANNOUNCE_* = 140..143 与决斗中猜拳 MSG_ROCK_PAPER_SCISSORS = 132）时另记待答询问时戳，
+     * 供 {@link #isQuestionPending()}。
      */
     void notifyAskReceived(int msgType) {
         long now = System.currentTimeMillis();
@@ -102,10 +104,19 @@ class AskWatchdog {
         return lastQuestionRxAt > lastResponseTxAt;
     }
 
-    /** 这条消息是否需要本端给出应答（与询问快照留存范围同源，见 MsgDispatchGate）。 */
+    /**
+     * 这条消息是否需要本端给出应答（与询问快照留存范围同源，见 MsgDispatchGate）：
+     * MSG_SELECT_*(10..26)、宣言类 MSG_ANNOUNCE_*(140..143)，再加决斗中脚本猜拳
+     * MSG_ROCK_PAPER_SCISSORS(132)——core 写完那一字节就停在
+     * PROCESSOR_ROCK_PAPER_SCISSORS 等 int32 应答（operations.cpp field::rock_paper_scissors），
+     * 不纳入则「变则齿轮」(58297729) 一类卡既无求援也不落询问快照，对局始终挂死。
+     * MSG_HAND_RES(133) 则不能纳入：它是纯展示的结果广播、core 不等任何人应答，误记为
+     * 待答询问会使 isQuestionPending() 长期为真，把撤回恢复与应答屏障带偏。
+     */
     static boolean isAnswerableQuestion(int msgType) {
         return (msgType >= GameMessage.SelectBattleCmd.value()
                 && msgType <= GameMessage.SelectUnselectCard.value())
+                || msgType == GameMessage.RockPaperScissors.value()
                 || (msgType >= GameMessage.AnnounceRace.value()
                 && msgType <= GameMessage.AnnounceNumber.value());
     }

@@ -34,7 +34,9 @@ abstract class GameFieldMotionBase {
 
     /**
      * 触发 LP 变化动画（duelclient.cpp MSG_DAMAGE/RECOVER/LPUPDATE/PAY_LPCOST）
-     * @param showText true=伤害/回复（先 30 帧浮字再扣减）；false=LPUPDATE/支付（立即扣减）
+     * @param showText true=伤害/回复/支付基本分（先 30 帧浮字再扣减，对齐 MSG_DAMAGE L3583-3585、
+     *                 MSG_RECOVER L3612-3614、MSG_PAY_LPCOST L3764-3766 的 lpcstring + WaitFrameSignal(30)+(11)）；
+     *                 false=LPUPDATE（无浮字，置 lpframe=10 后直接逐帧过渡，对齐 MSG_LPUPDATE L3666-3667）
      */
     public void startLpChange(int player, int finalLp, int color, String text, boolean showText) {
         if (field.instantPlace) {

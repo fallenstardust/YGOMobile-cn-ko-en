@@ -446,7 +446,8 @@ abstract class ServerDuelBase implements YGOProtocol {
     /**
      * 重试熔断落地（{@link DuelAnalyzer} 在 MSG_RETRY 调用）：代那个对同一询问连续非法应答的席位向引擎喂「放弃」，使决斗继续而非永久互等。
      * 回退只倒退服务端引擎、对端客户端局面无法倒退，回退后重发同名效果的旧答复恒非法——本席位手上无询问、点卡无菜单，故须代答。
-     * 代答在录像与撤回栈各占一步（与真实答复逐字节同形、非行动锚点）；若引擎判非法，{@link #discardPendingUndoStep()} 与录像回退会一并弹掉。
+     * 代答在录像与撤回栈各占一步（与真实答复逐字节同形、非行动锚点）；若引擎判非法，{@link ServerDuel#discardPendingUndoStep()}
+     * 与录像回退会一并弹掉。
      */
     void applyForcedPass(int seat, byte[] resb) {
         if (pduel == 0L || seat < 0 || seat >= room.players.length || room.players[seat] == null) {
@@ -636,7 +637,7 @@ abstract class ServerDuelBase implements YGOProtocol {
     /** 同一条询问最多重发几份（重发后仍无答复则交给日志与下一轮玩家操作，不再刷盘）。 */
     protected static final int QUESTION_KEEPALIVE_MAX_REDELIVERIES = 3;
     /**
-     * 客户端主动索取重发（{@link #onAskResendRequest}）时的份数上限：取得比保活心跳略高，
+     * 客户端主动索取重发（{@link ServerDuel#onAskResendRequest(ServerConnection)}）时的份数上限：取得比保活心跳略高，
      * 因为它是「客户端确实已经答完并且什么也没等到」的直接证据，而非心跳的超时推测。
      */
     protected static final int ASK_RESEND_MAX_REDELIVERIES = 5;

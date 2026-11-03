@@ -739,6 +739,12 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
 
     @Override
     public void onLpUpdate(int player, int lp) {
+        // duelclient.cpp MSG_LPUPDATE L3656-3672：lp[player] 直接取通讯里的终值（不做加减），
+        // 无音效、无 lpcstring 浮字（C++ 只置 lpplayer/lpd/lpframe=10 + WaitFrameSignal(11)），
+        // 故 showText=false 走 startLpChange 的「立即逐帧扣减到终值」分支；回放快进/上一步重算
+        // （instantPlace）在该分支内已直接落位，与 C++ 的 isReplaySkiping 分支同构。
+        // 注意：本分支为「绝对值覆写」，与上面 onDamage/onRecover/onPayLpCost 的按量加减只差一行形态
+        // 但语义来源不同（core 下发的是终值而非变化量），切勿改成 += / -= 否则立即双倍偏移
         int p = engine.localPlayer(player & 1);
         engine.field.players[p].lp = lp;
         engine.field.startLpChange(p, lp, 0, null, false);
