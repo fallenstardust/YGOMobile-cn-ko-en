@@ -183,8 +183,15 @@ public class PlayerWaitingDialog extends PlayerWaitingDialogMid {
         }
 
         String title = mStringManager.getSystemString(1725, "卡组验证失败");
+        // 同屏只保留一张卡组校验失败询问：先关旧窗再弹新窗，并登记到 deckErrorDialog，
+        // 由等待界面的退出/隐藏路径随弹窗一起关闭（不点“确定”直接点“退出”时不再残留）
+        dismissDeckErrorDialog();
         YesOrNoDialog dialog = new YesOrNoDialog(context);
-        dialog.setTitle(title).setMessage(errorDesc);
+        deckErrorDialog = dialog;
+        dialog.setTitle(title).setMessage(errorDesc)
+                .setOnDismissListener(() -> {
+                    if (deckErrorDialog == dialog) deckErrorDialog = null;
+                });
         dialog.show();
     }
     // === 静态入口：由 YGOProActivity 调用（直连/人机直接进入玩家等待界面） ===

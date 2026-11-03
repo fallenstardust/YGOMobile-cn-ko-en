@@ -649,6 +649,7 @@ abstract class PlayerWaitingDialogMid extends PlayerWaitingDialogBase {
     /** 内部跳转（决斗开始/返回主界面）：抑制外部 dismiss 回调后关闭；
      * 弹窗退场动画会延迟触发 onDismiss，抑制标志由回调内消费复位 */
     public void hideForNavigation() {
+        dismissDeckErrorDialog();
         if (popupWindow == null) return;
         if (popupWindow.isShowing()) {
             suppressDismiss = true;
@@ -662,11 +663,23 @@ abstract class PlayerWaitingDialogMid extends PlayerWaitingDialogBase {
 
     public void dismiss() {
         hideAllSeatEmotes();
+        dismissDeckErrorDialog();
         if (popupWindow != null && popupWindow.isShowing()) {
             popupWindow.dismiss();
         }
         if (deckSelectorDialog != null) {
             deckSelectorDialog.dismiss();
+        }
+    }
+
+    /**
+     * 关闭卡组校验失败询问窗：该窗不响应窗外点击，只能由“确定”关闭，故等待界面每次
+     * 隐藏/释放（点“退出”回主菜单、进决斗、断线返回）都需主动收口，否则会停留在新界面上。
+     */
+    protected void dismissDeckErrorDialog() {
+        if (deckErrorDialog != null) {
+            deckErrorDialog.dismiss();
+            deckErrorDialog = null;
         }
     }
 
@@ -678,6 +691,7 @@ abstract class PlayerWaitingDialogMid extends PlayerWaitingDialogBase {
      */
     public void releaseOnExit() {
         hideAllSeatEmotes();
+        dismissDeckErrorDialog();
         if (deckSelectorDialog != null) {
             deckSelectorDialog.dismiss();
             deckSelectorDialog = null;

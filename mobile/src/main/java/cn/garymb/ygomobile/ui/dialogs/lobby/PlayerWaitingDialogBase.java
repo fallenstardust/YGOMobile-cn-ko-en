@@ -65,6 +65,11 @@ abstract class PlayerWaitingDialogBase {
     protected PopupWindow.OnDismissListener externalDismissListener;
     protected DraggablePopupHelper draggableHelper;
     protected DeckSelectorDialog deckSelectorDialog;
+    /**
+     * 卡组校验失败询问窗（handleDeckError 弹出）：需持引用登记，由等待界面退出/隐藏的各路径
+     * 统一关闭，避免玩家不点“确定”而直接点“退出”回主菜单后该窗残留遮挡。
+     */
+    protected YesOrNoDialog deckErrorDialog;
 
     protected String currentDeckCategory = "";
     protected String currentDeckName = "";
