@@ -45,6 +45,8 @@ public final class FieldTextureManager {
     private static final long COVER_OPP_KEY = -2L;
     /** unknown.jpg 纹理的专用缓存键（负数键与 COVER_* 同一命名空间，避开真实卡码） */
     private static final long UNKNOWN_KEY = -3L;
+    /** negated.png 无效徽记纹理的共享缓存键：场地标注格底（FieldBoardRenderer）与卡面无效角标（CardOverlayRenderer）为同一张贴图，须同键只上传一张纹理 */
+    public static final long NEGATED_TEX_KEY = -5L;
 
     public static class PendingUpload {
         final long key;

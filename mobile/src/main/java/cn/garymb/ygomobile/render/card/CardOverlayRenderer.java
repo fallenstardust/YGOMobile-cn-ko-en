@@ -40,7 +40,8 @@ public final class CardOverlayRenderer {
     private static final long EQUIP_TEX_KEY = -50L;
     private static final long TARGET_TEX_KEY = -51L;
     private static final long CHAIN_TARGET_TEX_KEY = -52L;
-    private static final long NEGATED_TEX_KEY = -53L;
+    // 无效徽记与场地标注格底（FieldBoardRenderer）为同一张 negated.png：共用纹理管理器发布的同一键（-5），-53 作废不得再给其他贴图取用
+    private static final long NEGATED_TEX_KEY = FieldTextureManager.NEGATED_TEX_KEY;
     private static final long CHAIN_TEX_KEY = -54L;
     private static final long CHAIN_NUM_TEX_KEY = -55L;
     private static final long ATTACK_TEX_KEY = -56L;

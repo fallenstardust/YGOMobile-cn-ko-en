@@ -23,8 +23,8 @@ public final class FieldBoardRenderer {
     private static final long TOTAL_ATK_KEY = -6L;
     // 区域发动 / conti_act 旋转提示图标（materials: act.png），对齐 drawing.cpp DrawMisc 的 tAct + act_rot
     private static final long ACT_TEX_KEY = -4L;
-    // HINT_ZONE 玫红标注格下方的半透明无效徽记（materials: negated.png，tNegated）
-    private static final long NEGATED_TEX_KEY = -5L;
+    // HINT_ZONE 玫红标注格下方的半透明无效徽记（materials: negated.png，tNegated）：与卡面无效角标共用纹理管理器的同一键，避免同一 png 上传两张纹理
+    private static final long NEGATED_TEX_KEY = FieldTextureManager.NEGATED_TEX_KEY;
     // conti_cards 隐形格子最多堆叠显示层数（对齐 drawing.cpp 中部场地空隙的可视堆叠）
     private static final int MAX_CONTI_LAYERS = 5;
 
