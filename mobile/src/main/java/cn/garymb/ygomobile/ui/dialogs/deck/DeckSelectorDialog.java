@@ -1,4 +1,5 @@
 package cn.garymb.ygomobile.ui.dialogs.deck;
+import cn.garymb.ygomobile.ui.dialogs.common.EditTextDialog;
 import cn.garymb.ygomobile.ui.dialogs.duel.YesOrNoDialog;
 
 import android.app.Activity;
@@ -14,7 +15,6 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.BaseAdapter;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
@@ -244,37 +244,38 @@ public class DeckSelectorDialog extends DeckSelectorDialogBase {
         Activity activity = getActivity();
         if (activity == null) return;
 
-        EditText editText = new EditText(activity);
-        editText.setGravity(Gravity.CENTER);
-        editText.setBackground(activity.getDrawable(R.drawable.ygopro_base_background));
-        editText.setSingleLine();
+        EditTextDialog dialog = new EditTextDialog(activity);
+        dialog.setTitle(mStringManager.getSystemString(1469, "请输入分类名:"))
+                .setPositiveButtonText(mStringManager.getSystemString(1302, "确定"))
+                .setNegativeButtonText(mStringManager.getSystemString(1212, "取消"))
+                .setOnInputActionListener(new EditTextDialog.OnInputActionListener() {
+                    @Override
+                    public boolean onConfirm(String name) {
+                        if (name.isEmpty()) {
+                            YGOUtil.show("请输入分类名称", Gravity.CENTER);
+                            return false;
+                        }
+                        for (CategoryInfo ci : catInfos) {
+                            if (ci.category.categoryName.equals(name)) {
+                                YGOUtil.show("分类已存在", Gravity.CENTER);
+                                return false;
+                            }
+                        }
+                        File folder = new File(localDeckDirPath, name);
+                        if (folder.mkdirs()) {
+                            YGOUtil.show("创建成功", Gravity.CENTER);
+                            reloadAndRefresh();
+                            return true;
+                        }
+                        YGOUtil.show("创建失败", Gravity.CENTER);
+                        return false;
+                    }
 
-        YesOrNoDialog dialog = new YesOrNoDialog(activity);
-        dialog.setTitle(mStringManager.getSystemString(1469, "请输入分类名:"));
-        dialog.setContentView(editText);
-        dialog.setType(YesOrNoDialog.TYPE_YES_NO);
-        dialog.setPositiveButtonText(mStringManager.getSystemString(1302, "确定"));
-        dialog.setNegativeButtonText(mStringManager.getSystemString(1212, "取消"));
-        dialog.setPositiveButton(v -> {
-            String name = editText.getText().toString().trim();
-            if (name.isEmpty()) {
-                YGOUtil.show("请输入分类名称", Gravity.CENTER);
-                return;
-            }
-            for (CategoryInfo ci : catInfos) {
-                if (ci.category.categoryName.equals(name)) {
-                    YGOUtil.show("分类已存在", Gravity.CENTER);
-                    return;
-                }
-            }
-            File folder = new File(localDeckDirPath, name);
-            if (folder.mkdirs()) {
-                YGOUtil.show("创建成功", Gravity.CENTER);
-                reloadAndRefresh();
-            } else {
-                YGOUtil.show("创建失败", Gravity.CENTER);
-            }
-        });
+                    @Override
+                    public void onCancel() {
+                        // 取消新建分类：无后续动作
+                    }
+                });
         dialog.show();
     }
 
@@ -291,43 +292,44 @@ public class DeckSelectorDialog extends DeckSelectorDialogBase {
             return;
         }
 
-        EditText editText = new EditText(activity);
-        editText.setGravity(Gravity.CENTER);
-        editText.setBackground(activity.getDrawable(R.drawable.ygopro_base_background));
-        editText.setSingleLine();
-        editText.setText(ci.category.categoryName);
+        EditTextDialog dialog = new EditTextDialog(activity);
+        dialog.setTitle(mStringManager.getSystemString(1469, "请输入分类名:"))
+                .setText(ci.category.categoryName)
+                .setPositiveButtonText(mStringManager.getSystemString(1302, "确定"))
+                .setNegativeButtonText(mStringManager.getSystemString(1212, "取消"))
+                .setOnInputActionListener(new EditTextDialog.OnInputActionListener() {
+                    @Override
+                    public boolean onConfirm(String newName) {
+                        if (newName.isEmpty()) {
+                            YGOUtil.show("请输入新名称", Gravity.CENTER);
+                            return false;
+                        }
+                        File oldDir = new File(ci.baseDirPath, ci.category.categoryName);
+                        File newDir = new File(ci.baseDirPath, newName);
+                        if (newDir.exists()) {
+                            YGOUtil.show("目标分类已存在", Gravity.CENTER);
+                            return false;
+                        }
+                        if (!oldDir.renameTo(newDir)) {
+                            YGOUtil.show("重命名失败", Gravity.CENTER);
+                            return false;
+                        }
+                        YGOUtil.show("重命名成功", Gravity.CENTER);
+                        //分类重命名会改变其下所有卡组的 deckType，需批量重新上传以覆盖云端记录
+                        syncUploadDecks(listYdkFilesRecursive(newDir));
+                        reloadAndRefresh();
+                        int newCatIndex = displayCategoryNames.indexOf(newName);
+                        if (newCatIndex >= 0) {
+                            selectCategoryAndFirstDeck(newCatIndex);
+                        }
+                        return true;
+                    }
 
-        YesOrNoDialog dialog = new YesOrNoDialog(activity);
-        dialog.setTitle(mStringManager.getSystemString(1469, "请输入分类名:"));
-        dialog.setContentView(editText);
-        dialog.setType(YesOrNoDialog.TYPE_YES_NO);
-        dialog.setPositiveButtonText(mStringManager.getSystemString(1302, "确定"));
-        dialog.setNegativeButtonText(mStringManager.getSystemString(1212, "取消"));
-        dialog.setPositiveButton(v -> {
-            String newName = editText.getText().toString().trim();
-            if (newName.isEmpty()) {
-                YGOUtil.show("请输入新名称", Gravity.CENTER);
-                return;
-            }
-            File oldDir = new File(ci.baseDirPath, ci.category.categoryName);
-            File newDir = new File(ci.baseDirPath, newName);
-            if (newDir.exists()) {
-                YGOUtil.show("目标分类已存在", Gravity.CENTER);
-                return;
-            }
-            if (oldDir.renameTo(newDir)) {
-                YGOUtil.show("重命名成功", Gravity.CENTER);
-                //分类重命名会改变其下所有卡组的 deckType，需批量重新上传以覆盖云端记录
-                syncUploadDecks(listYdkFilesRecursive(newDir));
-                reloadAndRefresh();
-                int newCatIndex = displayCategoryNames.indexOf(newName);
-                if (newCatIndex >= 0) {
-                    selectCategoryAndFirstDeck(newCatIndex);
-                }
-            } else {
-                YGOUtil.show("重命名失败", Gravity.CENTER);
-            }
-        });
+                    @Override
+                    public void onCancel() {
+                        // 取消重命名分类：无后续动作
+                    }
+                });
         dialog.show();
     }
 
@@ -373,45 +375,47 @@ public class DeckSelectorDialog extends DeckSelectorDialogBase {
         Activity activity = getActivity();
         if (activity == null) return;
         CategoryInfo ci = getSelectedCategoryInfo();
-        EditText editText = new EditText(activity);
-        editText.setGravity(Gravity.CENTER);
-        editText.setBackground(activity.getDrawable(R.drawable.ygopro_base_background));
-        editText.setSingleLine();
-
-        YesOrNoDialog dialog = new YesOrNoDialog(activity);
-        dialog.setTitle(mStringManager.getSystemString(1471, "请输入卡组名:"));
-        dialog.setContentView(editText);
-        dialog.setType(YesOrNoDialog.TYPE_YES_NO);
-        dialog.setPositiveButtonText(mStringManager.getSystemString(1302, "确定"));
-        dialog.setNegativeButtonText(mStringManager.getSystemString(1212, "取消"));
-        dialog.setPositiveButton(v -> {
-            String name = editText.getText().toString().trim();
-            if (name.isEmpty()) {
-                YGOUtil.show("请输入卡组名称", Gravity.CENTER);
-                return;
-            }
-            String dirPath = ci.isSystem ? ci.baseDirPath : ci.baseDirPath + "/" + ci.category.categoryName;
-            File deckFile = new File(dirPath, name + ".ydk");
-            try {
-                if (deckFile.getParentFile() != null) deckFile.getParentFile().mkdirs();
-                if (deckFile.createNewFile()) {
-                    try (FileOutputStream fos = new FileOutputStream(deckFile)) {
-                        fos.write("#created by YGOMobile\n#main\n#extra\n!side\n".getBytes());
+        EditTextDialog dialog = new EditTextDialog(activity);
+        dialog.setTitle(mStringManager.getSystemString(1471, "请输入卡组名:"))
+                .setPositiveButtonText(mStringManager.getSystemString(1302, "确定"))
+                .setNegativeButtonText(mStringManager.getSystemString(1212, "取消"))
+                .setOnInputActionListener(new EditTextDialog.OnInputActionListener() {
+                    @Override
+                    public boolean onConfirm(String name) {
+                        if (name.isEmpty()) {
+                            YGOUtil.show("请输入卡组名称", Gravity.CENTER);
+                            return false;
+                        }
+                        String dirPath = ci.isSystem ? ci.baseDirPath : ci.baseDirPath + "/" + ci.category.categoryName;
+                        File deckFile = new File(dirPath, name + ".ydk");
+                        try {
+                            if (deckFile.getParentFile() != null) deckFile.getParentFile().mkdirs();
+                            if (!deckFile.createNewFile()) {
+                                YGOUtil.show("创建失败", Gravity.CENTER);
+                                return false;
+                            }
+                            try (FileOutputStream fos = new FileOutputStream(deckFile)) {
+                                fos.write("#created by YGOMobile\n#main\n#extra\n!side\n".getBytes());
+                            }
+                            YGOUtil.show("创建成功", Gravity.CENTER);
+                            String ydkFileName = deckFile.getName();
+                            String catName = ci.category.categoryName;
+                            //新建卡组：向云端申请新的 deckId 后上传（萌卡账号已登录时）
+                            syncUploadSingleDeck(deckFile, true);
+                            reloadAndRefresh();
+                            selectCategoryAndDeck(catName, ydkFileName);
+                            return true;
+                        } catch (IOException e) {
+                            YGOUtil.show("创建失败: " + e.getMessage(), Gravity.CENTER);
+                            return false;
+                        }
                     }
-                    YGOUtil.show("创建成功", Gravity.CENTER);
-                    String ydkFileName = deckFile.getName();
-                    String catName = ci.category.categoryName;
-                    //新建卡组：向云端申请新的 deckId 后上传（萌卡账号已登录时）
-                    syncUploadSingleDeck(deckFile, true);
-                    reloadAndRefresh();
-                    selectCategoryAndDeck(catName, ydkFileName);
-                } else {
-                    YGOUtil.show("创建失败", Gravity.CENTER);
-                }
-            } catch (IOException e) {
-                YGOUtil.show("创建失败: " + e.getMessage(), Gravity.CENTER);
-            }
-        });
+
+                    @Override
+                    public void onCancel() {
+                        // 取消新建卡组：无后续动作
+                    }
+                });
         dialog.show();
     }
 
@@ -423,43 +427,44 @@ public class DeckSelectorDialog extends DeckSelectorDialogBase {
             return;
         }
 
-        EditText editText = new EditText(activity);
-        editText.setGravity(Gravity.CENTER);
-        editText.setBackground(activity.getDrawable(R.drawable.ygopro_base_background));
-        editText.setSingleLine();
-        editText.setText(selectedDeckName[0]);
+        EditTextDialog dialog = new EditTextDialog(activity);
+        dialog.setTitle(mStringManager.getSystemString(1471, "请输入卡组名:"))
+                .setText(selectedDeckName[0])
+                .setPositiveButtonText(mStringManager.getSystemString(1302, "确定"))
+                .setNegativeButtonText(mStringManager.getSystemString(1212, "取消"))
+                .setOnInputActionListener(new EditTextDialog.OnInputActionListener() {
+                    @Override
+                    public boolean onConfirm(String newName) {
+                        if (newName.isEmpty()) {
+                            YGOUtil.show("请输入新名称", Gravity.CENTER);
+                            return false;
+                        }
+                        File oldFile = new File(selectedDeckPath[0]);
+                        File newFile = new File(oldFile.getParent(), newName + ".ydk");
+                        if (newFile.exists()) {
+                            YGOUtil.show("目标卡组已存在", Gravity.CENTER);
+                            return false;
+                        }
+                        if (!oldFile.renameTo(newFile)) {
+                            YGOUtil.show("重命名失败", Gravity.CENTER);
+                            return false;
+                        }
+                        YGOUtil.show("重命名成功", Gravity.CENTER);
+                        CategoryInfo ci = getSelectedCategoryInfo();
+                        String catName = ci != null ? ci.category.categoryName : "";
+                        String ydkFileName = newFile.getName();
+                        //重命名不改变 ydk 中已有的 deckId，直接覆盖上传以更新云端的卡组名
+                        syncUploadSingleDeck(newFile, false);
+                        reloadAndRefresh();
+                        selectCategoryAndDeck(catName, ydkFileName);
+                        return true;
+                    }
 
-        YesOrNoDialog dialog = new YesOrNoDialog(activity);
-        dialog.setTitle(mStringManager.getSystemString(1471, "请输入卡组名:"));
-        dialog.setContentView(editText);
-        dialog.setType(YesOrNoDialog.TYPE_YES_NO);
-        dialog.setPositiveButtonText(mStringManager.getSystemString(1302, "确定"));
-        dialog.setNegativeButtonText(mStringManager.getSystemString(1212, "取消"));
-        dialog.setPositiveButton(v -> {
-            String newName = editText.getText().toString().trim();
-            if (newName.isEmpty()) {
-                YGOUtil.show("请输入新名称", Gravity.CENTER);
-                return;
-            }
-            File oldFile = new File(selectedDeckPath[0]);
-            File newFile = new File(oldFile.getParent(), newName + ".ydk");
-            if (newFile.exists()) {
-                YGOUtil.show("目标卡组已存在", Gravity.CENTER);
-                return;
-            }
-            if (oldFile.renameTo(newFile)) {
-                YGOUtil.show("重命名成功", Gravity.CENTER);
-                CategoryInfo ci = getSelectedCategoryInfo();
-                String catName = ci != null ? ci.category.categoryName : "";
-                String ydkFileName = newFile.getName();
-                //重命名不改变 ydk 中已有的 deckId，直接覆盖上传以更新云端的卡组名
-                syncUploadSingleDeck(newFile, false);
-                reloadAndRefresh();
-                selectCategoryAndDeck(catName, ydkFileName);
-            } else {
-                YGOUtil.show("重命名失败", Gravity.CENTER);
-            }
-        });
+                    @Override
+                    public void onCancel() {
+                        // 取消重命名卡组：无后续动作
+                    }
+                });
         dialog.show();
     }
 

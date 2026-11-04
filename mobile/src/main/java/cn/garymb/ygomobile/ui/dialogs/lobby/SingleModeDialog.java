@@ -332,7 +332,7 @@ public class SingleModeDialog {
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setOutsideTouchable(false);
         // 纯单人页含初始LP/起手/抽卡三个可编辑 EditText：PopupWindow 必须 focusable=true
-        // 才能拿到输入焦点并唤起输入法（对齐同带输入框的 AnnounceCardDialog/ReplaySaveDialog；
+        // 才能拿到输入焦点并唤起输入法（对齐同带输入框的 AnnounceCardDialog/EditTextDialog；
         // focusable=false 时窗口不接收按键，点 EditText 无法弹出输入法、无法修改文本）
         popupWindow.setFocusable(true);
         popupWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);

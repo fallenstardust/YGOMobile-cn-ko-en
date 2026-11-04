@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 通用文本输入弹窗（EditTextDialog）的内容布局：标题行（带收缩把手）+ 单行输入框 + 确定/取消。
+     各段高度一律 wrap_content：旧 dialog_replay_save 用「0dp 高 + layout_weight」分配高度，而弹窗
+     窗口本身是 WRAP_CONTENT，权重子视图在测量时先按 0dp 参与，整窗只剩边距高度，弹出来是一条
+     虚影（输入框与按钮全都看不见），故本布局不再用权重撑高。 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/edit_text_root"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/sdialogl"
+    android:orientation="vertical"
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="10dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:id="@+id/btn_dialog_collapse"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start"
+            android:adjustViewBounds="true"
+            android:background="@drawable/selected_light"
+            android:scaleType="centerInside"
+            android:src="@drawable/baseline_keyboard_arrow_down_24" />
+
+        <TextView
+            android:id="@+id/tv_edit_text_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginStart="2dp"
+            android:layout_weight="1"
+            android:gravity="center_vertical|start"
+            android:textColor="@color/white"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <EditText
+        android:id="@+id/et_edit_text_input"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/ygopro_base_background"
+        android:gravity="center_vertical|start"
+        android:imeOptions="actionDone"
+        android:inputType="textNoSuggestions"
+        android:paddingHorizontal="6dp"
+        android:paddingVertical="4dp"
+        android:singleLine="true"
+        android:textColor="@color/white"
+        android:textColorHint="@color/white_88"
+        android:textSize="11sp" />
+
+    <LinearLayout
+        android:id="@+id/edit_text_button_area"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginTop="10dp"
+        android:gravity="center_vertical|center_horizontal"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btn_edit_text_positive"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="20dp"
+            android:layout_weight="1"
+            android:background="@drawable/button3_bg"
+            android:minWidth="40dp"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+
+        <Button
+            android:id="@+id/btn_edit_text_negative"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:background="@drawable/button3_bg"
+            android:minWidth="40dp"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+    </LinearLayout>
+</LinearLayout>

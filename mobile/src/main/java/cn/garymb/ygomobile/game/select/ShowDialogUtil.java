@@ -17,6 +17,7 @@ import java.util.Random;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.render.card.CardDetailPanel;
+import cn.garymb.ygomobile.ui.dialogs.common.EditTextDialog;
 import cn.garymb.ygomobile.ui.dialogs.duel.AnnounceAttributeDialog;
 import cn.garymb.ygomobile.ui.dialogs.duel.AnnounceCardDialog;
 import cn.garymb.ygomobile.ui.dialogs.duel.AnnounceNumberDialog;
@@ -491,6 +492,10 @@ public class ShowDialogUtil {
         // 知会窗（对位 C++ wMessage）同样收口：不可取消的它若不主动关闭会遮挡返回界面；
         // 不计入 closed——它不是应答类弹窗，撤回被拒时无需按询问快照重建
         YesOrNoDialog.dismissNoticeDialog();
+        // 文本输入弹窗（录像保存/重命名、新建与重命名卡组与分类）同样是锚在 Activity 窗口的独立
+        // 窗口，不随决斗 UI 隐显销毁；一律程序化关闭（不回调监听），否则误被当成玩家取消会多走
+        // 一层后续流程（如把待保存录像静默落盘、或继续弹下一张保存窗）
+        EditTextDialog.dismissAllOpen();
         GameFieldController fieldController = fieldCtl();
         if (fieldController != null) fieldController.endChainCommand();
         clearChainSelect();

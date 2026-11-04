@@ -16,7 +16,7 @@ import java.util.Locale;
 
 import cn.garymb.ygomobile.game.engine.GameEngine;
 import cn.garymb.ygomobile.game.replay.ReplayReader;
-import cn.garymb.ygomobile.ui.dialogs.replay.ReplaySaveDialog;
+import cn.garymb.ygomobile.ui.dialogs.common.EditTextDialog;
 import cn.garymb.ygomobile.ui.dialogs.duel.YesOrNoDialog;
 
 /** 决斗结束与录像保存子系统（自 EngineCallbackDelegate 拆出）：待处理录像队列、观战结算动画排空等待、逐个录像保存/自动保存对话框与落盘、决斗结束提示与对外复位/断开抑制标志。 */
@@ -36,7 +36,7 @@ class DuelEndReplayHandler {
     // 显式退出等待界面时置位：本次 DISCONNECTED 回调跳过 returnToLanMain，返回导航由退出入口独占（bot→SingleModeDialog / LAN→LanModeDialog），避免 LanModeDialog 与 MainMenuDialog 连带弹出
     boolean suppressDisconnectedReturn = false;
     YesOrNoDialog resultDialog;
-    ReplaySaveDialog replaySaveDialog;
+    EditTextDialog replaySaveDialog;
     // STOC_REPLAY 紧随 STOC_DUEL_END 下发：录像处理延迟到该窗口内无新数据到达再启动，避免在录像数据尚未收齐时就走到「决斗结束」弹窗
     static final long REPLAY_ARRIVAL_WAIT_MS = 800;
     /** 观战结算前动画排空等待：轮询间隔与超时兜底（异常/卡死时不再无限等待） */
@@ -114,14 +114,21 @@ class DuelEndReplayHandler {
             activity.mainHandler.post(this::processPendingReplays);
             return;
         }
-        replaySaveDialog = new ReplaySaveDialog(activity);
-        replaySaveDialog.setDefaultName(getReplayDefaultName(replayData))
+        // 录像保存走通用文本输入弹窗：标题 sys 1342「录像文件：」，输入框预填通讯发来的默认名，
+        // 「保存」取 sys 1341（对齐 gframe wSaveReplay）；时间戳默认名光标落末尾便于接着补名字
+        replaySaveDialog = new EditTextDialog(activity);
+        replaySaveDialog.setTitle(activity.mStringManager.getSystemString(1342, "录像文件："))
+                .setText(getReplayDefaultName(replayData))
+                .setPositiveButtonText(activity.mStringManager.getSystemString(1341, "保存"))
                 .setCenterInView(activity.layoutGameRight)
-                .setOnReplayActionListener(new ReplaySaveDialog.OnReplayActionListener() {
+                .setSelectAllOnShow(false)
+                .setOnInputActionListener(new EditTextDialog.OnInputActionListener() {
                     @Override
-                    public void onSave(String fileName) {
+                    public boolean onConfirm(String fileName) {
+                        // 空名交给 sanitizeReplayName 兜底为 _LastReplay，不拦用户直接点保存
                         saveReplayFile(replayData, fileName, false);
                         activity.mainHandler.post(() -> processPendingReplays());
+                        return true;
                     }
 
                     @Override

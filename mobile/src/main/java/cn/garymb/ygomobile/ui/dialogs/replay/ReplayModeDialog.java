@@ -1,4 +1,5 @@
 package cn.garymb.ygomobile.ui.dialogs.replay;
+import cn.garymb.ygomobile.ui.dialogs.common.EditTextDialog;
 import cn.garymb.ygomobile.ui.dialogs.duel.YesOrNoDialog;
 
 import android.app.Activity;
@@ -439,34 +440,33 @@ public class ReplayModeDialog {
         }
     }
 
+    /** 重命名录像：单行输入框预填去掉 .yrp 的当前名（整段选中，打字即覆盖）；
+     *  空名与重名不关窗，玩家就地改字重输 */
     private void showRenameDialog(File replayFile, ListView listView) {
-        EditText editText = new EditText(DialogScale.wrap(context));
-        editText.setText(replayFile.getName().replace(".yrp", ""));
-        editText.selectAll();
-        editText.setTextColor(YGOUtil.c(R.color.white));
-        editText.setHintTextColor(YGOUtil.c(R.color.white_88));
-
-        YesOrNoDialog dialog = new YesOrNoDialog(context);
-        dialog.setTitle("重命名录像")
-                .setContentView(editText)
-                .setType(YesOrNoDialog.TYPE_YES_NO)
-                .setPositiveButtonText("确定")
-                .setNegativeButtonText("取消")
-                .setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+        EditTextDialog dialog = new EditTextDialog(context);
+        dialog.setTitle(DataManager.get().getStringManager().getSystemString(1362, "重命名"))
+                .setText(replayFile.getName().replace(".yrp", ""))
                 .setCenterInView(windowCenterRegion())
-                .setPositiveButton(v -> {
-                    String newName = editText.getText().toString().trim();
-                    if (newName.isEmpty()) {
-                        Toast.makeText(context, "名称不能为空", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                    boolean success = ReplayReader.renameReplay(replayFile.getAbsolutePath(), newName);
-                    if (success) {
+                .setOnInputActionListener(new EditTextDialog.OnInputActionListener() {
+                    @Override
+                    public boolean onConfirm(String newName) {
+                        if (newName.isEmpty()) {
+                            Toast.makeText(context, "名称不能为空", Toast.LENGTH_SHORT).show();
+                            return false;
+                        }
+                        if (!ReplayReader.renameReplay(replayFile.getAbsolutePath(), newName)) {
+                            Toast.makeText(context, "重命名失败", Toast.LENGTH_SHORT).show();
+                            return false;
+                        }
                         Toast.makeText(context, "重命名成功", Toast.LENGTH_SHORT).show();
                         selectedReplayFile = null;
                         refreshReplayList();
-                    } else {
-                        Toast.makeText(context, "重命名失败", Toast.LENGTH_SHORT).show();
+                        return true;
+                    }
+
+                    @Override
+                    public void onCancel() {
+                        // 取消重命名：保留原录像名与当前选中
                     }
                 });
         dialog.show();

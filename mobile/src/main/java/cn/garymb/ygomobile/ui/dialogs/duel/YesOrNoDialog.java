@@ -187,20 +187,24 @@ public class YesOrNoDialog extends YesOrNoDialogBase {
         return this;
     }
 
-    /** 列表选项内容容器（dialog_game_select 的 layout_options），由 setOptionsContentView() 初始化 */
+    /** 列表选项内容容器（{@link #setOptionsContentView()} 现造的可滚动纵向容器） */
     protected LinearLayout optionsContainer;
 
     /**
-     * 采用“列表选择”内容视图（复用 dialog_game_select 布局）：隐藏其标题/提示/底部按钮，
-     * 仅保留 layout_options 选项容器；随后通过 {@link #addOption} 逐项添加按钮。
+     * 采用“列表选项”内容：只造一条可滚动的选项容器（不整块借用 dialog_game_select——那块自带
+     * 面板底衬与 16dp 内边距，嵌进本弹窗的 sdialogl 框里会双层套框，其 minWidth 280dp 也与本
+     * 弹窗内容宽冲突），标题与按钮仍由本弹窗承担；随后经 {@link #addOption} 逐项添加按钮。
      */
     public YesOrNoDialog setOptionsContentView() {
-        View content = LayoutInflater.from(DialogScale.wrap(context)).inflate(R.layout.dialog_game_select, null);
-        content.findViewById(R.id.tv_select_title).setVisibility(View.GONE);
-        content.findViewById(R.id.tv_select_hint).setVisibility(View.GONE);
-        content.findViewById(R.id.layout_select_buttons).setVisibility(View.GONE);
-        optionsContainer = content.findViewById(R.id.layout_options);
-        return setContentView(content);
+        Context themed = DialogScale.wrap(context);
+        ScrollView scroll = new ScrollView(themed);
+        scroll.setVerticalScrollBarEnabled(false);
+        optionsContainer = new LinearLayout(themed);
+        optionsContainer.setOrientation(LinearLayout.VERTICAL);
+        optionsContainer.setLayoutParams(new ScrollView.LayoutParams(
+                ScrollView.LayoutParams.MATCH_PARENT, ScrollView.LayoutParams.WRAP_CONTENT));
+        scroll.addView(optionsContainer);
+        return setContentView(scroll);
     }
 
     /**
@@ -255,6 +259,8 @@ public class YesOrNoDialog extends YesOrNoDialogBase {
         // 卡图堆栈（dialog_yes_or_no 结构：ll_yes_no_card_stack 直接作为消息行左侧子视图，
         // 首张 iv_yes_no_card_image 常驻、其余按 message 中的卡名动态叠压追加）
         LinearLayout contentRow = (LinearLayout) scrollView.getParent();
+        // 内容纵列（消息行与连锁卡图行的共同父层）：自定义内容也追加到这里
+        LinearLayout contentBlock = (LinearLayout) contentRow.getParent();
         LinearLayout cardStack = root.findViewById(R.id.ll_yes_no_card_stack);
 
         // 连锁卡片横向列表（ll_chain_card_list 位于 hsv_yes_no_chain_cards 内，同行消息区右侧）
@@ -309,7 +315,6 @@ public class YesOrNoDialog extends YesOrNoDialogBase {
                 chainCardList.addView(cardItemView);
             }
             // 连锁列表独立成一行：放在内容区（消息行所在纵向 LinearLayout）下方、按钮区上方全宽展示
-            LinearLayout contentBlock = (LinearLayout) contentRow.getParent();
             if (chainCardsScrollView.getParent() == contentRow) {
                 contentRow.removeView(chainCardsScrollView);
             }
@@ -322,6 +327,17 @@ public class YesOrNoDialog extends YesOrNoDialogBase {
             }
         } else {
             chainCardsScrollView.setVisibility(View.GONE);
+        }
+
+        // ── 自定义内容区（选项列表 / 多选卡片列表等）───────────────────────
+        // setContentView 注入的视图必须真挂进布局：早前只拿 customContentView 判断要不要按钮，
+        // 却从未 addView，于是列表类弹窗只剩标题与按钮、内容整块看不见（用户反馈的“虚影”）。
+        // 挂在消息行与连锁卡图行之后、按钮区之前（同一内容纵列内逐段往下排）。
+        if (customContentView != null && customContentView.getParent() == null) {
+            LinearLayout.LayoutParams contentLp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            contentLp.topMargin = (int) (6 * density);
+            contentBlock.addView(customContentView, contentLp);
         }
 
         // ── Button area ──────────────────────────────────────────
