@@ -1072,6 +1072,27 @@ class CardInfoBinder {
         keywordDialog.show();
     }
 
+    /**
+     * 停用聊天后决斗内检索的展示入口（聊天输入框转作关键词检索框，输入法点发送触达）：
+     * 切词与命中规则与卡组编辑同源（空格分词、{@code @+}字段、{@code -} 排除、卡名/描述/卡码
+     * 包含），结果用既有关键词卡片列表弹窗显示，标题为整串查询词，条目点击仍刷新左侧卡详。
+     */
+    void showKeywordSearchResult(String keywords) {
+        final String query = keywords == null ? "" : keywords.trim();
+        if (query.isEmpty() || context == null) return;
+        // 全卡表扫描放后台线程（与卡组编辑检索一致），回主线程时按当时的 anchor 建弹窗，
+        // 避免旋转重建后拿着旧视图的 window token 弹窗
+        executorService.execute(() -> {
+            List<Card> cards = CardSearcherManager.searchCardsByKeywords(query);
+            mainHandler.post(() -> {
+                if (context == null || anchor == null) return;
+                if (keywordDialog != null) keywordDialog.dismiss();
+                keywordDialog = new KeywordCardListDialog(context, imageLoader, anchor, cards, query, this::showCard);
+                keywordDialog.show();
+            });
+        });
+    }
+
     /** 关闭关键词卡片列表弹窗（切换/隐藏卡详时调用，避免残留遮挡） */
     private void dismissKeywordDialog() {
         if (keywordDialog != null) {

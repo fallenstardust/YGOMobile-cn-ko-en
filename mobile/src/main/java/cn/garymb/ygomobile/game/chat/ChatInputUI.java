@@ -27,6 +27,8 @@ public class ChatInputUI {
     
     private EditText etChatInput;
     private boolean isChatEnabled = true;
+    /** 停用聊天后的检索态：输入框就地转为卡片关键词检索（背景下横线、发送走检索） */
+    private boolean searchMode;
     /** 绑定时捕获的 XML 基准高度（px，<=0 表示 wrap/自适应），缩放不叠乘 */
     private int baseInputHeight = -2;
     /** 当前 HUD 等比缩放系数（与 gameTopInfo 同源，见 GameTopInfoManager.applyTopInfoSize） */
@@ -60,9 +62,19 @@ public class ChatInputUI {
     public interface OnChatMessageListener {
         void onSendChatMessage(String message);
     }
+
+    /**
+     * 关键词检索监听：停用聊天后输入框就地转为卡片检索框，输入法点发送时把查询词交由外部
+     * 按卡组编辑同源的规则检索，并用关键词卡片列表弹窗显示命中卡
+     */
+    public interface OnKeywordSearchListener {
+        void onKeywordSearch(String keywords);
+    }
     
     @Nullable
     private OnChatMessageListener chatMessageListener;
+    @Nullable
+    private OnKeywordSearchListener keywordSearchListener;
     
     public ChatInputUI(Context context, GameEngine engine) {
         this.context = context;
@@ -80,6 +92,7 @@ public class ChatInputUI {
             baseInputHeight = (lp != null) ? lp.height : -2;
         }
         setupChatInput();
+        applySearchStyle();
         applyChatInputScale(hudScaleFactor);
         // 输入法看门狗常驻：大厅与决斗期间抬键盘都要联动在显弹窗（登记由各 dialog 完成）。
         // 旋转重建后 etChatInput 换新实例，重挂到新视图根并把去抖状态复位，
@@ -137,6 +150,13 @@ public class ChatInputUI {
     }
 
     /**
+     * 设置关键词检索监听器（停用聊天后的检索态发送入口）
+     */
+    public void setOnKeywordSearchListener(@Nullable OnKeywordSearchListener listener) {
+        this.keywordSearchListener = listener;
+    }
+
+    /**
      * 注册输入法显隐监听（由 YGOProActivity 接线到 {@link cn.garymb.ygomobile.utils.ImePopupAdjuster}）。
      */
     public void setImeVisibilityListener(@Nullable ImeVisibilityListener listener) {
@@ -150,8 +170,11 @@ public class ChatInputUI {
         if (etChatInput == null) return;
         
         etChatInput.setOnEditorActionListener((v, actionId, event) -> {
+            // 聊天态动作键为「发送」、检索态为「搜索」（见 applySearchStyle），两者同走发送入口；
+            // 实体回车与完成(DONE)键一并保留原有响应路径
             boolean isSend = actionId == EditorInfo.IME_ACTION_SEND
                     || actionId == EditorInfo.IME_ACTION_DONE
+                    || actionId == EditorInfo.IME_ACTION_SEARCH
                     || (event != null && event.getKeyCode() == android.view.KeyEvent.KEYCODE_ENTER
                     && event.getAction() == android.view.KeyEvent.ACTION_DOWN);
             
@@ -242,13 +265,21 @@ public class ChatInputUI {
     }
     
     /**
-     * 发送聊天消息
+     * 发送聊天消息；检索态下把输入内容当关键词交由外部弹关键词卡片列表
      */
     private void sendChatMessage() {
         if (etChatInput == null) return;
         
         String message = etChatInput.getText().toString().trim();
         if (message.isEmpty()) return;
+
+        if (searchMode) {
+            // 检索态：不报通讯，查询词保留在输入框内便于改词重查
+            if (keywordSearchListener != null) {
+                keywordSearchListener.onKeywordSearch(message);
+            }
+            return;
+        }
         
         // 通过监听器回调发送消息
         if (chatMessageListener != null) {
@@ -366,9 +397,52 @@ public class ChatInputUI {
     }
     
     /**
-     * 切换聊天输入框的显示/隐藏状态
-     * 停用状态 → 启用：显示聊天输入框
-     * 启用状态 → 停用：隐藏聊天输入框并清空聊天消息
+     * 切换输入框的「停用聊天 → 卡片关键词检索」形态（由 YGOProActivity.updateChatUIVisibility
+     * 按停用聊天设置与场景集中核算后下发）。每次调用都重贴一次背景，使旋转重建后
+     * {@link #bindChatInput} 换新视图实例也能按当前形态复原。
+     */
+    public void setSearchMode(boolean search) {
+        boolean wasSearch = searchMode;
+        searchMode = search;
+        // 回到聊天态时清掉遗留的检索词，避免把关键词当聊天内容误发；
+        // 仅在检索→聊天的真实翻转时清，避免旋转/场景刷新误掉正在输入的聊天草稿
+        if (wasSearch && !search && etChatInput != null) {
+            etChatInput.setText("");
+        }
+        applySearchStyle();
+    }
+
+    /**
+     * 按当前形态贴底与动作键（聊天态四周描边 + 发送、检索态只留下横线 + 搜索）。
+     * 不动字号/边距/高度（尺寸只经 {@link #applyChatInputScale} 与 XML 决定），也不改
+     * inputType（仍是 text 单行），中文合成与空格输入不受影响。
+     */
+    private void applySearchStyle() {
+        if (etChatInput == null) return;
+        // 换背景会带出档案自带内边距（聊天底衬四周 1dp、检索下横线无），先记后还，
+        // 使两态只差在底衬外观，切换时输入框尺寸与文字位置不跳动（用户规格）
+        int pl = etChatInput.getPaddingLeft();
+        int pt = etChatInput.getPaddingTop();
+        int pr = etChatInput.getPaddingRight();
+        int pb = etChatInput.getPaddingBottom();
+        etChatInput.setBackgroundResource(searchMode
+                ? R.drawable.ygopro_search_underline : R.drawable.ygopro_base_background);
+        etChatInput.setPadding(pl, pt, pr, pb);
+        etChatInput.setImeOptions(searchMode
+                ? EditorInfo.IME_ACTION_SEARCH | EditorInfo.IME_FLAG_NO_EXTRACT_UI
+                : EditorInfo.IME_ACTION_SEND | EditorInfo.IME_FLAG_NO_EXTRACT_UI);
+        // imeOptions 变更对已连接的输入法不会自动生效，持焦时补一次 restartInput 重报键名
+        if (etChatInput.hasFocus()) {
+            InputMethodManager imm = (InputMethodManager)
+                    context.getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) imm.restartInput(etChatInput);
+        }
+    }
+
+    /**
+     * 切换聊天输入框的工作形态
+     * 停用状态 → 启用：恢复聊天态（四周描边背景、发送走聊天）
+     * 启用状态 → 停用：转卡片检索态并清空已显示的聊天消息（可见性交集中核算）
      */
     public void toggleChatInput(boolean enable, Runnable onClearChatMessages) {
         if (etChatInput == null) return;
@@ -392,10 +466,10 @@ public class ChatInputUI {
                 imm.hideSoftInputFromWindow(etChatInput.getWindowToken(), 0);
             }
             etChatInput.clearFocus();
-            // 停用聊天隐藏输入框用 INVISIBLE 而非 GONE（用户规格）：竖屏底部聊天输入框
-            // 为 weight 布局，GONE 会让左侧按钮组宽度跳变，INVISIBLE 保持占位稳定
-            etChatInput.setVisibility(View.INVISIBLE);
-            
+            // 停用聊天不再在此隐藏输入框：输入框就地转为卡片关键词检索框（检索态与可见性
+            // 统一由 YGOProActivity.updateChatUIVisibility 按抑制场景核算，隐藏一律用 INVISIBLE
+            // 以保持竖屏底部 weight 布局的占位稳定）
+
             if (onClearChatMessages != null) {
                 onClearChatMessages.run();
             }
@@ -479,5 +553,6 @@ public class ChatInputUI {
         detachImeWatcher();
         etChatInput = null;
         chatMessageListener = null;
+        keywordSearchListener = null;
     }
 }

@@ -2,6 +2,8 @@ package cn.garymb.ygomobile.render.card;
 import cn.garymb.ygomobile.render.field.TextureLoader;
 
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -126,11 +128,43 @@ abstract class CardDetailPanelBase {
         binder.setDeckCardListHandler(handler);
     }
 
-    /** 更新聊天按钮图标（对齐 gframe event_handler.cpp BUTTON_CHATTING：停用聊天显示 tShut、启用显示 tTalk） */
+    /**
+     * 更新聊天按钮图标（对齐 gframe event_handler.cpp BUTTON_CHATTING：启用聊天显示 tTalk）；
+     * 停用聊天时聊天输入框就地转为卡片关键词检索，按钮改用既有搜索图标 ic_search
+     */
     public void updateChatIcon(boolean ignored) {
         if (btnChat == null) return;
-        Bitmap bmp = ignored ? TextureLoader.get().getShutTexture() : TextureLoader.get().getTalkTexture();
+        Bitmap bmp = ignored ? getSearchIconBitmap() : TextureLoader.get().getTalkTexture();
         if (bmp != null) btnChat.setImageBitmap(bmp);
+    }
+
+    /** tTalk/tShut 功能精灵的实际边长（assets/data/textures/extra/*.png 为 45×45），皮肤缺失时兜底 */
+    private static final int EXTRA_ICON_FALLBACK_PX = 45;
+
+    /**
+     * 把既有 ic_search 矢量按 tTalk 精灵同边长绘成位图再交给按钮，而不直接 setImageResource：
+     * btn_chat 是 wrap_content + adjustViewBounds，图标固有尺寸就是按钮尺寸（矢量的 24dp 会
+     * 把按钮从 30dp 顶到 32dp），而横屏聊天输入框又锁定为按钮实测高，两样会跟着被放大（用户反馈）。
+     * 按精灵尺寸栅格化后，聊天态与检索态的按钮与输入框尺寸完全一致。
+     */
+    private Bitmap getSearchIconBitmap() {
+        Bitmap talk = TextureLoader.get().getTalkTexture();
+        int size = talk != null && talk.getWidth() > 0 ? talk.getWidth() : EXTRA_ICON_FALLBACK_PX;
+        Drawable icon = activity.getDrawable(R.drawable.ic_search);
+        if (icon == null) return null;
+        Bitmap bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bmp);
+        icon.setBounds(0, 0, size, size);
+        icon.draw(canvas);
+        return bmp;
+    }
+
+    /**
+     * 停用聊天后的决斗内关键词检索展示：交由 binder 按卡组编辑同源规则检索并用既有关键词
+     * 卡片列表弹窗显示（检索入口为聊天输入框在检索态下的输入法发送）
+     */
+    public void showKeywordSearchResult(String keywords) {
+        binder.showKeywordSearchResult(keywords);
     }
 
     /**

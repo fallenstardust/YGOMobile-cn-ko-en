@@ -251,6 +251,13 @@ public abstract class YGOProActivityBase extends AppCompatActivity {
             }
         });
 
+        // 停用聊天后输入框转卡片关键词检索：输入法点发送即用卡组编辑同源规则检索并弹结果列表
+        chatInputUI.setOnKeywordSearchListener(keywords -> {
+            if (cardDetailPanel != null) {
+                cardDetailPanel.showKeywordSearchResult(keywords);
+            }
+        });
+
         // 聊天：输入法把输入框抬高时，所有在显弹窗（玩家等待 + 决斗中的是/否询问、宣言类、
         // 猜拳、先后攻、位置选择、卡片选择/显示、决斗记录、录像保存等，各 dialog 自行向
         // ImePopupAdjuster 登记）统一抬成「底边紧贴输入框上沿」，不再与输入框/键盘互相遮挡；
@@ -652,8 +659,8 @@ public abstract class YGOProActivityBase extends AppCompatActivity {
 
     /**
      * 聊天开关（对齐 gframe event_handler.cpp BUTTON_CHATTING）：
-     * 停用状态（chkIgnore1=1）→ 启用：图标 tTalk、显示聊天输入框；
-     * 启用状态 → 停用：图标 tShut、隐藏聊天输入框并清空聊天消息
+     * 停用状态（chkIgnore1=1）→ 启用：图标 tTalk、输入框恢复聊天态；
+     * 启用状态 → 停用：图标改搜索 ic_search、输入框转卡片关键词检索态并清空已显示的聊天消息
      */
     public void toggleChatInput() {
         if (chatInputUI != null) {
@@ -664,11 +671,11 @@ public abstract class YGOProActivityBase extends AppCompatActivity {
                 }
             });
             // 点击切换后立即同步图标（对齐 event_handler.cpp BUTTON_CHATTING）：
-            // 停用聊天显示 tShut、启用显示 tTalk，不再依赖设置对话框路径的 applySettingsToEngine
+            // 停用聊天显示搜索图标、启用显示 tTalk，不再依赖设置对话框路径的 applySettingsToEngine
             if (cardDetailPanel != null) {
                 cardDetailPanel.updateChatIcon(!enable);
             }
-            // 切换后走统一场景核算重置输入框可见性（ChatInputUI 内的直接显隐不感知抑制场景）
+            // 切换后走统一场景核算重置输入框形态与可见性（ChatInputUI 内的直接显隐不感知抑制场景）
             updateChatUIVisibility();
         }
     }
@@ -687,7 +694,9 @@ public abstract class YGOProActivityBase extends AppCompatActivity {
     }
 
     /**
-     * 聊天输入框与聊天开关按钮可见性统一核算：输入框需设置允许（未停用聊天）且非抑制场景；
+     * 聊天输入框与聊天开关按钮形态/可见性统一核算：停用聊天时输入框不再隐藏，而是就地
+     * 转为卡片关键词检索框（背景下横线、发送走检索）；卡组编辑/录像/残局这些无聊天对象
+     * 的抑制场景连检索框一并隐藏（卡组编辑自带自己的检索框），大厅保持聊天态。
      * 开关按钮（用户规格）不受停用聊天设置影响、仅抑制场景隐藏——停用后必须留着入口才能点回启用。
      * 卡组编辑/录像/残局进入与退出、旋转重建、设置变更均经此刷新（用户规格）。
      */
@@ -695,20 +704,22 @@ public abstract class YGOProActivityBase extends AppCompatActivity {
         boolean settingAllow = AppsSettings.get().getIntSettings("chkDisableChatting", 0) != 1;
         boolean suppressed = isChatUiSuppressedScene();
         if (etChatInput != null) {
-            // 大厅等待界面：输入框作为聊天主入口的初始可见由 enterLobbyChatUI 无条件 VISIBLE 保障；
-            // 但用户经聊天开关明确停用（ChatInputUI 运行时状态）后同样以 INVISIBLE 隐藏输入框
-            //（用户规格：横竖屏点击开关必须隐藏，INVISIBLE 保持占位不影响 gameField 位置）；
-            // 非大厅场景仍按持久停用聊天设置与抑制场景核算
             boolean lobby = playerWaitingDialog != null && playerWaitingDialog.isShowing();
+            // 检索态仅在决斗场（含观战）生效：大厅仍是聊天主入口，不转检索
+            boolean searchMode = !lobby && !settingAllow && !suppressed;
+            if (chatInputUI != null) chatInputUI.setSearchMode(searchMode);
+            // 大厅等待界面：输入框作为聊天主入口的初始可见由 enterLobbyChatUI 无条件 VISIBLE 保障；
+            // 但用户经聊天开关明确停用（ChatInputUI 运行时状态）后同样以 INVISIBLE 隐藏输入框；
+            // 非大厅场景：聊天与检索态均常驻，仅抑制场景隐藏
             boolean visible = lobby
                     ? (chatInputUI == null || chatInputUI.isChatEnabled())
-                    : (settingAllow && !suppressed);
+                    : !suppressed;
             // 隐藏一律用 INVISIBLE 而非 GONE（用户规格）：竖屏底部聊天输入框为 weight 布局，
             // GONE 会让左侧按钮组宽度跳变，INVISIBLE 保持占位稳定
             etChatInput.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
         }
         if (cardDetailPanel != null) {
-            // 停用聊天只隐藏输入框与聊天信息，开关恒可见（非抑制场景）
+            // 停用聊天只清空已显示的聊天信息、输入框转检索态，开关恒可见（非抑制场景）
             cardDetailPanel.setChatToggleVisible(!suppressed);
         }
     }

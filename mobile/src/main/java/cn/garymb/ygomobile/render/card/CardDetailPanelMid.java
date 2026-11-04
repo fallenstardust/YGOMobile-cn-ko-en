@@ -74,12 +74,9 @@ abstract class CardDetailPanelMid extends CardDetailPanelBase {
             Bitmap bmp = tl.getEmoticonTexture();
             if (bmp != null) btnEmote.setImageBitmap(bmp);
         }
-        if (btnChat != null) {
-            // 对齐 gframe game.cpp L1319：初始图标跟随停用聊天设置（chkDisableChatting），停用显示 tShut、启用显示 tTalk
-            boolean ignored = AppsSettings.get().getIntSettings("chkDisableChatting", 0) == 1;
-            Bitmap bmp = ignored ? tl.getShutTexture() : tl.getTalkTexture();
-            if (bmp != null) btnChat.setImageBitmap(bmp);
-        }
+        // 初始聊天图标同样跟随停用聊天设置（chkDisableChatting，对齐 gframe game.cpp L1319）：
+        // 启用显示 tTalk，停用显示搜索图标（输入框已转卡片关键词检索态）
+        updateChatIcon(AppsSettings.get().getIntSettings("chkDisableChatting", 0) == 1);
     }
 
     public void closeGameButtons() {

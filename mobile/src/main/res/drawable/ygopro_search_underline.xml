@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 停用聊天后聊天输入框转作卡片关键词检索的底衬：只留底部一条横线（搜索框观感），
+     横线色沿用 ygopro_line_color，与 ygopro_base_background 的四周描边同色 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:gravity="bottom">
+        <shape android:shape="rectangle">
+            <size android:height="1dp" />
+            <solid android:color="@color/ygopro_line_color" />
+        </shape>
+    </item>
+</layer-list>

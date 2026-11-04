@@ -374,14 +374,24 @@ abstract class CardSearcherManagerBase {
     }
 
     protected boolean matchesKeywordFilter(Card card, List<String> terms) {
+        return matchesKeywordTerms(card, terms);
+    }
+
+    /**
+     * 单卡关键词命中判定（与卡组编辑筛选同一实现，供决斗内检索复用）：空格分出的每一项
+     * 都要命中；{@code -} 前缀项为排除，{@code @} 前缀项按串名（字段）取 setcode 命中，
+     * 其余按卡名/描述包含与卡码全等命中。
+     */
+    public static boolean matchesKeywordTerms(Card card, List<String> terms) {
         if (terms.isEmpty()) return true;
+        StringManager stringManager = DataManager.get().getStringManager();
         for (String term : terms) {
             boolean exclude = term.startsWith("-") && term.length() > 1;
             String body = exclude ? term.substring(1) : term;
             boolean matched = false;
             if (body.startsWith("@") && body.length() > 1) {
                 String setName = body.substring(1);
-                long setcode = mStringManager.getSetCode(setName, true);
+                long setcode = stringManager.getSetCode(setName, true);
                 if (setcode != 0 && card.isSetCode(setcode)) matched = true;
             } else {
                 String searchText = body.isEmpty() ? term : body;
@@ -398,10 +408,16 @@ abstract class CardSearcherManagerBase {
     }
 
     protected List<String> parseKeywordTerms() {
-        String raw = etKeyword != null ? etKeyword.getText().toString().trim() : "";
+        return splitKeywordTerms(etKeyword != null ? etKeyword.getText().toString() : "");
+    }
+
+    /** 检索串按空格切分为关键词项（小写归一，与卡组编辑切词同一实现） */
+    public static List<String> splitKeywordTerms(String raw) {
         List<String> terms = new ArrayList<>();
+        if (raw == null) return terms;
+        // 中文输入法在中文标点状态下会打出全角空格（U+3000），归一成分隔符后才能正常分词
+        raw = raw.replace('\u3000', ' ').trim().toLowerCase();
         if (raw.isEmpty()) return terms;
-        raw = raw.toLowerCase();
         StringBuilder current = new StringBuilder();
         for (int i = 0; i < raw.length(); i++) {
             char c = raw.charAt(i);
@@ -416,6 +432,25 @@ abstract class CardSearcherManagerBase {
         }
         if (current.length() > 0) terms.add(current.toString());
         return terms;
+    }
+
+    /**
+     * 决斗内检索入口（停用聊天后聊天输入框转作关键词检索）：切词与命中判定复用卡组编辑
+     * 实现，遍历全卡表（排除衍生物）返回命中集并按卡组编辑默认序排序；空查询返回空表。
+     */
+    public static List<Card> searchCardsByKeywords(String raw) {
+        List<Card> results = new ArrayList<>();
+        List<String> terms = splitKeywordTerms(raw);
+        if (terms.isEmpty()) return results;
+        SparseArray<Card> allCards = DataManager.get().getCardManager().getAllCards();
+        if (allCards == null) return results;
+        for (int i = 0; i < allCards.size(); i++) {
+            Card card = allCards.valueAt(i);
+            if (card == null || Card.isType(card.Type, CardType.Token)) continue;
+            if (matchesKeywordTerms(card, terms)) results.add(card);
+        }
+        Collections.sort(results, defaultSearchComparator());
+        return results;
     }
 
     protected int[] parseFilterType(String text) {
