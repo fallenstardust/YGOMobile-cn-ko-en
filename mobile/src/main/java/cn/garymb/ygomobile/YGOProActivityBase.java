@@ -606,6 +606,8 @@ public abstract class YGOProActivityBase extends AppCompatActivity {
     void updateFieldRegionBackground() {
         if (lastBgBitmap == null || lastBgBitmap.isRecycled()) {
             if (layoutGameRight != null) layoutGameRight.setBackground(null);
+            // 背景被清空同样改变了输入框所在处的明暗：一并重取检索态对比色
+            if (chatInputUI != null) chatInputUI.refreshSearchContrast();
             return;
         }
         boolean portrait = getResources().getConfiguration().orientation
@@ -620,6 +622,8 @@ public abstract class YGOProActivityBase extends AppCompatActivity {
             getWindow().setBackgroundDrawable(new BitmapDrawable(getResources(), lastBgBitmap));
             if (layoutGameRight != null) layoutGameRight.setBackground(null);
         }
+        // 换肤/旋转重贴背景后输入框所在位置的实际背景已变：重取检索态的下划线与文字色
+        if (chatInputUI != null) chatInputUI.refreshSearchContrast();
     }
 
     /**
@@ -708,14 +712,10 @@ public abstract class YGOProActivityBase extends AppCompatActivity {
             // 检索态仅在决斗场（含观战）生效：大厅仍是聊天主入口，不转检索
             boolean searchMode = !lobby && !settingAllow && !suppressed;
             if (chatInputUI != null) chatInputUI.setSearchMode(searchMode);
-            // 大厅等待界面：输入框作为聊天主入口的初始可见由 enterLobbyChatUI 无条件 VISIBLE 保障；
-            // 但用户经聊天开关明确停用（ChatInputUI 运行时状态）后同样以 INVISIBLE 隐藏输入框；
-            // 非大厅场景：聊天与检索态均常驻，仅抑制场景隐藏
-            boolean visible = lobby
-                    ? (chatInputUI == null || chatInputUI.isChatEnabled())
-                    : !suppressed;
-            // 隐藏一律用 INVISIBLE 而非 GONE（用户规格）：竖屏底部聊天输入框为 weight 布局，
-            // GONE 会让左侧按钮组宽度跳变，INVISIBLE 保持占位稳定
+            // 输入框不再因「停用聊天」而被藏起（用户规格）：大厅也保持聊天态常驻，
+            // 只有卡组编辑/录像/残局这些无聊天对象的抑制场景才隐藏（一律用 INVISIBLE 而非 GONE，
+            // 竖屏底部聊天输入框为 weight 布局，GONE 会让左侧按钮组宽度跳变，INVISIBLE 保持占位稳定）
+            boolean visible = !suppressed;
             etChatInput.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
         }
         if (cardDetailPanel != null) {

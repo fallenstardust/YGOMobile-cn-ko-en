@@ -314,8 +314,17 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
         mCardLoader.setCallBack(this);
 
         // 初始化卡片搜索器及其回调接口
-        mCardSearcher = new CardSearcher(layoutView.findViewById(R.id.nav_view_list), mCardLoader);
+        View cardSearchPanel = layoutView.findViewById(R.id.nav_view_list);
+        mCardSearcher = new CardSearcher(cardSearchPanel, mCardLoader);
         mCardSearcher.setCallBack(this);
+        // 筛选条件抽屉（右侧）的容器铺满整屏且背景透明：抽屉在显时落在筛选面板以外的触点若无人消费，
+        // ViewGroup 会把同一次按下继续下发给下层兄弟（搜索结果列表抽屉）与内容层（功能菜单/搜索/
+        // 搜索结果列表按钮），形成点击穿透（用户规格：抽屉在显时禁止穿透）。容器自身的消费只发生在
+        // 面板子树没接住事件时，故面板内控件与列表滚动照常响应；抽屉收起时容器被 DrawerLayout 摆到
+        // 屏外并置 INVISIBLE，收不到触点，不影响收起态下的下层点击与边缘拉出抽屉的手势
+        if (cardSearchPanel != null && cardSearchPanel.getParent() instanceof View) {
+            ((View) cardSearchPanel.getParent()).setOnTouchListener((v, event) -> true);
+        }
 
         //初始化genesys计分板
         ll_genesys_scoreboard = layoutView.findViewById(R.id.ll_genesys_scoreboard);

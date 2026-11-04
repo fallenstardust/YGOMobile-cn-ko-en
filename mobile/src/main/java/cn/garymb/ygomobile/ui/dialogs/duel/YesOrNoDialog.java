@@ -181,6 +181,12 @@ public class YesOrNoDialog extends YesOrNoDialogBase {
         return this;
     }
 
+    /** 把本弹窗的窗口层级提到所有弹窗之上（知会窗用，保证「确定」不被其他弹窗压住而点不到） */
+    public YesOrNoDialog setTopmostLayer(boolean topmost) {
+        this.topmostLayer = topmost;
+        return this;
+    }
+
     /** 列表选项内容容器（dialog_game_select 的 layout_options），由 setOptionsContentView() 初始化 */
     protected LinearLayout optionsContainer;
 
@@ -384,6 +390,11 @@ public class YesOrNoDialog extends YesOrNoDialogBase {
             return false;
         });
         popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
+        // 层级置顶：子窗口的层按类型偏移量比较（ATTACHED_DIALOG 高于默认的 PANEL），不受显示先后影响，
+        // 故知会窗恒在其他弹窗之上（修复加入房间失败等知会窗被大厅/局域网弹窗遮挡无法关闭）
+        if (topmostLayer) {
+            popupWindow.setWindowLayoutType(WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG);
+        }
         popupWindow.setOnDismissListener(() -> {
             sShowingDialogs.remove(this);
             // EFFECT_YN 询问窗关闭（应答/被新询问接力关闭/决斗结束）：摸掉本窗置入的
@@ -771,6 +782,7 @@ public class YesOrNoDialog extends YesOrNoDialogBase {
                 .setPositiveButtonText(sysText(1211, "确定"))
                 .setCancelable(false)
                 .setCenterInView(region)
+                .setTopmostLayer(true)
                 .setOnDismissListener(() -> {
                     if (currentNotice == dialog) currentNotice = null;
                 });

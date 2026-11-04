@@ -99,6 +99,9 @@ abstract class YesOrNoDialogBase {
     protected int titleColor = 0;
     // 指定弹窗居中区域（如 layout_game_right）；null = 按整个窗口居中（原行为）
     protected View centerInView;
+    // 窗口层级提到所有弹窗之上（知会窗用）：PopupWindow 默认 TYPE_APPLICATION_PANEL，同一父窗口下按
+    // 显示先后排层，后显示的大厅/局域网弹窗会把先显示的知会窗压在下面，其「确定」点不到
+    protected boolean topmostLayer;
     // 用于显示卡片的卡片代码
     protected int cardCode = 0;
     // 链式询问的卡片列表

@@ -88,6 +88,10 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
                 duelEnd.duelEndHandling = false;
                 break;
             case SIDING:
+                // match 局间进入换 side：上一局仍在显示的局内弹窗（询问/选卡/展示/宣言/选项/知会）是独立窗口，
+                // 不随换备卡的卡组编辑器显隐销毁，会浮在编辑器上遮挡操作，故进换 side 界面先全部收口
+                if (activity.dialogUtil != null) activity.dialogUtil.dismissOpenGameDialogs();
+                YesOrNoDialog.dismissShowingDialogs();
                 applySidingScreen();
                 break;
             case DUEL_END:
