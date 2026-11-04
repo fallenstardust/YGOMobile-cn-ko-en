@@ -43,10 +43,10 @@
     <EditText
         android:id="@+id/et_edit_text_input"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="40dp"
         android:layout_marginTop="8dp"
         android:background="@drawable/ygopro_base_background"
-        android:gravity="center_vertical|start"
+        android:gravity="center_vertical"
         android:imeOptions="actionDone"
         android:inputType="textNoSuggestions"
         android:paddingHorizontal="6dp"
