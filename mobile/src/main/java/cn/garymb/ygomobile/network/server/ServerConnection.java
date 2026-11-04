@@ -102,7 +102,14 @@ public final class ServerConnection {
             }
         } finally {
             running = false;
-            sink.onDisconnect(this);
+            // 断开回调不得掀掉本 finally：它把任务投递到房间执行器，主机停止那一瞬执行器已 shutdown
+            // 会抛 RejectedExecutionException，穿出 finally 会使 closeQuietly 不执行（socket 泄漏）
+            // 并让读线程带异常终止；这里兜住一切异常，保证连接一定被关闭
+            try {
+                sink.onDisconnect(this);
+            } catch (Throwable t) {
+                Log.w(TAG, "断开回调投递失败: " + t);
+            }
             closeQuietly();
         }
     }

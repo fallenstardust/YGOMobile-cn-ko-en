@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 
 import cn.garymb.ygomobile.Constants;
@@ -285,19 +286,31 @@ public final class LanGameServer implements YGOProtocol {
     // 生命周期 / 执行器投递
     // ==================================================================
 
-    /** 投递一个任务到单线程房间执行器；执行器已停止时静默丢弃。 */
+    /**
+     * 投递一个任务到单线程房间执行器；执行器已停止时静默丢弃。
+     * <p>{@code isShutdown} 与 {@code execute} 之间存在竞态：{@code stopServer}/{@code cleanup} 在
+     * 另一线程（UI 线程退出对战、断线重连）shutdown 执行器，收包线程刚过完检查就撞上线程池的
+     * AbortPolicy 抛出 {@link RejectedExecutionException}。该异常会顺着 {@code sink.onDisconnect}
+     * 穿透 ServerConnection 的 readLoop finally，使 closeQuietly 不执行（socket 泄漏）并弄死读线程，
+     * 故检查之后仍必须兜住。
+     */
     public void post(Runnable task) {
         ExecutorService exec = roomExecutor;
         if (exec == null || exec.isShutdown()) {
             return;
         }
-        exec.execute(() -> {
-            try {
-                task.run();
-            } catch (Throwable t) {
-                Log.e(TAG, "房间任务异常", t);
-            }
-        });
+        try {
+            exec.execute(() -> {
+                try {
+                    task.run();
+                } catch (Throwable t) {
+                    Log.e(TAG, "房间任务异常", t);
+                }
+            });
+        } catch (RejectedExecutionException e) {
+            // 主机正在停止：房间与连接都已在销毁，本任务已无对象可投递（与上面的静默丢弃同口径）
+            Log.d(TAG, "房间任务被拒（主机正在停止），丢弃: " + e.getMessage());
+        }
     }
 
     /** 停止监听：不再接受新连接与新发现请求（对局中调用），已连接的房间继续运行。 */
