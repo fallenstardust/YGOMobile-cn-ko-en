@@ -85,8 +85,12 @@ public class GameTopInfoManager extends GameTopInfoManagerBase {
      * 否则原地刷新行以反映新发动/被无效/已过期的效果与新落账的召唤誓约）。
      */
     private void refreshApplyingEffectsNow() {
-        applyingMe = ContinuousEffectApplier.forSide(0);
-        applyingOpp = ContinuousEffectApplier.forSide(1);
+        // 引擎权威来源（用户新规格）：解算前按各侧场上卡的 descHints（CHINT_DESC_ADD/REMOVE 维护）
+        // 采一份在场持续效果快照，连同两本账本一并交给解算器——黑点子效果只有引擎上报的 offset 能定位
+        // 到具体哪条在适用，纯文本无从区分；引擎未上报时该来源为空，行为回退到既有账本解算
+        GameField field = activity.getEngine() != null ? activity.getEngine().getField() : null;
+        applyingMe = ContinuousEffectApplier.forSide(0, field != null ? field.collectApplyingHints(0) : null);
+        applyingOpp = ContinuousEffectApplier.forSide(1, field != null ? field.collectApplyingHints(1) : null);
         setApplyingPrompt(0, !applyingMe.isEmpty());
         setApplyingPrompt(1, !applyingOpp.isEmpty());
         if (applyingPopup == null || !applyingPopup.isShowing()) return;

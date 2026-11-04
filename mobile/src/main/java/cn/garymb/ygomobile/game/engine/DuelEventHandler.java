@@ -4,6 +4,7 @@ import cn.garymb.ygomobile.game.gamefield.GameField;
 import cn.garymb.ygomobile.game.gamefield.MoveEventApplier;
 import cn.garymb.ygomobile.game.gamefield.ReloadFieldBuilder;
 import cn.garymb.ygomobile.game.gamefield.TagSwapApplier;
+import cn.garymb.ygomobile.game.gamefield.GameTopInfoManager;
 
 import android.util.Log;
 
@@ -345,6 +346,11 @@ public class DuelEventHandler extends DuelEventHandlerBase {
     public void onCardHint(int player, int location, int sequence, int hintType, int value) {
         // duelclient.cpp MSG_CARD_HINT L4094-4109：CHINT_DESC_ADD/REMOVE 维护卡片 desc_hints
         engine.field.applyCardHint(engine.localPlayer(player & 1), location, sequence, hintType, value);
+        // 持续适用中效果的引擎权威来源（用户新规格）：desc_hints 的加/删即代表某段持续效果“开始/停止
+        // 在场适用”，与 MSG_CHAINING/新回合/胜负等其它权威触发点同源刷徽标与列表（refreshApplyingEffects
+        // 自带 remove+post 合批，多次连投不重复重解）；其余 chtype（CHINT_TURN 等）不影响适用集合，不刷
+        if (hintType == GameField.CHINT_DESC_ADD || hintType == GameField.CHINT_DESC_REMOVE)
+            GameTopInfoManager.refreshApplyingEffects();
     }
 
     @Override

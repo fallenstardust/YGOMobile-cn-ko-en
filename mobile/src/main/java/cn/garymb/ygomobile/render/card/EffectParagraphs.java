@@ -32,15 +32,25 @@ public final class EffectParagraphs {
     public final int[] paraOf;
     /** 段落文档序 → 段首圆圈/项目符序位（判定限制句中的「①的效果…」与本段对应关系时用） */
     public final int[] paraAnchor;
+    /**
+     * 段落文档序 → 所在框标题序（{@link #build} 里的 frameTitle：0=第 1 条框标题之前、
+     * 1=第 1 框（灵摆怪兽卡即灵摆框）、2=第 2 框（即怪兽框）…）。灵摆怪兽卡的灵摆框与怪兽框
+     * 因此可分（见 {@link #boxText}）；非灵摆/无框标题卡各段恒为同一值。
+     */
+    public final int[] frameOf;
+    /** 已识别的框标题行条数（&lt;=1=单框卡，取句范围即整卡；&gt;=2=灵摆怪兽等多框卡） */
+    public final int frameCount;
     /** 段落总数＝最大文档序 + 1；越界的 offset（辅助/适用效果让位槽）自然无命中 */
     public final int paragraphCount;
 
     private EffectParagraphs(String desc, List<int[]> lines, int[] paraOf,
-                             int[] paraAnchor, int paragraphCount) {
+                             int[] paraAnchor, int[] frameOf, int frameCount, int paragraphCount) {
         this.desc = desc;
         this.lines = lines;
         this.paraOf = paraOf;
         this.paraAnchor = paraAnchor;
+        this.frameOf = frameOf;
+        this.frameCount = frameCount;
         this.paragraphCount = paragraphCount;
     }
 
@@ -48,7 +58,8 @@ public final class EffectParagraphs {
     public static EffectParagraphs build(String desc) {
         List<int[]> lines = new ArrayList<>();
         if (desc == null || desc.isEmpty()) {
-            return new EffectParagraphs(desc == null ? "" : desc, lines, new int[0], new int[0], 0);
+            return new EffectParagraphs(desc == null ? "" : desc, lines, new int[0], new int[0],
+                    new int[0], 0, 0);
         }
         // 拆行：[start, end) 不含换行符
         int lineStart = 0;
@@ -107,14 +118,19 @@ public final class EffectParagraphs {
             if (anchor >= 0) {
                 docIdx++;
                 para = docIdx;
-                meta.add(new int[]{docIdx, anchor});
+                meta.add(new int[]{docIdx, anchor, frameTitle});
             }
             paraOf[i] = para;
         }
-        // 段落→段首序号：per-duel 条款判定时需要知道限制句中序号与本段的对应关系
+        // 段落→段首序号：per-duel 条款判定时需要知道限制句中序号与本段的对应关系；
+        // 段落→所在框：灵摆怪兽卡据此把灵摆框与怪兽框分开（兜底取句不得跨框，见 {@link #boxText}）
         int[] paraAnchor = new int[docIdx + 1];
-        for (int[] m : meta) paraAnchor[m[0]] = m[1];
-        return new EffectParagraphs(desc, lines, paraOf, paraAnchor, docIdx + 1);
+        int[] frameOf = new int[docIdx + 1];
+        for (int[] m : meta) {
+            paraAnchor[m[0]] = m[1];
+            frameOf[m[0]] = m[2];
+        }
+        return new EffectParagraphs(desc, lines, paraOf, paraAnchor, frameOf, frameTitle, docIdx + 1);
     }
 
     /** 第 index 行的原文（不含换行符） */
@@ -203,6 +219,29 @@ public final class EffectParagraphs {
             if (trimmed.isEmpty() || isDividerLine(trimmed) || isFrameTitleLine(trimmed)) continue;
             if (sb.length() > 0) sb.append('\n');
             sb.append(raw);
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 该段所在「框」的全部段落块文本拼接（同 {@link #blockText} 的段级口径，只是把范围从单段
+     * 扩到本框的所有段），供「发动段落抽不出适用句、须在本框内按唯一适用句兜底」时用。
+     * <p>灵摆怪兽卡的灵摆框与怪兽框是两个互不相干的效果框：怪兽效果发动后绝不能再把灵摆框里
+     * 的「这个回合」句当作本次发动的适用句（反之亦然），故兜底取句范围必须按框收紧，不能扫整卡。
+     * <p>单框卡（{@link #frameCount}&lt;=1，无第 2 条框标题）没有跨框误染风险，直接返回整卡描述，
+     * 保持既有「同类描述不许漏」兜底口径；段不存在时空串。
+     */
+    public String boxText(int offset) {
+        if (!hasParagraph(offset)) return "";
+        if (frameCount <= 1) return desc == null ? "" : desc;
+        int frame = frameOf[offset];
+        StringBuilder sb = new StringBuilder();
+        for (int p = 0; p < paragraphCount; p++) {
+            if (frameOf[p] != frame) continue;
+            String t = blockText(p);
+            if (t.isEmpty()) continue;
+            if (sb.length() > 0) sb.append('\n');
+            sb.append(t);
         }
         return sb.toString();
     }

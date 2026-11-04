@@ -267,6 +267,23 @@ public final class ContinuousEffectApplier {
             "the turn you Special Summon", "the turn it is Summoned", "the turn it was Summoned"
     };
     /**
+     * 「以下效果适用」母句标记（用户新规格：黑点子效果不能靠协议帧判定哪一个在生效时的兜底显示，
+     * 见 {@link #motherClause}）：这类卡把持续适用限制写成「…以下效果适用。」+ 换行 ● 子效果，
+     * 而 ● 子效果由脚本在发动解算时按活场子计数/选项分支注册（联机时客户端既无逐卡 Lua 执行，
+     * 协议也不下发「本次注册了第几个 ●」），故黑点正文无法回指、只能退回列出母句本身，让玩家至少
+     * 知道本回合有锁在适用。命中面已在实库六套卡文逐词量过（简中160/日207/韩198/英65/西77/葡14），
+     * 一律取「效果＋适用/apply/aplica/aplique」的稳定搭配，避开裸「以下效果」与「选择1个发动」族
+     * （多作代价/时机定语，会误伤）。繁中无独立卡库，按既有纪律不入表（宁缺勿错列）。入口随静态块统一小写化。
+     */
+    private static final String[] MOTHER_EFFECT_MARKS = {
+            "以下效果适用",                       // 简中
+            "以下の効果を適用",                    // 日
+            "이하의 효과를 적용",                  // 韩
+            "apply these effects", "apply the following effects", "apply 1 of these effects",   // 英
+            "aplica estos efectos", "aplica los siguientes efectos", "aplica 1 de estos efectos", // 西
+            "aplique os seguintes efeitos"        // 葡
+    };
+    /**
      * 跨回合族（用户新规格：这类誓约要跨多回合显示）：『直到下次的自己回合…』『下次的自己回合的
      * ○○阶段跳过』从发动/召唤当回合起一直适用到自己的下个回合结束。本表不参与「是不是适用句」
      * 判定，只在句子已被认定后决定是否把存续期延长到 {@code 发动回合 + }{@link #NEXT_TURN_SPAN}。
@@ -304,7 +321,8 @@ public final class ContinuousEffectApplier {
         //把 Summoned / Special 这类词写成大写（“the turn this card is Special Summoned”），不归一
         //则整条永远匹配不到；中/日/韩文取 Locale.ROOT 小写不变，不影响既有命中面。
         for (String[] table : new String[][]{TURN_DURATION_MARKS, DUEL_DURATION_MARKS, DUEL_LIMIT_WORDS,
-                ACTIVATION_CUES, NEGATION_TOKENS, TURN_PLEDGE_MARKS, SUMMON_PLEDGE_MARKS, NEXT_TURN_MARKS}) {
+                ACTIVATION_CUES, NEGATION_TOKENS, TURN_PLEDGE_MARKS, SUMMON_PLEDGE_MARKS, NEXT_TURN_MARKS,
+                MOTHER_EFFECT_MARKS}) {
             for (int i = 0; i < table.length; i++) {
                 table[i] = table[i].toLowerCase(Locale.ROOT);
             }
@@ -315,11 +333,24 @@ public final class ContinuousEffectApplier {
     private static final HashMap<Integer, EffectParagraphs> MODEL_CACHE = new HashMap<>();
 
     /**
-     * 指定半场（本地索引 0=我方 1=对方，随视角互换由两本账本的 {@code swapSides} 统一翻转）
-     * 当前持续适用中的效果列表：发动账本与召唤账本合并解算，整局级在前、其内按发动/召唤回合升序
-     * 再按卡码稳定排列，异画与本卡归一后去重（同一笔发动或同一次召唤只列一行）。
+     * 指定半场当前持续适用中的效果列表（无引擎提示来源的便捷入口，等价于 {@code forSide(side, null)}）。
      */
     public static List<Applying> forSide(int side) {
+        return forSide(side, null);
+    }
+
+    /**
+     * 指定半场（本地索引 0=我方 1=对方，随视角互换由两本账本的 {@code swapSides} 统一翻转）
+     * 当前持续适用中的效果列表：发动账本、召唤账本与引擎权威上报的在场提示（{@code clientHints}，
+     * 用户新规格：来自 {@link GameField#collectApplyingHints} 的 descHints）三源合并解算，整局级在前、
+     * 其内按发动/召唤回合升序再按卡码稳定排列，异画与本卡归一后去重（同一笔发动、同一次召唤或同一条
+     * 在场提示只列一行）。
+     *
+     * @param clientHints 该侧在场卡当前「引擎上报为正在适用」的段落提示列表，每项 {@code {卡码, offset}}；
+     *                    可为 null（无该来源）。这些提示由服务器随持续效果的注册/注销增删，存在即代表此刻在
+     *                    适用（故不另做回合/无效门控），仅当该段落确实抽得出携时长语的适用句时才成行。
+     */
+    public static List<Applying> forSide(int side, List<int[]> clientHints) {
         int nowTurn = EffectActivationLedger.getCurrentTurn();
         List<Applying> out = new ArrayList<>();
         Set<String> seen = new HashSet<>();
@@ -350,8 +381,17 @@ public final class ContinuousEffectApplier {
             String clause = durationClause(paragraph, maxGrade);
             if (clause.isEmpty()) clause = durationClause(str, maxGrade);
             // 兜底（用户新规格：同类描述不许漏）：段落序能解出句子时不走——只有账本里的 offset
-            // 对不上本次文本（脚本序与文本圆圈序不一致、辅动/让位槽 offset 越界）且整卡恰好一句适用句时才用它
-            if (clause.isEmpty()) clause = uniqueCardClause(model.desc, maxGrade);
+            // 对不上本次文本（脚本序与文本圆圈序不一致、辅动/让位槽 offset 越界）且本框恰好一句适用句时才用它。
+            // 取句范围按框收紧（用户新规格）：灵摆怪兽卡发动的是怪兽框效果时，绝不能把灵摆框里含「这个回合」
+            // 的句子当成本次发动的适用句（反之亦然），故段落命中时只在发动段落所在框内兜底，不再扫整卡；
+            // 单框卡与整卡即单效果的传统卡（legacySingle）没有跨框误染风险，仍用整卡描述兜底
+            if (clause.isEmpty()) {
+                String scope = hit ? model.boxText(a.offset) : model.desc;
+                clause = uniqueCardClause(scope, maxGrade);
+            }
+            // 兜底2（用户新规格：黑点子效果无协议帧可判定哪一个在生效）：发动段落抽不出任何时长语子句时，
+            // 若段落块含「…以下效果适用」母句，列出母句本身，让本回合的锁不至于整条不显示
+            if (clause.isEmpty()) clause = motherClause(paragraph);
             if (clause.isEmpty()) continue;
             // 子句里含整局词即归整局级（寿命跨回合）；否则若携跨回合族，寿命延到下个自己回合
             boolean duel = marksDuelDuration(clause);
@@ -368,8 +408,47 @@ public final class ContinuousEffectApplier {
             out.add(new Applying(canonical, a.offset, side, a.turn, text, duel, untilTurn));
         }
         appendSummonEntries(side, out, seen, nowTurn);
+        // 引擎权威来源（用户新规格）：在场卡 descHints 指向的段落确为「此刻适用中」的持续效果，
+        // 其存在本身即存续门控（服务器随效果注册/注销加删提示，不做回合/无效过滤），仍须按段落取到
+        // 携时长语的适用句才成行，抽不出即跳过（与发动/召唤来源同一取句口径，不新增噪声条目）
+        appendClientHintEntries(side, clientHints, out, seen, nowTurn);
         Collections.sort(out, BY_TURN_THEN_CODE);
         return out;
+    }
+
+    /**
+     * 引擎在场提示来源（用户新规格：黑点子效果按 {@link GameField#collectApplyingHints} 上报的信号取句）：
+     * 逐条把 {@code {卡码, offset}} 解成一行——按发动段落所在框取句，与 {@link #forSide} 主循环同一
+     * durationClause→框内唯一句口径（不走整卡兜底、不走母句兜底：提示已精确指到生效段落，若该段落本身
+     * 没有时长语子句说明它是无持续语义的瞬时/代价提示，直接不成行）。已按 {@code canonical:offset} 去重，
+     * 同码同句不重复成行。提示为“当前在场适用”，回合基准取 nowTurn。
+     */
+    private static void appendClientHintEntries(int side, List<int[]> hints, List<Applying> out,
+                                                Set<String> seen, int nowTurn) {
+        if (hints == null || hints.isEmpty()) return;
+        for (int[] h : hints) {
+            if (h == null || h.length < 2) continue;
+            int code = h[0], offset = h[1];
+            if (code <= 0) continue;
+            Card cd = DataManager.get().getCardManager().getCard(code);
+            int canonical = cd != null && cd.Alias > 0 && cd.Alias != code ? cd.Alias : code;
+            if (!seen.add(canonical + ":" + offset)) continue;
+            EffectParagraphs model = modelFor(canonical);
+            if (!model.hasParagraph(offset)) continue;
+            String paragraph = model.blockText(offset);
+            String str = DataManager.get().getDesc((int) ((long) canonical * 16 + offset), "");
+            String clause = durationClause(paragraph, GRADE_ALL);
+            if (clause.isEmpty()) clause = durationClause(str, GRADE_ALL);
+            if (clause.isEmpty()) clause = uniqueCardClause(model.boxText(offset), GRADE_ALL);
+            if (clause.isEmpty()) continue;
+            boolean duel = marksDuelDuration(clause);
+            boolean span = !duel && hasNextTurnPledge(clause);
+            int untilTurn = duel ? Integer.MAX_VALUE : (span ? nowTurn + NEXT_TURN_SPAN : nowTurn);
+            String text = clause.trim();
+            if (text.isEmpty()) continue;
+            if (listsSameText(out, canonical, text)) continue;
+            out.add(new Applying(canonical, offset, side, nowTurn, text, duel, untilTurn));
+        }
     }
 
     /**
@@ -638,10 +717,12 @@ public final class ContinuousEffectApplier {
     }
 
     /**
-     * 整卡唯一适用句（用户新规格：同类描述不许漏）：当发动账本里的段落序对不上本次文本
-     * （脚本 {@code aux.Stringid} 偏移与文本圆圈序不一致、或辅动/让位槽 offset 越界）时，
-     * 整卡里恰好只有一句适用句则用它；多句（歧义，不知是哪条）或零句时不列。
-     * <p>本方法只用于兜底，段落序能解出句子时一律不走，不会把另一个效果的誓约当成本次发动的。
+     * 给定范围内恰好只有一句适用句时用它（用户新规格：同类描述不许漏）：当发动账本里的段落序对不上
+     * 本次文本（脚本 {@code aux.Stringid} 偏移与文本圆圈序不一致、或辅动/让位槽 offset 越界）时，
+     * 入参 {@code text} 里恰好只有一句适用句则用它；多句（歧义，不知是哪条）或零句时不列。
+     * <p>调用方传入的范围已按框收紧（灵摆怪兽卡用 {@link EffectParagraphs#boxText}，只用发动段落
+     * 所在框；单框/传统单效果卡用整卡描述），故本方法不会把另一个框（如灵摆框）的誓约当成本次发动的。
+     * <p>本方法只用于兜底，段落序能解出句子时一律不走。
      */
     private static String uniqueCardClause(String text, int maxGrade) {
         String first = null;
@@ -654,6 +735,27 @@ public final class ContinuousEffectApplier {
             first = trimmed;
         }
         return first == null ? "" : first;
+    }
+
+    /**
+     * 「以下效果适用」母句兜底（用户新规格，与发动账本兜底取句同级）：当发动段落本身抽不出任何时长语
+     * 子句（因限制都写在 ● 黑点子项里、而 {@link #applyingSentences} 一律跳过黑点行），但段落块里确有一句
+     * 「…以下效果适用」母句时，列出该母句，让玩家知道本回合有一条“以下效果适用”的锁在生效（黑点里具体
+     * 是哪一条无法从协议帧回指，故不细分）。只取携 {@link #MOTHER_EFFECT_MARKS} 标记的那句，多句只取首句。
+     * <p>本方法只在按框取句/整卡唯一句都落空后才走，不会抢在正常带时长语的适用句之前。
+     */
+    private static String motherClause(String text) {
+        if (TextUtils.isEmpty(text)) return "";
+        for (String sentence : applyingSentences(text)) {
+            String low = lowerForSearch(sentence);
+            for (String m : MOTHER_EFFECT_MARKS) {
+                if (low.contains(m)) {
+                    String trimmed = sentence.trim();
+                    if (!trimmed.isEmpty()) return trimmed;
+                }
+            }
+        }
+        return "";
     }
 
     /**

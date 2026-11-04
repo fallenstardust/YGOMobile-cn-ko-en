@@ -678,6 +678,42 @@ public class GameField {
     }
 
     /**
+     * 采集该侧场上卡当前「引擎权威上报为正在适用」的持续效果（用户新规格：黑点子效果按引擎信号取句）：
+     * 遍历本地该侧怪兽区/魔陷区在场卡（含灵摆区，与魔陷同区）的 {@code descHints}——这些提示由服务器
+     * 在带 {@code EFFECT_FLAG_CLIENT_HINT} 的持续效果注册/注销时经 {@code MSG_CARD_HINT} 的
+     * CHINT_DESC_ADD / CHINT_DESC_REMOVE 逐条加减（见 duelclient.cpp L4094-4109 与本类 applyCardHint），
+     * 提示值即 {@code peffect->description}＝该效果段落锚点的 {@code code*16+offset}，其存在本身就代表
+     * “该段落对应的效果此刻在场并适用”，无需回合/无效门控（离场或到期时服务器必发 REMOVE 摘除）。
+     * <p>只收卡码型提示（{@code value > MAX_STRING_ID}，即 &gt;0x7ff，系统字符串提示无段落序含义、丢弃）；
+     * 每项以 {@code {在场卡卡码, offset=value&0xf}} 返回，{@code side} 为本地索引（解算器据此归一 alias）。
+     * 与 {@link CardInfoBinder} 的已发动标记共用同一 descHints 通道，口径不分叉。
+     * <p>主线程解算时调用，而引擎派发线程会并发改写 descHints（TreeMap 非并发容器）：先把 keySet 快照
+     * 成数组再遍历，避免与 CHINT_DESC_ADD/REMOVE 的写入竞态致 ConcurrentModificationException。
+     */
+    public List<int[]> collectApplyingHints(int side) {
+        List<int[]> out = new ArrayList<>();
+        if (side < 0 || side > 1) return out;
+        PlayerField pf = players[side];
+        if (pf == null) return out;
+        collectZoneHints(pf.monsterZone, out);
+        collectZoneHints(pf.spellZone, out);
+        return out;
+    }
+
+    private static void collectZoneHints(List<ClientCard> zone, List<int[]> out) {
+        if (zone == null) return;
+        for (ClientCard c : zone) {
+            if (c == null || c.code <= 0 || c.descHints.isEmpty()) continue;
+            for (Integer key : new ArrayList<>(c.descHints.keySet())) {
+                long uid = key & 0xFFFFFFFFL;
+                //仅卡码型字符串 id（>MAX_STRING_ID）携段落序含义，系统字符串/0 一律丢弃
+                if (uid <= ocgcore.DataManager.MAX_STRING_ID) continue;
+                out.add(new int[]{c.code, (int) (uid & 0xf)});
+            }
+        }
+    }
+
+    /**
      * 玩家级描述提示（对齐 duelclient.cpp MSG_PLAYER_HINT L4139-4150）：仅当 CARD_QUESTION（谜题）
      * 提示挂在本地玩家（localPlayer==0）时，ADD 置、REMOVE 清 cantCheckGrave「不可确认墓地」禁止态，
      * 由本端点击墓地处（GameFieldControllerBase.showCardCommandMenu）拦截弹 cmdmenudialog。对方座位
