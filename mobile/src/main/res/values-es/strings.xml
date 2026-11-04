@@ -259,9 +259,6 @@
     <string name="Join_QQ">Grupo de soporte</string>
     <string name="about_Join_QQ">Únete al grupo de soporte si tienes algún problema</string>
     <string name="donatefor">Tus donaciones se usarán para mantener actualizaciones, recopilar datos, editar imágenes y comprar dispositivos de prueba.</string>
-    <string name="coverSelect">Toca para elegir la cubierta de la carta</string>
-    <string name="bgSelect">Toca para elegir el fondo</string>
-    <string name="avatarSelect">Toca para elegir el ávatar</string>
     <string name="ClickLinkArrows">Activar flechas</string>
     <string name="tip_no_permission" formatted="false">El permiso %s está desactivado</string>
     <string name="Already_Lastest">No se ha encontrado ninguna nueva versión. ¿Por qué no revisas las actualizaciones del autor para más detalles?</string>

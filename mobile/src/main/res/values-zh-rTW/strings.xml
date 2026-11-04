@@ -274,9 +274,6 @@
     <string name="Join_QQ">機型調試群</string>
     <string name="about_Join_QQ">軟體遇到使用問題可以加群</string>
     <string name="donatefor">您的捐贈將用於維持自動更新費用，收集更新資料、修圖後期以及購買適配機型等</string>
-    <string name="coverSelect">點擊相應卡背選擇檔案</string>
-    <string name="bgSelect">點擊相應背景選擇檔案</string>
-    <string name="avatarSelect">點擊相應頭像選擇檔案</string>
     <string name="ClickLinkArrows">點亮箭頭</string>
     <string name="tip_no_permission" formatted="false">權限 %s 被您禁止了</string>
     <string name="Already_Lastest">未發現新版本，要不去作者動態看看？或許有最新訊息</string>

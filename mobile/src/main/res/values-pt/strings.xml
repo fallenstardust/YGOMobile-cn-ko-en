@@ -251,9 +251,6 @@
     <string name="Join_QQ">Grupo QQ</string>
     <string name="about_Join_QQ">Junte-se al grupo QQ para informar problemas</string>
     <string name="donatefor">Sua doação será utilizada para manter as taxas de atualização automática, coletar dados de atualização, retocar imagens posteriores e comprar modelos adaptados, etc.</string>
-    <string name="coverSelect">Toque na capa para alterar a imagem</string>
-    <string name="bgSelect">Toque no fundo para alterar a imagem</string>
-    <string name="avatarSelect">Toque no avatar para alterar a imagem</string>
     <string name="ClickLinkArrows">Toque nas setas</string>
     <string name="tip_no_permission" formatted="false">A permissão %s foi negada.</string>
     <string name="Already_Lastest">Nenhuma nova versão encontrada. Por que não verificar as atualizações do autor? Talvez haja notícias importantes</string>

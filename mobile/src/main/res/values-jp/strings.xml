@@ -255,9 +255,6 @@
     <string name="Join_QQ">QQを参加</string>
     <string name="about_Join_QQ">ソフトフィットバックはQQでお願いします</string>
     <string name="donatefor">寄付はサーバーの維持や情報収集に使用します</string>
-    <string name="coverSelect">カードプロテクターを選択してください</string>
-    <string name="bgSelect">壁紙を選択してください</string>
-    <string name="avatarSelect">アバタを選択してください</string>
     <string name="ClickLinkArrows">クリック矢印を発光する</string>
     <string name="tip_no_permission" formatted="false"> %s 権限はあなたに禁止されています</string>
     <string name="Already_Lastest">新バージョンなし。作者の最新情報を確認？</string>

@@ -266,9 +266,6 @@
     <string name="Join_QQ">QQ Group</string>
     <string name="about_Join_QQ">join QQ group to report problems</string>
     <string name="donatefor">your donation will be used for keeping severs updating, buying card to get artworks and purchasing new phone to adapt</string>
-    <string name="coverSelect">click covers and select files</string>
-    <string name="bgSelect">click background and select files</string>
-    <string name="avatarSelect">click avatar and select files</string>
     <string name="ClickLinkArrows">click link arrows</string>
     <string name="Already_Lastest">No new version available. Check the author\'s feed?</string>
     <string name="tip_no_permission" formatted="false">the permission %s is denied.</string>
