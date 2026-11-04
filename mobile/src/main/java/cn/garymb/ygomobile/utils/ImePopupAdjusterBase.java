@@ -49,7 +49,7 @@ abstract class ImePopupAdjusterBase {
     protected static final int VERIFY_TOL_PX = 2;
 
     /**
-     * 聊天输入框「被抬高」的判定阈值（dp，玩家等待弹窗几何判定专用）：实测上沿比
+     * 聊天输入框「被抬高」的判定阈值（dp，followChatLift 弹窗几何判定专用）：实测上沿比
      * 静置基准上移超过此距离才算抬高——键盘弹起但输入框未动时弹窗保持原处，不抬升
      * （用户规格），也吸收掉事件抖动引起的快速上下闪动。
      */
@@ -82,7 +82,7 @@ abstract class ImePopupAdjusterBase {
 
     /** 聊天输入框静置上沿基准（屏幕 px）：只在落定且未处于抬高态时重采，抬高判定以它为准 */
     protected static int sChatRestTop = -1;
-    /** 抬高态锁存（玩家等待弹窗专用）：输入框落定后被抬高才置 true，落定降回基准高度才
+    /** 抬高态锁存（followChatLift 弹窗专用）：输入框落定后被抬高才置 true，落定降回基准高度才
      *  置 false；动画途中的中间值不参与翻转，杜绝逐帧追逐引起的闪动（用户规格） */
     protected static boolean sChatLiftState = false;
     /** {@link #CHAT_LIFT_TRIGGER_DP} 换算成的像素（随 {@link #refreshLiftSafety} 同密度刷新） */
@@ -97,7 +97,7 @@ abstract class ImePopupAdjusterBase {
     protected static int sStableChatTop = -2;
     /** 输入框上沿与上一轮连续一致的轮数（达 {@link #CHAT_STABLE_TICKS} 视为键盘动画落定） */
     protected static int sStableCount = 0;
-    /** 当前是否已落定：玩家等待/含 EditText 弹窗只在此态下发移动，动画途中不动 */
+    /** 当前是否已落定：followChatLift/含 EditText 弹窗只在此态下发移动，动画途中不动 */
     protected static boolean sChatStable = true;
 
     /** {@link #LIFT_SAFETY_DP} 换算成的像素（按登记时所在屏幕密度，attach 与键盘弹起时刷新） */
@@ -115,17 +115,18 @@ abstract class ImePopupAdjusterBase {
     protected static class Entry {
         final WeakReference<PopupWindow> popupRef;
         /** true = 自定位弹窗整窗上移（尺寸与内容布局都不改）；false = 铺满窗口的包装层弹窗
-         *  （抬升走 {@link #stepMinimize} 自动最小化，或 noAutoMinimize 时走旧收缩+贴底） */
+         *  （抬升走 {@code stepMinimize} 自动最小化，或 noAutoMinimize 时走旧收缩+贴底） */
         final boolean liftMode;
         /** true = 包装层弹窗不做自动最小化，维持旧的「收缩窗口 + 内容贴底」整 dialog 抬高
-         *  （{@link #attach(PopupWindow, boolean)} 传 autoMinimize=false，或因含 EditText 被
-         *  强制置位，用户规格：玩家等待 / 含输入框弹窗不加最小化） */
+         *  （{@code ImePopupAdjuster.attach(popup, false)} 传 autoMinimize=false，或因含 EditText 被
+         *  强制置位，用户规格：决斗记录 / 含输入框弹窗不加最小化；玩家等待弹窗已完全不登记） */
         final boolean noAutoMinimize;
         /** true = 弹窗内容子树含 EditText（宣言卡搜索框、录像保存名称等）：一律不缩小/
          *  不最小化；聊天输入框未持焦时（弹窗自身输入框唤起键盘）完全不介入，保留其
          *  原生 ADJUST_RESIZE 输入路径（用户规格） */
         final boolean hasEditText;
-        /** true = 玩家等待弹窗方式（不最小化且自身无输入框）：抬升改由「聊天输入框实测
+        /** true = 决斗记录弹窗方式（不最小化且自身无输入框；玩家等待弹窗早前同此方式，
+         *  现按用户新规格不再登记，改 ADJUST_NOTHING + 自由拖动）：抬升改由「聊天输入框实测
          *  上沿相对静置基准是否真被抬高」的几何判定驱动，不论输入法是否显示都不再受
          *  显隐事件翻转影响；键盘显示期冻结本弹窗 softInputMode，消除 WMS 二次 resize
          *  与本类还原下发的互相拉扯（输入框未抬高时快速上下闪动的根源，用户反馈） */

@@ -40,7 +40,6 @@ import cn.garymb.ygomobile.render.field.TextureLoader;
 import cn.garymb.ygomobile.ui.dialogs.duel.YesOrNoDialog;
 import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
-import cn.garymb.ygomobile.utils.ImePopupAdjuster;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
 import ocgcore.StringManager;
@@ -97,15 +96,28 @@ abstract class PlayerWaitingDialogMid extends PlayerWaitingDialogBase {
         // outsideTouchable 同步关闭，避免点外部区域误 dismiss 弹窗触发回主菜单
         popupWindow.setOutsideTouchable(false);
         popupWindow.setFocusable(false);
-        popupWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        // 用户新规格：本弹窗不跟随输入法抬高。早前它经 ImePopupAdjuster 整窗抬高（见 show() 末尾
+        // 注释），同时 ADJUST_RESIZE 又让 WMS 在键盘升起时压缩铺满窗口的包装层，使 Gravity.CENTER
+        // 的内容随之上移、键盘收起再落回——两个控制器叠在一起就是反复上下闪动且仍遮挡输入框的
+        // 根源。改 ADJUST_NOTHING 后窗口矩形与内容位置完全不动，需要让位时由玩家自己按住拖到一旁
+        // （见下方 setDragEnabled）；键盘可见可点靠下面的 INPUT_METHOD_NEEDED 分层，与位置无关
+        popupWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
         popupWindow.setTouchInterceptor((v, event) -> false);
         popupWindow.setAnimationStyle(R.style.PopupCenterAnimation);
         popupWindow.setOnDismissListener(internalDismissListener);
 
         // 全屏弹窗窗口不得作为 touch-modal：置为非模态后窗口边界外的触摸仍会派发给其他窗口。
         // 但软键盘落在全屏窗口的边界“内”，单靠本设置挡不住键盘区域触摸被全屏层吞掉——
-        // Android 12+ 的分层修复见下方 setInputMethodMode 块
-        popupWindow.setTouchModal(false);
+        // Android 12+ 的分层修复见下方 setInputMethodMode 块。
+        // PopupWindow#setTouchModal 自 API 29（Q）才公开（此前为 @hide），Android 7/8 直接调用会
+        // NoSuchMethodError，故低版本保持默认 touch-modal=true：本弹窗被包装层铺满整屏，屏内
+        // 触摸本就全部落在窗口矩形内、照旧派发到本窗口，拖拽（DragFrameLayout.handleDrag）与
+        // 点卡/点聊天框（resolveGestureTarget 将事件在进程内转发进 Activity decor 树）都不依赖
+        // FLAG_NOT_TOUCH_MODAL，因此默认值不影响这两项行为；唯一受影响的是窗口未铺满屏幕而留在
+        // 窗口外的那条窄带（拖拽位被当作窗口偏移回放时才会出现），见下方不回放窗口偏移的处理
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            popupWindow.setTouchModal(false);
+        }
 
         // 输入法分层修复（用户反馈：等待对话框显示时点大厅聊天输入框，输入法弹在 dialog
         // 下方且按键点不动）：
@@ -117,21 +129,27 @@ abstract class PlayerWaitingDialogMid extends PlayerWaitingDialogBase {
         // 非获焦弹窗置 INPUT_METHOD_NEEDED 使 PopupWindow.computeFlags() 为本窗口加
         // FLAG_ALT_FOCUSABLE_IM，其官方语义（见 WindowManager.LayoutParams 注释）为
         // “不可获焦但按输入法目标对待，分层在输入法窗口之下”：键盘显示在 dialog 上方、
-        // 按键直达 IME 窗口；窗口焦点仍留给 Activity，et_chat_input 获焦与输入链路不受影响
+        // 按键直达 IME 窗口；窗口焦点仍留给 Activity，et_chat_input 获焦与输入链路不受影响。
+        // 本块只管分层（键盘可见可点），不再改 softInputMode：位置一律由玩家拖动决定
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
             popupWindow.setInputMethodMode(PopupWindow.INPUT_METHOD_NEEDED);
-            // 用户新规格：输入法抬高聊天输入框时，输入框与输入法都显示在弹窗前面——
-            // 弹窗随键盘 resize：全屏包装层可视区收缩、居中内容整体上移到键盘之上，
-            // 腾出贴着键盘上沿的输入框条带，不再被弹窗内容压住（旧 ADJUST_NOTHING 仅保
-            // 证键盘可见，输入框仍可能被弹窗遮挡，已废弃）
-            popupWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         }
 
         draggableHelper = new DraggablePopupHelper(context, DIALOG_ID);
         // 竖屏宽铺满屏宽且高与宽相等（正方形），转回横屏恢复设计宽高比（用户规格）
         draggableHelper.setupDraggablePopup(popupWindow, customView, popupWidth, popupHeight, true);
-        // 用户规格：本 dialog 横竖屏均不可拖动（对齐 C++ 定位弹窗），其他 dialog 仍可拖动
-        draggableHelper.setDragEnabled(popupWindow, false);
+        // 用户新规格：本 dialog 恢复可随意按住拖动（早前按「对齐 C++ 定位弹窗」禁掉，
+        // 而今它不再跟随输入法抬高，遮挡聊天输入框时必须能手动拖开）；拖拽偏移由包装层
+        // 记忆并在下次显示时回放（仅 API >= 29，原因见下方低版本清位）
+        draggableHelper.setDragEnabled(popupWindow, true);
+        // API < 29 保持 touch-modal（无 setTouchModal 可调）：那种情况下一旦把拖拽位以
+        // showAtLocation 的 x/y 回放成窗口偏移，屏上会留一条落在窗口矩形外的窄带，窄带内的触摸
+        // 会被本弹窗按 ACTION_OUTSIDE 吞掉（包装层拿不到 DOWN，也就不会转发给 Activity）而不再
+        // 穿透——表现为贴屏边的卡与聊天框点不动。低版本一律不回放窗口偏移，使窗口恒铺满整屏，
+        // 缝隙从根上消失；本会话内的拖拽平移与点卡转发均不受影响（退出口本来也会清位）
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.Q) {
+            draggableHelper.clearSavedPosition();
+        }
 
         loadLastDeckInfo();
 
@@ -257,12 +275,12 @@ abstract class PlayerWaitingDialogMid extends PlayerWaitingDialogBase {
         setupStartButton();
 
         draggableHelper.showPopup(popupWindow, anchorView);
-        // 输入法抬升联动（用户规格：本弹窗维持原本整个 dialog 被抬高的方式，不做自动最小化，
-        // 故 autoMinimize=false）：几何判定驱动——聊天输入框实测被抬高（不论输入法是否显示）
-        // 时底边贴输入框上沿，输入框未被抬高则保持原处，键盘显示期由工具类冻结本窗口
-        // 的 IME 自适应，消除之前「输入框未抬高时快速上下闪动」的 WMS 二次 resize 拉扯
-        ImePopupAdjuster.attach(popupWindow, false);
-
+        // 不再向 ImePopupAdjuster 登记（用户新规格：本弹窗不参与输入法抬升联动）。它是铺满窗口
+        // 的包装层弹窗且按 autoMinimize=false 登记（内容无 EditText，席位名只是 et_ 前缀的
+        // TextView），于是落在 followChatLift 方式：登记即冻结本窗 softInputMode，再按「输入框
+        // 实测被抬高」逐轮测—改地收缩窗口并把内容贴底整体抬高、落定后还原——两个定位控制器
+        // 在真机上仍然互相拉扯（上下闪动），且抬高结果仍压住聊天输入框。不登记后工具类不再
+        // 写它的窗口矩形与内容重力，弹窗停在玩家拖到的位置
         if (listener != null) listener.onPlayerWaitingShown();
     }
 
@@ -657,9 +675,10 @@ abstract class PlayerWaitingDialogMid extends PlayerWaitingDialogBase {
         }
     }
 
-    // 输入法抬升/还原已抽取到 cn.garymb.ygomobile.utils.ImePopupAdjuster：本弹窗与其他 dialog
-    // （决斗中的是/否询问、宣言类、猜拳、先后攻、位置选择、录像保存等）走同一条逻辑——
-    // 抬键盘时底边贴聊天输入框上沿，收起后回中央，横竖屏切换亦回中央；登记见 show() 末尾。
+    // 输入法抬升/还原已抽取到 cn.garymb.ygomobile.utils.ImePopupAdjuster，供决斗中的是/否询问、
+    // 宣言类、录像保存等 dialog 登记使用；本弹窗按用户新规格不再登记（抬升路径在真机上
+    // 反复闪动且仍遮挡聊天输入框），改为 ADJUST_NOTHING + 自由拖动，详见 show() 内注释。
+    // 拖拽位仅在本次等待会话内回放，退出界面由 releaseOnExit 清除，下次进入回默认居中。
 
     public void dismiss() {
         hideAllSeatEmotes();

@@ -40,7 +40,6 @@ import cn.garymb.ygomobile.render.field.TextureLoader;
 import cn.garymb.ygomobile.ui.dialogs.duel.YesOrNoDialog;
 import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
-import cn.garymb.ygomobile.utils.ImePopupAdjuster;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
 import ocgcore.StringManager;
@@ -603,7 +602,8 @@ abstract class PlayerWaitingDialogBase {
 
     /**
      * 非 solo：点击准备即上传房主自身卡组（单一 currentDeckPath）。
-     * solo：卡组在点击“开始”时由 {@link #soloCommitDecksForStart()} 按席位顺序统一上传，
+     * solo：卡组在点击“开始”时由 {@code soloCommitDecksForStart()}（子类 PlayerWaitingDialogMid 实现）
+     * 按席位顺序统一上传，
      * 此处不发卡（避免“先上传席位0、其余席位未选→return false”造成的服务端部分上传脏状态），
      * 准备仅作为本地标记，返回 true。
      */

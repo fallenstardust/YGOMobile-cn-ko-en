@@ -258,10 +258,12 @@ public abstract class YGOProActivityBase extends AppCompatActivity {
             }
         });
 
-        // 聊天：输入法把输入框抬高时，所有在显弹窗（玩家等待 + 决斗中的是/否询问、宣言类、
-        // 猜拳、先后攻、位置选择、卡片选择/显示、决斗记录、录像保存等，各 dialog 自行向
+        // 聊天：输入法把输入框抬高时，所有在显弹窗（决斗中的是/否询问、宣言类、
+        // 猜拳、先后攻、位置选择、卡片选择/显示、决斗记录、文本输入等，各 dialog 自行向
         // ImePopupAdjuster 登记）统一抬成「底边紧贴输入框上沿」，不再与输入框/键盘互相遮挡；
-        // 输入法收起后各弹窗回到 layout_game_right 中央（区域锚定由工具类还原时补做）
+        // 输入法收起后各弹窗回到 layout_game_right 中央（区域锚定由工具类还原时补做）。
+        // 例外：玩家等待弹窗按用户新规格不再登记（它铺满窗口且含席位名输入框，抬升路径
+        // 反复闪动仍遮挡输入框），改为 ADJUST_NOTHING 原位不动 + 可自由拖动让位
         chatInputUI.setImeVisibilityListener(new ChatInputUI.ImeVisibilityListener() {
             @Override
             public void onImeShown() {
@@ -277,8 +279,8 @@ public abstract class YGOProActivityBase extends AppCompatActivity {
                 if (fieldCtl != null) fieldCtl.repinHudBands();
             }
         });
-        // 提早把聊天输入框登记进联动工具：静置期采样其屏幕上沿基准，供玩家等待弹窗
-        // 按「输入框是否真被抬高」的几何判定抬升/回位（不随输入法显隐事件翻转闪动）
+        // 提早把聊天输入框登记进联动工具：静置期采样其屏幕上沿基准，供联动弹窗
+        // （如决斗记录）按「输入框是否真被抬高」的几何判定抬升/回位（不随输入法显隐事件翻转闪动）
         ImePopupAdjuster.bindChatInput(etChatInput);
 
         cardDetailPanel = new CardDetailPanel((YGOProActivity) this);

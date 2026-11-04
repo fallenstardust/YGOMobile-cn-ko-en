@@ -335,7 +335,7 @@ public class DuelLogDialog {
         // 输入法抬升联动（用户规格）：抬键盘时本面板底边贴聊天输入框上沿（贴区域顶缘，
         // 故只收缩窗口不改为贴底），收起后回到 layout_game_right 右上角，逻辑统一在 ImePopupAdjuster。
         // autoMinimize=false（用户规格：本弹窗不要最小化）：抬升期不收缩成底部最小化横条，
-        // 维持整面板收缩贴底的旧方式（与玩家等待弹窗同款）
+        // 维持整面板收缩贴底的旧方式（不最小化且自身无输入框，故登记起持续冻结本窗 softInputMode）
         ImePopupAdjuster.attach(popupWindow, false);
     }
 

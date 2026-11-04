@@ -91,7 +91,7 @@ abstract class ImePopupAdjusterMid extends ImePopupAdjusterBase {
             sStableCount = 0;
         }
         sChatStable = sStableCount >= CHAT_STABLE_TICKS;
-        // 抬高状态机（玩家等待弹窗判据）：只在输入框落定后翻转，不参考输入法事件——
+        // 抬高状态机（followChatLift 弹窗判据）：只在输入框落定后翻转，不参考输入法事件——
         // 抬高后不管输入法是否仍显示都保持贴输入框上沿，落定降回基准高度才回位（用户规格）；
         // 静置态重采基准使旋转/HUD 缩放后的新静置位自动跟上，动画途中的中间值一律不污染基准
         boolean liftedNow = chatTop > 0 && sChatRestTop > 0
@@ -182,7 +182,7 @@ abstract class ImePopupAdjusterMid extends ImePopupAdjusterBase {
         // （chat 无焦点）不最小化也不收缩，避免打断其自身输入。
         boolean chatFocused = sChatInput != null && sChatInput.get() != null
                 && sChatInput.get().hasFocus();
-        // 玩家等待弹窗（followChatLift）：登记起一律持续冻结本窗口的 IME 自适应，
+        // followChatLift 弹窗（决斗记录）：登记起一律持续冻结本窗口的 IME 自适应，
         // 使抬升/还原只由本类下发——ADJUST_RESIZE 下 WMS 会同步收缩铺满窗口的弹窗，
         // 与还原下发构成两个互相拉扯的定位控制器（快速上下闪动的根源）；本弹窗
         // 自身无输入框，冻结不影响任何输入路径（用户规格：只看输入框几何，不管输入法）
@@ -201,7 +201,7 @@ abstract class ImePopupAdjusterMid extends ImePopupAdjusterBase {
         // 不介入，保留其原生 ADJUST_RESIZE 输入路径；聊天持焦抬键盘时才走整 dialog
         // 贴边抬高（不缩小、不最小化，用户规格）
         if (entry.hasEditText && entry.wantLift && !chatFocused) return false;
-        // 动画途中不下发（用户规格：拿到聊天输入框最终高度后再移动）：玩家等待与
+        // 动画途中不下发（用户规格：拿到聊天输入框最终高度后再移动）：followChatLift 与
         // 含 EditText 弹窗都待输入框上沿落定后一次性移到/回位；其余弹窗维持逐轮跟随
         if ((entry.followChatLift || entry.hasEditText) && !sChatStable) return false;
         if (entry.wantLift && chatTop > 0 && !entry.liftMode && !entry.noAutoMinimize

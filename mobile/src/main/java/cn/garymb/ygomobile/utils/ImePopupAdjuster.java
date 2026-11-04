@@ -18,7 +18,8 @@ import java.util.List;
 
 /**
  * 输入法抬升联动工具（用户规格：决斗中出现的对话框——先后攻、是/否询问、宣言类、
- * 位置选择、卡片选择/显示、关键词列表、决斗记录、录像保存、玩家等待等——显示期间点击
+ * 位置选择、卡片选择/显示、关键词列表、决斗记录、文本输入（录像保存与重命名、卡组与
+ * 分类名）等——显示期间点击
  * 聊天输入框抬高输入框与输入法时，对话框底边要紧贴输入框上沿，双方互不遮挡；输入法收起
  * 后回到 layout_game_right 中央，横竖屏及横竖屏切换后一律回中央）。
  * <p>
@@ -104,9 +105,11 @@ public final class ImePopupAdjuster extends ImePopupAdjusterMid {
     /**
      * @param autoMinimize 铺满窗口的包装层弹窗抬升时是否自动最小化为底部收缩横条（默认 true）；
      *                     传 false 维持旧的「收缩窗口 + 内容贴底」整 dialog 抬高方式（用户规格：
-     *                     玩家等待弹窗不加最小化功能）；自定位弹窗的整窗上移不受此参数影响。
+     *                     决斗记录弹窗不加最小化功能）；自定位弹窗的整窗上移不受此参数影响。
      *                     弹窗内容含 EditText 时无论传值一律强制按不最小化处理（用户规格：
-     *                     不得缩小包含 edittext 布局的 dialog）。
+     *                     不得缩小包含 edittext 布局的 dialog）。不参与联动的弹窗（现：玩家
+     *                     等待）直接不调本方法，同时应自行置 ADJUST_NOTHING 以免 WMS 压缩窗口
+     *                     把居中内容顶上去（用户反馈的反复闪动）。
      */
     public static void attach(PopupWindow popup, boolean autoMinimize) {
         if (popup == null) return;
@@ -127,9 +130,10 @@ public final class ImePopupAdjuster extends ImePopupAdjusterMid {
         // 最小化，输入法直接覆盖未抬高输入框时不处理），基准未建立前退回 IME 事件态
         entry.wantLift = sChatRestTop > 0 ? sChatLiftState : sImeUp;
         ENTRIES.add(entry);
-        // 跟随输入框抬高的弹窗（玩家等待）登记即刻冻结本窗口的 IME 自适应：等首轮 tick
-        // 再冻会留下 WMS 按键盘高度收缩铺满窗口的空窗，随后的还原下发与二次 resize 来回
-        // 拉扯，即真机仍见残余快速上下闪动的根源（用户反馈）；冻结后窗口尺寸只由本类下发
+        // 跟随输入框抬高的弹窗（决斗记录：不最小化且自身无输入框）登记即刻冻结本窗口的 IME
+        // 自适应：等首轮 tick 再冻会留下 WMS 按键盘高度收缩铺满窗口的空窗，随后的还原下发与
+        // 二次 resize 来回拉扯，即真机仍见残余快速上下闪动的根源（用户反馈）；冻结后窗口尺寸
+        // 只由本类下发
         if (entry.followChatLift) {
             View w = windowViewOf(popup);
             WindowManager.LayoutParams lp = w == null ? null : paramsOf(w);
@@ -181,7 +185,8 @@ public final class ImePopupAdjuster extends ImePopupAdjusterMid {
 
     /**
      * 提早绑定聊天输入框（Activity 在 initViews 与旋转重建绑定新视图后调用）：登记弱引用
-     * 并在视图根挂全局布局监听，非键盘期采样输入框静置上沿基准，使玩家等待弹窗的几何
+     * 并在视图根挂全局布局监听，非键盘期采样输入框静置上沿基准，使跟随输入框抬高的弹窗
+     * （决斗记录）的几何
      * 判定（只凭「输入框是否真被抬高」）从第一次抬键盘起就可用；不绑定时基准在首次
      * 键盘收起后才建立，期间退回旧的 IME 事件驱动。
      */
