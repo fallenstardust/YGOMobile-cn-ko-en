@@ -43,6 +43,8 @@ import ocgcore.DataManager;
 
 public class ExCardListFragment extends Fragment {
     private static final String TAG = String.valueOf(ExCardListFragment.class);
+    /** 下载已完成但旧先行卡包替换失败，与下载失败分开处理，不重跑下载 */
+    private static final int TYPE_INSTALL_FAILED = 4;
     public static DownloadState downloadState;
     private Context context;
     private View layoutView;
@@ -140,28 +142,19 @@ public class ExCardListFragment extends Fragment {
 
     private void downloadfromWeb(String fileUrl) {
         textDownload.setText("0%");//点击下载后，距离onDownloading触发要等几秒，这一延迟会造成软件响应慢的错觉，因此在下载函数开始就设置文本
-        String path = AppsSettings.get().getExpansionsPath().getAbsolutePath();
-        String fileName = Constants.officialExCardPackageName;
-        File file = new File(path, fileName + Constants.YPK_FILE_EX);
-        /* 删除旧的先行卡包 */
-        File[] files = AppsSettings.get().getExpansionsPath().listFiles();
-        if (files != null) {
-            for (File oldfile : files) {
-                if (oldfile.exists() && (oldfile.getName().contains(fileName) || oldfile.getName().contains(Constants.cacheExCardPackageName) || oldfile.getName().contains(Constants.mercuryExCardPackageName))) {
-                    //删除残留的指定先行卡包,避免具备相同id的数据库之间引起冲突
-                    FileUtils.deleteFile(oldfile);
-                }
-            }
+        String fileName = Constants.officialExCardPackageName + Constants.YPK_FILE_EX;
+        /* 新先行卡先下到应用现有 Cache 里，下载成功后才替换 expansions 下的旧包，以免下载失败时旧先行卡一并没了 */
+        File cacheDir = context.getExternalCacheDir();
+        if (cacheDir == null) {
+            cacheDir = context.getCacheDir();//外部存储不可用时退回内部缓存
         }
-        SharedPreferenceUtil.setExpansionDataVer(null);//删除先行卡后，更新版本状态
-        ServerUtil.exCardState = ServerUtil.ExCardState.NEED_UPDATE;
-        EventBus.getDefault().postSticky(new ExCardEvent(ExCardEvent.EventType.exCardPackageChange));//删除后，通知UI做更新
+        File tempFile = new File(cacheDir, fileName);
 
-        DownloadUtil.get().downloadSuperpre(fileUrl, path, file.getName(), new DownloadUtil.OnDownloadListener() {
+        DownloadUtil.get().downloadSuperpre(fileUrl, cacheDir.getAbsolutePath(), fileName, new DownloadUtil.OnDownloadListener() {
             @Override
             public void onDownloadSuccess(File file) {
                 Message message = new Message();
-                message.what = DownloadUtil.TYPE_DOWNLOAD_OK;
+                message.what = installExCardPackage(tempFile) ? DownloadUtil.TYPE_DOWNLOAD_OK : TYPE_INSTALL_FAILED;
                 handler.sendMessage(message);
             }
 
@@ -176,14 +169,46 @@ public class ExCardListFragment extends Fragment {
 
             @Override
             public void onDownloadFailed(Exception e) {
-                //下载失败后删除下载的文件
-                FileUtils.deleteFile(file);
+                //下载失败只删临时档案，旧先行卡从未被动过
+                FileUtils.deleteFile(tempFile);
                 Message message = new Message();
                 message.what = TYPE_DOWNLOAD_EXCEPTION;
                 handler.sendMessage(message);
             }
         });
 
+    }
+
+    /**
+     * 下载成功后才替换：把临时档案挪到 expansions 的正式包名（同存储卷改名即覆盖旧包，
+     * 改名不可用再退回复制），落位成功后才清理历史命名的残留先行卡包，避免具备相同id
+     * 的数据库之间引起冲突。任一步失败都保留旧包与临时档案，仅记日志。
+     *
+     * @param tempFile 下载完成的临时档案
+     * @return 是否完成落位替换
+     */
+    private boolean installExCardPackage(File tempFile) {
+        if (!tempFile.isFile() || tempFile.length() <= 0) {
+            LogUtil.e(TAG, "先行卡临时档案无效: " + tempFile.getAbsolutePath());
+            return false;
+        }
+        File dir = AppsSettings.get().getExpansionsPath();
+        File target = new File(dir, tempFile.getName());
+        if (!tempFile.renameTo(target) && !FileUtils.copyFile(tempFile, target)) {
+            LogUtil.e(TAG, "先行卡包替换失败，保留旧包: " + target.getAbsolutePath());
+            return false;
+        }
+        FileUtils.deleteFile(tempFile);//改名落位时本已不存在，复制兜底后把临时档案清掉
+        String fileName = Constants.officialExCardPackageName;
+        File[] files = dir.listFiles();
+        if (files != null) {
+            for (File oldfile : files) {
+                if (oldfile.exists() && !oldfile.equals(target) && (oldfile.getName().contains(fileName) || oldfile.getName().contains(Constants.cacheExCardPackageName) || oldfile.getName().contains(Constants.mercuryExCardPackageName))) {
+                    FileUtils.deleteFile(oldfile);
+                }
+            }
+        }
+        return true;
     }
 
     /**
@@ -219,6 +244,10 @@ public class ExCardListFragment extends Fragment {
                         downloadfromWeb(ServerUtil.downloadUrl());
                     }
                     YGOUtil.showTextToast("error:" + getString(R.string.Download_Precard_Failed));
+                    break;
+                case TYPE_INSTALL_FAILED:
+                    downloadState = DownloadState.NO_DOWNLOAD;
+                    YGOUtil.showTextToast(getString(R.string.Download_Precard_Failed));
                     break;
 //                case UnzipUtils.ZIP_READY:
 //                    textDownload.setText(R.string.title_use_ex);
