@@ -46,7 +46,7 @@
         android:layout_height="40dp"
         android:layout_marginTop="8dp"
         android:background="@drawable/ygopro_base_background"
-        android:gravity="center_vertical"
+        android:gravity="center"
         android:imeOptions="actionDone"
         android:inputType="textNoSuggestions"
         android:paddingHorizontal="6dp"

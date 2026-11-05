@@ -272,6 +272,7 @@ abstract class HomeFragmentBase extends BaseFragemnt implements OnDuelAssistantL
         ListView listView = builder.bind(R.id.room_list);
         TextView text_abt_roomlist = builder.bind(R.id.abt_room_list);
         SimpleListAdapter simpleListAdapter = new SimpleListAdapter(getContext());
+        simpleListAdapter.setTextSize(16f);//密码历史记录列表字号加大，避免看不清
         simpleListAdapter.set(AppsSettings.get().getLastRoomList());
         if (AppsSettings.get().getLastRoomList().size() > 0)
             text_abt_roomlist.setVisibility(View.VISIBLE);

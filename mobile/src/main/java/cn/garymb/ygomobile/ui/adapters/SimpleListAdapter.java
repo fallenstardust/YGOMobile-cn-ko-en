@@ -16,11 +16,18 @@ public class SimpleListAdapter extends BaseAdapterPlus<String> {
 
     private static final int SELECTED_BG_COLOR = YGOUtil.c(R.color.list_selected_sky);
     private int selectedPosition = -1;
+    /** 列表项字号（sp），<=0 表示沿用 item_bot_list 的默认字号 */
+    private float textSize = 0f;
     private Set<Integer> multiSelectedPositions = new HashSet<>();
     private boolean isMultiSelectMode = false;
 
     public SimpleListAdapter(Context context) {
         super(context);
+    }
+
+    /** 设置列表项字号（sp），仅影响使用本适配器的列表 */
+    public void setTextSize(float textSize) {
+        this.textSize = textSize;
     }
 
     public void setSelectedPosition(int position) {
@@ -86,6 +93,9 @@ public class SimpleListAdapter extends BaseAdapterPlus<String> {
     protected View createView(int position, ViewGroup parent) {
         View view = inflate(R.layout.item_bot_list, null);
         TextView textView = view.findViewById(R.id.tv_bot_item);
+        if (textSize > 0f) {
+            textView.setTextSize(textSize);
+        }
         view.setTag(textView);
         return view;
     }
