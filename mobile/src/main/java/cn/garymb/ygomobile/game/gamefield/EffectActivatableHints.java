@@ -39,7 +39,8 @@ public final class EffectActivatableHints {
 
     /** 登记 code 卡（半场 side）的一个可发动选项 desc：仅卡码型字符串 id（>MAX_STRING_ID）
      *  有段落序含义，desc==0（无效果文字的选项，如召唤/特召段）与系统字符串 id 忽略；
-     *  低 4 位=效果段落文档序下标，选项重复下发以幂等集合去重 */
+     *  低 4 位=效果段落文档序下标（上游 cdb/script 已整改为与卡面圆圈序一致），
+     *  选项重复下发以幂等集合去重 */
     public static void register(int code, int side, int descRaw) {
         long uid = descRaw & 0xFFFFFFFFL;
         if (code <= 0 || uid <= DataManager.MAX_STRING_ID) return;

@@ -14,7 +14,8 @@ import ocgcore.data.Card;
 /**
  * 决斗级「已发动效果」账本：按（卡码 × 半场 × 回合）三维登记效果发动记录，数据源为
  * MSG_CHAINING 的 desc（processor.cpp L4159-4166 每次效果发动必写 peffect->description
- * =code*16+offset 与 triggering_controler）。
+ * =code*16+offset 与 triggering_controler），另存一条 triggering_location 供「从手卡/从盖放发动的场合」
+ * 类前置条件判定（本端把它按 卡码×段落×半场×回合 归一，区域只随首条记录走）。
  * <p>按卡码而非 ClientCard 对象登记的原因：墓地/卡组/额外等「列表 → 点卡看详情」场景
  * 会以卡码重建临时 ClientCard（CardSelectController.showCardInfoFromItem），逐对象记录
  * 必然丢失；异画卡与的本卡共用效果脚本，登记时按卡码镜像写入其 alias，查询按 卡码+alias 并集。
@@ -25,15 +26,17 @@ import ocgcore.data.Card;
  * 「决斗中只能使用1次」类限制由 CardInfoBinder 渲染时按 cdb 描述文本条款判定，
  * 命中则跨回合持续标记，直到胜负（MSG_WIN）/新一局（MSG_START）整体清空。
  * <p>链结算结果（用户新规格）：MSG_CHAIN_NEGATED / MSG_CHAIN_DISABLED 经 {@link #markPledgeNegated}
- * 回到对应条目上，供「持续适用中效果」按 OCG Rule《誓约》的两档收紧显示（括号内誓约被无效仍适用，
- * 『发动的回合』只看发动是否被无效，『这个回合/发动后/发动过的回合』类附加处理被无效即不适用）。
+ * 回到对应条目上，供「持续适用中效果」按用户归纳的记述规律区分两型无效收紧显示（发动被无效只留下
+ * 括号内『（这个回合，○○）』；效果被无效另可留下『…发动的回合，○○』；两类都不是效果，
+ * 而『这个回合/发动后/发动过的回合』是卡的效果，任一型无效都不适用）。
  * <p>线程模型：引擎派发线程写（record/setCurrentTurn）、UI/后台绑定线程读；
  * ConcurrentHashMap + CopyOnWrite 集合 + volatile 回合号，无需外部同步；
  * 撤回回退（dropBeyond）沿追加日志剪除后缀条目，与 record 共用 LOG 监视器串行。
  */
 public final class EffectActivationLedger {
 
-    /** 单条发动记录：效果段落锚点 offset + 发动半场（本地索引 0=我方 1=对方）+ 发动回合号。
+    /** 一条发动记录：效果段落锚点 offset + 发动半场（本地索引 0=我方 1=对方）+ 发动回合号
+     * + 发动时所在区域（MSG_CHAINING 的 triggering_location，0=未知）。
      *  side 非 final：视角互换就地翻转（保持对象身份，使 {@link #LOG} 里的引用仍可精确剪除）。
      *  negated/disabled 也非 final 且不进 equals/hashCode：它们是链的结算结果（状态）而不是
      *  发动本身的身份，同键的另一条已存在记录仍应归一 */
@@ -41,22 +44,26 @@ public final class EffectActivationLedger {
         public final int offset;
         public int side;
         public final int turn;
-        /** 本次发动的链被无效（MSG_CHAIN_NEGATED）：按 OCG Rule《誓约》，效果的附加处理与
-         *  『发动的回合，○○』都不再适用，仅括号内『（这个回合，○○）』仍适用 */
+        /** 发动时卡所在区域（ocgcore  LOCATION：手卡 0x02 / 魔陷区 0x08 …）：「这张卡从手卡发动的场合」
+         *  「盖放的这张卡发动的场合」这类写在适用句同句里的前置条件，只能靠它判成立与否 */
+        public final int location;
+        /** 本次发动的链被无效（MSG_CHAIN_NEGATED，即<b>发动无效</b>）：『…发动的回合，○○』与
+         *  『这个回合/发动后/发动过的回合』类都不再适用，仅括号内『（这个回合，○○）』仍适用 */
         public boolean negated;
-        /** 本次发动成功但效果被无效（MSG_CHAIN_DISABLED）：『不是效果』的誓约仍适用，
-         *  只有「效果的附加处理」类不适用 */
+        /** 本次发动成功但效果被无效（MSG_CHAIN_DISABLED，即<b>效果无效</b>）：不是效果的『（这个回合，○○）』
+         *  与『…发动的回合，○○』仍适用，只有属卡的效果的『这个回合/发动后/发动过的回合』类附加处理不适用 */
         public boolean disabled;
         /** 本次发动已走到「适用与否已成定局」的时点（用户新规格：持续适用列表只收已适用的条目，
          *  不是一挂上连锁就有）：MSG_CHAIN_SOLVED（效果处理完成）或 MSG_CHAIN_NEGATED /
-         *  MSG_CHAIN_DISABLED（链已结算完毕，按 OCG Rule 括号内誓约仍适用）时置位；
+         *  MSG_CHAIN_DISABLED（链已结算完毕，括号内与『发动的回合』档按规律仍可能适用）时置位；
          *  状态不入 equals/hashCode（同 negated/disabled：它们是结算结果而非发动身份） */
         public boolean applied;
 
-        Activation(int offset, int side, int turn) {
+        Activation(int offset, int side, int turn, int location) {
             this.offset = offset;
             this.side = side;
             this.turn = turn;
+            this.location = location;
         }
 
         @Override
@@ -89,14 +96,14 @@ public final class EffectActivationLedger {
 
     private EffectActivationLedger() {}
 
-    /** 登记 code 卡（半场 side、回合 turn）发动了 descRaw 指向的效果：仅卡码型字符串 id
+    /** 登记 code 卡（半场 side、回合 turn、发动区域 location）发动了 descRaw 指向的效果：仅卡码型字符串 id
      *（>MAX_STRING_ID）有段落序含义，desc==0（脚本未 SetDescription）与系统字符串 id 忽略。
      * <p>幂等去重（评审 Minor①）：同 (code, offset, side, turn) 键已存在任何日志行时直接返回，
      * 不重复成行——重放/自愈重复投递同一条 MSG_CHAINING 不再把 LOG 推得比服务端
      *  silentChainEvents 大（dropBeyond 误清保留前缀方向）；合法的同键重复发动本只需一条标记，
      *  存在性语义与 kept 前缀判定仍一致（该键被保留 ⇒ 标记留，被全撤 ⇒ kept 小于唯一行序 ⇒ 清），
      *  与服务端每链计数口径的差值只会落在「清不少」的安全侧 */
-    public static void record(int code, int descRaw, int side, int turn) {
+    public static void record(int code, int descRaw, int side, int turn, int location) {
         long uid = descRaw & 0xFFFFFFFFL;
         if (code <= 0 || uid <= DataManager.MAX_STRING_ID) return;
         int offset = (int) (uid & 0xf);
@@ -118,11 +125,11 @@ public final class EffectActivationLedger {
             int[] codes = new int[n];
             Activation[] acts = new Activation[n];
             codes[0] = code;
-            acts[0] = new Activation(offset, side, turn);
+            acts[0] = new Activation(offset, side, turn, location);
             addCode(code, acts[0]);
             if (mirror) {
                 codes[1] = c.Alias;
-                acts[1] = new Activation(offset, side, turn);
+                acts[1] = new Activation(offset, side, turn, location);
                 addCode(c.Alias, acts[1]);
             }
             // 每条 record() 调用占一行日志（即使等值去重未新增也记录，与发动事件计数同长），
@@ -170,8 +177,9 @@ public final class EffectActivationLedger {
      * {@code disabled=false} 为 MSG_CHAIN_NEGATED（发动被无效），{@code true} 为 MSG_CHAIN_DISABLED
      *（发动成功但效果被无效）。按 卡码×段落×半场×回合 命中，异画镜像的等值条目一并标上；
      * 只改状态不新建对象，{@link #dropBeyond} 按对象身份剪除的机制不受影响。
-     * <p>被无效的链也已「结算完毕」：括号内『（这个回合，○○）』档按文档仍适用，
-     * 所以本方法同时置 {@code applied}（否则被无效后反而永不入列）。
+     * <p>被无效的链也已「结算完毕」：括号内『（这个回合，○○）』档发动被无效仍适用，
+     * 『…发动的回合，○○』档效果被无效仍适用，所以本方法同时置 {@code applied}
+     *（否则被无效后反而永不入列）；具体留哪几档由 {@code ContinuousEffectApplier} 按两型无效分别筛。
      */
     public static void markPledgeNegated(int code, int offset, int side, int turn, boolean disabled) {
         forEachMatch(code, offset, side, turn, new MatchAction() {

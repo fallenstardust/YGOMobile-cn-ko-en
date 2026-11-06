@@ -16,45 +16,37 @@ import ocgcore.DataManager;
 import ocgcore.data.Card;
 
 /**
- * 「持续适用中效果」解算器：从两本决斗级账本里挑出「本回合（含跨到下个自己回合的誓约）
- * 或本局决斗一直适用中」的效果，供顶部 HUD 头像角上的金色感叹号徽标与下拉列表展示。
- * <p>两类来源（用户规格）：
- * <ol>
- * <li><b>发动账本</b> {@link EffectActivationLedger}——MSG_CHAINING 登记的效果发动；</li>
- * <li><b>召唤账本</b> {@link SummonPledgeLedger}——通常/反转/特殊召唤成功。召唤不入连锁、
- * 不产生 MSG_CHAINING，而『把这张卡特殊召唤的回合，○○』『○○召唤成功的回合，○○』这类召唤
- * 誓约恰恰是玩家「现在不能做什么」的直接原因（用户新规格：必须能查到）。</li>
- * </ol>
- * <p>判据（两层串联，缺一不可）：
- * <ol>
- * <li><b>时长语过滤</b>——该段落（或召唤记录下的整卡描述）里存在「持续适用句」：含整回合/整局/
- * 下个回合时长语（{@link #TURN_DURATION_MARKS} / {@link #DUEL_DURATION_MARKS} /
- * {@link #NEXT_TURN_MARKS}），且不是该效果自身的<b>发动时机句</b>。一次性解卡（破坏/抽卡等）不命中。</li>
- * <li><b>存续门控</b>——与卡详「已发动」勾同源：发动当回合恒存续；更早回合须满足下列之一——
- * 命中该段落块的「决斗中只能使用1次」条款（{@link EffectParagraphs#isPerDuel}），
- * 或该子句携「直到下次的自己回合」族（到期回合＝发动回合+2 前均存续）。</li>
- * </ol>
- * <p>关键词与档位按 OCG Rule《誓约》（ocg-rule.readthedocs.io → c03/誓约）校准，分三档
- *（{@link #GRADE_BRACKET} / {@link #GRADE_TURN_PLEDGE} / {@link #GRADE_APPENDAGE}）：
- * 括号内『（这个回合，○○）』与『…发动的回合，○○』都是<b>不是效果</b>的誓约，发动时点立即适用；
- * 前者「即使那个发动被无效仍然适用」，后者「这个发动被无效的场合不再适用」；『这个回合○○』
- * 『发动后，○○』『发动<b>过</b>的回合，○○』『这个效果发动的场合，○○』都是<b>效果的附加处理</b>，
- * 不论发动被无效还是效果被无效都不适用。据此按链的结算结果收紧（用户新规格）：
- * {@link EffectActivationLedger.Activation#negated} 时只保留括号档，
- * {@link EffectActivationLedger.Activation#disabled} 时保留括号档与『发动的回合』档。
- * <p>誓约句与序号位置无关（文档明载「有的放在效果序号之前，有的放在之后，没有区别」），故抽句一律
- * 取 {@link EffectParagraphs#blockText} 的「段落块」而非单段。
- * <p>时长语<b>落在括号里</b>的句子只截括号内那一句（用户新规格）：
- * 「②：把墓地的这张卡除外才能发动（这个效果发动的回合，自己不是机械族怪兽不能特殊召唤）。」
- * 列表里只要括号内的限制句，前面的发动正文不列（见 {@link #clipToBracket}）。
- * <p>时长语一律按小写比较（{@link #lowerForSearch}）：官方英/西/葡卡文把句首字母大写
- * （"During the turn this card was activated…"/"El turno en el que activas…"），按原文大小写找词
- * 会整批漏掉拉丁语系；中/日/韩文小写化不变长、不改变下标，命中面与原一致。
- * <p>整局轴上另排除「决斗中只能使用1次」这类<b>使用限制</b>小句：它只限制发动次数、本身不产生
- * 持续适用的效果，命中该小句不算数（见 {@link #marksDuelDuration}）。
- * <p>列表文字（用户新规格）：不列整段序号文本，只取该段落里携时长语的子句；玩家要看完整效果与
- * 已打勾的序号段落，点列表上的卡即可在卡详面板展开。
- * <p>纯函数、无视图依赖：可在主线程调用（账本条目数为个位数～几十，且段落解析结果按卡码缓存）。
+ * 「持续适用中效果」解算器：从决斗级账本里挑出「此刻还在适用」的效果，供顶部 HUD 的金色徽标
+ * 与下拉列表展示（每行只放携时长语的子句，完整效果与已打勾段落点列表上的卡回卡详看）。
+ * <p>三个来源：{@link EffectActivationLedger}（效果发动）、{@link SummonPledgeLedger}（召唤成功，
+ * 不入连锁所以没有发动记录，但召唤誓约正是玩家「现在不能做什么」的直接原因）、
+ * {@link GameField#collectApplyingHints}（引擎上报在场适用的段落）。
+ * <p>一句要不要列，先看它携哪个时长的档位（{@link #pledgeGrade}），再看这次结算有没有把它否掉：
+ * <pre>
+ *   档位           记述形态                  发动无效  效果无效  本卡在场被无效
+ *   GRADE_BRACKET     括号内「（这个回合，…）」  列       列       列
+ *   GRADE_TURN_PLEDGE 不带括号「…发动的回合，…」 不列     列       列
+ *   GRADE_APPENDAGE   不带括号「这个回合…」「发动后…」 不列 不列   不列
+ * </pre>
+ * 上两档<b>不是效果</b>、发动时点立即适用（规律 1/2：发动被无效时括号内的仍适用、「发动的回合」的不适用）；
+ * APPENDAGE <b>是卡的效果</b>（前段效果的附加处理），效果处理时才适用，所以任一型无效都不适用
+ *（规律 3/4：逗号连接的从句跟正文整句同进同出，{@link #splitSentences} 不以逗号断句）。
+ * <p>召唤誓约按适用时点分两族（规律 5/6/7）：『把这张卡特殊召唤的回合』属召唤时点即适用，只有召唤
+ * 被无效才不适用（无效召唤根本不落账）；含「成功」的 {@link #SUMMON_SUCCESS_WORDS} 与
+ * {@link #SUMMON_APPLY_WORDS}（「…召唤时适用」族）是召唤成功后<b>在场上适用</b>的效果，
+ * 那张卡在场且被无效即不适用（特殊召唤<b>之际</b>还不适用，由挂账/落账时序保证）。
+ * <p>「本卡在场被无效」这一门控对三个来源统一生效：{@link #fieldNegated} 按
+ * {@link GameField#collectNegatedCodes} 把上限收到 {@link #GRADE_TURN_PLEDGE}（摘掉 APPENDAGE），
+ * 召唤来源再按 {@link #SUMMON_ONFIELD_MARKS} 逐句摘除；无效解除后下一次解算自行恢复。
+ * <p>取句口径：段落块 {@link EffectParagraphs#blockText}（誓约写在序号前后同等看待）、时长语全在
+ * 括号内时只截括号内那句（{@link #clipToBracket}）、词表一律小写比较（{@link #lowerForSearch}）、
+ * 「决斗中只能使用1次」是使用限制不是持续适用（{@link #marksDuelDuration}）。
+ * <p>还有一道前置条件闸门（{@link #blockedByActivateZone}）：列王诗篇、灵王的波动、霆王的闪光、
+ * 命王的螺旋把条件写在本句开头——「这张卡从手卡发动的场合，发动后，这次决斗中自己不能…」，从场上盖放
+ * 发动时后半句并不适用；无限泡影同型（「盖放的这张卡发动的场合，再在这个回合中…」）。这类条件凭
+ * MSG_CHAINING 带的发动区域判（{@link EffectActivationLedger.Activation#location}：手卡 0x02 /
+ * 魔陷区 0x08），区域不符则该句不列；区域未知（引擎提示来源）时不判。
+ * <p>纯函数、无视图依赖，可在主线程调用（账本条目个位数～几十，段落模型按卡码缓存）。
  */
 public final class ContinuousEffectApplier {
 
@@ -86,21 +78,41 @@ public final class ContinuousEffectApplier {
 
     private ContinuousEffectApplier() {}
 
+    /** 把下面的共用词组合成实际用的辨识表，避开同一批词在几张表里各抄一遍 */
+    private static String[] concat(String[] head, String[] tail) {
+        String[] out = new String[head.length + tail.length];
+        System.arraycopy(head, 0, out, 0, head.length);
+        System.arraycopy(tail, 0, out, head.length, tail.length);
+        return out;
+    }
+
+    /**
+     * 「…召唤时适用。○○」族（规律 6）：不写「…的回合」而直接声明何时起适用的记述，
+     * 六套 cdb 实测命中：简中 10/日 30/韩 10/英 18/西 23/葡 16 张。一份词表进四处：
+     * 算适用句（{@link #TURN_DURATION_MARKS}）、召唤来源取句（{@link #SUMMON_PLEDGE_MARKS}）、
+     * 本卡被无效时不列（{@link #SUMMON_ONFIELD_MARKS}）、不当作发动时机句（{@link #pledgeGrade}）。
+     * 不用宽主干：英 "after this card is" 命中里有 5 张是 "…after this card is activated"，
+     * "if this card is Special Summoned" 命中 469 张多为 "…: You can …" 的发动条件句。
+     */
+    private static final String[] SUMMON_APPLY_WORDS = {
+            "召唤时适用", "召喚した時に適用", "소환했을 때에 적용",
+            "after this card is fusion summoned", "after this card is synchro summoned",
+            "after this card is xyz summoned", "after this card is special summoned",
+            "after this card is normal or special summoned", "after you normal summon this card",
+            "after you special summon this card", "after you normal or special summon this card",
+            "después de que esta carta sea invocada", "después de que esta carta es invocada",
+            "después de que esta carta fue invocada", "después de que invoques esta carta",
+            "depois que este card for invocado", "depois de invocar este card"
+    };
+
     /**
      * 整回合时长语（逐词在 setDesception/ygopro-database 实库 10 套语言 cards.cdb 上验过命中率，
-     * 小写比较）：分三类——
-     * <ul>
-     * <li>纯时长状语：「这个回合」「ターン終了時まで」「for the rest of this turn」；</li>
-     * <li>「（这张卡/这个效果）发动的回合」族（用户新规格1/3）：本回合内因这次发动而持续成立，
-     * 与「这个效果的发动后」等价；它们与 {@link #ACTIVATION_CUES} 同现且不是逗号引导的独立状语时，
-     * 则是在交代该效果的<b>发动时机</b>（如「这张卡发动的回合的自己主要阶段才能发动」），不算适用中；</li>
-     * <li>「这个效果的发动后」族（含多语言对应写法）。</li>
-     * </ul>
-     * 不取「1回合1次」这类只限次数的措辞（它们不命中本表）。
-     * <p>誓约句式族的简中形态已在本机实库上逐句量过命中面与误伤面（见表内注释），
-     * 西/葡/法/意的誓约译法未逐词验证，按本表既有纪律不凭猜测入词（宁缺勿错列）。
+     * 小写比较）：含纯时长状语（「这个回合」「ターン終了時まで」）、这回合内因这次发动而持续成立的
+     * 「…发动的回合/发动后」族与多语言对应写法；不取「1回合1次」这类只限次数的措辞。
+     * 本表只列各语言的时长词形；命中后的取舍见类注释的三档与 {@link #pledgeGrade}。
+     * 法/意的誓约译法未逐词验证，按既有纪律不凭猜测入词（宁缺勿错列）。
      */
-    private static final String[] TURN_DURATION_MARKS = {
+    private static final String[] TURN_DURATION_WORDS = {
             // 简中（官方 zh-CN 译法）
             "这个回合", "回合结束时", "直到回合结束", "这回合",
             "发动的回合", "发动过的回合", "这个效果的发动后",
@@ -191,6 +203,8 @@ public final class ContinuousEffectApplier {
             "turno in cui attivi", "turno in cui hai attivato",
             "dopo l'attivazione di questo effetto"
     };
+    /** 适用句时长语总表＝各语言时长词形 + 「…召唤时适用」族 */
+    private static final String[] TURN_DURATION_MARKS = concat(TURN_DURATION_WORDS, SUMMON_APPLY_WORDS);
     /**
      * 整局时长语：「这场决斗中…」类持续条款（与 {@link #DUEL_LIMIT_WORDS} 的使用限制句区分）。
      * 同样逐词在 10 套语言实库上验过命中率（de-DE 实库无德文卡文，不入表）。
@@ -253,18 +267,55 @@ public final class ContinuousEffectApplier {
             "no turno em que ativar", "le tour où vous activez", "turno in cui attivi"
     };
     /**
-     * 「召唤的回合」族（{@link SummonPledgeLedger} 的召唤来源专用筛子）：召唤记录没有段落序，
-     * 只能从整卡描述里挑出属于本次召唤的子句；其余时长语句属于某个可发动段落，已由发动账本
-     * 按 offset 精确列出，从描述里再抓一遍就会重复成行。本表各项均为 {@link #TURN_DURATION_MARKS}
-     * 的子集，是不是适用句仍走同一条 {@link #pledgeGrade} 通路（发动时机句一律剔除）。
+     * 「召唤的回合」族：召唤记录没有段落序，只能从整卡描述里挑出属于本次召唤的句子
+     *（{@link #summonPledgeClause}）；其余时长句属于某个可发动段落，已由发动账本按 offset 列出。
      */
-    private static final String[] SUMMON_PLEDGE_MARKS = {
+    private static final String[] SUMMON_TURN_WORDS = {
             "特殊召唤的回合", "召唤成功的回合", "特殊召唤过的回合",
             "特殊召喚的回合", "召喚成功的回合", "特殊召喚過的回合",
             "特殊召喚したターン", "特殊召喚するターン", "召喚に成功したターン", "召喚されたターン",
             "특수 소환한 턴", "특수 소환하는 턴", "소환에 성공한 턴", "소환된 턴",
             "the turn this card is Special Summoned", "the turn this card was Special Summoned",
             "the turn you Special Summon", "the turn it is Summoned", "the turn it was Summoned"
+    };
+    /**
+     * {@link #SUMMON_TURN_WORDS} 里含「成功」的子集（规律 6/7）：要特殊召唤<b>成功</b>后才适用、
+     * 属在场上一直适用的效果，所以本卡在场且被无效即不列（无效解除后下一次解算自行恢复）。
+     * 不含「成功」的『把这张卡特殊召唤的回合』按规律 5 属召唤时点即适用，场上无效不影响。
+     */
+    private static final String[] SUMMON_SUCCESS_WORDS = {
+            "召唤成功的回合", "特殊召唤过的回合",
+            "召喚成功的回合", "特殊召喚過的回合",
+            "召喚に成功したターン", "소환에 성공한 턴"
+    };
+    /** 召唤来源的取句表＝「召唤的回合」族 + 「…召唤时适用」族 */
+    private static final String[] SUMMON_PLEDGE_MARKS = concat(SUMMON_TURN_WORDS, SUMMON_APPLY_WORDS);
+    /** 场上无效时要一并摘掉的召唤誓约族（规律 6/7）＝含「成功」子集 + 「…召唤时适用」族 */
+    private static final String[] SUMMON_ONFIELD_MARKS = concat(SUMMON_SUCCESS_WORDS, SUMMON_APPLY_WORDS);
+    /** ocgcore common.h LOCATION_HAND / LOCATION_SZONE：MSG_CHAINING 带的发动区域取值 */
+    private static final int LOC_HAND = 0x02;
+    private static final int LOC_SZONE = 0x08;
+    /**
+     * 「这张卡从手卡发动的场合」族（用户新规格）：这类卡把<b>后续持续适用的前置条件</b>就写在适用句同句里
+     * （「…才能发动。那个效果无效。这张卡从手卡发动的场合，发动后，这次决斗中自己不能…」），从场上盖放
+     * 发动时后半句根本不适用 → 不得进列表。成立与否只能凭 {@link EffectActivationLedger.Activation#location}
+     * 判（手卡发动 ⇔ 0x02），故命中本族而发动区域不是手卡时该句不列。
+     * <p>锚长到带「这张卡/このカード/이 카드를」主语是实测必需：短主干会误收
+     * 「雷族怪兽的效果在手卡发动的场合才能发动」那类发动时机句（带主语版三套各 7 张，
+     * 短版则 9/10 张）；英/西/葡的对应记述是「Set 过且结算时仍在场」的复合条件，后半条客户端无信号，
+     * 按既有纪律不入表（不判即保持现有显示，不会新增漏列）。
+     */
+    private static final String[] FROM_HAND_ACTIVATE_MARKS = {
+            "从手卡发动的场合", "このカードを手札から発動した場合", "이 카드를 패에서 발동했을 경우"
+    };
+    /**
+     * 「盖放的这张卡发动的场合」族（同上机制，成立⇔发动区域＝魔陷区 0x08）：无限泡影类
+     * 「那只怪兽的效果直到回合结束时无效。盖放的这张卡发动的场合，再在这个回合中…」——从手卡直接发动时
+     * 后半句不适用。同样只用带主语的完整主干（三套各 2 张）；短主干「盖放的这张卡」命中 102 张，不可用。
+     */
+    private static final String[] FROM_SET_ACTIVATE_MARKS = {
+            "盖放的这张卡发动的场合", "セットされていたこのカードを発動した場合",
+            "세트되어 있던 이 카드를 발동했을 경우"
     };
     /**
      * 「以下效果适用」母句标记（用户新规格：黑点子效果不能靠协议帧判定哪一个在生效时的兜底显示，
@@ -298,11 +349,12 @@ public final class ContinuousEffectApplier {
     private static final String BRACKET_OPEN = "（(";
     private static final String BRACKET_CLOSE = "）)";
     /**
-     * 誓约档位（按 OCG Rule《誓约》两档再按形态细分，值越大越容易被链无效摘掉）：
-     * {@link #GRADE_BRACKET} 括号内『（这个回合，○○）』——不是效果，发动被无效也仍适用；
-     * {@link #GRADE_TURN_PLEDGE}『…发动的回合，○○』——同样不是效果，但发动被无效即不再适用
-     *（效果被无效仍适用）；{@link #GRADE_APPENDAGE}『这个回合』『发动后』『发动过的回合』
-     * 『这个效果发动的场合』『这次决斗中』——效果的附加处理，发动被无效或效果被无效都不适用。
+     * 誓约档位（按用户归纳的记述规律分档，值越大越容易被无效摘掉）：
+     * {@link #GRADE_BRACKET} 括号内『（这个回合，○○）』——不是效果，发动时点立即适用，
+     * 发动被无效也仍适用；{@link #GRADE_TURN_PLEDGE}『…发动的回合，○○』——同样不是效果，
+     * 但发动被无效即不再适用（效果被无效仍适用）；{@link #GRADE_APPENDAGE}『这个回合』『发动后』
+     * 『发动过的回合』『这个效果发动的场合』『这次决斗中』——卡的效果（前段效果的附加处理），
+     * 发动被无效或效果被无效都不适用。
      */
     private static final int GRADE_BRACKET = 0;
     private static final int GRADE_TURN_PLEDGE = 1;
@@ -311,6 +363,12 @@ public final class ContinuousEffectApplier {
     private static final int GRADE_ALL = GRADE_APPENDAGE;
     /** 逗号族：时长语后紧跟逗号＝独立状语从句，在陈述本回合持续成立的状态（不是发动时机） */
     private static final String COMMA_LIKE = "，,、";
+    /**
+     * 定语标记：时长语后紧跟此字即「在挑对象」而不是「在定时间」——「可以选｛这个回合被破坏｝的
+     * 1只怪兽」是一次性处理里的定语，不是一条本回合持续成立的限制（实测六库共 17 句这类误报，
+     * 而「直到下个回合的结束时…」这类真持续句后跟的是「的」，不被本判据误伤）。
+     */
+    private static final String ATTRIBUTIVE_FOLLOW = "被";
     /** 扫描时长语后继字符时跳过的空白与日/韩格助词（不影响「の/의」定语判定的结果） */
     private static final String SKIP_AFTER_MARK = " \tのはがをにでと을를에서은는가";
     /** 读句分隔符（与 EffectParagraphs 的 per-duel 小句拆分口径一致） */
@@ -322,7 +380,8 @@ public final class ContinuousEffectApplier {
         //则整条永远匹配不到；中/日/韩文取 Locale.ROOT 小写不变，不影响既有命中面。
         for (String[] table : new String[][]{TURN_DURATION_MARKS, DUEL_DURATION_MARKS, DUEL_LIMIT_WORDS,
                 ACTIVATION_CUES, NEGATION_TOKENS, TURN_PLEDGE_MARKS, SUMMON_PLEDGE_MARKS, NEXT_TURN_MARKS,
-                MOTHER_EFFECT_MARKS}) {
+                MOTHER_EFFECT_MARKS, SUMMON_ONFIELD_MARKS, SUMMON_APPLY_WORDS,
+                FROM_HAND_ACTIVATE_MARKS, FROM_SET_ACTIVATE_MARKS}) {
             for (int i = 0; i < table.length; i++) {
                 table[i] = table[i].toLowerCase(Locale.ROOT);
             }
@@ -333,10 +392,11 @@ public final class ContinuousEffectApplier {
     private static final HashMap<Integer, EffectParagraphs> MODEL_CACHE = new HashMap<>();
 
     /**
-     * 指定半场当前持续适用中的效果列表（无引擎提示来源的便捷入口，等价于 {@code forSide(side, null)}）。
+     * 指定半场当前持续适用中的效果列表（无引擎提示与场上无效来源的便捷入口，
+     * 等价于 {@code forSide(side, null, null)}）。
      */
     public static List<Applying> forSide(int side) {
-        return forSide(side, null);
+        return forSide(side, null, null);
     }
 
     /**
@@ -346,11 +406,15 @@ public final class ContinuousEffectApplier {
      * 其内按发动/召唤回合升序再按卡码稳定排列，异画与本卡归一后去重（同一笔发动、同一次召唤或同一条
      * 在场提示只列一行）。
      *
-     * @param clientHints 该侧在场卡当前「引擎上报为正在适用」的段落提示列表，每项 {@code {卡码, offset}}；
-     *                    可为 null（无该来源）。这些提示由服务器随持续效果的注册/注销增删，存在即代表此刻在
-     *                    适用（故不另做回合/无效门控），仅当该段落确实抽得出携时长语的适用句时才成行。
+     * @param clientHints    该侧在场卡当前「引擎上报为正在适用」的段落提示列表，每项 {@code {卡码, offset}}；
+     *                       可为 null（无该来源）。这些提示由服务器随持续效果的注册/注销增删，存在即代表此刻在
+     *                       适用（故不另做回合/无效门控），仅当该段落确实抽得出携时长语的适用句时才成行。
+     * @param negatedOnField 该侧场上此刻效果被无效的卡码（{@link GameField#collectNegatedCodes}，可为 null）：
+     *                       用户规律 3/6/7，发动账本的附属处理（{@link #GRADE_APPENDAGE}）与召唤誓约的
+     *                       "在场上适用"那族（{@link #SUMMON_ONFIELD_MARKS}）在本卡被无效期间不拼入行内；
+     *                       不含"成功"的『把这张卡特殊召唤的回合』族属召唤时点适用，不受本参数影响（规律 5）。
      */
-    public static List<Applying> forSide(int side, List<int[]> clientHints) {
+    public static List<Applying> forSide(int side, List<int[]> clientHints, Set<Integer> negatedOnField) {
         int nowTurn = EffectActivationLedger.getCurrentTurn();
         List<Applying> out = new ArrayList<>();
         Set<String> seen = new HashSet<>();
@@ -374,12 +438,16 @@ public final class ContinuousEffectApplier {
             String paragraph = hit ? model.blockText(a.offset) : (legacySingle ? model.desc : "");
             // cdb str：上游整改后即该段效果文字（短标签或全文）
             String str = DataManager.get().getDesc((int) ((long) canonical * 16 + a.offset), "");
-            // 门控①时长＋时机＋档位（用户新规格1/2/3，叠加被无效收紧）：只收「持续适用句」，
-            // 并按链的结算结果摘掉相应档位——发动被无效只留括号档、效果被无效留括号与『发动的回合』档；
+            // 档位收紧（按规律 1/2/3 区分两型无效）：只收「持续适用句」，发动被无效（negated）时摘掉
+            // 『…发动的回合』与附加处理档、只留括号内的仍然适用的誓约；效果被无效（disabled）时摘掉
+            // 附加处理档（是卡的效果）、保留括号内与『…发动的回合』两档（都不是效果）；
             // 摘完不剩句子就不列（抽不出子句直接丢弃，不降级到整段全文）
-            int maxGrade = a.negated ? GRADE_BRACKET : (a.disabled ? GRADE_TURN_PLEDGE : GRADE_ALL);
-            String clause = durationClause(paragraph, maxGrade);
-            if (clause.isEmpty()) clause = durationClause(str, maxGrade);
+            int baseMaxGrade = a.negated ? GRADE_BRACKET : (a.disabled ? GRADE_TURN_PLEDGE : GRADE_ALL);
+            // 场上无效门控：那张卡此刻在场且被无效时，附属处理档一律不拼入行内（无论发动/效果哪型无效）
+            int maxGrade = fieldNegated(baseMaxGrade, e.code, canonical, negatedOnField);
+            // 取句时另按发动区域筛掉「从手卡/从盖放发动的场合」类前置条件不成立的句（用户新规格）
+            String clause = durationClause(paragraph, maxGrade, a.location);
+            if (clause.isEmpty()) clause = durationClause(str, maxGrade, a.location);
             // 兜底（用户新规格：同类描述不许漏）：段落序能解出句子时不走——只有账本里的 offset
             // 对不上本次文本（脚本序与文本圆圈序不一致、辅动/让位槽 offset 越界）且本框恰好一句适用句时才用它。
             // 取句范围按框收紧（用户新规格）：灵摆怪兽卡发动的是怪兽框效果时，绝不能把灵摆框里含「这个回合」
@@ -387,11 +455,12 @@ public final class ContinuousEffectApplier {
             // 单框卡与整卡即单效果的传统卡（legacySingle）没有跨框误染风险，仍用整卡描述兜底
             if (clause.isEmpty()) {
                 String scope = hit ? model.boxText(a.offset) : model.desc;
-                clause = uniqueCardClause(scope, maxGrade);
+                clause = uniqueCardClause(scope, maxGrade, a.location);
             }
             // 兜底2（用户新规格：黑点子效果无协议帧可判定哪一个在生效）：发动段落抽不出任何时长语子句时，
-            // 若段落块含「…以下效果适用」母句，列出母句本身，让本回合的锁不至于整条不显示
-            if (clause.isEmpty()) clause = motherClause(paragraph);
+            // 若段落块含「…以下效果适用」母句，列出母句本身，让本回合的锁不至于整条不显示。
+            // 母句本身就是这段效果的处理（规律 3：是卡的效果），发动被无效或效果被无效都不适用，不再兜底列出
+            if (clause.isEmpty() && maxGrade == GRADE_ALL) clause = motherClause(paragraph);
             if (clause.isEmpty()) continue;
             // 子句里含整局词即归整局级（寿命跨回合）；否则若携跨回合族，寿命延到下个自己回合
             boolean duel = marksDuelDuration(clause);
@@ -407,24 +476,31 @@ public final class ContinuousEffectApplier {
             if (listsSameText(out, canonical, text)) continue;
             out.add(new Applying(canonical, a.offset, side, a.turn, text, duel, untilTurn));
         }
-        appendSummonEntries(side, out, seen, nowTurn);
+        appendSummonEntries(side, out, seen, nowTurn, negatedOnField);
         // 引擎权威来源（用户新规格）：在场卡 descHints 指向的段落确为「此刻适用中」的持续效果，
         // 其存在本身即存续门控（服务器随效果注册/注销加删提示，不做回合/无效过滤），仍须按段落取到
         // 携时长语的适用句才成行，抽不出即跳过（与发动/召唤来源同一取句口径，不新增噪声条目）
-        appendClientHintEntries(side, clientHints, out, seen, nowTurn);
+        appendClientHintEntries(side, clientHints, out, seen, nowTurn, negatedOnField);
         Collections.sort(out, BY_TURN_THEN_CODE);
         return out;
     }
 
     /**
      * 引擎在场提示来源（用户新规格：黑点子效果按 {@link GameField#collectApplyingHints} 上报的信号取句）：
-     * 逐条把 {@code {卡码, offset}} 解成一行——按发动段落所在框取句，与 {@link #forSide} 主循环同一
+     * 逐条把 {@code {卡码，offset}} 解成一行——按发动段落所在框取句，与 {@link #forSide} 主循环同一
      * durationClause→框内唯一句口径（不走整卡兜底、不走母句兜底：提示已精确指到生效段落，若该段落本身
      * 没有时长语子句说明它是无持续语义的瞬时/代价提示，直接不成行）。已按 {@code canonical:offset} 去重，
      * 同码同句不重复成行。提示为“当前在场适用”，回合基准取 nowTurn。
+     * <p>例外（用户新规格：列王诗篇、灵王的波动、霆王的闪光、命王的螺旋类）：这类卡把附加处理效果的
+     * {@code CLIENT_HINT} 注册放在「从手卡发动才成立」的分支里（脚本里是
+     * {@code if e:GetHandler():IsStatus(STATUS_ACT_FROM_HAND) then e:SetLabel(100)} 才 RegisterEffect），
+     * 所以本通道的存在就是「前置条件已满足」的权威信号（盖放发动时核心根本不注册，也没有提示），
+     * 而它们的提示 offset 是脚本侧 {@code aux.Stringid(id,2/3)} 的偏移，对得上文本里的圆圈序（这类卡
+     * 描述只有一个 ①），且 cdb str 只有「「XX」效果适用中」这种短标签（不含时长语）——故允许段落对不上时
+     * 退回整卡描述里的<b>唯一</b>适用句（多句歧义仍不列），不再因 offset 越界直接丢弃。
      */
     private static void appendClientHintEntries(int side, List<int[]> hints, List<Applying> out,
-                                                Set<String> seen, int nowTurn) {
+                                                Set<String> seen, int nowTurn, Set<Integer> negatedOnField) {
         if (hints == null || hints.isEmpty()) return;
         for (int[] h : hints) {
             if (h == null || h.length < 2) continue;
@@ -434,12 +510,20 @@ public final class ContinuousEffectApplier {
             int canonical = cd != null && cd.Alias > 0 && cd.Alias != code ? cd.Alias : code;
             if (!seen.add(canonical + ":" + offset)) continue;
             EffectParagraphs model = modelFor(canonical);
-            if (!model.hasParagraph(offset)) continue;
-            String paragraph = model.blockText(offset);
-            String str = DataManager.get().getDesc((int) ((long) canonical * 16 + offset), "");
-            String clause = durationClause(paragraph, GRADE_ALL);
-            if (clause.isEmpty()) clause = durationClause(str, GRADE_ALL);
-            if (clause.isEmpty()) clause = uniqueCardClause(model.boxText(offset), GRADE_ALL);
+            // 场上无效门控（规律 3）：提示虽由服务器给出，归属卡被无效时附属处理档也不适用
+            int maxGrade = fieldNegated(GRADE_ALL, code, canonical, negatedOnField);
+            // 提示本身不带发动区域信息，传 0 不做前置条件判定（条件本身已由提示存在与否保证）
+            String clause = "";
+            if (model.hasParagraph(offset)) {
+                clause = durationClause(model.blockText(offset), maxGrade, 0);
+                if (clause.isEmpty()) {
+                    String str = DataManager.get().getDesc((int) ((long) canonical * 16 + offset), "");
+                    clause = durationClause(str, maxGrade, 0);
+                }
+                if (clause.isEmpty()) clause = uniqueCardClause(model.boxText(offset), maxGrade, 0);
+            }
+            // offset 对不上文本圆圈序（脚本侧偏移）时的整卡唯一适用句兜底
+            if (clause.isEmpty()) clause = uniqueCardClause(model.desc, maxGrade, 0);
             if (clause.isEmpty()) continue;
             boolean duel = marksDuelDuration(clause);
             boolean span = !duel && hasNextTurnPledge(clause);
@@ -457,14 +541,24 @@ public final class ContinuousEffectApplier {
      * 拼成一行（沿用每卡一行的既定形态）。
      * <p>召唤没有链可无效（无效召唤根本不会落账，见 {@link SummonPledgeLedger}），故一律按
      * {@link #GRADE_ALL} 取句；已被发动账本同码同回合行列过的句子不再重复拼入。
+     * <p>规律 5：『把这张卡特殊召唤的回合，○○』属召唤时点即适用的誓约，只有召唤被无效才不适用，
+     * 而本账本只收 {@code *SUMMONED} 落账的成功召唤（无效召唤停在挂账阶段、卡回到非怪兽区时即刻撤单，
+     * 回合轮转再清）→ 此类誓约天然不会为被无效的召唤成行。
+     * <p>规律 6/7：『…召唤成功的回合，○○』『…召唤时适用。○○』与『这个方法特殊召唤（成功）过的回合，○○』
+     * 要成功后才适用、是<b>在场上适用</b>的效果，所以那张卡此刻在场且效果被无效时不拼入本行
+     *（无效解除后下一次解算自行恢复）。
      */
-    private static void appendSummonEntries(int side, List<Applying> out, Set<String> seen, int nowTurn) {
+    private static void appendSummonEntries(int side, List<Applying> out, Set<String> seen, int nowTurn,
+                                           Set<Integer> negatedOnField) {
         for (SummonPledgeLedger.Entry se : SummonPledgeLedger.snapshot()) {
             if (se.side != side || se.code <= 0) continue;
             Card cd = DataManager.get().getCardManager().getCard(se.code);
             int canonical = cd != null && cd.Alias > 0 && cd.Alias != se.code ? cd.Alias : se.code;
             if (!seen.add(canonical + ":S:" + se.turn)) continue;
-            String clause = summonPledgeClause(modelFor(canonical).desc, out, canonical);
+            // 场上无效门控只对「在场上适用」那一族句子生效（规律 5 的召唤时点族不受影响）
+            boolean fieldNegated = negatedOnField != null
+                    && (negatedOnField.contains(se.code) || negatedOnField.contains(canonical));
+            String clause = summonPledgeClause(modelFor(canonical).desc, out, canonical, fieldNegated);
             if (clause.isEmpty()) continue;
             boolean duel = marksDuelDuration(clause);
             boolean span = !duel && hasNextTurnPledge(clause);
@@ -496,63 +590,48 @@ public final class ContinuousEffectApplier {
     };
 
     /**
-     * 单句的誓约档位（用户新规格1的核心判定，叠加被无效收紧）：含时长语（{@link #TURN_DURATION_MARKS}
-     * / {@link #DUEL_DURATION_MARKS}）且不是在交代该效果自身的发动时机时返回档位，否则 -1。
-     * <p>发动时机句的特征：既带「才能发动」类提示语，句里的时长语又都是定语用法（后面不紧跟逗号），
-     * 如「①：这张卡发动的回合的自己主要阶段才能发动。」/「①：このカードを発動したターンの自分
-     * メインフェイズに発動できる。」/「①： 이 카드를 발동한 턴의 자신 메인 페이즈에 발동할 수 있다。」
-     * /「During your Main Phase, if this card was activated this turn: You can …」。
-     * <p>而时长语后紧跟逗号的，是独立状语从句、在陈述本回合持续成立的状态，即使同句带发动提示语也保留，
-     * 如「②：把墓地的这张卡除外才能发动（这个效果发动的回合，自己不是机械族怪兽不能特殊召唤）。」
-     * <p>时机句的剔除只在<b>时长语所在范围</b>内判提示语：时长语在括号里时，提示语只算同括号内
-     * 出现的——主句那侧的「才能发动 / you can」是在交代这次发动的代价与时机，与括号里的持续限制无关
-     *（实库回归：英/西/葡「negate its effects (until the end of this turn), then you can …」
-     * 这类括号内时长语被整句的 you can 连坐删掉，三套库共 18 句）。
-     * <p>档位：时长语落在括号内 → {@link #GRADE_BRACKET}（文档：即使那个发动被无效仍然适用）；
-     * 命中 {@link #TURN_PLEDGE_MARKS}（『…发动的回合，○○』）→ {@link #GRADE_TURN_PLEDGE}
-     *（文档：这个发动被无效的场合，这种描述不再适用）；其余 → {@link #GRADE_APPENDAGE}
-     *（效果的附加处理，发动或效果被无效都不适用）。
+     * 单句判档（返回 {@link #GRADE_BRACKET}/{@link #GRADE_TURN_PLEDGE}/{@link #GRADE_APPENDAGE}，
+     * 不算适用句时返回 -1），三条剔除依次走：
+     * <ol>
+     * <li>不带时长语 → -1；</li>
+     * <li>时长语全是定语用法（后跟「被」，如「这个回合被破坏的那只怪兽」）且无逗号引导 → -1；</li>
+     * <li>同句带「才能发动 / you can」一类提示语且时长语都不是逗号引导的独立状语 → 这只是在
+     * 交代发动时机（「这张卡发动的回合的自己主要阶段才能发动」）→ -1；但命中
+     * {@link #SUMMON_APPLY_WORDS}（「…召唤时适用」族本身就在声明适用时点）时不剔除，
+     * 提示语只在<b>时长语所在的括号内</b>时才算数。</li>
+     * </ol>
+     * 剩下的分档：在括号内＝规律 2（不是效果，发动被无效仍适用）；命中
+     * {@link #TURN_PLEDGE_MARKS}＝规律 1（不是效果，但发动被无效即不适用）；其余＝规律 3/4
+     *（这个回合/发动后/发动过的回合都是卡的效果，两型无效都不适用）。
      */
     private static int pledgeGrade(String sentence) {
         if (TextUtils.isEmpty(sentence)) return -1;
         String hay = lowerForSearch(sentence);
         boolean hasMark = false;
         boolean commaLedMark = false;
+        boolean allAttributive = true;
         int markOpen = -1, markClose = -1;
-        for (String m : TURN_DURATION_MARKS) {
-            int from = 0;
-            int i;
-            while ((i = hay.indexOf(m, from)) >= 0) {
-                hasMark = true;
-                if (followedByComma(hay, i + m.length())) commaLedMark = true;
-                if (markOpen < 0) {
-                    int[] pair = bracketAround(hay, i);
-                    if (pair != null) {
-                        markOpen = pair[0];
-                        markClose = pair[1];
+        for (String[] table : new String[][]{TURN_DURATION_MARKS, DUEL_DURATION_MARKS}) {
+            for (String m : table) {
+                int from = 0;
+                int i;
+                while ((i = hay.indexOf(m, from)) >= 0) {
+                    hasMark = true;
+                    if (followedByComma(hay, i + m.length())) commaLedMark = true;
+                    else if (!isAttributiveUse(hay, i + m.length())) allAttributive = false;
+                    if (markOpen < 0) {
+                        int[] pair = bracketAround(hay, i);
+                        if (pair != null) {
+                            markOpen = pair[0];
+                            markClose = pair[1];
+                        }
                     }
+                    from = i + m.length();
                 }
-                from = i + m.length();
             }
         }
-        for (String m : DUEL_DURATION_MARKS) {
-            int from = 0;
-            int i;
-            while ((i = hay.indexOf(m, from)) >= 0) {
-                hasMark = true;
-                if (followedByComma(hay, i + m.length())) commaLedMark = true;
-                if (markOpen < 0) {
-                    int[] pair = bracketAround(hay, i);
-                    if (pair != null) {
-                        markOpen = pair[0];
-                        markClose = pair[1];
-                    }
-                }
-                from = i + m.length();
-            }
-        }
-        if (!hasMark) return -1;
-        if (!commaLedMark) {
+        if (!hasMark || (allAttributive && !commaLedMark)) return -1;
+        if (!commaLedMark && !containsAny(hay, SUMMON_APPLY_WORDS)) {
             //时长语在括号内（括号没闭合时到句末）就只在这一段里找发动提示语
             String scope = sentence;
             if (markOpen >= 0) {
@@ -669,6 +748,27 @@ public final class ContinuousEffectApplier {
         return k < s.length() && COMMA_LIKE.indexOf(s.charAt(k)) >= 0;
     }
 
+    /** 时长语出现处之后（同样跳过空白与格助词）是否为「被」：是则该时长语在作定语挑选对象 */
+    private static boolean isAttributiveUse(String s, int after) {
+        int k = after;
+        while (k < s.length() && SKIP_AFTER_MARK.indexOf(s.charAt(k)) >= 0) k++;
+        return k < s.length() && ATTRIBUTIVE_FOLLOW.indexOf(s.charAt(k)) >= 0;
+    }
+
+    /**
+     * 该句是否因「前置发动来源条件与本次发动区域不符」而不适用（用户新规格：列王诗篇、灵王的波动、
+     * 霆王的闪光、命王的螺旋类「这张卡从手卡发动的场合，发动后，…」，与无限泡影类「盖放的这张卡发动的
+     * 场合，再在这个回合…」）：句里写的条件就是后半句持续适用的前提，前提不成立时该句不得入列。
+     * <p>{@code activateLoc} 为 0（未知来源，如引擎 descHints）时一律不判，保持现有显示。
+     */
+    private static boolean blockedByActivateZone(String sentence, int activateLoc) {
+        if (activateLoc <= 0 || TextUtils.isEmpty(sentence)) return false;
+        String low = sentence.toLowerCase(Locale.ROOT);
+        if (containsAny(low, FROM_HAND_ACTIVATE_MARKS)) return activateLoc != LOC_HAND;
+        if (containsAny(low, FROM_SET_ACTIVATE_MARKS)) return activateLoc != LOC_SZONE;
+        return false;
+    }
+
     /**
      * 从整段效果文本里只抽出「正在适用中且未被无效摘掉」的那句（用户新规格：列表不展示完整序号文本，
      * 只要「这个回合，xxx」/「这个效果发动过的回合，xxx」/「这个效果的发动后，xxx」这类子句，
@@ -676,20 +776,45 @@ public final class ContinuousEffectApplier {
      * 按句终止符（。．！？!?；; 与换行）切句，保留 {@link #pledgeGrade} 命中且档位不高于
      * {@code maxGrade} 的句子并以空格拼接；逗号/顿号不断句（「这个回合，」与后半句必须同现）。
      * 命中句里的时长语全在括号内时，只截括号内那一句（{@link #clipToBracket}）。
-     * 无命中时返回空串（被无效到不剩一句时，整行不列）。
+     * 无命中时返回空串（被无效到不剩一句时，整行不列）；调用方传给 {@code maxGrade} 的上限已按
+     * 两型无效与场上无效门控（{@link #fieldNegated}）算好。
      */
     public static String durationClause(String text, int maxGrade) {
+        return durationClause(text, maxGrade, 0);
+    }
+
+    /**
+     * 同上，并带上本次发动所在区域 {@code activateLoc}（0＝未知）：句里写了「从手卡/从盖放发动的场合」
+     * 类前置条件而区域不符时，该句不适用（{@link #blockedByActivateZone}）。
+     */
+    public static String durationClause(String text, int maxGrade, int activateLoc) {
         if (TextUtils.isEmpty(text)) return "";
         StringBuilder sb = new StringBuilder();
         for (String sentence : applyingSentences(text)) {
             int grade = pledgeGrade(sentence);
             if (grade < 0 || grade > maxGrade) continue;
+            if (blockedByActivateZone(sentence, activateLoc)) continue;
             String trimmed = clipToBracket(sentence).trim();
             if (trimmed.isEmpty()) continue;
             if (sb.length() > 0) sb.append(' ');
             sb.append(trimmed);
         }
         return sb.toString();
+    }
+
+    /**
+     * 场上无效门控（用户规律 3/6/7）：那段落效果的归属卡此刻在场上且效果被无效时，附属处理档
+     *（{@link #GRADE_APPENDAGE}，即「这个回合」「发动后」「发动过的回合」这类<b>卡的效果</b>）不适用，
+     * 故把上限收到 {@link #GRADE_TURN_PLEDGE}（只余括号内与『…发动的回合』两档，它们都不是效果）；
+     * 未被无效时原样返回。链上的发动无效/效果无效仍由调用方先按规律 1/2/3 定出基准档位。
+     */
+    private static int fieldNegated(int baseMaxGrade, int code, int canonical, Set<Integer> negatedOnField) {
+        if (negatedOnField == null
+                || (!negatedOnField.contains(Integer.valueOf(code))
+                    && !negatedOnField.contains(Integer.valueOf(canonical)))) {
+            return baseMaxGrade;
+        }
+        return Math.min(baseMaxGrade, GRADE_TURN_PLEDGE);
     }
 
     /**
@@ -722,13 +847,14 @@ public final class ContinuousEffectApplier {
      * 入参 {@code text} 里恰好只有一句适用句则用它；多句（歧义，不知是哪条）或零句时不列。
      * <p>调用方传入的范围已按框收紧（灵摆怪兽卡用 {@link EffectParagraphs#boxText}，只用发动段落
      * 所在框；单框/传统单效果卡用整卡描述），故本方法不会把另一个框（如灵摆框）的誓约当成本次发动的。
-     * <p>本方法只用于兜底，段落序能解出句子时一律不走。
+     * <p>本方法只用于兜底，段落序能解出句子时一律不走；同样按 {@code activateLoc} 筛掉前置条件不符的句。
      */
-    private static String uniqueCardClause(String text, int maxGrade) {
+    private static String uniqueCardClause(String text, int maxGrade, int activateLoc) {
         String first = null;
         for (String sentence : applyingSentences(text)) {
             int grade = pledgeGrade(sentence);
             if (grade < 0 || grade > maxGrade) continue;
+            if (blockedByActivateZone(sentence, activateLoc)) continue;
             String trimmed = clipToBracket(sentence).trim();
             if (trimmed.isEmpty()) continue;
             if (first != null) return "";   //多句歧义 → 不列
@@ -763,13 +889,19 @@ public final class ContinuousEffectApplier {
      * 与发动来源同一走 {@link #pledgeGrade}（一律按 {@link #GRADE_ALL}，召唤没有链可无效），
      * 但只保留携「召唤的回合」族词的句子，避免把已由发动账本按 offset 列过的同码句子重复成行
      *（{@code sameCodeRows} 里已有文本包含本句时直接跳过）。
+     * <p>{@code fieldNegated} 为真时按用户规律 6/7 再挑掉「在场上适用」那一族（携
+     * {@link #SUMMON_ONFIELD_MARKS} 的句子，『…召唤成功的回合』『…特殊召唤（成功）过的回合』
+     * 『…召唤时适用。○○』），
+     * 不含「成功」的『把这张卡特殊召唤的回合』族按规律 5 继续保留。
      */
-    private static String summonPledgeClause(String text, List<Applying> sameCodeRows, int canonical) {
+    private static String summonPledgeClause(String text, List<Applying> sameCodeRows, int canonical,
+                                             boolean fieldNegated) {
         if (TextUtils.isEmpty(text)) return "";
         StringBuilder sb = new StringBuilder();
         for (String sentence : applyingSentences(text)) {
             if (pledgeGrade(sentence) < 0) continue;
             if (!containsAny(sentence, SUMMON_PLEDGE_MARKS)) continue;
+            if (fieldNegated && containsAny(sentence, SUMMON_ONFIELD_MARKS)) continue;
             String trimmed = clipToBracket(sentence).trim();
             if (trimmed.isEmpty()) continue;
             boolean dup = false;

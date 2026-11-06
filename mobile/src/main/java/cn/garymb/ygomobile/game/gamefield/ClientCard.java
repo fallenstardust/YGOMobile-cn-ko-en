@@ -55,6 +55,18 @@ public class ClientCard {
     public List<ClientCard> overlayed = new ArrayList<>();
     public ClientCard overlayTarget;
     public int status;
+    /**
+     * 本端版的 ocgcore {@code STATUS_ACT_FROM_HAND}（common.h L222）——核心发给客户端的 status 只放行
+     * DISABLED|FORBIDDEN|PROC_COMPLETE 三位（card.cpp L335），该位从不进包，协议里也没有「从哪发动」
+     * 字段（MSG_CHAINING 的 triggering_location 对两种发动都是 SZONE，因核心先 move_to_field 再发链），
+     * 所以靠场地痕迹重建：手卡发动必走 move_to_field 发 {@code MSG_MOVE}（手卡→魔陷区表侧，
+     * operations.cpp L4752-4760）。由 {@code MoveEventApplier.applyMove} 每次移动重算，连锁结束再清。
+     */
+    public boolean actFromHand;
+    /** 与 {@link #actFromHand} 互斥的反向痕迹：盖放发动走 {@code change_position}（processor.cpp L4139）
+     *  只发同格里侧→表侧的 {@code MSG_POS_CHANGE} 而不发移动，据此正向认定盖放发动，
+     *  避免「两个痕迹都没看到」（如重同步重建卡对象）时只能退到协议区域默认值 */
+    public boolean actFromSet;
 
     /** duelclient.cpp MSG_CARD_HINT 的 desc_hints：效果文字 id→引用计数；TreeMap 对齐 C++ std::map 升序遍历，ClearData 不清（与 C++ 一致）。 */
     public final Map<Integer, Integer> descHints = new TreeMap<>();

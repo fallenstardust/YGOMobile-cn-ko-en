@@ -4,7 +4,9 @@ import cn.garymb.ygomobile.game.replay.ReplayPosSnap;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.utils.YGOUtil;
@@ -710,6 +712,37 @@ public class GameField {
                 if (uid <= ocgcore.DataManager.MAX_STRING_ID) continue;
                 out.add(new int[]{c.code, (int) (uid & 0xf)});
             }
+        }
+    }
+
+    /**
+     * 采集该侧场上此刻<b>效果被无效</b>的卡码（用户规律 6/7：『…召唤成功的回合，○○』『这个方法
+     * 特殊召唤（成功）过的回合，○○』『…召唤时适用』这族誓约是召唤成功后<b>在场上适用</b>的效果，
+     * 卡被无效即不适用，不该再列进「持续适用中效果」）。
+     * <p>判据与卡面无效角标完全同源（{@code CardOverlayRenderer.overlayCardStatus}：在场 + 表侧 +
+     * {@code STATUS_DISABLED|STATUS_FORBIDDEN}，即无限泡影类与技能抽取类），覆盖怪兽区与魔陷区
+     *（含灵摆区/场地区，同区）；异画卡连同其 alias 一并入集，使按物理卡码登记的召唤账本条目能对上。
+     * <p>主线程解算时调用（与 {@link #collectApplyingHints} 同一时机），无效态由引擎派发线程经
+     * {@code MSG_UPDATE_CARD/MSG_UPDATE_DATA} 写入，本方法只读一次当前快照。
+     */
+    public Set<Integer> collectNegatedCodes(int side) {
+        Set<Integer> out = new HashSet<>();
+        if (side < 0 || side > 1) return out;
+        PlayerField pf = players[side];
+        if (pf == null) return out;
+        collectZoneNegated(pf.monsterZone, out);
+        collectZoneNegated(pf.spellZone, out);
+        return out;
+    }
+
+    private static void collectZoneNegated(List<ClientCard> zone, Set<Integer> out) {
+        if (zone == null) return;
+        for (ClientCard c : zone) {
+            if (c == null || c.code <= 0) continue;
+            if ((c.status & (STATUS_DISABLED | STATUS_FORBIDDEN)) == 0) continue;
+            if (!c.isFaceUp()) continue;
+            out.add(c.code);
+            if (c.alias > 0 && c.alias != c.code) out.add(c.alias);
         }
     }
 

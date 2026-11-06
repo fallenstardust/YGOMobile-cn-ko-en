@@ -99,11 +99,18 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
     }
 
     @Override
-    public void onUpdateData(int player, int location, ByteBuffer data) { engine.messageParser.onUpdateData(player, location, data); }
+    public void onUpdateData(int player, int location, ByteBuffer data) {
+        engine.messageParser.onUpdateData(player, location, data);
+        // 场上卡的状态位（效果无效/禁止）只随本消息与 onUpdateCard 一并写入：卡被无效时列表要按
+        // 规律 6/7 掉行、无效解除时要把行补回，故场上区（0x04/0x08）的刷新补一次解算
+        if ((location & 0x0c) != 0) GameTopInfoManager.refreshApplyingEffects();
+    }
 
     @Override
     public void onUpdateCard(int player, int location, int sequence, ByteBuffer data) {
         engine.messageParser.onUpdateCard(player, location, sequence, data);
+        // 同上：单卡查询刷新也携 STATUS_DISABLED/STATUS_FORBIDDEN，场上卡的无效态变化在此刷适用列表
+        if ((location & 0x0c) != 0) GameTopInfoManager.refreshApplyingEffects();
     }
 
     @Override
@@ -395,7 +402,15 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
         // 同一笔发动的原始派发已计数，重放再计会使客户端账本条数超过服务端保留前缀计数
         //（配合 EffectActivationLedger.record 幂等去重，双保险评审 Minor①）
         if (!engine.suppressLedgerRecord) {
-            EffectActivationLedger.record(code, desc, localCc, engine.field.turnCount);
+            // 发动区域复原：协议里的 triggering_location 对两种发动都是魔陷区（核心先 move_to_field /
+            // change_position 再发链），改用上面的两条场地痕迹：手卡发动→0x02、盖放发动→0x08，
+            // 两个痕迹都没看到（重同步重建卡对象等）才退回协议值
+            int actLoc = cl & 0x7f;
+            if (chainCard != null) {
+                if (chainCard.actFromHand) actLoc = CardLocation.Hand.value();
+                else if (chainCard.actFromSet) actLoc = CardLocation.SpellZone.value();
+            }
+            EffectActivationLedger.record(code, desc, localCc, engine.field.turnCount, actLoc);
             // 登记序快照（评审 Major①）：效果处理阶段适用的 HINT_ZONE/MSG_FIELD_DISABLED 标注
             // 落本次发动的序而非标注到达时的实时条数，连锁交错（后链先结算/无关发动在后）
             // 时撤回才不误清保留中的标注
@@ -528,7 +543,13 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
         // is_showchaintarget 后再 chains.clear()
         for (GameField.ChainInfo ch : engine.field.chains) {
             for (ClientCard t : ch.targets) t.is_showchaintarget = false;
-            if (ch.chainCard != null) ch.chainCard.is_showchaintarget = false;
+            if (ch.chainCard != null) {
+                ch.chainCard.is_showchaintarget = false;
+                // 发动方式痕迹仅本次连锁内有效：随手清掉，避免该卡之后在场上发动别的卡的效果时被旧痕迹
+                // 误判（chains 即将 clear，故必须在本遍里清）
+                ch.chainCard.actFromHand = false;
+                ch.chainCard.actFromSet = false;
+            }
         }
         chainCodes.clear();
         engine.field.chains.clear();
@@ -555,10 +576,12 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
     }
 
     /**
-     * 把链的结算结果映射到发动账本条目（用户新规格：被无效的效果，其誓约部分不起作用，
-     * 不该出现在「持续适用中效果」列表里）：按 {@link #onChainSolving} 同款口径取
+     * 把链的结算结果映射到发动账本条目（用户新规格：被无效的效果，不适用的誓约不该出现在
+     * 「持续适用中效果」列表里）：{@code disabled=false} 为 MSG_CHAIN_NEGATED（<b>发动无效</b>，除括号内
+     * 『（这个回合，○○）』外全不适用），{@code true} 为 MSG_CHAIN_DISABLED（<b>效果无效</b>，只属卡的效果的
+     * 『这个回合/发动后/发动过的回合』类附加处理不适用）。按 {@link #onChainSolving} 同款口径取
      * {@code chains.get(ct-1)} 的 卡码/段落/半场，标到 {@link EffectActivationLedger} 对应条目上
-     * 并刷新徽标与已展开的列表（档位过滤在 {@code ContinuousEffectApplier} 里做）。
+     * 并刷新徽标与已展开的列表（两型无效各自留哪几档在 {@code ContinuousEffectApplier} 里做）。
      * 取不到链（越界/已被 CHAIN_END 清理）时静默跳过：宁可多留一条也不误清仍在适用的誓约。
      */
     private void markPledge(int chainCount, boolean disabled) {

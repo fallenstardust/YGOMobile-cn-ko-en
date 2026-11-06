@@ -196,6 +196,11 @@ public class MoveEventApplier {
             engine.field.removeCard(oldCtrl, oldLoc, oldSeq);
             card.position = position;
             engine.field.addCard(newCtrl, newLoc, newSeq, card);
+            // 发动方式地证一：手卡发动必走 move_to_field 发本消息（operations.cpp L4752-4760），
+            // 所以只认「手卡→场上区且表侧」；任何移动都重算两个标记（盖放发动不发移动，保留给 POS_CHANGE）
+            card.actFromHand = (oldLoc & 0x7f) == CardLocation.Hand.value()
+                    && (newLoc & 0x0C) != 0 && (position & GameField.POS_FACEUP) != 0;
+            if (newLoc != oldLoc) card.actFromSet = false;
             // 同区重排（duelclient.cpp MSG_MOVE L3022-3030：pl==cl && pc==cc && cl&0x71）：
             // 先 5 帧每帧横移 ±0.3（对方手卡向右、我方向左抖开），再 5 帧回到新位置，
             // 形成 gframe 标志性的抽卡/缩手抖动；animJitterX 驱动两阶段轨迹（合并 10 帧）。
@@ -313,6 +318,12 @@ public class MoveEventApplier {
             if (code != 0 && card.code != code)
                 card.setCode(code);
             card.position = newPos;
+            // 发动方式地证二：盖放的魔陷发动走 change_position（processor.cpp L4139），只发本消息（同格
+            // 里侧→表侧）而不发 MSG_MOVE；攻守互转、翻开被无效等同型翻转不会命中「里侧→表侧」的
+            // 魔陷区卡，而区域限定的误置位也只在文本含「盖放的这张卡发动的场合」时才参与判定
+            if ((oldPos & GameField.POS_FACEDOWN) != 0 && (newPos & GameField.POS_FACEUP) != 0
+                    && (loc & CardLocation.SpellZone.value()) != 0)
+                card.actFromSet = true;
             // 对齐 L3174 MoveCard(pcard, 10)：由 getCardLocation 依据新 position 求目标姿态
             //（里侧翻开 curRotY、攻击↔守备 curRotZ），normalizeAngleTarget 取最短路径，
             // 播放里侧翻开 / 攻守互转的卡片转动动画而非瞬时切换。C++ 此处不播音效，故不加声音。

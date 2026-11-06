@@ -27,8 +27,8 @@ import cn.garymb.ygomobile.loader.ImageLoader;
  * 面板横向对齐该侧血条面板、纵向贴其下缘，条目按发动回合升序（整局级在前）。
  * <p>行点击（用户新规格）：转交 {@link OnCardClick}，由 GameTopInfoManager 按卡码合成临时卡
  * 走 ClientCard 展示态路径刷 carddetailpanel（带已打勾的序号段落标记）；面板不收起，便于连续点看。
- * <p>字号（用户新规格）：正文与标题固定 6sp（在原 9sp 基础上再缩一档，列表要能在血条面板那么宽
- * 的区域里多放几行），不随 HUD 系数放大（否则长句在窄面板里根本放不下）；仅卡图缩略版随 HUD 系数等比。
+ * <p>字号（用户新规格）：正文与标题固定 7sp（不随 HUD 系数放大，否则长句在窄面板里根本放不下），
+ * 仅卡图缩略版随 HUD 系数等比。
  * <p>生命周期：由 {@link GameTopInfoManager} 持有单实例——徽标点击切换显隐，回合轮转/胜负/
  * 开局/撤回/换视角刷新时若该侧已无条目即自动收起，HUD 隐藏（{@link GameTopInfoManager#hide()}）
  * 时一并 dismiss 防窗口泄漏。
@@ -44,8 +44,8 @@ public final class ApplyingEffectsPopup {
     /** 卡图缩略版基准尺寸（dp，f=1）：按 177:254 原比例，随 HUD 系数等比放大 */
     private static final float CARD_W_DP = 20f;
     private static final float CARD_H_DP = 29f;
-    /** 正文/标题字号（sp）：固定 6sp 不随 HUD 缩放（用户新规格：显示文字再缩小一档） */
-    private static final float TEXT_SIZE_SP = 6f;
+    /** 正文/标题字号（sp）：固定 7sp 不随 HUD 缩放（用户新规格：列表文字放大一号） */
+    private static final float TEXT_SIZE_SP = 7f;
     /** 行内文字左内边距基准（dp，随 HUD 系数） */
     private static final float ROW_TEXT_PAD_DP = 5f;
 
@@ -120,7 +120,7 @@ public final class ApplyingEffectsPopup {
         if (live && key.equals(shownKeys) && Math.abs(f - shownScale) < 0.001f && width == shownWidth) return;
         ensureContent();
         int scrollY = live && scroll != null ? scroll.getScrollY() : 0;
-        // 字号不乘 f：硬 6sp（用户新规格：文字太大长句显示不完）
+        // 字号不乘 f：硬 7sp（用户新规格：长句要在窄面板里放得下）
         tvTitle.setText(side == 0 ? R.string.applying_effects_self : R.string.applying_effects_opponent);
         tvTitle.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, TEXT_SIZE_SP);
         buildRows(items, f);
@@ -167,7 +167,7 @@ public final class ApplyingEffectsPopup {
         }
     }
 
-    /** 按条目重建列表行（卡图缩略版随 HUD 系数、正文固定 6sp），整行可点转卡详 */
+    /** 按条目重建列表行（卡图缩略版随 HUD 系数、正文固定 7sp），整行可点转卡详 */
     private void buildRows(List<ContinuousEffectApplier.Applying> items, float f) {
         rows.removeAllViews();
         LayoutInflater inflater = LayoutInflater.from(activity);

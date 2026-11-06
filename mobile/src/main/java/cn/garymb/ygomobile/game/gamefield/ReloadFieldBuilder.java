@@ -88,6 +88,13 @@ public class ReloadFieldBuilder {
                 ClientCard card = new ClientCard();
                 field.addCard(p, CardLocation.SpellZone.value(), seq, card);
                 card.position = data.get() & 0xFF;
+                // 发动方式地证的 reload 版（用户新规格：消掉重同步/观战接入窗口）：
+                // MSG_RELOAD_FIELD 每格只写 present+position（field.cpp L91-98）、不写 status，
+                // 而核心的 STATUS_ACT_FROM_HAND 本就不下发（card.cpp L335 只放行三位），所以
+                // 里侧格＝这张卡是盖放在场的，它下次发动只可能是「盖放发动」：直接预置 actFromSet，
+                // 不再依赖后续那条 MSG_POS_CHANGE（撤回重同步与观战中途接入时看不到它，
+                // 只能退回协议值而把无限泡影这类卡「盖放的这张卡发动的场合」判错）
+                card.actFromSet = (card.position & GameField.POS_FACEDOWN) != 0;
             }
             // deck/hand/grave/removed/extra 五区：各 cnt(1) + cnt 张占位卡（C++ 不读卡详情与 position）
             int[] zoneLocs = {CardLocation.Deck.value(), CardLocation.Hand.value(),

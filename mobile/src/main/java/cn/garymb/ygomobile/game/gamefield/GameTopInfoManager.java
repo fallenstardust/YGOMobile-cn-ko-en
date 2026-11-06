@@ -87,10 +87,14 @@ public class GameTopInfoManager extends GameTopInfoManagerBase {
     private void refreshApplyingEffectsNow() {
         // 引擎权威来源（用户新规格）：解算前按各侧场上卡的 descHints（CHINT_DESC_ADD/REMOVE 维护）
         // 采一份在场持续效果快照，连同两本账本一并交给解算器——黑点子效果只有引擎上报的 offset 能定位
-        // 到具体哪条在适用，纯文本无从区分；引擎未上报时该来源为空，行为回退到既有账本解算
+        // 到具体哪条在适用，纯文本无从区分；引擎未上报时该来源为空，行为回退到既有账本解算。
+        // 同时采一份该侧场上「效果被无效」的卡码（用户规律 6/7：『…召唤成功的回合』『…特殊召唤（成功）
+        // 过的回合』属在场上适用的效果，卡被无效期间不列，无效解除后下一次解算自行恢复）
         GameField field = activity.getEngine() != null ? activity.getEngine().getField() : null;
-        applyingMe = ContinuousEffectApplier.forSide(0, field != null ? field.collectApplyingHints(0) : null);
-        applyingOpp = ContinuousEffectApplier.forSide(1, field != null ? field.collectApplyingHints(1) : null);
+        applyingMe = ContinuousEffectApplier.forSide(0, field != null ? field.collectApplyingHints(0) : null,
+                field != null ? field.collectNegatedCodes(0) : null);
+        applyingOpp = ContinuousEffectApplier.forSide(1, field != null ? field.collectApplyingHints(1) : null,
+                field != null ? field.collectNegatedCodes(1) : null);
         setApplyingPrompt(0, !applyingMe.isEmpty());
         setApplyingPrompt(1, !applyingOpp.isEmpty());
         if (applyingPopup == null || !applyingPopup.isShowing()) return;
