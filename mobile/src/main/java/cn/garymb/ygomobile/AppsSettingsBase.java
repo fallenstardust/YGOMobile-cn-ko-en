@@ -251,7 +251,8 @@ abstract class AppsSettingsBase {
     /**
      * expansions/ 目录下的扩展卡包档案（zip/ypk），按文件名<b>升序</b>返回。
      * 需要“靠后名包优先”的调用方（{@link #makeZipList} 倒序挂载、ImageLoader
-     * 倒序查包；NativeScriptBootstrap 升序覆写物化）统一以此为优先级基准。
+     * 倒序查包、CardManager 升序后读覆盖、native 侧扫档案时同样升序载 cdb/降序查脚本）
+     * 统一以此为优先级基准。
      */
     public File[] getExpansionFiles() {
         File[] files = new File(getResourcePath(), Constants.CORE_EXPANSIONS)
@@ -273,42 +274,40 @@ abstract class AppsSettingsBase {
     }
 
     /**
-     * 引擎卡片数据库列表，按<b>优先级从低到高</b>排列（后加载覆盖同名卡，对齐
-     * ygo_engine_jni.cpp::loadCdb 与 ocgcore ReadDB 的后写覆盖语义，净效果同
-     * game.cpp 先 LoadDB(mDbList) 后 LoadExpansions()：扩展覆盖主库）。
-     * <p>顺序：主 cards.cdb → 卡包物化 cdb（{@code <expansions>/cdb/}，由
-     * NativeScriptBootstrap 从包内 *.cdb 解出，升序=靠后包覆盖靠前包）→
-     * expansions 散 cdb（最高，对齐 data_manager.cpp 的 expansions 散文件优先）。
+     * 主资源档卡片数据库列表（低→高，后加载覆盖同名卡）：只列 ygocore 主库。
+     * <p>扩展卡数据不再进本列表，两套 C++ 都就地读档案（不再解压物化）：
+     * libYGOMobile.so 由 {@code game.cpp::LoadExpansions} 扫 <root>/expansions 目录与
+     * 已挂载 FileArchives 里的 *.cdb（走 sqlite3_deserialize）；libygoengine.so 由
+     * {@code ygo_engine_jni.cpp::loadExpansionCardData} 扫同一批档案。两者都在本列表
+     * 之后装载，净效果对齐 C++“先 LoadDB(mDbList) 后 LoadExpansions()”：
+     * 卡包 zip/ypk 内 cdb 与 expansions 散 cdb 优先级恒高于 cards.cdb。
      */
     protected void makeCdbList(List<String> pathList) {
         // 优先级最低：主库最先加载，被后面的扩展覆盖
         pathList.add(getDatabaseFile().getAbsolutePath());
-        if (isReadExpansions()) {
-            File expansionsDir = getExpansionsPath();
-            if (expansionsDir.exists()) {
-                // 卡包物化 cdb（中等优先级）
-                addCdbDir(new File(expansionsDir, Constants.CORE_PACK_CDB_DIR), pathList);
-                // expansions 散 cdb（调试/覆写用，最高优先级，最后加载）
-                addCdbDir(expansionsDir, pathList);
-            }
-        }
     }
 
-    /** 把目录下全部 .cdb 按文件名升序加入列表（后加入者后加载、覆盖同名卡）。 */
-    protected static void addCdbDir(File dir, List<String> pathList) {
-        File[] cdbs = dir.listFiles(file -> file.isFile()
-                && file.getName().toLowerCase(Locale.US).endsWith(".cdb"));
-        if (cdbs == null) {
-            return;
+    /** 资源根目录（ygocore/）下的卡包档案（.zip/.ypk，排除主资源 pics.zip/scripts.zip），升序。 */
+    public File[] getRootPackFiles() {
+        File[] files = new File(getResourcePath()).listFiles((file) -> {
+            if (!file.isFile()) {
+                return false;
+            }
+            String name = file.getName().toLowerCase(Locale.US);
+            if (name.startsWith(".") || name.equals(Constants.CORE_PICS_ZIP)
+                    || name.equals(Constants.CORE_SCRIPTS_ZIP)) {
+                return false;
+            }
+            return name.endsWith(".zip") || name.endsWith(Constants.YPK_FILE_EX);
+        });
+        if (files != null) {
+            try {
+                Arrays.sort(files, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+            } catch (Exception e) {
+                //
+            }
         }
-        try {
-            Arrays.sort(cdbs, (file, t1) -> file.getName().compareTo(t1.getName()));
-        } catch (Exception e) {
-            //
-        }
-        for (File file : cdbs) {
-            pathList.add(file.getAbsolutePath());
-        }
+        return files;
     }
 
     /**
@@ -322,27 +321,34 @@ abstract class AppsSettingsBase {
 
     /**
      * native 档案挂载列表：C++ 侧 CFileSystem::createAndOpenFile 对 FileArchives
-     * <b>正序遍历（最先挂载者优先）</b>，后接物理工作目录，故卡包按文件名字典序
-     * <b>倒序</b>加入（靠后的包最先挂载=优先），最后加入 pics.zip、scripts.zip（主资源优先级最低）
-     *——与 cdb/script/pics 统一优先级“expansions 散文件 ＞ 卡包 zip/ypk（后名优先）＞
-     * 主资源 ＞ 主散目录”一致（参考 game.cpp、data_manager.cpp、image_manager.cpp）。
-     * 主卡片脚本分两套 C++ 读取路径，本列表只对后者有效：① libygoengine.so 薄 JNI 引擎的
-     * engineScriptReader（见 ygo_engine_jni.cpp）自己扫 scripts.zip 中央目录建索引、按需
-     * pread+inflate 直读，不经过 irrlicht；② libYGOMobile.so（gframe）在
-     * data_manager.cpp::ScriptReaderEx 里走 Irrlicht FileSystem 查找 "script/cXXX.lua"，
-     * 只能命中已挂进 FileArchives 的档案（game.cpp 以 ignorePaths=false 挂载，故档案内
-     * 条目名需与 "script/cXXX.lua" 逐字对应）。而资源检查已不再把 scripts.zip 解压落地成
-     * script/ 实目录（并主动清旧残留），因此本列表一旦缺 scripts.zip，gframe 就再也取不到
-     * 主脚本（卡无效果可发动）。旧注释担心的“残留旧 zip 盖掉卡包物化区”不成立：
-     * prefer_expansion_script 默认为 1，expansions/script/ 实体文件排在档案之前。
+     * <b>正序遍历（最先挂载者优先）</b>，后接物理工作目录，故卡包（ygocore/ 与
+     * expansions/ 下全部 .zip/.ypk）按文件名字典序<b>倒序</b>加入（靠后的包最先挂载=优先），
+     * 最后加入 pics.zip、scripts.zip（主资源优先级最低）——与 cdb/script/pics 统一优先级
+     * “expansions 散文件 ＞ 卡包 zip/ypk（后名优先）＞ 主资源 ＞ 主散目录”一致
+     *（参考 game.cpp、data_manager.cpp、image_manager.cpp）。
+     * 卡包档案同时带着包内 {@code *.cdb} 与 {@code script/*.lua} 进入 gframe：
+     * {@code LoadExpansions} 对档案内 cdb 走 {@code LoadDB}（sqlite3_deserialize 只读内存库），
+     * {@code ScriptReaderEx} 对 {@code script/cXXX.lua} 走 {@code ReadScriptFromIrrFS}，
+     * 因此卡包不需要任何解压物化，且优先级高于 cards.cdb 与 scripts.zip。
+     * libygoengine.so 不读本列表（它自己扫档案直读）；两张档案清单必须同时保留：
+     * scripts.zip 不能从本列表拿掉，否则 gframe 取不到主脚本（见
+     * {@link cn.garymb.ygomobile.engine.NativeScriptBootstrap}）。
      */
     protected void makeZipList(List<String> pathList) {
         if (isReadExpansions()) {
+            File[] rootPacks = getRootPackFiles();
             File[] files = getExpansionFiles();
+            List<File> all = new ArrayList<>();
+            if (rootPacks != null) {
+                all.addAll(Arrays.asList(rootPacks));
+            }
             if (files != null) {
-                for (int i = files.length - 1; i >= 0; i--) {
-                    pathList.add(files[i].getAbsolutePath());
-                }
+                all.addAll(Arrays.asList(files));
+            }
+            all.sort((a, b) -> a.getName().toLowerCase(Locale.US)
+                    .compareTo(b.getName().toLowerCase(Locale.US)));
+            for (int i = all.size() - 1; i >= 0; i--) {
+                pathList.add(all.get(i).getAbsolutePath());
             }
         }
         pathList.add(new File(getResourcePath(), Constants.CORE_PICS_ZIP).getAbsolutePath());

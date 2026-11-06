@@ -14,7 +14,7 @@ import android.util.Log;
  *
  * <p>典型驱动顺序（无状态转发，与 gframe single_duel.cpp 对偶）：
  * <pre>
- *   OcgDuelEngine.init(rootPath, cdbPaths);
+ *   OcgDuelEngine.init(rootPath, cdbPaths, readExpansions);
  *   long duel = OcgDuelEngine.createDuelV2(seed8);
  *   OcgDuelEngine.setPlayerInfo(duel, 0, lp, hand, draw);
  *   OcgDuelEngine.setPlayerInfo(duel, 1, lp, hand, draw);
@@ -117,9 +117,10 @@ public final class OcgDuelEngine {
 
     // ==================== native 方法（唯一声明处） ====================
 
-    private static native boolean nativeInit(String rootPath, String[] cdbPaths);
+    private static native boolean nativeInit(String rootPath, String[] cdbPaths,
+            boolean readExpansions);
 
-    private static native void nativeReloadCards(String[] cdbPaths);
+    private static native void nativeReloadCards(String[] cdbPaths, boolean readExpansions);
 
     private static native long nativeCreateDuelV2(int[] seedSequence);
 
@@ -162,31 +163,38 @@ public final class OcgDuelEngine {
     /**
      * 初始化引擎。
      *
-     * @param rootPath 资源根目录（其下含 script/、single/，可选 expansions/）
-     * @param cdbPaths 卡片数据库绝对路径，按优先级从低到高排列：主库在前、扩展卡包物化
-     *                 cdb 与 expansions 散 cdb 在后（后加载覆盖同名卡，对齐 C++
-     *                 game.cpp 先主库后 LoadExpansions 的净效果）
+     * @param rootPath        资源根目录（ygocore/，其下含 single/、scripts.zip、卡包 zip/ypk，
+     *                        可选 expansions/）
+     * @param cdbPaths        主资源档卡片数据库绝对路径，按优先级从低到高（主 cards.cdb 等）；
+     *                        扩展卡数据（卡包档案内 cdb 与 expansions 散 cdb）由 native 自己
+     *                        扫档案就地加载，均在本列表之后装载，故优先级恒高于主库
+     * @param readExpansions  是否读取扩展卡包（用户开关 {@code isReadExpansions}）；
+     *                        false 时 native 不扫任何卡包档案、也不读包内 cdb
      * @return 成功返回 true；库不可用或加载失败返回 false
      */
-    public static boolean init(String rootPath, String[] cdbPaths) {
+    public static boolean init(String rootPath, String[] cdbPaths, boolean readExpansions) {
         if (notReady("init") || rootPath == null) {
             return false;
         }
         try {
-            return nativeInit(rootPath, cdbPaths == null ? new String[0] : cdbPaths);
+            return nativeInit(rootPath, cdbPaths == null ? new String[0] : cdbPaths,
+                    readExpansions);
         } catch (Throwable t) {
             Log.e(TAG, "nativeInit 失败", t);
             return false;
         }
     }
 
-    /** 重新装载卡片数据（卡组/扩展变更后），沿用已设置的 rootPath。 */
-    public static void reloadCards(String[] cdbPaths) {
+    /**
+     * 重新装载卡片数据（卡组/卡包变更后）：沿用已设置的 rootPath，并强制 native 重扫卡包
+     * 档案，因此包的新增/删除/覆写无需重启应用即可生效。
+     */
+    public static void reloadCards(String[] cdbPaths, boolean readExpansions) {
         if (notReady("reloadCards")) {
             return;
         }
         try {
-            nativeReloadCards(cdbPaths == null ? new String[0] : cdbPaths);
+            nativeReloadCards(cdbPaths == null ? new String[0] : cdbPaths, readExpansions);
         } catch (Throwable t) {
             Log.e(TAG, "nativeReloadCards 失败", t);
         }

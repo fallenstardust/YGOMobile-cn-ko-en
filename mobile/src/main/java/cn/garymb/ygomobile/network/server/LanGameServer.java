@@ -33,8 +33,9 @@ import cn.garymb.ygomobile.utils.CrashHandler;
  *       以 {@code room} 的房名/HostInfo 组 72 字节 {@code HostPacket} 单播回请求者 IP:7921，
  *       与客户端 {@code LanDiscoveryManager.parseHostPacket} 严格对偶；</li>
  *   <li>引擎：{@link #start} 绑定监听并拉起 accept 线程<b>之后</b>在后台引导
- *       {@link OcgDuelEngine}（物化卡包脚本 + 读 cards.cdb）：握手/加入/大厅聊天不依赖引擎，
- *       老设备卡包物化慢不再阻塞 TCP 监听导致 WindBot 探测超时；开局时
+ *       {@link OcgDuelEngine}（直读卡包 zip/ypk 档案 + 读 cards.cdb，全程不解压）：
+ *       握手/加入/大厅聊天不依赖引擎，
+ *       老设备扫档案慢不再阻塞 TCP 监听导致 WindBot 探测超时；开局时
  *       {@link ServerDuel#startDuel} 经幂等引导闸门等待引擎就绪。</li>
  * </ul>
  *
@@ -124,11 +125,11 @@ public final class LanGameServer implements YGOProtocol {
             }
             Log.i(TAG, "局域网主机已启动，端口 " + serverPort);
             // 引擎引导改在监听就绪后进行：建房/加入/大厅聊天（含 WindBot 连入）全程不依赖
-            // 引擎，只有真正开局才需要；首次物化卡包脚本/cdb 与加载 cdb 在老设备上
+            // 引擎，只有真正开局才需要；首次扫档案建索引与加载 cdb 在老设备上
             // 可达数秒，若像在监听前同步执行，TCP 端口迟迟不 bind，握手会被 WindBot 探测
             // 超时赶在前面。引导失败不在此反馈：{@link ServerDuel#startDuel} 开局闸门会
             // 重试并兜底终止开局；与预热/其它建主路径并发时 ensureEngineReady 同步幂等，
-            // 不会重复物化/重复 init。
+            // 不会重复清理/重复 init。
             if (!engineBootDone) {
                 Thread boot = new Thread(this::bootstrapEngineInBackground, "LanEngineBoot");
                 boot.setDaemon(true);
@@ -139,9 +140,9 @@ public final class LanGameServer implements YGOProtocol {
         }
     }
 
-    /** 引导引擎：确保卡片脚本可读（expansions 物化区或 scripts.zip 直读）并加载卡片数据库。
+    /** 引导引擎：确保脚本与卡数据可读（全部档案直读：卡包 zip/ypk + scripts.zip + cards.cdb）。
      * 经 {@link NativeScriptBootstrap#ensureEngineReady()} 幂等引导：相同资源根目录仅首次
-     * 真正 {@code OcgDuelEngine.init}（物化卡包+加载 cdb，耗时数秒），后续建主直接命中缓存，
+     * 真正 {@code OcgDuelEngine.init}（扫档案建索引+加载 cdb），后续建主直接命中缓存，
      * 消除“每次建主都重载引擎”的4~5秒延迟（对齐 C++ gframe 启动时一次性加载、多次建主复用）。
      * 监听已开启后才在后台执行，开局需求由 {@link ServerDuel#startDuel} 的同步闸门等待。 */
     private boolean bootstrapEngine() {

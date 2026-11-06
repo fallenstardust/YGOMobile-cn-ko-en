@@ -90,7 +90,7 @@ abstract class ServerDuelBase implements YGOProtocol {
     // ==================================================================
 
     void startDuel(ServerConnection dp, int tp) {
-        // 引擎就绪闸门：LanGameServer.start 为了握手即时，把物化卡包/加载 cdb 的引导
+        // 引擎就绪闸门：LanGameServer.start 为了握手即时，把扫档案/加载 cdb 的引导
         // 改到了监听就绪后的后台线程；开局是引擎真正的首个使用时点，在此同步幂等引导
         // 兜底——已就绪立即返回，预热/后台引导仍在进行时阻塞至完成，失败则重试一次，
         // 仍失败终止开局（本方法在单线程房间执行器上串行，短暂阻塞不影响已建立连接）
@@ -98,12 +98,12 @@ abstract class ServerDuelBase implements YGOProtocol {
         boolean engineReady = NativeScriptBootstrap.ensureEngineReady();
         long gateWait = SystemClock.uptimeMillis() - gateStart;
         if (gateWait > 300) {
-            // 预热未完成：猜拳后同步跑了完整引导（物化/加载），分段耗时见
+            // 预热未完成：猜拳后同步跑了完整引导（扫档案建索引/加载），分段耗时见
             // NativeScriptBootstrap 的「engine bootstrap 耗时」/「引擎 init 完成」日志
             Log.w(TAG, "startDuel：等待引擎引导 " + gateWait + "ms（预热未完成，开局发牌延迟）");
         }
         if (!engineReady) {
-            Log.e(TAG, "startDuel：引擎引导失败（卡包物化或卡数据库加载未完成），终止开局");
+            Log.e(TAG, "startDuel：引擎引导失败（档案直读或卡数据库加载未完成），终止开局");
             room.duelStage = DUEL_STAGE_END;
             return;
         }

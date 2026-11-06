@@ -731,8 +731,10 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
      * 由 native 直读 {@code scripts.zip}，实体目录只是最低优先级的兜底档，留着白占 31.5MB，
      * 还可能让升级后未重写的那部分 lua 假装成“已就绪”。
      *
-     * <p>卡包物化区 {@code expansions/script/} 不在此列：它仍是 native 眼中的最高优先级档，
-     * 手工调试主脚本也应当放到那里。目录不存在时只剩一次 isDirectory() 探测。
+     * <p>{@code expansions/script/} 不在此列：它是 native 眼中的最高优先级档，只放手工调试
+     * 脚本（卡包脚本不再解压物化到此处，而由 native 直读包档案；旧版物化残留由
+     * {@code NativeScriptBootstrap#pruneLegacyMaterialized} 负责回收）。目录不存在时只剩一次
+     * isDirectory() 探测。
      */
     private void pruneLegacyScriptsDir(String resPath, int unit) {
         File scriptDir = new File(resPath, Constants.CORE_SCRIPT_PATH);

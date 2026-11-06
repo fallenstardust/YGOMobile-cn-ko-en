@@ -4,19 +4,27 @@
  * 薄 JNI 决斗引擎封装：仅暴露 ocgcore（ocgapi.h）的干净 C 接口子集给 Java，
  * 不链接 irrlicht / freetype / openal / openssl / libevent 等渲染或网络库。
  * 自带：
- *   - 卡片数据读取（sqlite3 直读 cards.cdb + 扩展 cdb，逻辑对齐 data_manager.cpp::ReadDB；
- *     cdbPaths 按优先级从低到高传入：主库在前、扩展卡包/散cdb在后，后加载覆盖）
- *   - Lua 脚本读取（优先级对齐 data_manager.cpp::ScriptReaderEx prefer_expansion_script=1：
- *     卡片脚本先查 <root>/expansions/script/（expansions 散文件与卡包物化区），
- *     再查 <root>/scripts.zip（主脚本档案，中央目录索引 + pread/inflate 就地取，不再落地
- *     解压出 1.35 万个 lua），最后才回落 <root>/script/（老安装残留或手工调试）；
- *     非卡片脚本（single/ 等）保持主目录优先）
+ *   - 卡片数据读取（sqlite3 直读，逻辑对齐 data_manager.cpp::ReadDB；装载次序按优先级
+ *     从低到高、后加载覆盖：Java 传入的主库等“主资源 cdb” → 卡包 zip/ypk 内 *.cdb
+ *    （按包名字典序升序，靠后的包覆盖靠前的包）→ <root>/expansions 散 cdb（最高），
+ *     净效果对齐 game.cpp 先 LoadDB(mDbList) 后 LoadExpansions()）
+ *   - Lua 脚本读取（优先级对齐 data_manager.cpp::ScriptReaderEx 在
+ *     prefer_expansion_script=1 时的“expansions 散文件 ＞ 卡包档案 ＞ 主脚本档案 ＞
+ *     主散目录”语义）：卡片脚本先查 <root>/expansions/script/（手工调试散文件），再按
+ *     包名字典序**降序**就地查各卡包 zip/ypk 里 script 目录下的 lua（靠后的包优先），再查
+ *     <root>/scripts.zip（主脚本档案），最后回落 <root>/script/；非卡片脚本（single/ 等）
+ *     保持主目录优先、expansions 兜底。所有档案都只扫中央目录建索引 + pread/inflate
+ *     就地取，不需要任何落地解压。
  * 决斗消息循环由 Java 侧（ServerDuel）驱动，本层只做无状态转发。
  */
 #include <jni.h>
 #include <cstdio>
 #include <cstring>
 #include <cstdint>
+#include <algorithm>
+#include <cctype>
+#include <dirent.h>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <unordered_map>
@@ -76,19 +84,13 @@ inline bool is_alternative(uint32_t code, uint32_t alias) {
            && (code < alias + CARD_ARTWORK_VERSIONS_OFFSET);
 }
 
-// 把一个 cdb 文件读入 g_cardData，后加载者覆盖先前同 code 项
-//（调用方按优先级从低到高排列：主库在前、扩展在后，扩展覆盖主库——对齐 C++
-// game.cpp 先 LoadDB(mDbList) 后 LoadExpansions() 的净效果）
-bool loadCdb(const char* file) {
-    sqlite3* db = nullptr;
-    if (sqlite3_open_v2(file, &db, SQLITE_OPEN_READONLY, nullptr) != SQLITE_OK) {
-        if (db) sqlite3_close(db);
-        return false;
-    }
+// 把一个已打开的 sqlite 句子里的 datas 表读进 g_cardData（对齐 ReadDB 的主循环）；
+// 后加载者覆盖先前同 code 项，调用方按优先级从低到高排列（主库在前、卡包与散 cdb
+// 在后，扩展覆盖主库——对齐 game.cpp 先 LoadDB(mDbList) 后 LoadExpansions() 的净效果）
+bool readDbRows(sqlite3* db) {
     sqlite3_stmt* stmt = nullptr;
     if (sqlite3_prepare_v2(db, SELECT_STMT, -1, &stmt, nullptr) != SQLITE_OK) {
         sqlite3_finalize(stmt);
-        sqlite3_close(db);
         return false;
     }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -122,8 +124,19 @@ bool loadCdb(const char* file) {
         g_cardData[code] = cd;
     }
     sqlite3_finalize(stmt);
-    sqlite3_close(db);
     return true;
+}
+
+// 从一个实体 cdb 文件读入 g_cardData
+bool loadCdb(const char* file) {
+    sqlite3* db = nullptr;
+    if (sqlite3_open_v2(file, &db, SQLITE_OPEN_READONLY, nullptr) != SQLITE_OK) {
+        if (db) sqlite3_close(db);
+        return false;
+    }
+    const bool ok = readDbRows(db);
+    sqlite3_close(db);
+    return ok;
 }
 
 // 第二轮：为仍带 alias 的卡继承原始卡的 rule_code（对齐 ReadDB 收尾循环）
@@ -150,7 +163,7 @@ uint32_t engineCardReader(uint32_t code, card_data* data) {
     return 1;
 }
 
-// scripts.zip 条目的定位信息（数据偏移、压缩/原始长度、方法）
+// ZIP 条目的定位信息（数据偏移、压缩/原始长度、方法）
 struct ZipEntryRef {
     uint64_t dataOffset = 0;
     uint32_t compSize = 0;
@@ -172,15 +185,64 @@ bool preadAll(int fd, void* buf, size_t n, off_t off) {
     return true;
 }
 
+// 条目名归一：反斜杠转正斜杠、去掉开头的 "./"（打包工具两种布局都见过）
+std::string normalizeEntryName(std::string name) {
+    for (char& c : name) {
+        if (c == '\\')
+            c = '/';
+    }
+    while (name.compare(0, 2, "./") == 0)
+        name.erase(0, 2);
+    return name;
+}
+
+// 大小写不敏感后缀比较（卡包与卡密扩展名在设备上大小写不一）
+bool endsWithI(const std::string& s, const char* suffix) {
+    const size_t n = std::strlen(suffix);
+    if (s.size() < n)
+        return false;
+    for (size_t i = 0; i < n; ++i) {
+        if (std::tolower(static_cast<unsigned char>(s[s.size() - n + i]))
+                != std::tolower(static_cast<unsigned char>(suffix[i])))
+            return false;
+    }
+    return true;
+}
+
+std::string lowerCopy(const std::string& s) {
+    std::string out(s);
+    for (char& c : out)
+        c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+    return out;
+}
+
+// 档案内路径里是否存在名为 script 的目录段（兼容 script/、Script/、./script/、任意前缀 script/）
+bool hasScriptDir(const std::string& path) {
+    const std::string lower = lowerCopy(path);
+    size_t p = 0;
+    while ((p = lower.find("script/", p)) != std::string::npos) {
+        if (p == 0 || lower[p - 1] == '/')
+            return true;
+        p += 7;
+    }
+    return false;
+}
+
 /**
- * scripts.zip 直读：扫一遍中央目录建“文件名 -> 条目”索引，之后 cXXXX.lua 用 pread 就地取
- *（stored 直接拷贝，deflate 走 zlib raw inflate），取代“把 1.35 万个 lua 解压落地到
- * <root>/script/”。被省掉的正是每条一次的 open/creat+close（实测占脚本落地耗时的主体，
- * inflate 只占零头），并且档案是唯一事实源：开局、撤回重建、旧格式回放与 MSG_RETRY 重派
- * 都经同一个 reader 入口，脚本内容不可能分叉。
+ * ZIP 档案直读（主脚本档案 scripts.zip 与各卡包 zip/ypk 共用；ypk 只是换了扩展名的 zip）：
+ * 扫一遍中央目录建索引，之后 *.lua 与 *.cdb 都用 pread 就地取（stored 直接拷贝，
+ * deflate 走 zlib raw inflate），全程不落盘解压。索引只收决斗用得上的两类条目：
+ * .lua（按“档案内全路径 / script 下裸名 / 顶层裸名”三种键）与 .cdb（按中央目录序列表）。
+ * 档案是唯一事实源：开局、撒回重建、旧格式回放与 MSG_RETRY 重派都经同一个 reader  入口，
+ * 脚本与卡数据不可能分叉。
  */
-class ScriptsArchive {
+class ZipArchive {
 public:
+    ZipArchive() = default;
+    ~ZipArchive() { reset(); }
+    ZipArchive(const ZipArchive&) = delete;
+    ZipArchive& operator=(const ZipArchive&) = delete;
+
     /**
      * 按 size+mtime 自查后保证索引就绪：档案换了（升级覆盖、首装时拷贝晚于引擎 init）就
      * 重建；档案还不存在则清空索引，让读取回落到实体目录。不缓存“失败”，代价只是一次
@@ -198,22 +260,32 @@ public:
         const int fd = ::open(path.c_str(), O_RDONLY | O_CLOEXEC);
         if (fd < 0)
             return;
-        std::unordered_map<std::string, ZipEntryRef> index;
-        if (buildIndex(fd, st.st_size, index)) {
+        if (buildIndex(fd, st.st_size)) {
             m_fd = fd;
             m_path = path;
             m_size = st.st_size;
             m_mtime = st.st_mtime;
-            m_index = std::move(index);
-            __android_log_print(ANDROID_LOG_INFO, ENGINE_TAG, "scripts.zip 索引 %zu 条：%s",
-                                m_index.size(), path.c_str());
+            __android_log_print(ANDROID_LOG_INFO, ENGINE_TAG, "档案索引 lua %zu 条、cdb %zu 条：%s",
+                                m_index.size(), m_cdbs.size(), path.c_str());
             return;
         }
+        reset();
         ::close(fd);
     }
 
-    const ZipEntryRef* find(const std::string& bareName) const {
-        auto it = m_index.find(bareName);
+    bool isOpen() const { return m_fd >= 0; }
+
+    const std::vector<std::pair<std::string, ZipEntryRef>>& cdbs() const { return m_cdbs; }
+
+    /**
+     * 查卡片脚本 cXXX.lua：先按档案内全路径键 "script/cXXX.lua"（对齐 irrlicht 以
+     * ignorePaths=false 挂载时的逐字匹配），再按裸名键（顶层散 lua 与老式无目录段打包）。
+     */
+    const ZipEntryRef* findScript(const std::string& bareName) const {
+        auto it = m_index.find("script/" + bareName);
+        if (it != m_index.end())
+            return &it->second;
+        it = m_index.find(bareName);
         return it == m_index.end() ? nullptr : &it->second;
     }
 
@@ -253,14 +325,15 @@ private:
         m_size = 0;
         m_mtime = 0;
         m_index.clear();
+        m_cdbs.clear();
     }
 
     /**
-     * 解析 EOCD（含 zip64 入口）与中央目录。条目名两种布局都兼容：裸文件名（现仓库/CI
-     * 产出）与带 script/ 前缀（历史包）；其它目录（.git/ 等）与不支持的方法一律不入索引。
+     * 解析 EOCD（含 zip64 入口）与中央目录，只把 .lua 进 m_index、.cdb 进 m_cdbs。
+     * 条目名布局全兼容：裸文件名、script/ 前缀、./script/ 前缀；pics/ 与 pack/ 等其
+     * 它条目不进决斗索引（卡图由 Java 侧查包，卡组列表另有入口）。
      */
-    bool buildIndex(int fd, off_t size,
-            std::unordered_map<std::string, ZipEntryRef>& out) {
+    bool buildIndex(int fd, off_t size) {
         const size_t tailLen = size < 0x11000 ? static_cast<size_t>(size) : 0x11000u;
         std::vector<unsigned char> tail(tailLen);
         if (!preadAll(fd, tail.data(), tailLen, size - static_cast<off_t>(tailLen)))
@@ -321,24 +394,19 @@ private:
                 break;
             std::string name(reinterpret_cast<const char*>(h + 46), nameLen);
             pos += 46u + nameLen + extraLen + commentLen;
-            if (!name.empty() && name.back() == '/')
+            name = normalizeEntryName(name);
+            if (name.empty() || name.back() == '/')
                 continue;     // 目录条目
-            for (char& c : name) {
-                if (c == '\\')
-                    c = '/';
-            }
-            std::string key;
-            const size_t slash = name.find('/');
-            if (slash == std::string::npos) {
-                key = name;
-            } else if (name.size() > 7 && name.compare(0, 7, "script/") == 0
-                    && name.find('/', 7) == std::string::npos) {
-                key = name.substr(7);
-            } else {
-                continue;     // 其它目录布局不属于主脚本区
-            }
-            if (key.empty() || key == ".gitignore" || key == ".gitattributes")
+            const size_t slash = name.rfind('/');
+            const std::string bare = slash == std::string::npos
+                    ? name : name.substr(slash + 1);
+            if (bare.empty() || bare == ".gitignore" || bare == ".gitattributes"
+                    || bare == "desktop.ini" || bare == "Thumbs.db")
                 continue;
+            const bool luaEntry = endsWithI(bare, ".lua");
+            const bool cdbEntry = endsWithI(bare, ".cdb");
+            if (!luaEntry && !cdbEntry)
+                continue;     // 卡图/卡组/conf 等不进决斗索引
             if (method != ZIP_STORED && method != ZIP_DEFLATED)
                 continue;     // 不支持的方法：交给实体目录兜底
             unsigned char lh[30];
@@ -355,9 +423,19 @@ private:
             ref.compSize = compSize;
             ref.rawSize = rawSize;
             ref.method = method;
-            out[key] = ref;
+            if (cdbEntry) {
+                // cdb 按中央目录序列表保留（一个包可能多个 cdb 目录/文件），由调用方按序加载
+                m_cdbs.emplace_back(name, ref);
+                continue;
+            }
+            m_index[name] = ref;                        // 档案内全路径键
+            const bool underScript = hasScriptDir(name);
+            if (slash == std::string::npos || underScript)
+                m_index.emplace(bare, ref);             // 裸名键：已有则不覆盖
+            if (underScript)
+                m_index["script/" + bare] = ref;
         }
-        return !out.empty();
+        return !m_index.empty() || !m_cdbs.empty();
     }
 
     int m_fd = -1;
@@ -365,12 +443,208 @@ private:
     off_t m_size = 0;
     time_t m_mtime = 0;
     std::unordered_map<std::string, ZipEntryRef> m_index;
+    std::vector<std::pair<std::string, ZipEntryRef>> m_cdbs;
 };
 
-ScriptsArchive g_scriptsZip;
+ZipArchive g_scriptsZip;
 std::string g_scriptsZipPath;
 // g_scriptBuffer 与档案索引是共享资源：多个决斗/回放线程同时读脚本时整体串行
 std::mutex g_scriptMutex;
+
+/**
+ * 卡包档案登记表（ygocore 根目录与 expansions/ 下的 zip/ypk，二者都是 ZIP 容器）：
+ * 不再解压物化任何 lua/cdb，全部按中央目录索引就地读。列表按包名字典序**升序**保存：
+ *  - 脚本查询反向遍历（靠后的包优先，对齐 irrlicht “倒序挂载、先挂载者优先”）；
+ *  - cdb 顺序加载（后加载覆盖同名卡，净效果同样是靠后的包优先）。
+ */
+struct PackArchive {
+    std::string path;
+    std::unique_ptr<ZipArchive> zip;
+};
+std::vector<PackArchive> g_packs;
+bool g_packsScanned = false;
+time_t g_packsStamp = 0;
+// 用户“读取扩展卡包”开关：false 时完全不扫卡包、不读包内 cdb 与 expansions 散 cdb
+bool g_readExpansions = true;
+
+time_t dirStamp(const std::string& dir) {
+    struct stat st{};
+    return ::stat(dir.c_str(), &st) == 0 ? st.st_mtime : 0;
+}
+
+// 收集目录下的卡包档案：只认 zip/ypk，并排除主资源档案 pics.zip / scripts.zip（另有专档入口）
+void collectPacksIn(const std::string& dir, std::vector<std::string>& out) {
+    DIR* d = ::opendir(dir.c_str());
+    if (d == nullptr)
+        return;
+    struct dirent* de;
+    while ((de = ::readdir(d)) != nullptr) {
+        const std::string name = de->d_name;
+        if (name[0] == '.' || name.size() < 5)
+            continue;                       // 隐藏/临时档案
+        if (!endsWithI(name, ".zip") && !endsWithI(name, ".ypk"))
+            continue;
+        const std::string lower = lowerCopy(name);
+        if (lower == "pics.zip" || lower == "scripts.zip")
+            continue;                       // 主资源档案走自己的通道，不能当卡包抢主线脚本
+        const std::string full = dir + "/" + name;
+        struct stat st{};
+        if (::stat(full.c_str(), &st) == 0 && S_ISREG(st.st_mode))
+            out.push_back(full);
+    }
+    ::closedir(d);
+}
+
+/**
+ * 重扫卡包清单。force=false 用于脚本读取路径：只看两个目录的 mtime（一次 stat），
+ * 档案被新增/删除才重扫；单个包被就地覆写则由 ZipArchive::ensureOpen 的 size+mtime
+ * 自查兜住。force=true 用于 init/reloadCards：包集与包内容都可能刚变，重建列表。
+ */
+void ensurePacksScanned(bool force) {
+    if (!g_readExpansions) {
+        g_packs.clear();
+        g_packsScanned = true;
+        g_packsStamp = 0;
+        return;
+    }
+    const time_t stamp = dirStamp(g_rootPath) + 7 * dirStamp(g_rootPath + "/expansions");
+    if (!force && g_packsScanned && stamp == g_packsStamp)
+        return;
+    g_packsScanned = true;
+    g_packsStamp = stamp;
+    std::vector<std::string> paths;
+    collectPacksIn(g_rootPath, paths);
+    collectPacksIn(g_rootPath + "/expansions", paths);
+    std::sort(paths.begin(), paths.end(), [](const std::string& a, const std::string& b) {
+        const std::string na = lowerCopy(a.substr(a.rfind('/') + 1));
+        const std::string nb = lowerCopy(b.substr(b.rfind('/') + 1));
+        return na != nb ? na < nb : lowerCopy(a) < lowerCopy(b);
+    });
+    g_packs.clear();
+    for (const auto& p : paths) {
+        PackArchive pack;
+        pack.path = p;
+        g_packs.push_back(std::move(pack));
+    }
+}
+
+// 懒开档案并按 size+mtime 保证索引就绪；不可用（被删/损坏）返回 nullptr
+ZipArchive* packZip(PackArchive& pack) {
+    if (pack.zip == nullptr)
+        pack.zip = std::make_unique<ZipArchive>();
+    pack.zip->ensureOpen(pack.path);
+    return pack.zip->isOpen() ? pack.zip.get() : nullptr;
+}
+
+// 卡包档案里查卡片脚本：包名字典序降序遍历，靠后的包优先
+const ZipEntryRef* findPackScript(const std::string& bareName, ZipArchive** owner) {
+    for (size_t i = g_packs.size(); i-- > 0; ) {
+        ZipArchive* zip = packZip(g_packs[i]);
+        if (zip == nullptr)
+            continue;
+        const ZipEntryRef* ref = zip->findScript(bareName);
+        if (ref != nullptr) {
+            *owner = zip;
+            return ref;
+        }
+    }
+    return nullptr;
+}
+
+/**
+ * 从档案条目就地读 cdb：整段解进 sqlite 堆缓冲后 sqlite3_deserialize 成只读内存库，
+ * 逐步对齐 data_manager.cpp::LoadDB（含强制 rollback-journal 的头 18/19 字节改写），
+ * 因此不需要把包里的 cdb 解压落地成实体文件。缓冲由 sqlite3_free 分配：成功时交
+ * FREEONCLOSE 释放，失败时自行释放（deserialize 失败路径除外）。
+ */
+bool loadCdbFromEntry(const ZipArchive& zip, const ZipEntryRef& ref) {
+    if (ref.rawSize == 0 || ref.rawSize > 0x20000000u)    // 上限 512MB：异常条目直接跳过
+        return false;
+    unsigned char* buf = static_cast<unsigned char*>(sqlite3_malloc64(ref.rawSize + 1));
+    if (buf == nullptr)
+        return false;
+    const int n = zip.read(ref, buf, static_cast<size_t>(ref.rawSize) + 1);
+    if (n <= 0) {
+        sqlite3_free(buf);
+        return false;
+    }
+    if (n >= 20 && buf[18] == 0x02) {   // WAL 强制改成 rollback-journal（对齐 LoadDB）
+        buf[18] = 0x01;
+        buf[19] = 0x01;
+    }
+    sqlite3* db = nullptr;
+    if (sqlite3_open(":memory:", &db) != SQLITE_OK) {
+        sqlite3_free(buf);
+        if (db) sqlite3_close(db);
+        return false;
+    }
+    if (sqlite3_deserialize(db, nullptr, buf, n, n,
+            SQLITE_DESERIALIZE_FREEONCLOSE | SQLITE_DESERIALIZE_READONLY) != SQLITE_OK) {
+        sqlite3_close(db);   // FREEONCLOSE 已接管该缓冲，不能再自行 free
+        return false;
+    }
+    const bool ok = readDbRows(db);
+    sqlite3_close(db);
+    return ok;
+}
+
+// 卡包档案内 cdb：按包名字典序升序加载（靠后的包后加载、覆盖同名卡）
+size_t loadPackCdbs() {
+    ensurePacksScanned(true);
+    size_t loaded = 0;
+    for (auto& pack : g_packs) {
+        ZipArchive* zip = packZip(pack);
+        if (zip == nullptr)
+            continue;
+        for (const auto& cdb : zip->cdbs())
+            if (loadCdbFromEntry(*zip, cdb.second))
+                ++loaded;
+    }
+    return loaded;
+}
+
+// <root>/expansions/*.cdb 散文件：调试/覆写用的最高优先级档，按名升序后加载者覆盖
+size_t loadLooseExpansionCdbs() {
+    if (!g_readExpansions)
+        return 0;
+    const std::string dir = g_rootPath + "/expansions";
+    std::vector<std::string> files;
+    DIR* d = ::opendir(dir.c_str());
+    if (d == nullptr)
+        return 0;
+    struct dirent* de;
+    while ((de = ::readdir(d)) != nullptr) {
+        const std::string name = de->d_name;
+        if (name[0] == '.' || !endsWithI(name, ".cdb"))
+            continue;
+        const std::string full = dir + "/" + name;
+        struct stat st{};
+        if (::stat(full.c_str(), &st) == 0 && S_ISREG(st.st_mode))
+            files.push_back(full);
+    }
+    ::closedir(d);
+    std::sort(files.begin(), files.end(), [](const std::string& a, const std::string& b) {
+        return lowerCopy(a) < lowerCopy(b);
+    });
+    size_t loaded = 0;
+    for (const auto& f : files)
+        if (loadCdb(f.c_str()))
+            ++loaded;
+    return loaded;
+}
+
+// 扩展卡数据装载（低→高：卡包档案 cdb → expansions 散 cdb），均在主库之后调用；
+// g_packs 与脚本读取共用，故与 engineScriptReader 同一把锁串行
+void loadExpansionCardData() {
+    std::lock_guard<std::mutex> guard(g_scriptMutex);
+    const size_t packs = g_packs.size();
+    const size_t fromPacks = loadPackCdbs();
+    const size_t loose = loadLooseExpansionCdbs();
+    __android_log_print(ANDROID_LOG_INFO, ENGINE_TAG,
+                        "扩展卡数据直读档案（readExpansions=%d）：卡包 %zu 个（包内 cdb %zu 本）、"
+                        "expansions 散 cdb %zu 本",
+                        g_readExpansions ? 1 : 0, packs, fromPacks, loose);
+}
 
 // 读实体文件到共享脚本缓冲；容量不足（异常大的脚本）视为失败
 bool readFileInto(const char* path, int* slen) {
@@ -386,10 +660,12 @@ bool readFileInto(const char* path, int* slen) {
 }
 
 // 把 "./script/c1.lua" / "./single/x.lua" 解析为可读来源。
-// 优先级对齐 data_manager.cpp::ScriptReaderEx（prefer_expansion_script=1）——
-// 卡片脚本：① <root>/expansions/（散调试文件 + Java 引导按包名字典序升序覆写物化的卡包
-// 脚本，即靠后的包优先）② <root>/scripts.zip（主脚本档案直读）③ <root>/script/
-//（老安装残留或手工放置）；非卡片脚本（single/ 等）仍旧是主目录优先、expansions 兜底。
+// 优先级对齐 data_manager.cpp::ScriptReaderEx 在 prefer_expansion_script=1 时的
+// “expansions 散文件 ＞ irrlicht 档案区（卡包倒序→pics.zip→scripts.zip）＞ 主散目录”：
+// 卡片脚本：① <root>/expansions/script/（手工调试散文件）② 卡包 zip/ypk 档案内
+// script/*.lua（包名字典序降序=靠后的包优先）③ <root>/scripts.zip（主脚本档案）
+// ④ <root>/script/ 实体目录（老安装残留/手工放置）；非卡片脚本（single/ 等）仍旧是
+// 主目录优先、expansions 兜底。所有档案均就地读，不再解压落地。
 uint8_t* engineScriptReader(const char* scriptPath, int* slen) {
     if (!scriptPath || g_rootPath.empty())
         return nullptr;
@@ -398,16 +674,28 @@ uint8_t* engineScriptReader(const char* scriptPath, int* slen) {
         rel += 2;
     const bool cardScript = std::strncmp(rel, "script/", 7) == 0;
     char full[1024];
-    // g_scriptBuffer 与档案索引都是共享资源，多个决斗/回放线程同时读时整体串行
+    // g_scriptBuffer 与各档案索引都是共享资源，多个决斗/回放线程同时读时整体串行
     std::lock_guard<std::mutex> guard(g_scriptMutex);
     if (cardScript) {
-        // ① expansions 散文件 / 卡包物化区（最高，与旧行为一致）
+        const std::string bare(rel + 7);
+        // ① expansions 散调试文件（实体，最高）
         std::snprintf(full, sizeof full, "%s/expansions/%s", g_rootPath.c_str(), rel);
         if (readFileInto(full, slen))
             return g_scriptBuffer;
-        // ② 主脚本档案：中央目录索引 + pread/inflate 就地取，不再依赖落地解压的 lua
+        ensurePacksScanned(false);
+        // ② 卡包档案：包名字典序降序就地取 script/*.lua（靠后的包优先，无需解压物化）
+        ZipArchive* owner = nullptr;
+        const ZipEntryRef* ref = findPackScript(bare, &owner);
+        if (ref != nullptr) {
+            const int n = owner->read(*ref, g_scriptBuffer, sizeof g_scriptBuffer);
+            if (n >= 0) {
+                *slen = n;
+                return g_scriptBuffer;
+            }
+        }
+        // ③ 主脚本档案 scripts.zip
         g_scriptsZip.ensureOpen(g_scriptsZipPath);
-        const ZipEntryRef* ref = g_scriptsZip.find(std::string(rel + 7));
+        ref = g_scriptsZip.findScript(bare);
         if (ref != nullptr) {
             const int n = g_scriptsZip.read(*ref, g_scriptBuffer, sizeof g_scriptBuffer);
             if (n >= 0) {
@@ -416,7 +704,7 @@ uint8_t* engineScriptReader(const char* scriptPath, int* slen) {
             }
         }
     }
-    // ③ 卡片脚本回落实体目录；非卡片脚本保持主目录优先、expansions 兜底
+    // ④ 卡片脚本回落实体目录；非卡片脚本保持主目录优先、expansions 兜底
     for (int pass = 0; pass < 2; ++pass) {
         const bool useExpansions = cardScript ? (pass == 1) : (pass == 0);
         if (useExpansions)
@@ -441,14 +729,19 @@ extern "C" {
 /*
  * class     cn.garymb.ygomobile.engine.OcgDuelEngine
  * 初始化引擎：装载卡片数据并挂上脚本/卡片读取回调。
- * rootPath 为资源根目录（含 script/、single/）；cdbPaths 按优先级从低到高排列
- * （主库在前，扩展卡包物化 cdb、expansions 散 cdb 在后，后加载覆盖同名卡）。
+ * rootPath 为资源根目录（其下含 single/、scripts.zip、可选 expansions/ 与卡包 zip/ypk）；
+ * cdbPaths 只传“主资源档”（主 cards.cdb 等）且按优先级从低到高；扩展卡数据（卡包档案内
+ * cdb 与 expansions 散 cdb）由本层自己扫档案就地加载，均在 cdbPaths 之后装载，因此
+ * 卡包/散 cdb 优先级恒高于主库（对齐 game.cpp 先 LoadDB(mDbList) 后 LoadExpansions()）。
+ * readExpansions=false 时一律不碰卡包档案与 expansions 扩展档。
  */
 JNIEXPORT jboolean JNICALL
 Java_cn_garymb_ygomobile_engine_OcgDuelEngine_nativeInit(JNIEnv* env, jclass /*clazz*/,
-                                                         jstring rootPath, jobjectArray cdbPaths) {
+                                                         jstring rootPath, jobjectArray cdbPaths,
+                                                         jboolean readExpansions) {
     if (rootPath == nullptr)
         return JNI_FALSE;
+    g_readExpansions = readExpansions != JNI_FALSE;
     const char* rp = env->GetStringUTFChars(rootPath, nullptr);
     g_rootPath = rp ? rp : "";
     if (rp) env->ReleaseStringUTFChars(rootPath, rp);
@@ -467,6 +760,8 @@ Java_cn_garymb_ygomobile_engine_OcgDuelEngine_nativeInit(JNIEnv* env, jclass /*c
         }
         env->DeleteLocalRef(pathStr);
     }
+    // 扩展卡数据：卡包 zip/ypk 档案内 cdb → expansions 散 cdb（均不解压落地）
+    loadExpansionCardData();
     resolveRuleCodes();
     if (g_cardData.empty())
         return JNI_FALSE;
@@ -477,10 +772,13 @@ Java_cn_garymb_ygomobile_engine_OcgDuelEngine_nativeInit(JNIEnv* env, jclass /*c
     return JNI_TRUE;
 }
 
-/* 重新装载卡片数据（卡组编辑/扩展变更后调用），沿用已设置的 rootPath */
+/* 重新装载卡片数据（卡组编辑/卡包增删变更后调用），沿用已设置的 rootPath；
+ * 本入口会强制重扫卡包档案，因此包的新增/删除/覆写无需重启应用即可生效 */
 JNIEXPORT void JNICALL
 Java_cn_garymb_ygomobile_engine_OcgDuelEngine_nativeReloadCards(JNIEnv* env, jclass /*clazz*/,
-                                                                 jobjectArray cdbPaths) {
+                                                                 jobjectArray cdbPaths,
+                                                                 jboolean readExpansions) {
+    g_readExpansions = readExpansions != JNI_FALSE;
     g_cardData.clear();
     jsize n = cdbPaths ? env->GetArrayLength(cdbPaths) : 0;
     for (jsize i = 0; i < n; ++i) {
@@ -492,6 +790,7 @@ Java_cn_garymb_ygomobile_engine_OcgDuelEngine_nativeReloadCards(JNIEnv* env, jcl
         }
         env->DeleteLocalRef(pathStr);
     }
+    loadExpansionCardData();
     resolveRuleCodes();
 }
 

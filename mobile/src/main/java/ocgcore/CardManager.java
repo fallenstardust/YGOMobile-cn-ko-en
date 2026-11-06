@@ -152,8 +152,9 @@ public class CardManager {
      *
      * <p>读取顺序与引擎侧 {@link cn.garymb.ygomobile.AppsSettings#makeCdbList}、
      * cdb 统一优先级一致（后读取覆盖同名卡，低→高）：主 cards.cdb → 卡包
-     * zip/ypk（按文件名升序，靠后名包覆盖靠前名包）→ 卡包物化 cdb
-     *（{@code expansions/cdb/}，与包内 cdb 同源）→ expansions 散 cdb（最高）。
+     * zip/ypk（按文件名升序，靠后名包覆盖靠前名包）→ expansions 散 cdb（最高）。
+     * 卡包物化目录 {@code expansions/cdb/} 已废除：包内 cdb 现由两套 C++ 直接从档案里读，
+     * 再读一份落地副本只会让旧副本盖住新包内容。
      */
     @WorkerThread
     public void loadCards() {
@@ -193,18 +194,7 @@ public class CardManager {
                             }
                             Log.i(TAG, "load " + count + " cdb:" + file);
                         }
-                        //2.再读卡包物化 cdb 目录（与包内同源，重复读无害；旧版未物化时为空）
-                        File packCdbDir = new File(dir, Constants.CORE_PACK_CDB_DIR);
-                        File[] packed = packCdbDir.listFiles(f -> f.isFile()
-                                && f.getName().toLowerCase().endsWith(".cdb"));
-                        if (packed != null) {
-                            Arrays.sort(packed, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
-                            for (File file : packed) {
-                                count = readAllCards(file, map);
-                                Log.i(TAG, "load " + count + " pack cdb:" + file);
-                            }
-                        }
-                        //3.最后读 expansions 散 cdb（最高优先级，覆盖全部同名卡）
+                        //2.最后读 expansions 散 cdb（最高优先级，覆盖全部同名卡）
                         for (File file : files) {
                             if (file.getName().endsWith(".cdb")) {
                                 count = readAllCards(file, map);

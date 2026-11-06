@@ -56,7 +56,7 @@ public class App extends GameApplication {
             QbSdk.initTbsSettings(map);
         }
         // 决斗引擎预热再提前到进程诞生时刻（已在 CrashHandler.init 之后，挂线程钩子
-        // 可用）：卡包物化→cdb 加载全部在子线程后台进行，用 Logo/主页/
+        // 可用）：档案直读式 cdb 加载全部在子线程后台进行，用 Logo/主页/
         // 资源检查/导航/建房/猜拳/选先后攻的全部自然耗时覆盖首次引导开销，使
         // ServerDuel#startDuel 开局闸门即时通过、选完直接发牌。仅主进程预热
         //（:game/:dexopt 等子进程不跑内置局域网服务器，无需引擎数据）；
