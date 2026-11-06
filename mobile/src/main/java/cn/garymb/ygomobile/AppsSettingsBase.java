@@ -323,12 +323,18 @@ abstract class AppsSettingsBase {
     /**
      * native 档案挂载列表：C++ 侧 CFileSystem::createAndOpenFile 对 FileArchives
      * <b>正序遍历（最先挂载者优先）</b>，后接物理工作目录，故卡包按文件名字典序
-     * <b>倒序</b>加入（靠后的包最先挂载=优先），最后加入 pics.zip（主资源优先级最低）
+     * <b>倒序</b>加入（靠后的包最先挂载=优先），最后加入 pics.zip、scripts.zip（主资源优先级最低）
      *——与 cdb/script/pics 统一优先级“expansions 散文件 ＞ 卡包 zip/ypk（后名优先）＞
      * 主资源 ＞ 主散目录”一致（参考 game.cpp、data_manager.cpp、image_manager.cpp）。
-     * 主卡片脚本不挂载 scripts.zip 档案：该档案由 native 侧 engineScriptReader 自己按中央
-     * 目录索引直读（见 ygo_engine_jni.cpp）。若挂进 irrlicht FileArchives，一旦设备里残留
-     * 旧版 zip，它会以更高优先级盖掉卡包物化区的新脚本。
+     * 主卡片脚本分两套 C++ 读取路径，本列表只对后者有效：① libygoengine.so 薄 JNI 引擎的
+     * engineScriptReader（见 ygo_engine_jni.cpp）自己扫 scripts.zip 中央目录建索引、按需
+     * pread+inflate 直读，不经过 irrlicht；② libYGOMobile.so（gframe）在
+     * data_manager.cpp::ScriptReaderEx 里走 Irrlicht FileSystem 查找 "script/cXXX.lua"，
+     * 只能命中已挂进 FileArchives 的档案（game.cpp 以 ignorePaths=false 挂载，故档案内
+     * 条目名需与 "script/cXXX.lua" 逐字对应）。而资源检查已不再把 scripts.zip 解压落地成
+     * script/ 实目录（并主动清旧残留），因此本列表一旦缺 scripts.zip，gframe 就再也取不到
+     * 主脚本（卡无效果可发动）。旧注释担心的“残留旧 zip 盖掉卡包物化区”不成立：
+     * prefer_expansion_script 默认为 1，expansions/script/ 实体文件排在档案之前。
      */
     protected void makeZipList(List<String> pathList) {
         if (isReadExpansions()) {
@@ -340,6 +346,7 @@ abstract class AppsSettingsBase {
             }
         }
         pathList.add(new File(getResourcePath(), Constants.CORE_PICS_ZIP).getAbsolutePath());
+        pathList.add(new File(getResourcePath(), Constants.CORE_SCRIPTS_ZIP).getAbsolutePath());
     }
 
     /***
