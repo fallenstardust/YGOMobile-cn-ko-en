@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?><!-- 搜索结果“宫格展现”模式图标（顶部切换按钮用，用户规格：图标显示当前模式）：
+     24dp 2×2 方块，与 ic_view_list_24 同一套尺寸与留白；白色实心，深色底与半透明黑圆角背景上均可读 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="@color/white"
+        android:pathData="M3,3H10.5V10.5H3Z M13.5,3H21V10.5H13.5Z M3,13.5H10.5V21H3Z M13.5,13.5H21V21H13.5Z" />
+</vector>

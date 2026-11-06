@@ -251,61 +251,95 @@
                     android:clipChildren="false"
                     android:clipToPadding="false"
                     android:orientation="vertical">
-                    <!-- 撤销/重做/批量删除一行：本 LinearLayout 同时是批量拖动“拖到此处删除”的落点区（layout_deck_undo_redo）；
-                         进入批量勾选模式时 undo/redo 隐藏、垃圾桶 delete 显示；本层不裁剪，保证垃圾桶放大后的圆圈完整 -->
+                    <!-- 批量模式按钮行：「撤销/重做/批量删除」(layout_deck_undo_redo) 与其右侧的「退出多选模式」按钮。
+                         退出键必须摆在本横向容器里而不是 layout_deck_undo_redo 内部：那行矩形同时是整组拖动
+                         “拖到此处删除”的落点区（DeckBatchEditController#setDeleteZone），拖到退出键上不该误删卡片 -->
                     <LinearLayout
-                        android:id="@+id/layout_deck_undo_redo"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="center"
                         android:layout_marginBottom="20dp"
                         android:clipChildren="false"
                         android:clipToPadding="false"
                         android:orientation="horizontal">
+                        <!-- 撤销/重做/批量删除一行：本 LinearLayout 同时是批量拖动“拖到此处删除”的落点区（layout_deck_undo_redo）；
+                             进入批量勾选模式时 undo/redo 隐藏、垃圾桶 delete 显示；本层不裁剪，保证垃圾桶放大后的圆圈完整 -->
+                        <LinearLayout
+                            android:id="@+id/layout_deck_undo_redo"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:clipChildren="false"
+                            android:clipToPadding="false"
+                            android:orientation="horizontal">
 
-                        <ImageButton
-                            android:id="@+id/btn_undo"
-                            android:layout_width="48dp"
-                            android:layout_height="48dp"
-                            android:layout_marginRight="5dp"
-                            android:adjustViewBounds="true"
-                            android:background="@drawable/rotate"
-                            android:enabled="false"
-                            android:gravity="center"
-                            android:padding="14dp"
-                            android:scaleType="fitCenter"
-                            android:src="@drawable/undo" />
+                            <ImageButton
+                                android:id="@+id/btn_undo"
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:layout_marginRight="5dp"
+                                android:adjustViewBounds="true"
+                                android:background="@drawable/rotate"
+                                android:enabled="false"
+                                android:gravity="center"
+                                android:padding="14dp"
+                                android:scaleType="fitCenter"
+                                android:src="@drawable/undo" />
 
-                        <ImageButton
-                            android:id="@+id/btn_redo"
-                            android:layout_width="48dp"
-                            android:layout_height="48dp"
+                            <ImageButton
+                                android:id="@+id/btn_redo"
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:layout_marginLeft="5dp"
+                                android:adjustViewBounds="true"
+                                android:background="@drawable/rotate"
+                                android:enabled="false"
+                                android:gravity="center"
+                                android:padding="14dp"
+                                android:scaleType="fitCenter"
+                                android:scaleX="-1"
+                                android:src="@drawable/undo" />
+
+                            <!-- 批量勾选模式的垃圾桶删除键：仅批量模式可见，与同列 undo/redo 同样带旋转背景；
+                                 三个删除入口共用：①整组拖动悬停在本行时放大图标、松手即删 ②批量模式内再次长按卡片
+                                 ③直接点击本键 → performBatchDelete；显式声明 clickable 保证点击不被当作装饰视图 -->
+                            <ImageButton
+                                android:id="@+id/btn_deck_batch_delete"
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:layout_marginLeft="5dp"
+                                android:adjustViewBounds="true"
+                                android:background="@drawable/rotate"
+                                android:clickable="true"
+                                android:gravity="center"
+                                android:padding="12dp"
+                                android:scaleType="fitCenter"
+                                android:src="@drawable/ic_del"
+                                android:visibility="gone" />
+                        </LinearLayout>
+
+                        <!-- 批量勾选模式的退出键：仅批量模式可见，点击清空全部勾选并退出批量模式
+                         （取代原先挡住卡片的操作提示 toast）；与垃圾桶同处一行但在其矩形之外，
+                         整组拖动松手在它上面不算“拖到此处删除”。
+                         按用户规格为左绿勾右「多选」：绿勾与卡片上的打勾图标同源（ic_effect_used_check），
+                         背景与另两处退出键统一用 button_radius_black_transparents；
+                         非多选模式以 INVISIBLE 常驻占位（而非 GONE），使本行在进出多选模式时不左右跳动 -->
+                        <Button
+                            android:id="@+id/btn_deck_batch_exit"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
                             android:layout_marginLeft="5dp"
-                            android:adjustViewBounds="true"
-                            android:background="@drawable/rotate"
-                            android:enabled="false"
-                            android:gravity="center"
-                            android:padding="14dp"
-                            android:scaleType="fitCenter"
-                            android:scaleX="-1"
-                            android:src="@drawable/undo" />
-
-                        <!-- 批量勾选模式的垃圾桶删除键：仅批量模式可见，与同列 undo/redo 同样带旋转背景；
-                             三个删除入口共用：①整组拖动悬停在本行时放大图标、松手即删 ②批量模式内再次长按卡片
-                             ③直接点击本键 → performBatchDelete；显式声明 clickable 保证点击不被当作装饰视图 -->
-                        <ImageButton
-                            android:id="@+id/btn_deck_batch_delete"
-                            android:layout_width="48dp"
-                            android:layout_height="48dp"
-                            android:layout_marginLeft="5dp"
-                            android:adjustViewBounds="true"
-                            android:background="@drawable/rotate"
+                            android:background="@drawable/button_radius_black_transparents"
                             android:clickable="true"
-                            android:gravity="center"
-                            android:padding="12dp"
-                            android:scaleType="fitCenter"
-                            android:src="@drawable/ic_del"
-                            android:visibility="gone" />
+                            android:drawableStart="@drawable/ic_effect_used_check"
+                            android:drawablePadding="3dp"
+                            android:minWidth="0dp"
+                            android:paddingLeft="6dp"
+                            android:paddingRight="6dp"
+                            android:text="@string/batch_mode_exit"
+                            android:textColor="@color/white"
+                            android:textSize="10sp"
+                            android:visibility="invisible" />
                     </LinearLayout>
 
                     <LinearLayout
@@ -456,6 +490,29 @@
                     android:text="0"
                     android:textColor="@color/gold"
                     android:textStyle="bold" />
+
+                <!-- 展现模式切换按钮（用户规格）：默认列表，点一下换宫格；图标始终显示当前模式
+                     （列表态 ic_view_list_24，宫格态 ic_view_grid_24），由页面点击后刷新 -->
+                <ImageButton
+                    android:id="@+id/btn_result_view_mode"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginEnd="10dp"
+                    android:background="@drawable/button_radius_black_transparents"
+                    android:padding="5dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_view_list_24" />
+
+                <!-- 搜索结果排序规则切换（用户规格：与顶部计数同一行）：选项与比较器实现
+                     与决斗内卡组编辑器的搜索结果排序同源（星数↑/攻击↑/守备↑/名称↓），
+                     切换只对当前结果重排，不重新发起搜索 -->
+                <androidx.appcompat.widget.AppCompatSpinner
+                    android:id="@+id/sp_result_sort"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_weight="1" />
             </LinearLayout>
 
             <com.tubb.smrv.SwipeMenuRecyclerView

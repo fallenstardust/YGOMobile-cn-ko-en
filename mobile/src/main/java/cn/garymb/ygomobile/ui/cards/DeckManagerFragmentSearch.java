@@ -187,6 +187,15 @@ public abstract class DeckManagerFragmentSearch extends DeckManagerFragmentDeck 
 
     @Override
     public void onSearchResult(List<Card> cardInfos, boolean isHide) {
+        // 关键词搜索与收藏列表按顶部下拉选中的规则排列（规则与决斗内卡组编辑器同源）
+        showSearchResultCards(applyResultSortRule(cardInfos), isHide);
+    }
+
+    /**
+     * 结果填入 + 顶部计数 + 抽屉展示。排序不在这里做，由调用方决定：
+     * 卡包展示需要保留卡包原来的顺序，不能套结果排序规则
+     */
+    private void showSearchResultCards(List<Card> cardInfos, boolean isHide) {
         tv_result_count.setText(String.valueOf(cardInfos.size()));
         String keyword = mCardSearcher.getCurrentKeyword();
         if (keyword != null && !keyword.isEmpty()) {
@@ -194,8 +203,7 @@ public abstract class DeckManagerFragmentSearch extends DeckManagerFragmentDeck 
         }
 
         mCardListAdapter.setSearchKeyword(currentCardSearchMessage);
-        mCardListAdapter.set(cardInfos);
-        mCardListAdapter.notifyDataSetChanged();
+        fillSearchResultList(cardInfos);
         if (!cardInfos.isEmpty()) {
             mListView.smoothScrollToPosition(0);
         }
@@ -372,7 +380,9 @@ public abstract class DeckManagerFragmentSearch extends DeckManagerFragmentDeck 
 
     protected void showCardList(List<Card> cardList, boolean sort) {
         if (!cardList.isEmpty()) {
-            onSearchResult(sort ? mCardLoader.sort(cardList) : cardList, false);//根据情况不同，判断是否调用CardLoader的sort方法排序List<Card>
+            //关联卡片与关键词搜索走同一排序规则（旧的 mCardLoader.sort 固定序已被
+            //本页的规则切换取代）；卡包展示(sort=false)保留卡包原顺序，直接填入不套规则
+            showSearchResultCards(sort ? applyResultSortRule(cardList) : cardList, false);
             //sort为true代表点击“关联卡片”按钮（卡包展示为false），以当前卡片名作为关键词计入搜索历史
             if (sort && mCardDetail != null && mCardDetail.getCardInfo() != null) {
                 mCardSearcher.recordHistoryKeyword(mCardDetail.getCardInfo().Name);

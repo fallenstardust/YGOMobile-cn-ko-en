@@ -6,16 +6,28 @@ import android.content.Context;
 import android.text.SpannableString;
 import android.text.style.BackgroundColorSpan;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.TextView;
+
+import androidx.recyclerview.widget.FastScrollLinearLayoutManager;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.chad.library.adapter.base.viewholder.BaseViewHolder;
 import com.tubb.smrv.SwipeHorizontalMenuLayout;
 
 import org.greenrobot.eventbus.EventBus;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.bean.events.CardInfoEvent;
+import cn.garymb.ygomobile.game.deck.CardSearcherManagerBase;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
@@ -49,6 +61,19 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
         mStringManager = DataManager.get().getStringManager();
     }
 
+    /**
+     * 条目布局按宫格标志选：行模式用 item_search_card（卡图 + 卡名/属性/攻守等文字），
+     * 宫格模式用 item_search_card_grid（只有卡图与左上角角标）；
+     * 返回类型写全限定名：本类体内简名 BaseViewHolder 被
+     * {@link BaseRecyclerAdapterPlus.BaseViewHolder} 遮蔽，与父类签名不匹配
+     */
+    @Override
+    protected com.chad.library.adapter.base.viewholder.BaseViewHolder onCreateDefViewHolder(
+            ViewGroup parent, int viewType) {
+        return createBaseViewHolder(parent,
+                mGrid ? R.layout.item_search_card_grid : R.layout.item_search_card);
+    }
+
     public void setSearchKeyword(String keyword) {
         mSearchKeyword = keyword;
     }
@@ -76,6 +101,108 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
             }
         }
         return false;
+    }
+
+    // === 搜索结果两种展现（行模式：卡图 + 文字信息；宫格模式：只卡图与禁限/起源点角标）===
+
+    /** 当前是否宫格展现；默认行为 false（用户规格：默认开列表，顶部按钮点一下换宫格） */
+    private boolean mGrid;
+    /** 宫格单列最小宽（px），列数 = 列表可用宽 / 该值；取行模式的卡图宽 card_small_width 保证两处观感一致 */
+    private int mGridMinCell;
+
+    /**
+     * 切换搜索结果列的展现形式（宫格/行）。本方法只改标志并重建 holder
+     * （两种条目布局的控件树完全不同），布局管理器要另外调
+     * {@link #applyListLayout(RecyclerView)} 或直接用 {@link #toggleListLayout(RecyclerView)}
+     */
+    public void setGridLayout(boolean grid) {
+        if (mGrid == grid) return;
+        mGrid = grid;
+        notifyDataSetChanged();
+    }
+
+    public boolean isGridLayout() {
+        return mGrid;
+    }
+
+    /**
+     * 按当前展现模式装配布局管理器：宫格 = GridLayoutManager（列数按可用宽 / 单列最小宽
+     * 自适应，宽度还没量出来时先给 1 列，下一轮填结果时再复核）；列表 = 原来的
+     * {@link FastScrollLinearLayoutManager}（带右侧快速滚动条）。已挂对类型的则只改列数，
+     * 不重建布局管理器（避免滚动位置被摸清）。列数变化会 requestLayout，所以下游
+     * 页面要在布局之外（post）调用；单格尺寸不在此计算：宫格条目宽高比由
+     * item_search_card_grid 的 dimensionRatio 派生，列宽变化自动跟随
+     */
+    public void applyListLayout(RecyclerView list) {
+        if (list == null) return;
+        RecyclerView.LayoutManager lm = list.getLayoutManager();
+        if (!mGrid) {
+            // GridLayoutManager 也是 LinearLayoutManager 的子类，判断列表态时必须先排除宫格
+            boolean linear = lm instanceof LinearLayoutManager && !(lm instanceof GridLayoutManager);
+            if (!linear) {
+                list.setLayoutManager(new FastScrollLinearLayoutManager(list.getContext()));
+            }
+            return;
+        }
+        if (mGridMinCell <= 0) {
+            mGridMinCell = context.getResources().getDimensionPixelSize(R.dimen.card_small_width);
+        }
+        int avail = list.getWidth() - list.getPaddingLeft() - list.getPaddingRight();
+        int span = avail > 0 ? Math.max(1, avail / mGridMinCell) : 1;
+        if (lm instanceof GridLayoutManager) {
+            if (((GridLayoutManager) lm).getSpanCount() != span) {
+                ((GridLayoutManager) lm).setSpanCount(span);
+            }
+        } else {
+            list.setLayoutManager(new GridLayoutManager(list.getContext(), span));
+        }
+    }
+
+    /**
+     * 顶部展现模式按钮的入口：翻转列表/宫格两态并成对换上对应的布局管理器
+     * （条目布局与布局管理器不能错开，否则宫格布局配线性 LM 会把卡图拉成满宽）
+     *
+     * @return 切换后的模式（true = 宫格），页面据此刷新按钮图标
+     */
+    public boolean toggleListLayout(RecyclerView list) {
+        setGridLayout(!mGrid);
+        applyListLayout(list);
+        return mGrid;
+    }
+
+    /**
+     * 按卡组编辑器的搜索结果排序规则重排（sortSel 与编辑器排序下拉位序同义：
+     * 0=星数↑ / 1=攻击↑ / 2=守备↑ / 3=名称↓）；比较器取自 {@link CardSearcherManagerBase}，
+     * 三个界面共用同一套规则而不各自实现。返回新列表，不改动传入列表（那是搜索线程的产物）。
+     */
+    public static List<Card> sortByRule(List<Card> cards, int sortSel) {
+        List<Card> sorted = new ArrayList<>(cards == null ? 0 : cards.size());
+        if (cards != null) sorted.addAll(cards);
+        Collections.sort(sorted, CardSearcherManagerBase.searchComparator(sortSel));
+        return sorted;
+    }
+
+    /**
+     * 结果排序下拉的公共装项（卡查页与卡组编辑页共用，装项与样式只在这里维护一份）：
+     * 四个选项与决斗内卡组编辑器的搜索结果排序同源（同一批系统字符串 1370-1373），
+     * 位序与 {@link #sortByRule} 的 sortSel 同义；白字单行 12sp，
+     * 弹层背景沿用两页禁卡表下拉的 colorNavy。选中监听由页面自己接（重排本页当前结果）
+     */
+    public static void setupSortSpinner(Context context, Spinner spinner) {
+        if (spinner == null) return;
+        StringManager sm = DataManager.get().getStringManager();
+        List<SimpleSpinnerItem> items = new ArrayList<>();
+        items.add(new SimpleSpinnerItem(0, sm.getSystemString(1370, "星数↑")));
+        items.add(new SimpleSpinnerItem(1, sm.getSystemString(1371, "攻击↑")));
+        items.add(new SimpleSpinnerItem(2, sm.getSystemString(1372, "守备↑")));
+        items.add(new SimpleSpinnerItem(3, sm.getSystemString(1373, "名称↓")));
+        SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(context);
+        adapter.setColor(YGOUtil.c(R.color.white));
+        adapter.setSingleLine(true);
+        adapter.setTextSize(12f);
+        adapter.set(items);
+        spinner.setAdapter(adapter);
+        spinner.setPopupBackgroundResource(R.color.colorNavy);
     }
 
     public void notifyItemChanged(Card card) {
@@ -134,6 +261,12 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
 
     @Override
     protected void convert(com.chad.library.adapter.base.viewholder.BaseViewHolder holder, Card item) {
+        // 宫格模式只呈现卡图与角标（用户规格），卡名/属性/攻守与加卡键不属于宫格条目
+        if (mGrid) {
+            imageLoader.bindImage(holder.getView(R.id.card_image), item, ImageLoader.Type.small);
+            bindLimitBadge(holder, item);
+            return;
+        }
         int position = holder.getBindingAdapterPosition() - getHeaderLayoutCount();
         imageLoader.bindImage(holder.getView(R.id.card_image), item, ImageLoader.Type.small);
 
@@ -295,6 +428,30 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
             holder.setGone(R.id.layout_atk, true);
             holder.setGone(R.id.layout_def, true);
         }
+        bindLimitBadge(holder, item);
+        //卡片类型
+        holder.setText(R.id.card_type, CardUtils.getAllTypeString(item, mStringManager));
+
+        holder.setText(R.id.card_code, String.format("%08d", item.getCode()));
+
+        // 根据设置控制添加按钮的可见性
+        if (item.isType(CardType.Token)) {//衍生物不显示添加按钮
+            holder.getView(R.id.ll_add_btn).setVisibility(View.GONE);
+        } else {
+            holder.getView(R.id.ll_add_btn).setVisibility(showAddButtons ? View.VISIBLE : View.GONE);
+        }
+
+        bindMenu(holder, position);
+        if (mItemBg) {
+            holder.setBackgroundResource(R.id.swipe_layout, R.drawable.list_item_bg);
+        }
+    }
+
+    /**
+     * 禁限 / 起源点(GeneSys)点数角标绑定：行模式与宫格模式共用这一段（两种条目布局的
+     * right_top / tv_limit_num 同名），保证两种展现下的判定口径与贴图完全一致。
+     */
+    private void bindLimitBadge(com.chad.library.adapter.base.viewholder.BaseViewHolder holder, Card item) {
         if (mImageTop == null) {
             mImageTop = new ImageTop(context);
         }
@@ -329,22 +486,6 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
         } else {
             holder.setGone(R.id.right_top, true);
             holder.setText(R.id.tv_limit_num, "");
-        }
-        //卡片类型
-        holder.setText(R.id.card_type, CardUtils.getAllTypeString(item, mStringManager));
-
-        holder.setText(R.id.card_code, String.format("%08d", item.getCode()));
-
-        // 根据设置控制添加按钮的可见性
-        if (item.isType(CardType.Token)) {//衍生物不显示添加按钮
-            holder.getView(R.id.ll_add_btn).setVisibility(View.GONE);
-        } else {
-            holder.getView(R.id.ll_add_btn).setVisibility(showAddButtons ? View.VISIBLE : View.GONE);
-        }
-
-        bindMenu(holder, position);
-        if (mItemBg) {
-            holder.setBackgroundResource(R.id.swipe_layout, R.drawable.list_item_bg);
         }
     }
 

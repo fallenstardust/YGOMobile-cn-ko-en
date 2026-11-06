@@ -1023,13 +1023,16 @@
     </LinearLayout>
 
     <!-- 底部：侧边按钮行（id=layout_deck_side_buttons，经 layout-port 变体解析为横向一行）：
-         按用户规格竖屏专用——按钮行在底部贴下缘、与上部卡组主体保留 1dp 间距，
-         横向一行贴界面左下角不挤压版面（历史踩坑：作为水平 LinearLayout 首格会占列宽致左侧大面积空白）。
+         按用户规格竖屏专用——按钮行贴下缘、与上部卡组主体保留 1dp 间距；
+         宽度必须给 match_parent：本变体根节点是 FrameLayout，内部按两个分组子布局定位
+         （设置/音乐靠左贴边，退出多选/撤销/重做整组居中），若只包 wrap_content
+         则两组会挤在同一个窄容器里重叠，居中与贴边都不成立（历史踩坑：作为水平
+         LinearLayout 首格会占列宽致卡组内容左侧大面积空白，故不并入主体列）。
          根默认 GONE，进/出卡组编辑器由 DeckEditorViewHost.show/hide 点亮/收起。 -->
     <include
         layout="@layout/layout_deck_side_buttons"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="start|bottom"
+        android:layout_gravity="bottom"
         android:layout_marginTop="1dp" />
 </LinearLayout>

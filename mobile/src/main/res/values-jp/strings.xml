@@ -152,8 +152,8 @@
     <string name="save_deck">保存</string>
     <string name="save_as_deck">名前を付けて保存 </string>
     <string name="deck_list">デッキリスト</string>
-    <string name="loading">ロード..."</string>
-    <string name="loading_failed">ロード失敗"</string>
+    <string name="loading">ロード...</string>
+    <string name="loading_failed">ロード失敗</string>
     <string name="tip">ヒント</string>
     <string name="question">問う</string>
     <string name="question_delete_deck">デッキを削除?</string>
@@ -393,10 +393,9 @@
     <string name="tip_drag_side_full" formatted="false">サイドデッキが上限（%d枚）に達しました</string>
     <string name="tip_drag_extra_in_main">エクストラデッキのカードはメインデッキに置けません</string>
     <string name="tip_drag_normal_in_extra">通常モンスター・魔法・罠カードはエクストラデッキに置けません</string>
-    <string name="batch_mode_hint">一括選択モード：カードをタップで選択、長押しで一括移動；ゴミ箱にドロップまたは再度長押しで選択分を削除、戻るキーで終了</string>
-    <string name="batch_mode_hint_editor">一括選択モード：カードをタップで選択、長押しで一括移動；検索結果リストにドロップで選択分を削除、戻るキーで終了</string>
     <string name="batch_delete_done" formatted="false">%d枚のカードを削除しました</string>
     <string name="batch_delete_none">カードが選択されていません</string>
+    <string name="batch_mode_exit">一括</string>
     <string name="point_cost">ポイント消費</string>
     <string name="credit_limit">ポイント上限</string>
     <string name="switch_genesys_mode">起源点数モード</string>

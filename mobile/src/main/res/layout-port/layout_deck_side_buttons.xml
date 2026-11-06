@@ -1,72 +1,100 @@
 <?xml version="1.0" encoding="utf-8"?><!-- 卡组编辑器侧边按钮列·竖屏变体（横屏 layout/ 为纵向贴卡组编辑器左缘）：
-     按用户规格竖屏改为和决斗态类似的底部横向一行，共四键：
-     设置(btn_deck_settings)/音乐开关(btn_deck_sound) 靠左紧贴界面左下缘，
-     撤销(btn_deck_undo)/重做(btn_deck_redo) 按用户规格排在可见键的最右侧。
-     （曾在本行右侧放 记录/加速/表情/聊天 四个 INVISIBLE 占位，Java 与 XML 均 0 引用，
-     而 INVISIBLE 在横向下仍会占满行宽，已删除）
-     与横屏变体同文件名同 ID（btn_deck_*），按方向限定符各自解析；本变体的宿主是
-     layout_deck_editor 根 FrameLayout 末尾的悬浮 include（root id=layout_deck_side_buttons）：
-     横向一行贴界面左下角且不挤压版面（若作为水平 LinearLayout 首格会占列宽致卡组内容
-     左侧大面积空白，历史踩坑）；运行时每个方向只有一份副本。
+     按用户规格竖屏为底部横向一行，整行宽度贴屏（由 layout_deck_editor 末尾 include 的
+     match_parent 提供），根为 FrameLayout + 两个分组子布局：
+     左组 layout_gravity=left——设置(btn_deck_settings)/音乐开关(btn_deck_sound) 靠左贴界面左下缘；
+     中组 layout_gravity=center——退出多选(btn_deck_batch_exit)/撤销(btn_deck_undo)/重做(btn_deck_redo)
+     在屏幕底部居中。
+     与横屏变体同文件名同 ID（btn_deck_*），按方向限定符各自解析；运行时每个方向只有一份副本。
      根节点默认 GONE，进/出卡组编辑器由 DeckEditorViewHost.show/hide 点亮/收起。
      ID 仍须与决斗场 layout_image_buttons_panel 的 btn_settings 等不同名。
-     点击行为与图标纹理由 DeckEditorManager.setupDeckSideButtons 与 DeckEditorHistoryPanel 接线 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+     点击行为与图标纹理由 DeckEditorManager.setupDeckSideButtons、DeckBatchSelectionManager
+     与 DeckEditorHistoryPanel 接线 -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/layout_deck_side_buttons"
-    android:layout_width="wrap_content"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:gravity="bottom|start"
-    android:orientation="horizontal"
+    android:gravity="bottom|center_horizontal"
     android:visibility="gone">
 
-    <!-- 设置键：尺寸对齐竖屏决斗 layout_game_right 的 btn_settings（固定 30dp 见方 /
-         padding=3dp / fitCenter），不用 adjustViewBounds+wrap_content（其按图标 intrinsic 收缩，
-         致本按钮比决斗同键显小） -->
-    <ImageButton
-        android:id="@+id/btn_deck_settings"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-        android:layout_marginEnd="5dp"
-        android:background="@drawable/btn_sci_fi_bg"
-        android:padding="3dp"
-        android:scaleType="fitCenter"
-        android:src="@drawable/setting" />
+    <!-- 左组：设置/音乐靠左贴边 -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="left"
+        android:orientation="horizontal">
 
-    <!-- 音乐开关键：同设置键，尺寸对齐竖屏决斗 btn_sound -->
-    <ImageButton
-        android:id="@+id/btn_deck_sound"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-        android:background="@drawable/btn_sci_fi_bg"
-        android:padding="3dp"
-        android:scaleType="fitCenter"
-        android:src="@drawable/ic_volume_on" />
+        <!-- 设置键：尺寸对齐竖屏决斗 layout_game_right 的 btn_settings -->
+        <ImageButton
+            android:id="@+id/btn_deck_settings"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginEnd="5dp"
+            android:background="@drawable/btn_sci_fi_bg"
+            android:padding="3dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/setting" />
 
-    <!-- 撤销/重做：按用户规格紧跟可见的设置/音乐两键之后，位于按钮行最右侧。
-         旋转背晕与卡组编辑页 undo/redo 同源（rotate），重做键 scaleX=-1 镜像；
-         默认 INVISIBLE 占位，由 DeckEditorHistoryPanel 按共享卡组历史点亮。
-         尺寸取 30×30dp 正方（与本行设置/音乐键等高）：rotate 环背景在非正方框里会被
-         拉成椭圆，按用户规格 “竖屏 undo/redo 为正圆形” 取正方；padding 8dp 收窄环内图标 -->
-    <ImageButton
-        android:id="@+id/btn_deck_undo"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-        android:layout_marginEnd="5dp"
-        android:background="@drawable/rotate"
-        android:padding="8dp"
-        android:scaleType="fitCenter"
-        android:src="@drawable/undo"
-        android:visibility="invisible" />
+        <!-- 音乐开关键：同设置键 -->
+        <ImageButton
+            android:id="@+id/btn_deck_sound"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:background="@drawable/btn_sci_fi_bg"
+            android:padding="3dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_volume_on" />
+    </LinearLayout>
 
-    <ImageButton
-        android:id="@+id/btn_deck_redo"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-        android:layout_marginEnd="5dp"
-        android:background="@drawable/rotate"
-        android:padding="8dp"
-        android:scaleType="fitCenter"
-        android:scaleX="-1"
-        android:src="@drawable/undo"
-        android:visibility="invisible" />
-</LinearLayout>
+    <!-- 中组：退出多选 + 撤销/重做整组在屏幕底部居中 -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="horizontal">
+
+        <!-- 批量勾选模式的退出键：常驻占位，只在长按进入批量多选模式时点亮（非模式内走
+             INVISIBLE 而非 GONE，避开进出模式时本键的插入把整行按钮顶位），
+             点击即清空全部勾选并退出多选模式；按用户规格取左绿勾右多选 -->
+        <Button
+            android:id="@+id/btn_deck_batch_exit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="5dp"
+            android:background="@drawable/button_radius_black_transparents"
+            android:clickable="true"
+            android:drawableStart="@drawable/ic_effect_used_check"
+            android:drawablePadding="2dp"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:text="@string/batch_mode_exit"
+            android:textColor="@color/white"
+            android:textSize="9sp"
+            android:visibility="invisible" />
+
+        <!-- 撤销/重做：由 DeckEditorHistoryPanel 按共享卡组历史点亮，重做键 scaleX=-1 镜像 -->
+        <ImageButton
+            android:id="@+id/btn_deck_undo"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginEnd="5dp"
+            android:background="@drawable/rotate"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/undo"
+            android:visibility="invisible" />
+
+        <ImageButton
+            android:id="@+id/btn_deck_redo"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginEnd="5dp"
+            android:background="@drawable/rotate"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:scaleX="-1"
+            android:src="@drawable/undo"
+            android:visibility="invisible" />
+    </LinearLayout>
+</FrameLayout>

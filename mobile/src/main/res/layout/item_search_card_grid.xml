@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?><!-- 搜索结果宫格条目（用户规格：只保留卡图与禁止/限制角标或起源点数值图标）：
+     与列表态 item_search_card.xml 共用同一组 id（card_image / right_top / tv_limit_num），
+     禁限与起源点角标的判定与贴图由 CardListAdapter 的同一段绑定代码提供，两处不会漂移。
+     尺寸口径：宽 = match_parent（即 GridLayoutManager 的列宽，列数按列表宽度自适应），
+     高按列表态卡图同比例 70:102 由 dimensionRatio 派生，因此旋转或抽屉宽度变化时
+     只改列数、不需要重新计算并 notify 数据（避免在布局过程中重建条目）。
+     角标沿用列表态的 @dimen/right_size（20dp 贴卡图左上角，与卡图宽 70dp 的比例
+     与 Constants.CARD_LIMIT_OVERLAY_RATIO 一致），字号沿用列表态的 10sp。 -->
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="2dp">
+
+    <ImageView
+        android:id="@+id/card_image"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:scaleType="fitXY"
+        app:layout_constraintDimensionRatio="70:102"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:src="@drawable/unknown" />
+
+    <!-- 禁限 / GeneSys 点数角标：与列表态同样贴卡图左上角 -->
+    <ImageView
+        android:id="@+id/right_top"
+        android:layout_width="@dimen/right_size"
+        android:layout_height="@dimen/right_size"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="@id/card_image"
+        app:layout_constraintTop_toTopOf="@id/card_image"
+        tools:src="@drawable/selected_light"
+        tools:visibility="visible" />
+
+    <TextView
+        android:id="@+id/tv_limit_num"
+        android:layout_width="@dimen/right_size"
+        android:layout_height="@dimen/right_size"
+        android:gravity="center"
+        android:textSize="10sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="@id/card_image"
+        app:layout_constraintTop_toTopOf="@id/card_image"
+        tools:text="12"
+        tools:visibility="visible" />
+</androidx.constraintlayout.widget.ConstraintLayout>

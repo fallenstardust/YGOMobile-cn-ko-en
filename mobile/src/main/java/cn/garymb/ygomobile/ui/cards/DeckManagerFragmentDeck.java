@@ -541,8 +541,8 @@ public abstract class DeckManagerFragmentDeck extends DeckManagerFragmentBase {
      * 更新撤销/重做按钮的状态和可见性
      */
     protected void updateUndoRedoButtons() {
-        //垃圾桶键与 undo/redo 同位互斥：批量模式只亮垃圾桶
-        applyBatchDeleteButtonVisibility();
+        //垃圾桶与退出键同批量模式互斥于 undo/redo
+        applyBatchButtonsVisibility();
         boolean batchMode = mDeckBatchController != null && mDeckBatchController.isBatchMode();
         if (btnUndo != null && btnRedo != null) {
             if (batchMode) {
@@ -575,10 +575,10 @@ public abstract class DeckManagerFragmentDeck extends DeckManagerFragmentBase {
     }
 
     protected void updateUndoRedoButtonVisibility() {
-        //垃圾桶键仅在批量模式可见
-        applyBatchDeleteButtonVisibility();
+        //垃圾桶与退出键仅在批量模式可见
+        applyBatchButtonsVisibility();
         if (btnUndo == null || btnRedo == null) return;
-        // 批量勾选模式：本行改为只亮垃圾桶，undo/redo 直接不可见不可点
+        // 批量勾选模式：本行改为只亮垃圾桶与退出键，undo/redo 直接不可见不可点
         if (mDeckBatchController != null && mDeckBatchController.isBatchMode()) {
             btnUndo.setVisibility(View.GONE);
             btnRedo.setVisibility(View.GONE);

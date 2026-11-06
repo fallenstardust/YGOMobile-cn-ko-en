@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?><!-- 搜索结果“列表展现”模式图标（顶部切换按钮用，用户规格：图标显示当前模式）：
+     24dp 线框三行，每行左侧小块 + 右侧长条；白色实心，深色抽屉底与半透明黑圆角背景上均可读 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="@color/white"
+        android:pathData="M3,4H7V8H3Z M9,4H21V8H9Z M3,10H7V14H3Z M9,10H21V14H9Z M3,16H7V20H3Z M9,16H21V20H9Z" />
+</vector>

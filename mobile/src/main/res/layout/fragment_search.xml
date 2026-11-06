@@ -23,10 +23,60 @@
                 android:id="@+id/list_cards"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:layout_marginTop="36dp"
                 android:divider="@android:color/transparent"
                 android:dividerHeight="4dp"
                 android:padding="5dp"
                 android:scrollbars="vertical" />
+
+            <!-- 顶部一行：搜索结果计数 + 排序规则切换（用户规格：新建立一行，与卡组编辑页
+                 左抽屉的顶部计数行观感一致）。计数原先在右下角卡查按钮下方，现上移到本行。
+                 本行与 list_cards 的 marginTop 同为 36dp：两者都是 layout_main(FrameLayout)
+                 的子项，不依赖彼此位置，改高度要同时改两处 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="36dp"
+                android:layout_gravity="top"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="5dp"
+                android:paddingEnd="5dp">
+
+                <TextView
+                    android:id="@+id/search_result_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="10dp"
+                    android:background="@drawable/ic_radius_bg"
+                    android:clickable="false"
+                    android:gravity="center"
+                    android:text="0"
+                    android:textAlignment="center"
+                    android:textColor="@color/gold"
+                    android:textSize="10sp" />
+
+                <!-- 展现模式切换按钮（用户规格）：默认列表，点一下换宫格；图标始终显示当前模式
+                     （列表态 ic_view_list_24，宫格态 ic_view_grid_24），由页面点击后刷新；
+                     本页不读卡组，因此行模式仍不装配加卡键 -->
+                <ImageButton
+                    android:id="@+id/btn_result_view_mode"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginEnd="10dp"
+                    android:background="@drawable/button_radius_black_transparents"
+                    android:padding="5dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_view_list_24" />
+
+                <!-- 排序规则切换：选项与比较器与决斗内卡组编辑器的搜索结果排序同源
+                     （星数↑/攻击↑/守备↑/名称↓），切换只对当前结果重排 -->
+                <androidx.appcompat.widget.AppCompatSpinner
+                    android:id="@+id/sp_result_sort"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -39,29 +89,19 @@
                 android:orientation="vertical"
                 android:padding="10dp">
 
+                <!-- 卡查按钮：结果计数已上移到顶部的计数+排序行（search_result_count），
+                     本悬浮列只留按钮本身，原先按钮下方的 10dp 间距是用来隔开计数的，一并去掉 -->
                 <ImageButton
                     android:id="@+id/btn_search"
                     android:layout_width="60dp"
                     android:layout_height="60dp"
                     android:layout_gravity="center"
-                    android:layout_marginBottom="10dp"
                     android:background="@drawable/button_cube"
                     android:src="@drawable/search"
                     android:scaleType="fitCenter"
                     android:adjustViewBounds="true"
                     android:padding="10dp"
                     android:clickable="false" />
-                <TextView
-                    android:id="@+id/search_result_count"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/ic_radius_bg"
-                    android:clickable="false"
-                    android:gravity="center"
-                    android:textAlignment="center"
-                    android:text="0"
-                    android:textColor="@color/gold"
-                    android:textSize="10sp" />
             </LinearLayout>
 
         </FrameLayout>

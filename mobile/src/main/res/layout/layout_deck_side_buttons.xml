@@ -1,19 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- 卡组编辑器侧边功能按钮列·横屏变体（纵向排列）：
-     只有四键：撤销(btn_deck_undo)/重做(btn_deck_redo)/设置(btn_deck_settings)/
-     音乐开关(btn_deck_sound)，前两键按共享卡组历史的游标位置点亮，并带与卡组编辑页
-     undo/redo 同源的 rotate 旋转光环（背景 @drawable/rotate，由 DeckEditorHistoryPanel 起动画）。
+     只有五键：退出批量多选(btn_deck_batch_exit，本变体上绿勾下多选)/撤销(btn_deck_undo)/
+     重做(btn_deck_redo)/设置(btn_deck_settings)/音乐开关(btn_deck_sound)，
+     撤销与重做按共享卡组历史的游标位置点亮，并带与卡组编辑页 undo/redo 同源的
+     rotate 旋转光环（背景 @drawable/rotate，由 DeckEditorHistoryPanel 起动画）；
+     退出批量多选键常驻占位，只在长按进入批量勾选模式时点亮（由 DeckBatchSelectionManager 接线与显隐）。
      （曾在此列顶部放 记录/加速/表情/聊天 四个 INVISIBLE 占位，Java 与 XML 均 0 引用，
      且 INVISIBLE 仍参与测量与布局，已删除）
-     列锚定在界面底部、向上生长，四枚功能键排在列尾贴住界面下缘。
+     列锚定在界面底部、向上生长，功能键排在列尾贴住界面下缘。
      include 位置：本变体由 layout_deck_editor 顶层水平 LinearLayout 以首列 include 引入
-     （wrap_content + layout_gravity=bottom），右侧卡组主体 weight=1 占满剩余宽度不重叠；
+     （wrap_content + layout_gravity=bottom），右侧卡组主体 weight=1 占满宽度不重叠；
      竖屏由 layout-port 同名变体接管（横向一行贴左下角），运行时每个方向只有一份副本。
      根节点横屏默认 VISIBLE，进/出卡组编辑器由 DeckEditorViewHost.show/hide 点亮/收起。
      ID 必须与决斗场 layout_image_buttons_panel 的 btn_settings 等不同名：
      两套按钮共存于同一 Activity 视图树，同名会让 CardDetailPanel/YGOProActivity
      的全树 findViewById 命中错误副本。
-     点击行为与图标纹理由 DeckEditorManager.setupDeckSideButtons 与 DeckEditorHistoryPanel 接线 -->
+     点击行为与图标纹理由 DeckEditorManager.setupDeckSideButtons、DeckBatchSelectionManager
+     与 DeckEditorHistoryPanel 接线 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/layout_deck_side_buttons"
     android:layout_width="wrap_content"
@@ -21,6 +24,35 @@
     android:gravity="bottom"
     android:orientation="vertical"
     android:visibility="visible">
+
+    <!-- 批量勾选模式的退出键：按用户规格放在撤销/重做上方，只在长按进入批量多选模式时点亮
+         （非模式内以 INVISIBLE 常驻占位，而非 GONE：避开进出模式时本键的插入把 undo/redo 顶位），
+         点击即清空全部勾选并退出多选模式（取代原先挡住卡片的操作提示 toast）。
+         本变体为横屏纵向列，按用户规格取上绿勾下多选；绿勾与卡片上的打勾图标同源
+         （ic_effect_used_check），背景与卡组编辑页退出键统一用 button_radius_black_transparents；
+         尺寸按用户规格与本列设置/音乐/撤销/重做键同为 40×40dp（高度写定而不走 wrap_content：
+         默认按钮高度会按内容与 minHeight 走，与本列其它键对不齐），左右内边距收窄到 2dp
+         以免按钮默认 16dp 内边距把 40dp 宽里的内容挤掉 -->
+    <Button
+        android:id="@+id/btn_deck_batch_exit"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginBottom="5dp"
+        android:background="@drawable/button_radius_black_transparents"
+        android:clickable="true"
+        android:drawableTop="@drawable/ic_effect_used_check"
+        android:drawablePadding="1dp"
+        android:gravity="center"
+        android:minWidth="0dp"
+        android:minHeight="0dp"
+        android:paddingLeft="2dp"
+        android:paddingTop="1dp"
+        android:paddingRight="2dp"
+        android:paddingBottom="1dp"
+        android:text="@string/batch_mode_exit"
+        android:textColor="@color/white"
+        android:textSize="9sp"
+        android:visibility="invisible" />
 
     <!-- 撤销/重做：按用户规格放在设置按钮上方、与其等同大小，并同样带旋转光环。
          尺寸写定 40×40dp：与设置/音乐键（wrap_content + adjustViewBounds + maxWidth/maxHeight=40dp

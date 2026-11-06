@@ -50,8 +50,11 @@ import ocgcore.enums.LimitType;
  * the sort comparators, ClearSearch and the filter popup displays.
  * The original public constructor body lives here under the base
  * name so the final activity field keeps its finality.
+ * <p>
+ * 本类公开：搜索结果排序比较器（{@link #searchComparator(int)}）是卡组编辑器与
+ * 卡查页、卡组编辑页搜索结果列共用的唯一实现，跨包调用需本类可访问。
  */
-abstract class CardSearcherManagerBase {
+public abstract class CardSearcherManagerBase {
 
     protected static final String TAG = "CardSearcherManager";
 
@@ -195,6 +198,15 @@ abstract class CardSearcherManagerBase {
      */
     public static Comparator<Card> defaultSearchComparator() {
         return makeComparator(0);
+    }
+
+    /**
+     * 按排序位序取比较器：sortSel 与编辑器搜索结果排序下拉的选中位序同义
+     * （0=星数↑ / 1=攻击↑ / 2=守备↑ / 3=名称↓），公开给卡查页与卡组编辑页的
+     * 搜索结果列表，使三处的规则切换共用同一套比较器而不各自实现。
+     */
+    public static Comparator<Card> searchComparator(int sortSel) {
+        return makeComparator(sortSel);
     }
 
     /** 排序比较器统一实现：类秩(怪兽→魔法→陷阱)优先，再按 sortSel 解算子类/攻守/名称，末尾以卡码兜底 */

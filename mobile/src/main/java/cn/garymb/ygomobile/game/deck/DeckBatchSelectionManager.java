@@ -33,6 +33,10 @@ import ocgcore.data.Card;
  * 搬运前先按 {@code getMaxMainCount / getMaxExtraCount / getMaxSideCount}（含换副卡组期间的
  * 临时放宽口径）预演拖动后三个区各自的张数，任一区会超出上限则整组移动全部作废并 toast 原因，
  * 不做部分生效。校验通过才真正改 {@link DeckInfo} 的三个列表。仅在 UI 线程调用。
+ * <p>
+ * 退出本模式的专用入口是侧边按钮列上的退出多选键（{@code btn_deck_batch_exit}，只在模式内点亮，
+ * 取代以前每次进模式弹一次、挡住卡片的操作提示 toast）与返回键；按用户规格取消掉最后一张勾
+ * 也直接退出，批量删除与整组搬运落定后同样自动退出。
  */
 class DeckBatchSelectionManager implements BatchCardDragHelper.BatchDropHandler {
 
@@ -75,7 +79,10 @@ class DeckBatchSelectionManager implements BatchCardDragHelper.BatchDropHandler 
         for (DeckInfo.Type zone : ZONE_ORDER) checked.put(zone, new TreeMap<>());
     }
 
-    /** 建立整组拖动助手并把三个卡组网格、搜索结果列表登记为落点（视图树重建后需重新调用） */
+    /**
+     * 建立整组拖动助手、把三个卡组网格与搜索结果列表登记为落点，并接线侧边按钮列上的
+     * 退出多选键（视图树重建后需重新调用）
+     */
     void setup() {
         SoundManager sound = owner.soundManager;
         batchDragHelper = new BatchCardDragHelper(owner.activity, this, sound);
@@ -86,6 +93,12 @@ class DeckBatchSelectionManager implements BatchCardDragHelper.BatchDropHandler 
         deleteTargetView = owner.rootView == null ? null
                 : owner.rootView.findViewById(R.id.rv_deck_search_results);
         if (deleteTargetView != null) batchDragHelper.addDropTarget(deleteTargetView);
+        // 退出多选键（owner.btnDeckBatchExit，横屏在 undo/redo 上方、竖屏在 undo 左侧）：
+        // 该键在视图树里的位置随方向而变，故经 activity 全树查找；点击即走与返回键同一条
+        // 收口路径（清空勾选 + 恢复单卡拖拽语义）
+        owner.btnDeckBatchExit = owner.activity.findViewById(R.id.btn_deck_batch_exit);
+        if (owner.btnDeckBatchExit != null) owner.btnDeckBatchExit.setOnClickListener(v -> reset());
+        applyExitButtonVisibility();
     }
 
     /** 退出批量模式：收起在飞浮层、清空勾选与打勾图标（切卡组 / 旋转重绑 / 退出编辑器 / 返回键共用） */
@@ -97,6 +110,7 @@ class DeckBatchSelectionManager implements BatchCardDragHelper.BatchDropHandler 
         }
         batchMode = false;
         clearChecks();
+        applyExitButtonVisibility();
         if (wasBatch) rebindCardViewTouchListeners();
     }
 
@@ -212,8 +226,9 @@ class DeckBatchSelectionManager implements BatchCardDragHelper.BatchDropHandler 
     }
 
     /**
-     * 长按入口：未在批量模式时进入并勾选该卡（附一次操作提示）；已在批量模式时只补勾该卡，
-     * 已勾选的卡长按不取消（否则“按住准备整组拖动”会被 500ms 长按误判成取消勾选）。
+     * 长按入口：未在批量模式时进入并勾选该卡（同时点亮侧边的退出多选键，不再弹操作提示）；
+     * 已在批量模式时只补勾该卡，已勾选的卡长按不取消
+     * （否则“按住准备整组拖动”会被 500ms 长按误判成取消勾选）。
      *
      * @return 是否已消费本次长按
      */
@@ -231,8 +246,8 @@ class DeckBatchSelectionManager implements BatchCardDragHelper.BatchDropHandler 
             // 模式切换后卡片触摸语义也要立刻切换（不重建视图，否则手指还按着的
             // 这次手势会被取消，无法“长按后直接拖动”）
             rebindCardViewTouchListeners();
-            // 本编辑器的删除落点是搜索结果列表，与卡组编辑页的垃圾桶不同，用专用文案
-            YGOUtil.showTextToast(owner.activity.getString(R.string.batch_mode_hint_editor));
+            // 不再弹操作提示 toast（会盖住卡片），改由侧边按钮列上只在本模式点亮的退出键提示
+            applyExitButtonVisibility();
         }
         if (!isChecked(type, index)) setChecked(type, index, true);
         return true;
@@ -295,9 +310,29 @@ class DeckBatchSelectionManager implements BatchCardDragHelper.BatchDropHandler 
             map.put(index, card);
         } else {
             map.remove(index);
+            // 用户规格：取消掉最后一张勾即直接退出批量模式，不必再点退出键或按返回键
+            if (batchMode && hasNoCheck()) {
+                reset();
+                return;
+            }
         }
         CardGroupView view = groupView(type);
         if (view != null) view.applyBatchChecked(validIndexes(type));
+    }
+
+    /** 三个卡区是否都不再有任何有效勾选（区上残留的下标已换卡也视为无勾选） */
+    private boolean hasNoCheck() {
+        for (DeckInfo.Type zone : ZONE_ORDER) {
+            if (!validIndexes(zone).isEmpty()) return false;
+        }
+        return true;
+    }
+
+    /** 退出多选键的显隐：非批量模式走 INVISIBLE 而非 GONE（用户规格），
+     *  使侧边按钮列在进出多选模式时不因为本键的插入而位移 */
+    private void applyExitButtonVisibility() {
+        if (owner.btnDeckBatchExit != null)
+            owner.btnDeckBatchExit.setVisibility(batchMode ? View.VISIBLE : View.INVISIBLE);
     }
 
     /** 当前卡区里仍然有效的勾选下标（位上卡片实例与记录一致的那些） */

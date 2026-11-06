@@ -163,8 +163,8 @@
     <string name="card_result">Cards List</string>
     <string name="unsort">Unsort</string>
     <string name="sort">Sort</string>
-    <string name="loading">loading..."</string>
-    <string name="loading_failed">loading failed"</string>
+    <string name="loading">loading...</string>
+    <string name="loading_failed">loading failed</string>
     <string name="question">Question</string>
     <string name="question_delete_deck">delete this deck?</string>
     <string name="noname">noname</string>
@@ -180,10 +180,9 @@
     <string name="tip_drag_side_full" formatted="false">Side deck is full (max %d)</string>
     <string name="tip_drag_extra_in_main">Extra deck cards can not be placed in the main deck</string>
     <string name="tip_drag_normal_in_extra">Normal cards can not be placed in the extra deck</string>
-    <string name="batch_mode_hint">Batch mode: tap a card to check it, hold to drag the whole group; drop on the trash bin or long-press again to delete the checked cards, Back to exit</string>
-    <string name="batch_mode_hint_editor">Batch mode: tap a card to check it, hold to drag the whole group; drop on the search result list to delete the checked cards, Back to exit</string>
     <string name="batch_delete_done" formatted="false">%d cards deleted</string>
     <string name="batch_delete_none">No cards are checked</string>
+    <string name="batch_mode_exit">Batch</string>
     <string name="file_exist">file is exist</string>
     <string name="share_deck">Share Deck</string>
     <string name="no_share_app">no find share app</string>

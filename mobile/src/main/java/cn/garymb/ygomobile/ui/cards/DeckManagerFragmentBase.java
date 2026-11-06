@@ -34,6 +34,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -150,6 +151,17 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
     protected CardManager mCardManager;
     protected PackManager mPackManager;
     protected CardListAdapter mCardListAdapter;
+    /**
+     * 搜索结果排序规则切换下拉（与左抽屉顶部计数同一行）：位序即编辑器同款的
+     * 0=星数↑ / 1=攻击↑ / 2=守备↑ / 3=名称↓，只影响本页结果列的展现顺序
+     */
+    protected AppCompatSpinner spResultSort;
+    protected int resultSortSel;
+    /**
+     * 搜索结果展现模式切换按钮（与左抽屉顶部计数同一行）：默认列表，点一下换宫格
+     * （只卡图与禁限/起源点角标）；图标始终表示当前模式，见 {@link #refreshResultViewModeIcon()}
+     */
+    protected ImageButton btnResultViewMode;
     protected boolean isLoad = false;
     protected int screenWidth;
     long exitLasttime = 0;
@@ -179,7 +191,9 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
     protected ImageButton btnUndo, btnRedo;
     /** 批量勾选模式的垃圾桶删除键，与 undo/redo 同处一行（该行同时也是整组拖动的删除落点区） */
     protected ImageButton btnBatchDelete;
-    /** undo/redo/垃圾桶所在行：批量拖动悬停在该矩形内松手即批量删除 */
+    /** 批量勾选模式的退出键：垃圾桶右侧，点击清空全部勾选并退出批量模式（取代原先挡住卡片的提示 toast） */
+    protected Button btnBatchExit;
+    /** undo/redo/垃圾桶所在行：批量拖动悬停在该矩形内松手即批量删除（退出键在本行矩形之外，不受影响） */
     protected View layoutUndoRedo;
     /**
      * 悬停在删除区上时垃圾桶图标的放大倍数。48dp 的键放大到 1.3 倍占 62.4dp（每侧外溢 7.2dp），
@@ -295,12 +309,19 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
 
         mListView = layoutView.findViewById(R.id.list_cards);
 
-
-        // 设置卡片列表适配器并启用滑动删除功能
+        // 设置卡片列表适配器并启用滑动删除功能；展现模式默认走原列表（用户规格），
+        // 顶部计数行的按钮可切成宫格（只留卡图与禁限/起源点角标，列数按宽度自适应），
+        // 两种展现都保留加卡键与行上的卡名/属性/攻守信息（宫格态则由卡详与长按拖动加卡）
         mCardListAdapter = new CardListAdapter(getContext(), activity.getImageLoader());
         mCardListAdapter.setShowAddButtons(true); // 显示添加按钮
         mListView.setLayoutManager(new FastScrollLinearLayoutManager(getContext()));
         mListView.setAdapter(mCardListAdapter);
+        // 顶部计数同一行的排序规则切换与展现模式切换
+        spResultSort = layoutView.findViewById(R.id.sp_result_sort);
+        setupResultSortSpinner();
+        btnResultViewMode = layoutView.findViewById(R.id.btn_result_view_mode);
+        btnResultViewMode.setOnClickListener(v -> toggleResultViewMode());
+        refreshResultViewModeIcon();
 
         // 设置各类监听器
         setListeners();
@@ -394,10 +415,7 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
 
                     @Override
                     public void onBatchModeChanged(boolean enabled) {
-                        if (enabled) {
-                            YGOUtil.showTextToast(getString(R.string.batch_mode_hint));
-                        }
-                        //批量模式决定了本行“undo/redo 与垃圾桶”的互斥显隐
+                        //批量模式决定了本行“undo/redo 与垃圾桶/退出键”的互斥显隐
                         updateUndoRedoButtonVisibility();
                     }
 
@@ -464,7 +482,7 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
                     requireActivity().getSupportFragmentManager(), this, 0, null);
         });
 
-        // 初始化撤销/重做按钮，并按同一行加入批量模式的垃圾桶删除键
+        // 初始化撤销/重做按钮，并在同一行右侧接上批量模式的垃圾桶删除键与退出多选键
         btnUndo = layoutView.findViewById(R.id.btn_undo);
         animRotate(btnUndo);
         btnRedo = layoutView.findViewById(R.id.btn_redo);
@@ -475,11 +493,18 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
         btnBatchDelete = layoutView.findViewById(R.id.btn_deck_batch_delete);
         animRotate(btnBatchDelete);
         btnBatchDelete.setOnClickListener(v -> performBatchDelete());
-        // 整组拖动的“拖到此处删除”落点：指向 undo/redo/垃圾桶所在行
+        // 退出键：清空全部勾选并退出批量模式（与返回键、批量删除后的自动退出同一条收口路径）
+        btnBatchExit = layoutView.findViewById(R.id.btn_deck_batch_exit);
+        btnBatchExit.setOnClickListener(v -> {
+            if (mDeckBatchController != null) {
+                mDeckBatchController.exitBatchMode();
+            }
+        });
+        // 整组拖动的“拖到此处删除”落点：指向 undo/redo/垃圾桶所在行（不含右侧退出键）
         mDeckBatchController.setDeleteZone(layoutUndoRedo);
         // 历史为两个编辑器共用的单例，对方新增快照时本面也需刷新按钮可用态
         deckHistory.addListener(historyListener);
-        applyBatchDeleteButtonVisibility();
+        applyBatchButtonsVisibility();
 
         mContext = (BaseActivity) getActivity();
 
@@ -555,6 +580,78 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
         }
         // 初始化卡组数据
         init(_file);
+    }
+
+    /**
+     * 搜索结果排序规则切换下拉：选项与样式由 {@link CardListAdapter#setupSortSpinner}
+     * 统一装配（与卡查页同一份），比较器与决斗内卡组编辑器同源；
+     * 切换只对当前结果重排，不重新发起搜索
+     */
+    private void setupResultSortSpinner() {
+        if (spResultSort == null) return;
+        CardListAdapter.setupSortSpinner(getContext(), spResultSort);
+        spResultSort.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                resultSortSel = position;
+                resortSearchResults();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+    }
+
+    /** 按当前排序规则重排（sortByRule 返回新列表，不动搜索线程交来的列表） */
+    protected List<Card> applyResultSortRule(List<Card> cards) {
+        return CardListAdapter.sortByRule(cards, resultSortSel);
+    }
+
+    /**
+     * 结果列表填入数据与刷新，再复核一次展现布局；
+     * 本方法不排序，排序由调用方决定（关键词搜索与收藏走规则，
+     * 卡包展示需要保留卡包原来的顺序）
+     */
+    protected void fillSearchResultList(List<Card> cards) {
+        if (mCardListAdapter == null) return;
+        mCardListAdapter.set(cards);
+        mCardListAdapter.notifyDataSetChanged();
+        applyResultLayout();
+    }
+
+    /** 排序规则变更后只重排当前结果，不重新搜索 */
+    protected void resortSearchResults() {
+        if (mCardListAdapter == null) return;
+        fillSearchResultList(applyResultSortRule(mCardListAdapter.getItems()));
+    }
+
+    /**
+     * 按当前展现模式装配列表布局（宫格列数随宽度自适应）：布局管理器与列数变化都会
+     * requestLayout，故 post 到本轮布局之外；宽度还没量出来时适配器先给 1 列兜底
+     */
+    protected void applyResultLayout() {
+        if (mListView == null || mCardListAdapter == null) return;
+        mListView.post(() -> mCardListAdapter.applyListLayout(mListView));
+    }
+
+    /**
+     * 切换搜索结果展现模式（列表/宫格）并同步按钮图标：模式由点击当场切换，
+     * 条目布局与布局管理器必须同一帧换完（toggleListLayout 里成对处理），
+     * 不能走 applyResultLayout 的 post 路径，否则中间会有一帧宫格条目配在线性布局上、
+     * 卡图被拉成满宽的大图；而点击回调本身不在布局过程中，可以直接换 LM
+     */
+    protected void toggleResultViewMode() {
+        if (mCardListAdapter == null) return;
+        mCardListAdapter.toggleListLayout(mListView);
+        refreshResultViewModeIcon();
+    }
+
+    /** 展现模式按钮的图标即当前模式：宫格→宫格图标，列表→列表图标 */
+    protected void refreshResultViewModeIcon() {
+        if (btnResultViewMode == null || mCardListAdapter == null) return;
+        btnResultViewMode.setImageResource(mCardListAdapter.isGridLayout()
+                ? R.drawable.ic_view_grid_24 : R.drawable.ic_view_list_24);
     }
 
     /**
@@ -747,24 +844,29 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
     }
 
     /**
-     * 垃圾桶删除键仅在批量勾选模式占位：非批量模式直接 GONE 不占行宽，
+     * 垃圾桶删除键与退出键的批量模式显隐：垃圾桶非批量模式 GONE 不占行宽，退出键则改走
+     * INVISIBLE 常驻占位（用户规格），使本行在进出多选模式时不左右跳动；
      * 顺便把图标缩放态还原，避免上一轮拖动的悬停放大残留。
      * <p>
      * 进入批量模式时显式拉回可点与置顶：本行与卡组网格同属一个 FrameLayout，
      * 只靠 XML 属性在某些 ROM 上会被当成装饰视图而不接点击，而垃圾桶本身就是
      * “直接点它批量删除”的第三个入口，这里保证它一定能接住点击。
      */
-    protected void applyBatchDeleteButtonVisibility() {
-        if (btnBatchDelete == null) return;
+    protected void applyBatchButtonsVisibility() {
         boolean batch = mDeckBatchController != null && mDeckBatchController.isBatchMode();
-        if (batch) {
-            btnBatchDelete.setVisibility(View.VISIBLE);
-            btnBatchDelete.setEnabled(true);
-            btnBatchDelete.setClickable(true);
-            btnBatchDelete.bringToFront();
-        } else {
-            btnBatchDelete.setVisibility(View.GONE);
-            applyDeleteZoneHighlight(false);
+        if (btnBatchDelete != null) {
+            if (batch) {
+                btnBatchDelete.setVisibility(View.VISIBLE);
+                btnBatchDelete.setEnabled(true);
+                btnBatchDelete.setClickable(true);
+                btnBatchDelete.bringToFront();
+            } else {
+                btnBatchDelete.setVisibility(View.GONE);
+                applyDeleteZoneHighlight(false);
+            }
+        }
+        if (btnBatchExit != null) {
+            btnBatchExit.setVisibility(batch ? View.VISIBLE : View.INVISIBLE);
         }
     }
 

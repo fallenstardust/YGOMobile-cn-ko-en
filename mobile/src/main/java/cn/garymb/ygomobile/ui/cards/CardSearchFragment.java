@@ -12,8 +12,10 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -75,6 +77,17 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
     private CardDetail mCardDetail;
     private DialogPlus mDialog;
     private TextView mResult_count;
+    /**
+     * 顶部计数行的排序规则切换下拉：选项与比较器与决斗内卡组编辑器同源，
+     * 位序即 0=星数↑ / 1=攻击↑ / 2=守备↑ / 3=名称↓
+     */
+    private Spinner mSortSpinner;
+    private int resultSortSel;
+    /**
+     * 顶部计数行的展现模式切换按钮：默认列表，点一下换宫格；
+     * 图标始终表示当前模式，见 {@link #refreshResultViewModeIcon()}
+     */
+    private ImageButton mBtnViewMode;
 
     private View layoutView;
     private ImageButton btn_search;
@@ -94,12 +107,20 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         mResult_count = layoutView.findViewById(R.id.search_result_count);
         mDrawerlayout = layoutView.findViewById(R.id.drawer_layout);
         mListView = layoutView.findViewById(R.id.list_cards);
+        // 展现模式默认走原列表（用户规格），顶部计数行的按钮可切成宫格
+        // （只留卡图与禁限/起源点角标，列数按列表宽度自适应）；
+        // 本页不读卡组，所以行模式也不装配加卡按钮，但保留条目背景
         mCardListAdapter = new CardListAdapter(getContext(), activity.getImageLoader());
         mCardListAdapter.setShowAddButtons(false); // 隐藏添加按钮
         mCardListAdapter.setItemBg(true);
-
         mListView.setLayoutManager(new FastScrollLinearLayoutManager(getContext()));
         mListView.setAdapter(mCardListAdapter);
+        // 顶部计数同一行的排序规则切换与展现模式切换
+        mSortSpinner = layoutView.findViewById(R.id.sp_result_sort);
+        setupResultSortSpinner();
+        mBtnViewMode = layoutView.findViewById(R.id.btn_result_view_mode);
+        mBtnViewMode.setOnClickListener(v -> toggleResultViewMode());
+        refreshResultViewModeIcon();
         btn_search = layoutView.findViewById(R.id.btn_search);
         btn_search.setOnClickListener((v) -> showSearch(true));
         mPackManager = DataManager.get().getPackManager();
@@ -116,6 +137,69 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         intentSearch(intentSearchMessage);
         isInitCdbOk = true;
 
+    }
+
+    /**
+     * 顶部计数行的排序规则切换：选项与样式由 {@link CardListAdapter#setupSortSpinner}
+     * 统一装配（与卡组编辑页同一份），比较器与决斗内卡组编辑器同源；
+     * 切换只对当前结果重排，不重新发起搜索
+     */
+    private void setupResultSortSpinner() {
+        if (mSortSpinner == null) return;
+        CardListAdapter.setupSortSpinner(getContext(), mSortSpinner);
+        mSortSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                resultSortSel = position;
+                resortSearchResults();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+    }
+
+    /** 按当前排序规则重排（sortByRule 返回新列表，不动搜索线程交来的列表） */
+    private List<Card> applyResultSortRule(List<Card> cards) {
+        return CardListAdapter.sortByRule(cards, resultSortSel);
+    }
+
+    /**
+     * 结果填入与刷新，再复核一次展现布局；本方法不排序，
+     * 排序由调用方决定（关键词搜索与收藏走规则，卡包展示保留卡包原顺序）
+     */
+    private void fillSearchResultList(List<Card> cards) {
+        mCardListAdapter.set(cards);
+        mCardListAdapter.notifyDataSetChanged();
+        // 布局管理器与列数变化会 requestLayout，填数据路径故 post 到本轮布局之外；
+        // 尚未量出宽度时适配器先给 1 列兜底，等下一次填结果数据时再算
+        mListView.post(() -> mCardListAdapter.applyListLayout(mListView));
+    }
+
+    /**
+     * 切换搜索结果展现模式（列表/宫格）并同步按钮图标：模式由点击当场切换，
+     * 条目布局与布局管理器必须同一帧换完（toggleListLayout 里成对处理），
+     * 不能走填数据那条 post 路径，否则中间会有一帧宫格条目配在线性布局上、卡图被拉成满宽；
+     * 而点击回调本身不在布局过程中，可以直接换 LM
+     */
+    private void toggleResultViewMode() {
+        if (mCardListAdapter == null) return;
+        mCardListAdapter.toggleListLayout(mListView);
+        refreshResultViewModeIcon();
+    }
+
+    /** 展现模式按钮的图标即当前模式：宫格→宫格图标，列表→列表图标 */
+    private void refreshResultViewModeIcon() {
+        if (mBtnViewMode == null || mCardListAdapter == null) return;
+        mBtnViewMode.setImageResource(mCardListAdapter.isGridLayout()
+                ? R.drawable.ic_view_grid_24 : R.drawable.ic_view_list_24);
+    }
+
+    /** 排序规则变更后只重排当前结果，不重新搜索 */
+    private void resortSearchResults() {
+        if (mCardListAdapter == null) return;
+        fillSearchResultList(applyResultSortRule(mCardListAdapter.getItems()));
     }
 
     @Override
@@ -214,15 +298,23 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
 
     @Override
     public void onSearchResult(List<Card> cardInfos, boolean isHide) {
+        // 关键词搜索与收藏列表按顶部下拉选中的规则排列（规则与决斗内卡组编辑器同源）
+        showSearchResultCards(applyResultSortRule(cardInfos));
+    }
+
+    /**
+     * 结果填入 + 顶部计数。排序不在这里做，由调用方决定：
+     * 卡包展示需要保留卡包原来的顺序，不能套结果排序规则
+     */
+    private void showSearchResultCards(List<Card> cardInfos) {
         String keyword = mCardSearcher.getCurrentKeyword();
         if (keyword != null && !keyword.isEmpty()) {
             currentCardSearchMessage = keyword;
         }
-        
+
         mCardListAdapter.setSearchKeyword(currentCardSearchMessage);
-        mCardListAdapter.set(cardInfos);
         mResult_count.setText(String.valueOf(cardInfos.size()));
-        mCardListAdapter.notifyDataSetChanged();
+        fillSearchResultList(cardInfos);
         if (!cardInfos.isEmpty()) {
             mListView.smoothScrollToPosition(0);
         }
@@ -373,7 +465,9 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
 
     private void showCardList(List<Card> cardList, boolean sort) {
         if (!cardList.isEmpty()) {
-            onSearchResult(sort ? mCardLoader.sort(cardList) : cardList, false);//根据情况不同，判断是否调用CardLoader的sort方法排序List<Card>
+            //关联卡片与关键词搜索走同一排序规则（旧的 mCardLoader.sort 固定序已被
+            //本页的规则切换取代）；卡包展示(sort=false)保留卡包原顺序，直接填入不套规则
+            showSearchResultCards(sort ? applyResultSortRule(cardList) : cardList);
             //sort为true代表点击“关联卡片”按钮（卡包展示为false），以当前卡片名作为关键词计入搜索历史
             if (sort && mCardDetail != null && mCardDetail.getCardInfo() != null) {
                 mCardSearcher.recordHistoryKeyword(mCardDetail.getCardInfo().Name);

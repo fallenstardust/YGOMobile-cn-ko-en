@@ -160,8 +160,8 @@
     <string name="save_deck">儲存</string>
     <string name="save_as_deck">另存新檔</string>
     <string name="deck_list">卡組列表</string>
-    <string name="loading">載入中..."</string>
-    <string name="loading_failed">載入失敗"</string>
+    <string name="loading">載入中...</string>
+    <string name="loading_failed">載入失敗</string>
     <string name="tip">提示</string>
     <string name="question">詢問</string>
     <string name="question_delete_deck">刪除卡組?</string>
@@ -178,10 +178,9 @@
     <string name="tip_drag_side_full" formatted="false">副卡組已滿（上限%d）</string>
     <string name="tip_drag_extra_in_main">額外卡組的卡片不能放入主卡組</string>
     <string name="tip_drag_normal_in_extra">普通卡片不能放入額外卡組</string>
-    <string name="batch_mode_hint">批量勾選模式：點擊卡片勾選，按住可整組拖動；拖到垃圾桶或再次長按即可批量刪除，按返回鍵退出</string>
-    <string name="batch_mode_hint_editor">批量勾選模式：點擊卡片勾選，按住可整組拖動；拖到搜尋結果列表即可批量刪除，按返回鍵退出</string>
     <string name="batch_delete_done" formatted="false">已刪除 %d 張卡</string>
     <string name="batch_delete_none">尚未勾選任何卡片</string>
+    <string name="batch_mode_exit">多選</string>
     <string name="file_exist">檔案已經存在</string>
     <string name="share_deck">分享卡組</string>
     <string name="code_share">卡組碼分享</string>

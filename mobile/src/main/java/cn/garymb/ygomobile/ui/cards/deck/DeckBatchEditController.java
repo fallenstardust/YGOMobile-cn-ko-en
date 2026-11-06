@@ -52,7 +52,7 @@ public class DeckBatchEditController implements RecyclerView.OnItemTouchListener
         boolean isDeckCardDragging();
 
         /**
-         * 模式刚被激活或退出，供宿主刷新界面（如收起抽屉、提示文案）
+         * 模式刚被激活或退出，供宿主刷新界面（如本行垃圾桶与退出键的显隐）
          */
         void onBatchModeChanged(boolean enabled);
 
@@ -241,13 +241,19 @@ public class DeckBatchEditController implements RecyclerView.OnItemTouchListener
 
     /**
      * 点击卡组网格条目：批量模式下改为切换勾选并吞掉点击（不再弹卡片详情）。
+     * 与决斗内卡组编辑器同口径：取消掉最后一张勾即直接退出批量模式，
+     * 不必再点退出键或按返回键。
      *
      * @return true 表示本次点击已被批量模式消费
      */
     public boolean onDeckCardTap(int pos) {
         if (!deckAdapater.isBatchMode()) return false;
         if (pos >= 0) {
-            deckAdapater.toggleBatchCheck(pos);
+            //分隔栏与占位格不可勾选，不参与“取消勾选”判定，否则它们会被当成取消最后一张勾
+            if (deckAdapater.batchCardAt(pos) == null) return true;
+            if (!deckAdapater.toggleBatchCheck(pos) && !deckAdapater.hasBatchChecked()) {
+                exitBatchMode();
+            }
         }
         return true;
     }

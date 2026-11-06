@@ -145,6 +145,10 @@ abstract class DeckEditorManagerBase {
     // 卡组编辑侧边按钮列的撤销/重做两键（与卡组编辑页同一语义、共用同一份历史）：
     // 横屏排在设置键上方、竖屏排在可见键行末尾，由 DeckEditorHistoryPanel 接线与点亮
     protected ImageButton btnDeckUndo, btnDeckRedo;
+    // 侧边按钮列上的“退出多选模式”键（绿勾图标 + 多选短标签）：只在长按进入批量勾选模式时点亮
+    // （横屏在 undo/redo 上方、竖屏在 undo 左侧），点击清空全部勾选并退出，
+    // 接线与显隐见 DeckBatchSelectionManager
+    protected Button btnDeckBatchExit;
     protected ImageTop mImageTop;
     protected CardTypeImage mCardTypeImage;
     protected ImageView ivMainMonsterType, ivMainSpellType, ivMainTrapType;
