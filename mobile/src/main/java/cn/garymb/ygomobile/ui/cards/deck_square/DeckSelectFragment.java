@@ -526,7 +526,7 @@ public class DeckSelectFragment extends Fragment {
         if (typeSelectPosition == 0) {//如果选中卡包，判断是否开启了先行卡，是的话加载先行卡
             if (AppsSettings.get().isReadExpansions()) {
                 try {
-                    deckList.addAll(0, DeckUtil.getExpansionsDeckList());//置顶ypk缓存的cacheDeck下的先行卡ydk
+                    deckList.addAll(0, DeckUtil.getExpansionsDeckList());//置顶卡包档案（zip/ypk）里的先行 ydk（就地读，不再解压到 cacheDeck）
                 } catch (IOException e) {
                     YGOUtil.showTextToast("额外卡库加载失败,原因为" + e);
                 }

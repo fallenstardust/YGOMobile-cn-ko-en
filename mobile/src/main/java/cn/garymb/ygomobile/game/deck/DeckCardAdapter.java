@@ -2,14 +2,18 @@ package cn.garymb.ygomobile.game.deck;
 
 import android.graphics.Color;
 import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
@@ -20,6 +24,7 @@ import cn.garymb.ygomobile.bean.DeckInfo;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
+import cn.garymb.ygomobile.ui.widget.CardGridInfoView;
 import cn.garymb.ygomobile.utils.CardUtils;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
@@ -54,6 +59,11 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
     private int mAvailLm = 0;
     private int mTouchSlop;
     private boolean mReadonly;
+    /**
+     * 搜索结果列是否宫格展现（卡图与禁限/起源点角标，不带卡名/属性/攻守文字）；
+     * 缺省 false 走行列表，由 {@code CardSearcherManager} 按本页设置项初始化
+     */
+    private boolean mGrid;
 
     public DeckCardAdapter(ImageLoader imageLoader, DeckEditorManager editorManager, DeckInfo.Type deckType, CardDragHelper dragHelper) {
         this.imageLoader = imageLoader;
@@ -87,7 +97,8 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
     }
 
     /**
-     * 设置赛制可用性标识模式，availLm为spinner_filter_limit选中项id（6=OCG、7=TCG、8=简体中文）。
+     * 设置赛制可用性标识模式，availLm为spinner_filter_limit选中项id（6=OCG、7=TCG、8=简体中文、
+     * 10=OCG独有、11=TCG独有）；由 CardSearcherManagerBase.applyAvailDisplay 下发。
      */
     public void setAvailLm(int availLm) {
         if (mAvailLm == availLm) return;
@@ -118,19 +129,120 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
         mReadonly = readonly;
     }
 
+    // === 搜索结果两种展现（行模式：卡图 + 三行文字；宫格模式：同一尺寸的卡图
+    //   + 叠在卡图下缘的 CardGridInfoView 信息条）===
+
+    /**
+     * 行/宫格两种条目布局各自的 viewType：RecyclerView 的复用池与缓存队列都按 viewType 分桶，
+     * 两态共用一个 viewType 时切换模式后旧布局的条目会被当成新模式直接复用，
+     * 而两种布局的控件树完全不同，宫格态会残留整行卡片布局与行间距、排列散乱
+     */
+    private static final int VIEW_TYPE_LIST = 1;
+    private static final int VIEW_TYPE_GRID = 2;
+
+    /** item_deck_card_grid 根节点的内边距（dp），与布局文件里的 padding 同口径，算列数时要算进单格宽 */
+    private static final float GRID_ITEM_PADDING_DP = 3f;
+
+    /**
+     * 攻守数字字号上限在卡组编辑器里的再放大倍数：宫格卡图要与列表态同尺寸（比卡查页的宫格
+     * 卡图小很多），按比例推出来的数字只剩 4sp 级几乎看不清，本页单独把这一行放大（用户规格）。
+     * 上限给得比实际能放的宽即可：真正定字号的是 CardGridInfoView 里的定长样本回缩
+     * （攻守按 0000/0000 四位那一档、连接按 0000/LINK-0 那一档），
+     * 因此同屏卡片字号一致且不会撑出卡宽；卡查页与卡组编辑页不走这里，仍保持原来的 8sp
+     */
+    private static final float ATK_TEXT_SCALE_IN_EDITOR = 2.2f;
+
+    /**
+     * 搜索结果卡片允许起拖前必须按住的最短时长（毫秒）：原先卡图把手在按下那一刻就禁止父级拦截、
+     * 位移过阈值即起拖，想上下翻滚列表而手指落在卡图上时会被误判成拖卡。现多加 0.1 秒门槛（用户规格），
+     * 期间手势仍归列表滚动（滚动本身与阈值不动）；卡组网格那一路不走此门槛
+     */
+    private static final long SEARCH_DRAG_START_DELAY_MS = 100L;
+
+    @Override
+    public int getItemViewType(int position) {
+        return mGrid ? VIEW_TYPE_GRID : VIEW_TYPE_LIST;
+    }
+
+    /**
+     * 切换搜索结果列的展现形式（宫格/行）。本方法只改标志并重建条目，
+     * 布局管理器要另外调 {@link #applyListLayout(RecyclerView)} 或直接用
+     * {@link #toggleListLayout(RecyclerView)}
+     */
+    public void setGridLayout(boolean grid) {
+        if (mGrid == grid) return;
+        mGrid = grid;
+        notifyDataSetChanged();
+    }
+
+    public boolean isGridLayout() {
+        return mGrid;
+    }
+
+    /**
+     * 按当前展现模式装配布局管理器：宫格 = GridLayoutManager（列数 = 列表可用宽 / 单格宽，
+     * 单格宽 = 卡组网格下发的 {@link #setCardSize} 卡宽 + 条目内边距，即卡图与行模式同大小，
+     * 宽度或卡尺寸还没量出来时先给 1 列兜底，由调用方在两者就位后复核）；
+     * 列表 = 原来的 {@link LinearLayoutManager}。已是目标类型时只改列数，不重建布局管理器
+     * （避免滚动位置被摸清）。列数变化会 requestLayout，故必须在布局之外（post）调用
+     */
+    public void applyListLayout(RecyclerView list) {
+        if (list == null) return;
+        RecyclerView.LayoutManager lm = list.getLayoutManager();
+        if (!mGrid) {
+            // GridLayoutManager 也是 LinearLayoutManager 的子类，判断列表态时必须先排除宫格
+            boolean linear = lm instanceof LinearLayoutManager && !(lm instanceof GridLayoutManager);
+            if (!linear) {
+                list.setLayoutManager(new LinearLayoutManager(list.getContext()));
+            }
+            return;
+        }
+        int cell = (mCardWidth > 0 ? mCardWidth : YGOUtil.dp2px(40f))
+                + YGOUtil.dp2px(GRID_ITEM_PADDING_DP * 2);
+        int avail = list.getWidth() - list.getPaddingLeft() - list.getPaddingRight();
+        int span = avail > 0 ? Math.max(1, avail / cell) : 1;
+        if (lm instanceof GridLayoutManager) {
+            if (((GridLayoutManager) lm).getSpanCount() != span) {
+                ((GridLayoutManager) lm).setSpanCount(span);
+            }
+        } else {
+            list.setLayoutManager(new GridLayoutManager(list.getContext(), span));
+        }
+    }
+
+    /**
+     * 顶部展现模式按钮的入口：翻转列表/宫格两态并成对换上对应的布局管理器
+     * （条目布局与布局管理器不能错开，否则宫格布局配线性 LM 会把卡图拉成满宽）
+     *
+     * @return 切换后的模式（true = 宫格），页面据此刷新按钮图标并写入本页设置项
+     */
+    public boolean toggleListLayout(RecyclerView list) {
+        setGridLayout(!mGrid);
+        applyListLayout(list);
+        return mGrid;
+    }
+
     @NonNull
     @Override
     public CardViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_deck_card_horizontal, parent, false);
+                .inflate(viewType == VIEW_TYPE_GRID
+                        ? R.layout.item_deck_card_grid : R.layout.item_deck_card_horizontal,
+                        parent, false);
         if (mImageTop == null) {
             mImageTop = new ImageTop(parent.getContext());
         }
-        return new CardViewHolder(view);
+        CardViewHolder holder = new CardViewHolder(view);
+        if (viewType == VIEW_TYPE_GRID && holder.gridInfo != null) {
+            holder.gridInfo.setAtkDefTextScale(ATK_TEXT_SCALE_IN_EDITOR);
+        }
+        return holder;
     }
 
     @Override
     public void onBindViewHolder(@NonNull CardViewHolder holder, int position) {
+        // 卡面尺寸两种展现共用卡组网格下发的同一尺寸（用户规格：宫格的卡图要和列表态一样大），
+        // 尺寸不为 0 才写，否则保留布局里的默认值
         if (mCardWidth > 0 && mCardHeight > 0) {
             ViewGroup.LayoutParams lp = holder.cardContainer.getLayoutParams();
             lp.width = mCardWidth;
@@ -148,6 +260,7 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
             if (holder.tvName != null) holder.tvName.setText("");
             if (holder.tvInfo != null) holder.tvInfo.setText("");
             if (holder.tvAtkDef != null) holder.tvAtkDef.setText("");
+            if (holder.gridInfo != null) holder.gridInfo.bind(null);
             return;
         }
 
@@ -155,6 +268,12 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
         bindLimitOverlay(holder, card);
         bindAvailOverlay(holder, card);
         bindCardInfo(holder, card);
+        // 宫格布局特有的叠在卡图下缘的信息条（星数/箭头与数字重叠 + 属性 + 种族均等分三格，
+        // 第二行攻守；魔陷为种类 + 子类），尺寸随卡宽等比；
+        // 行布局没这块（引用为 null），行模式仍走上面的三行文字
+        if (holder.gridInfo != null) {
+            holder.gridInfo.bind(card);
+        }
         //选中项加一层holo_blue_bright背景，未选中恢复透明（holder复用安全）
         holder.itemView.setBackgroundColor(position == mSelectedPosition
                 ? YGOUtil.c(R.color.blackLinght) : Color.TRANSPARENT);
@@ -248,6 +367,7 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
 
     private void bindAvailOverlay(@NonNull CardViewHolder holder, Card card) {
         if (holder.ivAvailBottom == null) return;
+        applyAvailPlacement(holder);
         android.graphics.Bitmap bitmap = null;
         if (mImageTop != null) {
             //OCG/TCG标识仅独有卡显示（OCG、TCG共有卡不显示），简中标识按Ot含简中位显示
@@ -266,6 +386,31 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
         } else {
             holder.ivAvailBottom.setVisibility(View.GONE);
         }
+    }
+
+    /**
+     * 赛制独有标识的落位：行模式贴卡底居中（与布局 XML 同）；宫格下卡底那一条被信息条占着，
+     * 用 bottomMargin 把它抬到信息条之上——仍然是“卡片底部的图标”，也不与左上角的禁限角标打架，
+     * 也不会被信息条的半透底条盖掉（原先因为本页 availLm 从未下发，这两个分支根本走不到）
+     */
+    private void applyAvailPlacement(@NonNull CardViewHolder holder) {
+        ViewGroup.LayoutParams params = holder.ivAvailBottom.getLayoutParams();
+        if (!(params instanceof FrameLayout.LayoutParams)) return;
+        FrameLayout.LayoutParams flp = (FrameLayout.LayoutParams) params;
+        int gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+        int inset = 0;
+        if (mGrid) {
+            inset = holder.gridInfo != null ? holder.gridInfo.getBarHeight() : 0;
+            if (inset <= 0 && mCardHeight > 0) {
+                // 首次绑定先于信息条测量：按卡高比例先让开（实测信息条约占卡高 0.45），
+                // 下一轮绑定拿到真实高度后自然校正
+                inset = Math.round(mCardHeight * 0.45f);
+            }
+        }
+        if (flp.gravity == gravity && flp.bottomMargin == inset) return;
+        flp.gravity = gravity;
+        flp.bottomMargin = inset;
+        holder.ivAvailBottom.setLayoutParams(flp);
     }
 
     private void bindLimitOverlay(@NonNull CardViewHolder holder, Card card) {
@@ -332,6 +477,12 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
      * 按下后移动超过touchSlop即开始拖动；返回false保证点击/长按仍可触发。
      * 搜索结果item整体仅横向拖动触发，避免与列表纵向滚动冲突；
      * 卡图把手（disallowIntercept=true）任意方向均可触发。
+     * <p>
+     * startDelayMs 是允许起拖前必须按住的最短时长（搜索结果列传 100ms，卡组网格传 0）：
+     * 本监听原先在 ACTION_DOWN 那一刻就禁止父级拦截，手指落在卡图上的快速上滑会被判成拖卡
+     * 而不是翻滚列表（用户报的误触）。改后未达时长的 MOVE 一律不动作也不抢手势，
+     * 列表滚动路径与阈值保持不变；达到时长后才把本次手势交给拖拽
+     * <p>
      * shadowView不为null时，拖拽阴影用shadowView（卡图）生成而非触发拖拽的view。
      * 拖拽触发后事件转交CardDragHelper，实现应用内自定义拖拽（规避系统拖拽被OEM浮窗拦截）。
      */
@@ -344,12 +495,17 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
         private final View shadowView;
         private final int touchSlop;
         private final boolean readonly;
+        private final long startDelayMs;
         private final CardDragHelper dragHelper;
         private float downX, downY;
+        private long downTime;
+        /** 本次手势是否已按住到允许起拖的时长（已把禁止拦截交给父级） */
+        private boolean holdReady;
 
         CardDragTouchListener(DeckInfo.Type source, int index, Card card, boolean horizontalOnly,
                               boolean disallowIntercept, View shadowView,
-                              int touchSlop, boolean readonly, CardDragHelper dragHelper) {
+                              int touchSlop, boolean readonly, long startDelayMs,
+                              CardDragHelper dragHelper) {
             this.source = source;
             this.index = index;
             this.card = card;
@@ -358,6 +514,7 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
             this.shadowView = shadowView;
             this.touchSlop = touchSlop;
             this.readonly = readonly;
+            this.startDelayMs = startDelayMs;
             this.dragHelper = dragHelper;
         }
 
@@ -371,16 +528,25 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
                 case MotionEvent.ACTION_DOWN:
                     downX = event.getX();
                     downY = event.getY();
+                    downTime = event.getEventTime();
+                    holdReady = false;
                     //上一张卡的拖拽阴影若因抬手丢失（被父级抢事件、弹窗、重绑换监听）而留在
                     //内容层上，就是玩家目击的「场上残留一个点不动的卡片矩形」；本监听没在拖时
                     //任何按下都先清扫一次，让残影在下一碰卡片时自愈
                     DragLayers.sweep();
-                    if (disallowIntercept && v.getParent() != null) {
-                        v.getParent().requestDisallowInterceptTouchEvent(true);
-                    }
+                    // 不在按下时就禁止父级拦截：那会抢掉本应归列表的滚动，
+                    // 拖拽门槛改到下面的 MOVE 分支里按时长再交
                     return false;
                 case MotionEvent.ACTION_MOVE:
                     if (readonly || card == null) return false;
+                    if (!holdReady) {
+                        // 还没按住到允许起拖的时长：本次手势仍归列表滚动，不抢手势也不起拖
+                        if (event.getEventTime() - downTime < startDelayMs) return false;
+                        holdReady = true;
+                        if (disallowIntercept && v.getParent() != null) {
+                            v.getParent().requestDisallowInterceptTouchEvent(true);
+                        }
+                    }
                     float dx = event.getX() - downX;
                     float dy = event.getY() - downY;
                     boolean triggered = horizontalOnly
@@ -399,6 +565,10 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
                         return true;
                     }
                     return false;
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    holdReady = false;
+                    return false;
                 default:
                     return false;
             }
@@ -406,30 +576,32 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
     }
 
     /**
-     * 供DeckEditorManager调用：卡组网格卡片任意方向拖动触发拖拽
+     * 供DeckEditorManager调用：卡组网格卡片任意方向拖动触发拖拽（无时长门槛，保持原有手感）
      */
     public View.OnTouchListener createDragTouchListener(DeckInfo.Type source, int index, Card card,
                                                         int touchSlop, boolean readonly) {
         return new CardDragTouchListener(source, index, card, false, false, null,
-                touchSlop, readonly, dragHelper);
+                touchSlop, readonly, 0L, dragHelper);
     }
 
     /**
-     * 搜索结果item整体仅横向拖动触发，避免与列表纵向滚动冲突；拖拽阴影用shadowView（卡图）生成
+     * 搜索结果item整体仅横向拖动触发，避免与列表纵向滚动冲突；拖拽阴影用shadowView（卡图）生成；
+     * 起拖前需先按住 {@link #SEARCH_DRAG_START_DELAY_MS}
      */
     public View.OnTouchListener createSearchDragTouchListener(Card card, View shadowView,
                                                               int touchSlop, boolean readonly) {
         return new CardDragTouchListener(null, -1, card, true, false, shadowView,
-                touchSlop, readonly, dragHelper);
+                touchSlop, readonly, SEARCH_DRAG_START_DELAY_MS, dragHelper);
     }
 
     /**
-     * 卡图作为拖拽把手：任意方向拖动即触发拖拽，并阻止列表拦截滚动
+     * 卡图作为拖拽把手：任意方向拖动可触发拖拽，但先要按住 {@link #SEARCH_DRAG_START_DELAY_MS}，
+     * 到时长后才禁止列表拦截本次手势（快速上滑仍然归列表翻滚）
      */
     public View.OnTouchListener createSearchImageDragTouchListener(Card card,
                                                                    int touchSlop, boolean readonly) {
         return new CardDragTouchListener(null, -1, card, false, true, null,
-                touchSlop, readonly, dragHelper);
+                touchSlop, readonly, SEARCH_DRAG_START_DELAY_MS, dragHelper);
     }
 
     static class CardViewHolder extends RecyclerView.ViewHolder {
@@ -441,6 +613,8 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
         TextView tvName;
         TextView tvInfo;
         TextView tvAtkDef;
+        /** 宫格布局才有的底部信息块（行布局为 null） */
+        CardGridInfoView gridInfo;
         int overlaySize;
 
         CardViewHolder(@NonNull View itemView) {
@@ -453,6 +627,7 @@ public class DeckCardAdapter extends RecyclerView.Adapter<DeckCardAdapter.CardVi
             tvName = itemView.findViewById(R.id.tv_deck_card_name);
             tvInfo = itemView.findViewById(R.id.tv_deck_card_info);
             tvAtkDef = itemView.findViewById(R.id.tv_deck_card_atkdef);
+            gridInfo = itemView.findViewById(R.id.card_grid_info);
         }
     }
 }

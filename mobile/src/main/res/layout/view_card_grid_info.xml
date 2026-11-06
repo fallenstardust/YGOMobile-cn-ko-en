@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?><!-- 搜索结果宫格条目叠在卡图底部的信息条（用户规格：覆盖式带半透明底条，
+     不再单独占卡图下方空间；底条色由 CardGridInfoView 自己在构造里上，两处宫格共用同一口径）：
+     怪兽两行 = 第一行 星级图标与数字重叠成一个（星星贴图按超量取 star_rank、其余取 star_level，
+                数字压在星形正中；连接怪兽该格换成 linkmarkersmall 那套箭头），
+                再均等分属性图标、种族图标；第二行 攻击力/守备力（连接怪兽为 攻击力/LINK-值）；
+     魔法陷阱只有一行 = 种类图标（魔法/陷阱）+ 子类图标（速攻/永续/装备/场地/反击/仪式），
+     第二行整行 GONE 不再为等高留空位（用户规格：怪兽与魔陷的格子高度不齐可以接受）。
+     本文件由 CardGridInfoView 以 <merge> 直接挂到自身（竖向 LinearLayout）下。
+     尺寸口径：第一行的三格一律 weight=1 均等分，图标 match_parent + fitCenter（一族贴图都是
+     80×80 正方），于是图标边长 = 格内宽与行高取小；格内留白、行高、字号与箭头缩放全部由
+     CardGridInfoView 按条宽（= 卡图宽）算出后写回，这里写的只是尚未测量前的占位值。
+     数字统一白字，靠不透明纯黑的居中阴影（dx/dy=0、radius=3.5）保证压在卡图上的可读性
+     （用户规格：不做描边，描边太粗；阴影要更明显凝实）。 -->
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <LinearLayout
+        android:id="@+id/grid_info_row1"
+        android:layout_width="match_parent"
+        android:layout_height="14dp"
+        android:orientation="horizontal">
+
+        <!-- 第一格：星数。图标与数字重叠成一个显示，连接怪兽改显示连接标记那一整块 -->
+        <FrameLayout
+            android:id="@+id/grid_cell_level"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1">
+
+            <FrameLayout
+                android:id="@+id/grid_link_box"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone">
+
+                <!-- 箭头那一整块按自身 24dp 量测，由 CardGridInfoView 等比缩到本格边长；
+                     visibility 只能由代码控（它不是 layout_ 属性，不会被 <include> 转递） -->
+                <include
+                    layout="@layout/item_carddetail_linkmaker_small"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center" />
+            </FrameLayout>
+
+            <ImageView
+                android:id="@+id/grid_icon_star"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="fitCenter" />
+
+            <TextView
+                android:id="@+id/grid_level"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:maxLines="1"
+                android:shadowColor="@color/black"
+                android:shadowDx="0"
+                android:shadowDy="0"
+                android:shadowRadius="3.5"
+                android:singleLine="true"
+                android:textColor="@color/white"
+                android:textSize="8sp"
+                android:textStyle="bold" />
+        </FrameLayout>
+
+        <!-- 第二格：属性图标 -->
+        <FrameLayout
+            android:id="@+id/grid_cell_attr"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1">
+
+            <ImageView
+                android:id="@+id/grid_icon_attr"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="fitCenter" />
+        </FrameLayout>
+
+        <!-- 第三格：种族图标 -->
+        <FrameLayout
+            android:id="@+id/grid_cell_race"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1">
+
+            <ImageView
+                android:id="@+id/grid_icon_race"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="fitCenter" />
+        </FrameLayout>
+
+        <!-- 魔陷专用两格：种类（魔法/陷阱）与子类；与怪兽三格互斥显隐 -->
+        <FrameLayout
+            android:id="@+id/grid_cell_type"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1">
+
+            <ImageView
+                android:id="@+id/grid_icon_type"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="fitCenter" />
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/grid_cell_subtype"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1">
+
+            <ImageView
+                android:id="@+id/grid_icon_subtype"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="fitCenter" />
+        </FrameLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/grid_info_row2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/grid_atkdef"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:shadowColor="@color/black"
+            android:shadowDx="0"
+            android:shadowDy="0"
+            android:shadowRadius="3.5"
+            android:singleLine="true"
+            android:textColor="@color/white"
+            android:textSize="8sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+</merge>

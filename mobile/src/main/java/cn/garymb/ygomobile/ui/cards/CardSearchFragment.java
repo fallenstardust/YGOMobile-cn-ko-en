@@ -35,6 +35,7 @@ import com.ourygo.lib.duelassistant.util.DuelAssistantManagement;
 import java.util.List;
 import java.util.ArrayList;
 
+import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
@@ -107,12 +108,13 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         mResult_count = layoutView.findViewById(R.id.search_result_count);
         mDrawerlayout = layoutView.findViewById(R.id.drawer_layout);
         mListView = layoutView.findViewById(R.id.list_cards);
-        // 展现模式默认走原列表（用户规格），顶部计数行的按钮可切成宫格
-        // （只留卡图与禁限/起源点角标，列数按列表宽度自适应）；
+        // 展现模式按本页设置项初始化（用户规格：三页各存各的开关，未设置过走原列表）；
+        // 宫格态只留卡图与禁限/起源点角标，列数按列表宽度自适应；
         // 本页不读卡组，所以行模式也不装配加卡按钮，但保留条目背景
         mCardListAdapter = new CardListAdapter(getContext(), activity.getImageLoader());
         mCardListAdapter.setShowAddButtons(false); // 隐藏添加按钮
         mCardListAdapter.setItemBg(true);
+        mCardListAdapter.setGridLayout(isResultGridPreferred());
         mListView.setLayoutManager(new FastScrollLinearLayoutManager(getContext()));
         mListView.setAdapter(mCardListAdapter);
         // 顶部计数同一行的排序规则切换与展现模式切换
@@ -121,6 +123,9 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         mBtnViewMode = layoutView.findViewById(R.id.btn_result_view_mode);
         mBtnViewMode.setOnClickListener(v -> toggleResultViewMode());
         refreshResultViewModeIcon();
+        // 初始化态可能是宫格（从设置读回），行 LM 必须当场换掉；
+        // 列数在宽度未量出时先给 1 列兜底，下一次填结果数据时再复核
+        mListView.post(() -> mCardListAdapter.applyListLayout(mListView));
         btn_search = layoutView.findViewById(R.id.btn_search);
         btn_search.setOnClickListener((v) -> showSearch(true));
         mPackManager = DataManager.get().getPackManager();
@@ -160,32 +165,35 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         });
     }
 
-    /** 按当前排序规则重排（sortByRule 返回新列表，不动搜索线程交来的列表） */
-    private List<Card> applyResultSortRule(List<Card> cards) {
-        return CardListAdapter.sortByRule(cards, resultSortSel);
-    }
-
     /**
-     * 结果填入与刷新，再复核一次展现布局；本方法不排序，
-     * 排序由调用方决定（关键词搜索与收藏走规则，卡包展示保留卡包原顺序）
+     * 结果填入与刷新：先记住搜索线程交来的原始顺序，再按本页当前档位填入，
+     * 最后复核一次展现布局。第 0 档（星数↑）就是改造前的原样顺序（含关键词完全命中置顶），
+     * 只有攻击/守备/名称三档才去套与决斗内卡组编辑器同源的规则
      */
     private void fillSearchResultList(List<Card> cards) {
-        mCardListAdapter.set(cards);
-        mCardListAdapter.notifyDataSetChanged();
+        mCardListAdapter.setRawCards(cards);
+        mCardListAdapter.applySortRule(resultSortSel);
         // 布局管理器与列数变化会 requestLayout，填数据路径故 post 到本轮布局之外；
         // 尚未量出宽度时适配器先给 1 列兜底，等下一次填结果数据时再算
         mListView.post(() -> mCardListAdapter.applyListLayout(mListView));
+    }
+
+    /** 本页上一次的展现模式开关（与卡组管理页、决斗内卡组编辑器各存一份） */
+    private boolean isResultGridPreferred() {
+        return AppsSettings.get().getIntSettings(Constants.PREF_CARD_SEARCH_RESULT_GRID,
+                Constants.PREF_DEF_RESULT_GRID) == 1;
     }
 
     /**
      * 切换搜索结果展现模式（列表/宫格）并同步按钮图标：模式由点击当场切换，
      * 条目布局与布局管理器必须同一帧换完（toggleListLayout 里成对处理），
      * 不能走填数据那条 post 路径，否则中间会有一帧宫格条目配在线性布局上、卡图被拉成满宽；
-     * 而点击回调本身不在布局过程中，可以直接换 LM
+     * 而点击回调本身不在布局过程中，可以直接换 LM；开关结果写回本页设置项供下次初始化
      */
     private void toggleResultViewMode() {
         if (mCardListAdapter == null) return;
-        mCardListAdapter.toggleListLayout(mListView);
+        boolean grid = mCardListAdapter.toggleListLayout(mListView);
+        AppsSettings.get().saveIntSettings(Constants.PREF_CARD_SEARCH_RESULT_GRID, grid ? 1 : 0);
         refreshResultViewModeIcon();
     }
 
@@ -196,10 +204,11 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
                 ? R.drawable.ic_view_grid_24 : R.drawable.ic_view_list_24);
     }
 
-    /** 排序规则变更后只重排当前结果，不重新搜索 */
+    /** 排序规则变更后只重排当前结果，不重新搜索：以适配器里记下的原始顺序为底 */
     private void resortSearchResults() {
         if (mCardListAdapter == null) return;
-        fillSearchResultList(applyResultSortRule(mCardListAdapter.getItems()));
+        mCardListAdapter.applySortRule(resultSortSel);
+        mListView.post(() -> mCardListAdapter.applyListLayout(mListView));
     }
 
     @Override
@@ -298,13 +307,13 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
 
     @Override
     public void onSearchResult(List<Card> cardInfos, boolean isHide) {
-        // 关键词搜索与收藏列表按顶部下拉选中的规则排列（规则与决斗内卡组编辑器同源）
-        showSearchResultCards(applyResultSortRule(cardInfos));
+        // 关键词搜索与收藏列表直接交搜索结果线程的原样顺序，
+        // 由 fillSearchResultList 按本页档位决定要不要重排（第 0 档保持原样）
+        showSearchResultCards(cardInfos);
     }
 
     /**
-     * 结果填入 + 顶部计数。排序不在这里做，由调用方决定：
-     * 卡包展示需要保留卡包原来的顺序，不能套结果排序规则
+     * 结果填入 + 顶部计数。卡包展示需要保留卡包原来的顺序，不能拿它当关键词结果重排
      */
     private void showSearchResultCards(List<Card> cardInfos) {
         String keyword = mCardSearcher.getCurrentKeyword();
@@ -465,9 +474,10 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
 
     private void showCardList(List<Card> cardList, boolean sort) {
         if (!cardList.isEmpty()) {
-            //关联卡片与关键词搜索走同一排序规则（旧的 mCardLoader.sort 固定序已被
-            //本页的规则切换取代）；卡包展示(sort=false)保留卡包原顺序，直接填入不套规则
-            showSearchResultCards(sort ? applyResultSortRule(cardList) : cardList);
+            // 关联卡片走移动端自己的固定序（mCardLoader.sort，高星/高攻在前那一族规则），
+            // 卡包展示(sort=false)则保留卡包原顺序：两者都是本页的“原始顺序”，
+            // 顶部规则下拉只在挑了攻击/守备/名称时才在其上重排（用户规格：默认档维持改造前排序）
+            showSearchResultCards(sort ? mCardLoader.sort(cardList) : cardList);
             //sort为true代表点击“关联卡片”按钮（卡包展示为false），以当前卡片名作为关键词计入搜索历史
             if (sort && mCardDetail != null && mCardDetail.getCardInfo() != null) {
                 mCardSearcher.recordHistoryKeyword(mCardDetail.getCardInfo().Name);

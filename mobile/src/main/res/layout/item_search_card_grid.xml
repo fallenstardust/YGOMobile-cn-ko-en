@@ -1,11 +1,15 @@
-<?xml version="1.0" encoding="utf-8"?><!-- 搜索结果宫格条目（用户规格：只保留卡图与禁止/限制角标或起源点数值图标）：
+<?xml version="1.0" encoding="utf-8"?><!-- 搜索结果宫格条目（用户规格：卡图与禁限/起源点角标，
+     底部两行卡面信息以覆盖式半透明底条叠在卡图下缘，不再单独占下方空间）：
      与列表态 item_search_card.xml 共用同一组 id（card_image / right_top / tv_limit_num），
-     禁限与起源点角标的判定与贴图由 CardListAdapter 的同一段绑定代码提供，两处不会漂移。
+     禁限与起源点角标的判定与贴图由 CardListAdapter 的同一段绑定代码提供，两处不会漂移；
+     信息条由 CardGridInfoView 统一绑定，与决斗内卡组编辑器的宫格共用同一份实现。
      尺寸口径：宽 = match_parent（即 GridLayoutManager 的列宽，列数按列表宽度自适应），
-     高按列表态卡图同比例 70:102 由 dimensionRatio 派生，因此旋转或抽屉宽度变化时
+     卡图高按列表态卡图同比例 70:102 由 dimensionRatio 派生，因此旋转或抽屉宽度变化时
      只改列数、不需要重新计算并 notify 数据（避免在布局过程中重建条目）。
      角标沿用列表态的 @dimen/right_size（20dp 贴卡图左上角，与卡图宽 70dp 的比例
-     与 Constants.CARD_LIMIT_OVERLAY_RATIO 一致），字号沿用列表态的 10sp。 -->
+     与 Constants.CARD_LIMIT_OVERLAY_RATIO 一致），字号沿用列表态的 10sp。
+     信息条宽 0dp 锁到卡图左右缘、底对齐卡图底缘，于是底条正好压在卡图下缘、
+     不超出卡面；魔陷只有一行时它自己收起第二行，格子变矮也不影响对齐。 -->
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -35,6 +39,8 @@
         tools:src="@drawable/selected_light"
         tools:visibility="visible" />
 
+    <!-- 禁限数字/起源点点数：可见性由 bindLimitBadge 当场判定（有数字才显），
+         这里不能留默认 gone，否则宫格态永远看不到数字（列表态靠 XML 的 visible 侥幸生效） -->
     <TextView
         android:id="@+id/tv_limit_num"
         android:layout_width="@dimen/right_size"
@@ -47,4 +53,13 @@
         app:layout_constraintTop_toTopOf="@id/card_image"
         tools:text="12"
         tools:visibility="visible" />
+
+    <!-- 叠在卡图下缘的信息条：星数/连接标记 + 属性 + 种族、攻守；魔陷为种类 + 子类图标 -->
+    <cn.garymb.ygomobile.ui.widget.CardGridInfoView
+        android:id="@+id/card_grid_info"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="@id/card_image"
+        app:layout_constraintEnd_toEndOf="@id/card_image"
+        app:layout_constraintStart_toStartOf="@id/card_image" />
 </androidx.constraintlayout.widget.ConstraintLayout>

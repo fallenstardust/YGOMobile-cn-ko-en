@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?><!-- 决斗内卡组编辑器搜索结果·宫格条目（与卡查页/卡组编辑页的
+     item_search_card_grid 同一语义：卡图 + 禁限/起源点角标 + 赛制独有标识，
+     卡面信息以覆盖式半透明底条叠在卡图下缘，不再单独占下方空间）：
+     与行模式 item_deck_card_horizontal.xml 共用同一组 id（card_container / iv_deck_card_item /
+     iv_deck_card_limit_top / tv_deck_limit_num / iv_deck_card_avail_bottom），DeckCardAdapter 的
+     角标绑定与尺寸计算两处共用同一段代码，不会漂移；卡名/属性/攻守文字控件在本布局里不存在，
+     bindCardInfo 的空控件守卫会自动跳过，改由 CardGridInfoView 提供宫格版信息。
+     尺寸口径：卡面容器与行模式共用卡组网格下发的同一尺寸（用户规格：宫格的卡图要和
+     列表态卡片 item 的卡图一样大），因此列数 = 可用宽 / (卡宽 + 本布局左右内边距)，
+     单格不会把卡面拉大。叠在卡图下缘的信息条宽 match_parent 锁在容器左右缘、
+     底对齐容器底缘，图标与字号由 CardGridInfoView 按实际卡宽等比缩小。
+     根节点 padding 与 DeckCardAdapter.GRID_ITEM_PADDING_DP 同口径（3dp），改一处要同步另一处，
+     否则列数与观感间距会错位。 -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="3dp">
+
+    <FrameLayout
+        android:id="@+id/card_container"
+        android:layout_width="40dp"
+        android:layout_height="58dp"
+        android:layout_gravity="center_horizontal">
+
+        <ImageView
+            android:id="@+id/iv_deck_card_item"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter"
+            android:src="@drawable/unknown" />
+
+        <ImageView
+            android:id="@+id/iv_deck_card_limit_top"
+            android:layout_width="@dimen/right_size2"
+            android:layout_height="@dimen/right_size2"
+            android:layout_gravity="top|start"
+            android:visibility="gone" />
+
+        <!-- 禁限数字 / GeneSys 点数：绑定处（bindLimitOverlay）显式置可见性，不靠 XML 默认值 -->
+        <TextView
+            android:id="@+id/tv_deck_limit_num"
+            android:layout_width="@dimen/right_size2"
+            android:layout_height="@dimen/right_size2"
+            android:layout_gravity="top|start"
+            android:gravity="center"
+            android:shadowColor="@color/holo_blue_bright"
+            android:shadowDx="0"
+            android:shadowDy="0"
+            android:shadowRadius="6"
+            android:textSize="8sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <ImageView
+            android:id="@+id/iv_deck_card_avail_bottom"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center"
+            android:layout_marginHorizontal="5dp"
+            android:visibility="gone" />
+
+        <!-- 叠在卡图下缘的信息条（与卡查页、卡组编辑页的宫格共用同一份控件与绑定）：
+             必须排在卡图之后，否则会被卡图盖住；内部尺寸随本条实宽（= 卡宽）等比缩放 -->
+        <cn.garymb.ygomobile.ui.widget.CardGridInfoView
+            android:id="@+id/card_grid_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom" />
+    </FrameLayout>
+</FrameLayout>

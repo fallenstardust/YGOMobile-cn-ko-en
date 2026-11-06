@@ -983,23 +983,48 @@
                     android:layout_weight="0.3"
                     android:orientation="vertical">
 
-                    <!-- 搜索结果标题 + 排序 -->
+                    <!-- 搜索结果标题 + 展现模式 + 排序（与横屏同名区块逐字一致，改一处要同步另一处） -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="15dp"
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
-                        <TextView
-                            android:id="@+id/tv_deck_search_result"
+                        <!-- 一组：结果计数 + 展现模式切换键，整组占行宽的 2/3（用户规格）。
+                             计数格吃组内剩余宽、数字靠左，切换键定宽 15dp 贴在组右缘，
+                             也就是三分线的位量；右侧排序方式拿剩下的 1/3 -->
+                        <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_weight="2"
-                            android:background="@drawable/ygopro_deck_background"
-                            android:gravity="center|left"
-                            android:text="搜索结果: 0"
-                            android:textColor="@color/white"
-                            android:textSize="8sp" />
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <!-- 结果计数：按用户规格只显统计数字（不再带“搜索结果:”前缀） -->
+                            <TextView
+                                android:id="@+id/tv_deck_search_result"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent"
+                                android:layout_weight="1"
+                                android:background="@drawable/ygopro_deck_background"
+                                android:gravity="center|left"
+                                android:text="0"
+                                android:textColor="@color/white"
+                                android:textSize="8sp" />
+
+                            <!-- 搜索结果展现模式切换键（与卡查页、卡组编辑页同一语义）：
+                                 图标始终显示当前模式（列表态 ic_view_list_24，宫格态 ic_view_grid_24），
+                                 开关状态按本页设置项持久化，接线与显隐见 CardSearcherManager -->
+                            <ImageButton
+                                android:id="@+id/btn_deck_result_view_mode"
+                                android:layout_width="15dp"
+                                android:layout_height="match_parent"
+                                android:layout_marginStart="2dp"
+                                android:background="@drawable/button3_bg"
+                                android:padding="2dp"
+                                android:scaleType="fitCenter"
+                                android:src="@drawable/ic_view_list_24" />
+                        </LinearLayout>
 
                         <Spinner
                             android:id="@+id/spinner_sort_type"

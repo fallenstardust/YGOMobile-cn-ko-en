@@ -13,6 +13,7 @@ import android.util.Log;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FilterInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -159,6 +160,10 @@ public class DeckUtil {
      * @return
      */
     public static String getDeckTypeName(String deckPath) {
+        if (isArchiveYdk(deckPath)) {
+            // 压缩包内的 pack/*.ydk：分类归到“卡包展示”，与磁盘上的 pack 目录同口径
+            return YGOUtil.s(R.string.category_pack);
+        }
         File file = new File(deckPath);
         String name = file.getParentFile().getName();
         String lastName = file.getParentFile().getParentFile().getName();
@@ -173,7 +178,235 @@ public class DeckUtil {
         }
     }
 
-    //获取扩展卡的列表
+    /**
+     * 压缩包内 ydk 的引用路径分隔符：{@code <压缩包绝对路径>!/pack/xxx.ydk}。
+     * <p>
+     * 整串仍能当普通路径传递（{@code new File(它).getName()} 依旧得到 xxx.ydk），但它不对应
+     * 磁盘实体文件，因此读写一律要过 {@link #openYdk(String)} 与 {@link #ydkExists(String)}，
+     * 不能再直接 {@code file.exists()} 或 {@code new FileInputStream}。
+     * 这么做的目的：卡包 ydk 不再解压到 cacheDeck（旧做法每换一次压缩包就多一批没人认领的过时 ydk）。
+     */
+    public static final String YDK_ARCHIVE_SEP = "!/";
+
+    /** 卡包 ydk 在压缩包内的目录约定（ygocore 下各 zip/ypk 都是 pack/xxx.ydk） */
+    private static final String PACK_DIR_NAME = "pack";
+
+    /** 本进程内是否已清过旧版解压残留 */
+    private static boolean sCacheDeckPurged;
+
+    /** 是否压缩包内的 ydk 引用路径 */
+    public static boolean isArchiveYdk(String path) {
+        return path != null && path.contains(YDK_ARCHIVE_SEP);
+    }
+
+    private static String archiveYdkPath(String archivePath, String entryName) {
+        return archivePath + YDK_ARCHIVE_SEP + entryName;
+    }
+
+    /** 引用路径拆成 (压缩包路径, 包内条目名)；非引用路径返回 null */
+    private static String[] splitArchiveYdk(String path) {
+        int sep = path.indexOf(YDK_ARCHIVE_SEP);
+        if (sep < 0) {
+            return null;
+        }
+        return new String[]{path.substring(0, sep), path.substring(sep + YDK_ARCHIVE_SEP.length())};
+    }
+
+    /** ydk 的文件名（含 .ydk）：压缩包条目取条目最后一段，实体文件取路径最后一段 */
+    public static String ydkFileName(String path) {
+        if (path == null || path.isEmpty()) {
+            return "";
+        }
+        int slash = path.lastIndexOf('/');
+        return slash >= 0 ? path.substring(slash + 1) : path;
+    }
+
+    /** ydk 的显示名（去 .ydk），实体文件与压缩包条目同一口径 */
+    public static String ydkDisplayName(String path) {
+        return IOUtils.tirmName(ydkFileName(path), YDK_FILE_EX);
+    }
+
+    /**
+     * 按 ydk 文件名在卡包档案里找引用路径，找不到返回 null。
+     * 用于升级过渡：旧版本把“最后卡组”存成解压到 cacheDeck 的实体路径，
+     * 那些文件现在不再生成，按同名回到档案里的 pack/xxx.ydk
+     */
+    public static String findPackYdkByName(String wantedFileName) {
+        if (wantedFileName == null || wantedFileName.isEmpty()) {
+            return null;
+        }
+        final String[] found = new String[1];
+        forEachPackYdk((ydkPath, entryName) -> {
+            if (found[0] == null && wantedFileName.equalsIgnoreCase(ydkFileName(entryName))) {
+                found[0] = ydkPath;
+            }
+        });
+        return found[0];
+    }
+
+    /** 按 UTF-8 打开档案，条目名编码不合法时退回 GBK（与旧版解压那一段的兜底一致） */
+    private static ZipFile openArchive(File file) throws IOException {
+        ZipFile zipFile = null;
+        try {
+            zipFile = new ZipFile(file, StandardCharsets.UTF_8);
+            zipFile.entries().hasMoreElements();
+        } catch (IllegalArgumentException e) {
+            IOUtils.close(zipFile);
+            zipFile = new ZipFile(file, Charset.forName("GBK"));
+        }
+        return zipFile;
+    }
+
+    /**
+     * 打开任意 ydk：磁盘实体文件直接开流；压缩包引用路径就地读包内条目，不解压。
+     * 返回的流 close() 时会连带关闭 ZipFile，调用方只管关流，不会漏文件句柄。
+     */
+    public static InputStream openYdk(String path) throws IOException {
+        if (path == null || path.isEmpty()) {
+            throw new IOException("空的 ydk 路径");
+        }
+        String[] split = splitArchiveYdk(path);
+        if (split == null) {
+            return new FileInputStream(path);
+        }
+        final ZipFile zipFile = openArchive(new File(split[0]));
+        boolean handedOff = false;
+        try {
+            ZipEntry entry = zipFile.getEntry(split[1]);
+            if (entry == null) {
+                throw new IOException("压缩包内没有该条目: " + split[1]);
+            }
+            InputStream in = zipFile.getInputStream(entry);
+            handedOff = true;
+            return new FilterInputStream(in) {
+                @Override
+                public void close() throws IOException {
+                    try {
+                        super.close();
+                    } finally {
+                        IOUtils.close(zipFile);
+                    }
+                }
+            };
+        } finally {
+            if (!handedOff) {
+                IOUtils.close(zipFile);
+            }
+        }
+    }
+
+    /** ydk 是否还读得到：实体文件看 exists，压缩包看条目是否还在（换包后旧引用自然判失效） */
+    public static boolean ydkExists(String path) {
+        if (path == null || path.isEmpty()) {
+            return false;
+        }
+        String[] split = splitArchiveYdk(path);
+        if (split == null) {
+            return new File(path).isFile();
+        }
+        ZipFile zipFile = null;
+        try {
+            File archive = new File(split[0]);
+            if (!archive.isFile()) {
+                return false;
+            }
+            zipFile = openArchive(archive);
+            return zipFile.getEntry(split[1]) != null;
+        } catch (IOException | IllegalArgumentException e) {
+            Log.w(TAG, "检查 ydk 是否存在失败: " + path, e);
+            return false;
+        } finally {
+            IOUtils.close(zipFile);
+        }
+    }
+
+    /** 遍历一个档案内 ydk 条目的访问器；交付的是引用路径，不交付流，因此不会因中途异常泄句柄 */
+    public interface PackYdkVisitor {
+        void visit(String ydkPath, String entryName);
+    }
+
+    /** 条目是否位于包内 pack/ 目录下（按路径段比对，避免 mypack/ 一类误命中） */
+    private static boolean isUnderPackDir(String entryName) {
+        String[] segments = entryName.split("/");
+        // 最后一段是文件名，只看它之前的目录段
+        for (int i = 0; i < segments.length - 1; i++) {
+            if (PACK_DIR_NAME.equalsIgnoreCase(segments[i])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 遍历 expansions 下所有 zip/ypk 里的 ydk，只交付引用路径（不解压到 cacheDeck）。
+     * <p>
+     * 优先只取包内 {@code pack/} 目录下的 ydk（用户指定的打包约定）；某个包里找不到 pack/ 目录时
+     * 退回该包内任意 ydk，保持旧版可见范围，不会因为收紧规则而少包。
+     * 单个档案打不开（不是 zip、编码异常等）只跳过，不能拖垮整个卡包列表。
+     */
+    public static void forEachPackYdk(PackYdkVisitor visitor) {
+        File[] files = AppsSettings.get().getExpansionFiles();
+        if (files == null || visitor == null) {
+            return;
+        }
+        for (File file : files) {
+            ZipFile zipFile = null;
+            try {
+                if (!file.isFile()) {
+                    continue;
+                }
+                zipFile = openArchive(file);
+                List<String> packEntries = new ArrayList<>();
+                List<String> otherEntries = new ArrayList<>();
+                Enumeration<?> entries = zipFile.entries();
+                while (entries.hasMoreElements()) {
+                    ZipEntry entry = (ZipEntry) entries.nextElement();
+                    String name = entry.getName();
+                    if (entry.isDirectory() || !name.toLowerCase(Locale.US).endsWith(YDK_FILE_EX)) {
+                        continue;
+                    }
+                    if (isUnderPackDir(name)) {
+                        packEntries.add(name);
+                    } else {
+                        otherEntries.add(name);
+                    }
+                }
+                List<String> picked = packEntries.isEmpty() ? otherEntries : packEntries;
+                String archivePath = file.getAbsolutePath();
+                for (String entryName : picked) {
+                    visitor.visit(archiveYdkPath(archivePath, entryName), entryName);
+                }
+            } catch (IOException | IllegalArgumentException e) {
+                Log.w(TAG, "读取卡包档案失败: " + file.getAbsolutePath(), e);
+            } finally {
+                IOUtils.close(zipFile);
+            }
+        }
+    }
+
+    /**
+     * 一次性清掉旧版解压到 cacheDeck 的 ydk 残留（每进程只做一次）。
+     * 卡包 ydk 现在一律就地从压缩包读，该目录已没有任何写入方，留下的都是过时副本。
+     * 只删该目录下的 *.ydk：它本身是 app 私有外部缓存目录，不碰其它文件。
+     */
+    private static void purgeCacheDeckLeftovers() {
+        if (sCacheDeckPurged) {
+            return;
+        }
+        sCacheDeckPurged = true;
+        File[] leftovers = new File(AppsSettings.get().getCacheDeckDir())
+                .listFiles(f -> f.isFile() && f.getName().toLowerCase(Locale.US).endsWith(YDK_FILE_EX));
+        if (leftovers == null) {
+            return;
+        }
+        for (File leftover : leftovers) {
+            if (!leftover.delete()) {
+                Log.w(TAG, "清理旧解压 ydk 失败: " + leftover.getAbsolutePath());
+            }
+        }
+    }
+
+    //获取扩展卡的列表：expansions/deck 下的实体 ydk + 卡包档案内 pack/ 的 ydk（引用路径，不解压）
     public static List<DeckFile> getExpansionsDeckList() throws IOException {
         AppsSettings appsSettings = AppsSettings.get();
         List<DeckFile> deckList = new ArrayList<>();
@@ -185,35 +418,8 @@ public class DeckUtil {
                 }
             }
         }
-        files = appsSettings.getExpansionFiles();
-        for (File file : files) {
-            if (file.isFile()) {
-                ZipFile zipFile = null;
-                try {
-                    try {
-                        zipFile = new ZipFile(file.getAbsoluteFile(), StandardCharsets.UTF_8);
-                        zipFile.entries().hasMoreElements();
-                    } catch (IllegalArgumentException e) {
-                        IOUtils.close(zipFile);
-                        zipFile = new ZipFile(file.getAbsoluteFile(), Charset.forName("GBK"));
-                    }
-                    Enumeration<?> entries = zipFile.entries();
-                    while (entries.hasMoreElements()) {
-                        ZipEntry entry = (ZipEntry) entries.nextElement();
-                        if (entry.getName().endsWith(YDK_FILE_EX)) {
-                            String name = entry.getName();
-                            name = name.substring(name.lastIndexOf("/"));
-                            InputStream inputStream = zipFile.getInputStream(entry);
-                            deckList.add(new DeckFile(IOUtils.asFile(inputStream, appsSettings.getCacheDeckDir() + "/" + name)));
-                        }
-                    }
-                } catch (IllegalArgumentException e) {
-                    LogUtil.e(TAG, "无法解压文件，编码不兼容: " + file.getAbsolutePath());
-                } finally {
-                    IOUtils.close(zipFile);
-                }
-            }
-        }
+        forEachPackYdk((ydkPath, entryName) -> deckList.add(new DeckFile(ydkPath)));
+        purgeCacheDeckLeftovers();
         Collections.sort(deckList, nameCom);
         return deckList;
     }
@@ -221,7 +427,8 @@ public class DeckUtil {
     public static int getFirstCardCode(String deckPath) {
         InputStreamReader in = null;
         try {
-            in = new InputStreamReader(new FileInputStream(new File(deckPath)), StandardCharsets.UTF_8);
+            // 实体文件与压缩包内 ydk 都走同一个入口
+            in = new InputStreamReader(openYdk(deckPath), StandardCharsets.UTF_8);
             BufferedReader reader = new BufferedReader(in);
             String line = null;
             DeckItemType type = DeckItemType.Space;
@@ -284,19 +491,26 @@ public class DeckUtil {
 
     //读取file指定的ydk文件，返回其内包含的deckId。如果不包含deckId，返回null
     public static String getDeckId(File file) {
-        if (file == null || !file.exists() || !file.isFile()) {
-            LogUtil.w(TAG, "文件不存在或不是有效文件: " + (file != null ? file.getAbsolutePath() : "null"));
+        return file == null ? null : getDeckId(file.getAbsolutePath());
+    }
+
+    /**
+     * 读取 ydk 内的 deckId，实体文件与压缩包引用都适用。
+     * 原先用 file.exists()/isFile() 守门，对压缩包内 ydk（不存在实体文件）会直接打“文件不存在”
+     * 并返回 null，改走 ydkExists/openYdk 后两种来源同一口径
+     */
+    public static String getDeckId(String ydkPath) {
+        if (!ydkExists(ydkPath)) {
+            LogUtil.w(TAG, "ydk 不可读: " + ydkPath);
             return null;
         }
-        
+
         String deckId = null;
         Integer userId = null;
-        FileInputStream inputStream = null;
+        InputStream ydkStream = null;
         try {
-            inputStream = new FileInputStream(file);
-
-            InputStreamReader in = null;
-            in = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
+            ydkStream = openYdk(ydkPath);
+            InputStreamReader in = new InputStreamReader(ydkStream, StandardCharsets.UTF_8);
             BufferedReader reader = new BufferedReader(in);
 
             String line = null;
@@ -322,7 +536,7 @@ public class DeckUtil {
         } catch (IOException e) {
             LogUtil.e(TAG, "read 1", e);
         } finally {
-            IOUtils.close(inputStream);
+            IOUtils.close(ydkStream);
         }
         return deckId;
     }
@@ -374,7 +588,9 @@ public class DeckUtil {
     }
 
     /**
-     * 处理单个YDK文件中的换行符，将\n、\\n、/n、\\r\\n替换为实际换行（\r\n）
+     * 处理单个YDK文件中的换行符，将
+、\n、/n、\\r\n替换为实际换行（\r
+）
      * 确保文本中的换行标记能真实换行显示
      */
     private static void processYdkLineBreaks(File ydkFile) {
@@ -411,7 +627,9 @@ public class DeckUtil {
     }
 
     /**
-     * 处理文本中的换行符，将\n、\\n、/n、\\r\\n替换为实际换行（\r\n）
+     * 处理文本中的换行符，将
+、\n、/n、\\r\n替换为实际换行（\r
+）
      * 确保文本中的换行标记能真实换行显示
      *
      * @param content 需要处理的原始文本内容

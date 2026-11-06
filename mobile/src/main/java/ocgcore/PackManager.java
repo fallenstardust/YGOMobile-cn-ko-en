@@ -9,6 +9,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.AbstractMap;
@@ -20,6 +21,8 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
+import cn.garymb.ygomobile.utils.DeckUtil;
+import cn.garymb.ygomobile.utils.IOUtils;
 import ocgcore.data.Card;
 
 public class PackManager implements Closeable {
@@ -44,8 +47,38 @@ public class PackManager implements Closeable {
         packList.clear();
         boolean rs1 = loadFile(AppsSettings.get().getResourcePath() + "/" + Constants.CORE_PACK_PATH);
         boolean rs2 = loadFile(AppsSettings.get().getExpansionsPath() + "/" + Constants.CORE_PACK_PATH);
-        boolean res3 = loadFile(AppsSettings.get().getCacheDeckDir());
-        return rs1 && rs2 && res3;
+        // 卡包 ydk 不再解压到 cacheDeck：就地读 expansions 下 zip/ypk 里的 pack/*.ydk
+        boolean rs3 = loadArchivePackYdks();
+        return rs1 && rs2 && rs3;
+    }
+
+    /**
+     * 从卡包档案（zip/ypk）里就地读 pack/*.ydk 建立包名→卡号表。
+     * <p>
+     * 旧实现读的是解压到 cacheDeck 的那批副本，而副本只增不减：每更替一次压缩包就多一批
+     * 没人认领的过时 ydk，既占空间又会让包名表混进旧包。现在既不生成也不再依赖。
+     *
+     * @return 至少读到一个包时为 true（与旧版“目录里有文件”同一语义）
+     */
+    private boolean loadArchivePackYdks() {
+        final int[] loaded = new int[1];
+        DeckUtil.forEachPackYdk((ydkPath, entryName) -> {
+            InputStream in = null;
+            try {
+                in = DeckUtil.openYdk(ydkPath);
+                // 包名键保的是 ydk 文件名，卡详按包名反查的口径不变
+                processStream(DeckUtil.ydkFileName(ydkPath), in);
+                loaded[0]++;
+            } catch (IOException | IllegalArgumentException e) {
+                Log.e(TAG, "Error reading pack ydk in archive: " + ydkPath, e);
+            } finally {
+                IOUtils.close(in);
+            }
+        });
+        if (loaded[0] == 0) {
+            Log.w(TAG, "No pack ydk found in expansion archives");
+        }
+        return loaded[0] > 0;
     }
 
     public boolean loadFile(String path) {
@@ -90,27 +123,34 @@ public class PackManager implements Closeable {
      * @throws IOException 文件读取过程中可能抛出的IO异常
      */
     private void processFile(File file) throws IOException {
-        List<Integer> ids = new ArrayList<>();
-        try (FileInputStream inputStream = new FileInputStream(file);
-             InputStreamReader in = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
-             BufferedReader reader = new BufferedReader(in)) {
+        try (FileInputStream inputStream = new FileInputStream(file)) {
+            processStream(file.getName(), inputStream);
+        }
+    }
 
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.startsWith("#")) {
-                    continue;
-                }
-                try {
-                    int id = Integer.parseInt(line.trim());
-                    ids.add(id);
-                } catch (NumberFormatException e) {
-                    Log.w(TAG, "Skipping invalid line in file " + file.getName() + ": " + line);
-                }
+    /**
+     * 从任意 ydk 流（实体文件或压缩包条目）解析卡号列表并归到指定包名下。
+     * 关流责任在调用方（本方法只读不关）
+     */
+    private void processStream(String packFileName, InputStream inputStream) throws IOException {
+        List<Integer> ids = new ArrayList<>();
+        InputStreamReader in = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
+        BufferedReader reader = new BufferedReader(in);
+        String line;
+        while ((line = reader.readLine()) != null) {
+            if (line.startsWith("#")) {
+                continue;
             }
-            // 将解析出的ID列表添加到packList中，如果ID列表不为空
-            if (!ids.isEmpty()) {
-                packList.add(new AbstractMap.SimpleEntry<>(file.getName(), ids));
+            try {
+                int id = Integer.parseInt(line.trim());
+                ids.add(id);
+            } catch (NumberFormatException e) {
+                Log.w(TAG, "Skipping invalid line in file " + packFileName + ": " + line);
             }
+        }
+        // 将解析出的ID列表添加到packList中，如果ID列表不为空
+        if (!ids.isEmpty()) {
+            packList.add(new AbstractMap.SimpleEntry<>(packFileName, ids));
         }
     }
 

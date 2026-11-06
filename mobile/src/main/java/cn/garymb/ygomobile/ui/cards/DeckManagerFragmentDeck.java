@@ -141,15 +141,34 @@ public abstract class DeckManagerFragmentDeck extends DeckManagerFragmentBase {
     //region init
 
     /**
+     * ydk 是否读得到：实体文件看 exists，卡包档案内的 ydk 引用（无实体文件）看条目是否还在。
+     * 卡包 ydk 现在不再解压到 cacheDeck，本页拿到的可能就是那种引用路径
+     */
+    private static boolean ydkReadable(File file) {
+        return file != null && DeckUtil.ydkExists(file.getAbsolutePath());
+    }
+
+    /**
+     * 卡包展示态判定：与决斗内编辑器同一口径（磁盘 pack/、旧版 cacheDeck、卡包档案内 ydk），
+     * 不再在本页另写一套目录比较（也避开了 archive 路径取 parent 的歧义）
+     */
+    private boolean isPackDeckSource(DeckInfo deckInfo) {
+        if (deckInfo == null || deckInfo.source == null) {
+            return false;
+        }
+        return DeckHistory.isPackDeck(deckInfo.source.getAbsolutePath());
+    }
+
+    /**
      * 从指定文件中加载卡牌包数据
      *
-     * @param file 包含卡牌数据的文件对象，如果文件不存在或为null则会设置空的卡牌包
+     * @param file 包含卡牌数据的卡组（磁盘文件或卡包档案内 ydk），读不到时设为空卡组
      */
     protected void loadDeckFromFile(File file) {
         // 发起一次载入就推一次序号：异步回调只能在序号未变时落地（防旧读盘结果覆盖对端同步）
         final int seq = ++deckLoadSeq;
-        // 检查卡牌加载器是否打开以及文件是否存在，如果条件不满足则设置空卡牌包
-        if (!mCardLoader.isOpen() || file == null || !file.exists()) {
+        // 检查卡牌加载器是否打开以及卡组是否可读，如果条件不满足则设置空卡牌包
+        if (!mCardLoader.isOpen() || !ydkReadable(file)) {
             setCurDeck(new DeckInfo(), false);
             return;
         }
@@ -159,8 +178,8 @@ public abstract class DeckManagerFragmentDeck extends DeckManagerFragmentBase {
 
         // 异步加载卡牌包数据
         VUiKit.defer().when(() -> {
-            // 双重检查卡牌加载器状态和文件存在性，确保数据加载安全
-            if (mCardLoader.isOpen() && file.exists()) {
+            // 双重检查卡牌加载器状态和卡组可读性，确保数据加载安全
+            if (mCardLoader.isOpen() && ydkReadable(file)) {
                 return mDeckAdapater.read(mCardLoader, file, mSettings.getGenesysMode() == 1 ? mCardLoader.getGenesysLimitList() : mCardLoader.getLimitList());
             } else {
                 return new DeckInfo();
@@ -172,15 +191,8 @@ public abstract class DeckManagerFragmentDeck extends DeckManagerFragmentBase {
                 // 期间又发生过一次卡组载入（典型为对端切换组卡的联动跟随），本次旧结果作废
                 return;
             }
-            // 根据资源路径判断是否进入卡包展示模式
-            if (rs != null && rs.source != null) {
-                String parentPath = rs.source.getParent();
-                isPackMode = parentPath != null &&
-                        (parentPath.equals(mSettings.getPackDeckDir()) ||
-                                parentPath.equals(mSettings.getCacheDeckDir()));
-            } else {
-                isPackMode = false;
-            }
+            // 根据卡组来源判断是否进入卡包展示模式
+            isPackMode = isPackDeckSource(rs);
             setCurDeck(rs, isPackMode);
         });
     }
@@ -206,7 +218,7 @@ public abstract class DeckManagerFragmentDeck extends DeckManagerFragmentBase {
 
             // 处理卡组文件加载逻辑
             File file = ydk;
-            if (file == null || !file.exists()) {
+            if (file == null || !ydkReadable(file)) {
                 // 当默认卡组不存在的时候，尝试获取其他可用的ydk文件
                 List<File> files = getYdkFiles();
                 if (files != null && !files.isEmpty()) {
@@ -222,7 +234,7 @@ public abstract class DeckManagerFragmentDeck extends DeckManagerFragmentBase {
             Log.i(TAG, "load ydk " + file);
 
             // 读取卡组文件内容
-            if (mCardLoader.isOpen() && file.exists()) {
+            if (mCardLoader.isOpen() && ydkReadable(file)) {
                 return mDeckAdapater.read(mCardLoader, file, mSettings.getGenesysMode() == 1 ? mCardLoader.getGenesysLimitList() : mCardLoader.getLimitList());
             } else {
                 return new DeckInfo();
@@ -237,13 +249,8 @@ public abstract class DeckManagerFragmentDeck extends DeckManagerFragmentBase {
             }
             // 初始化卡片搜索器中的项目列表,为卡片搜索功能准备基础数据
             mCardSearcher.initItems();
-            // 根据资源路径判断是否进入卡包展示模式
-            if (rs != null && rs.source != null) {
-                String parentPath = rs.source.getParent();
-                isPackMode = parentPath.equals(mSettings.getPackDeckDir()) || parentPath.equals(mSettings.getCacheDeckDir());
-            } else {
-                isPackMode = false;
-            }
+            // 根据卡组来源判断是否进入卡包展示模式
+            isPackMode = isPackDeckSource(rs);
             // 设置当前卡组显示
             setCurDeck(rs, isPackMode);
 
@@ -264,9 +271,9 @@ public abstract class DeckManagerFragmentDeck extends DeckManagerFragmentBase {
             deckInfo = new DeckInfo();
         }
         File file = deckInfo.source;
-        // 更新最后选择的卡组路径和界面显示名称
-        if (file != null && file.exists()) {
-            String name = IOUtils.tirmName(file.getName(), Constants.YDK_FILE_EX);
+        // 更新最后选择的卡组路径和界面显示名称（卡包 ydk 可档案在压缩包内，无实体文件也能取到名）
+        if (ydkReadable(file)) {
+            String name = DeckUtil.ydkDisplayName(file.getAbsolutePath());
             mSettings.setLastDeckPath(file.getAbsolutePath());
             tv_deck.setText(name);
         }

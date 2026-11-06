@@ -60,6 +60,7 @@ public class CardSearcherManager extends CardSearcherManagerBase {
         spinnerFilterRace = root.findViewById(R.id.spinner_filter_race);
         spinnerFilterLimit = root.findViewById(R.id.spinner_filter_limit);
         spinnerSortType = root.findViewById(R.id.spinner_sort_type);
+        btnResultViewMode = root.findViewById(R.id.btn_deck_result_view_mode);
         etAttack = root.findViewById(R.id.et_filter_attack);
         etDefense = root.findViewById(R.id.et_filter_defense);
         etStar = root.findViewById(R.id.et_filter_star);
@@ -72,7 +73,8 @@ public class CardSearcherManager extends CardSearcherManagerBase {
     }
 
     public void setupLabels() {
-        searchResultPrefix = mStringManager.getSystemString(1333, "搜索结果:");
+        // 结果计数格不再拼“搜索结果:”前缀（用户规格：只显统计数字），
+        // 所以这里不再取系统字符串 1333
         // 筛选按钮文字复用 gframe 既有系统字符串（对齐 game.cpp wFilter）：
         // btnEffectFilter 1326 效果 / btnMarksFilter 1374 连接标记
         if (btnFilterEffect != null) btnFilterEffect.setText(mStringManager.getSystemString(1326, "效果"));
@@ -84,7 +86,14 @@ public class CardSearcherManager extends CardSearcherManagerBase {
         rvSearchResults.setLayoutManager(new LinearLayoutManager(activity));
         searchAdapter = new DeckCardAdapter(imageLoader, editorManager, null, dragHelper);
         searchAdapter.setLimitList(mLimitList);
+        // 展现模式按本页设置项初始化（用户规格：三页各存各的开关），布局管理器跟着换上；
+        // 此时列数与卡尺寸可能还未量出，随后的 setCardSize 会再复核一次
+        searchAdapter.setGridLayout(loadResultViewMode());
         rvSearchResults.setAdapter(searchAdapter);
+        // 新建/旋转重建的适配器都从 0 档起步，按当前禁限下拉补一次独有标识档位
+        applyAvailDisplay();
+        refreshResultViewModeIcon();
+        applyResultLayout();
     }
 
     /**
@@ -95,8 +104,7 @@ public class CardSearcherManager extends CardSearcherManagerBase {
     public void rebindResultsToNewAdapter() {
         if (searchAdapter == null || searchResults.isEmpty()) return;
         searchAdapter.setCards(searchResults);
-        if (tvSearchResult != null)
-            tvSearchResult.setText(searchResultPrefix + " " + searchResults.size());
+        showSearchResultCount(searchResults.size());
     }
 
     public void setupSpinners() {
@@ -165,13 +173,19 @@ public class CardSearcherManager extends CardSearcherManagerBase {
             spinnerFilterLimit.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
                 public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
-                    // availLm 更新由 DeckEditorManager 通过 onAvailDisplayChanged 回调处理
+                    // 禁限档位当场生效：搜索结果条目与三个卡组网格的赛制独有标识就地重画，
+                    // 不必等到点“搜索”（对应 C++ deck_con.cpp 选 OCG/TCG 时立刻标记独有卡）
+                    applyAvailDisplay();
                 }
 
                 @Override
                 public void onNothingSelected(AdapterView<?> p) {
+                    applyAvailDisplay();
                 }
             });
+            // 装项刚挂上时 Spinner 的首次回调还在后面，先按当前选中项同步一次，
+            // 旋转重绑或回到编辑器时不会丢已有档位
+            applyAvailDisplay();
         }
         List<SimpleSpinnerItem> sortItems = new ArrayList<>();
         sortItems.add(new SimpleSpinnerItem(0, mStringManager.getSystemString(1370, "星数↑")));
@@ -199,6 +213,12 @@ public class CardSearcherManager extends CardSearcherManagerBase {
             if (soundManager != null) soundManager.playSoundEffect(SoundManager.SFX.BUTTON);
             clearSearch();
         });
+        // 搜索结果列的行/宫格展现切换（与卡查页、卡组编辑页同一语义，图标即当前模式）；
+        // 本键是 ImageButton，不走 setClickListener（那个只收 Button）
+        if (btnResultViewMode != null) btnResultViewMode.setOnClickListener(v -> {
+            if (soundManager != null) soundManager.playSoundEffect(SoundManager.SFX.BUTTON);
+            toggleResultViewMode();
+        });
         setupKeywordInput();
     }
 
@@ -211,6 +231,8 @@ public class CardSearcherManager extends CardSearcherManagerBase {
         filterType = spinnerFilterType != null ? spinnerFilterType.getSelectedItemPosition() : 0;
         filterType2 = (int) SimpleSpinnerAdapter.getSelect(spinnerFilterType2);
         filterLm = (int) SimpleSpinnerAdapter.getSelect(spinnerFilterLimit);
+        // 筛选时一并下发独有标识档位，保证下拉回调被跳过时也不会与筛选条件不一致
+        applyAvailDisplay();
         filterAttrib = (int) SimpleSpinnerAdapter.getSelect(spinnerFilterAttribute);
         filterRace = (int) SimpleSpinnerAdapter.getSelect(spinnerFilterRace);
         int[] atk = parseFilterType(etAttack != null ? etAttack.getText().toString() : "");

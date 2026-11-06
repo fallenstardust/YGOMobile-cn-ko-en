@@ -5,6 +5,7 @@ import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.bean.DeckInfo;
+import cn.garymb.ygomobile.utils.DeckUtil;
 
 /**
  * 卡组编辑的撤销 / 重做历史，同时也是两个编辑器的**实时同步总线**（进程内单例，
@@ -73,9 +74,13 @@ public final class DeckHistory {
         return path != null && aiDeckDir != null && path.startsWith(aiDeckDir);
     }
 
-    /** 卡包展示卡组与云端缓存卡组（同为只读的展示态） */
+    /**
+     * 卡包展示卡组（只读的展示态）：磁盘 pack/ 目录、旧版解压的 cacheDeck 目录，
+     * 以及卡包档案内的 ydk 引用（现在的默认形式，见 DeckUtil.YDK_ARCHIVE_SEP，不再解压落盘）
+     */
     public static boolean isPackDeck(String path) {
         if (path == null) return false;
+        if (DeckUtil.isArchiveYdk(path)) return true;
         String packDir = AppsSettings.get().getPackDeckDir();
         String cacheDir = AppsSettings.get().getCacheDeckDir();
         return (packDir != null && path.startsWith(packDir))

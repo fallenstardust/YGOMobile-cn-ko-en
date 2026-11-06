@@ -187,13 +187,14 @@ public abstract class DeckManagerFragmentSearch extends DeckManagerFragmentDeck 
 
     @Override
     public void onSearchResult(List<Card> cardInfos, boolean isHide) {
-        // 关键词搜索与收藏列表按顶部下拉选中的规则排列（规则与决斗内卡组编辑器同源）
-        showSearchResultCards(applyResultSortRule(cardInfos), isHide);
+        // 关键词搜索与收藏列表直接交搜索线程的原样顺序（含完全命中卡名置顶），
+        // 由 fillSearchResultList 按本页档位决定要不要重排（第 0 档保持原样）
+        showSearchResultCards(cardInfos, isHide);
     }
 
     /**
-     * 结果填入 + 顶部计数 + 抽屉展示。排序不在这里做，由调用方决定：
-     * 卡包展示需要保留卡包原来的顺序，不能套结果排序规则
+     * 结果填入 + 顶部计数 + 抽屉展示。卡包展示的原始顺序就是卡包顺序本身，
+     * 也不会在第 0 档被套上其它规则
      */
     private void showSearchResultCards(List<Card> cardInfos, boolean isHide) {
         tv_result_count.setText(String.valueOf(cardInfos.size()));
@@ -380,9 +381,10 @@ public abstract class DeckManagerFragmentSearch extends DeckManagerFragmentDeck 
 
     protected void showCardList(List<Card> cardList, boolean sort) {
         if (!cardList.isEmpty()) {
-            //关联卡片与关键词搜索走同一排序规则（旧的 mCardLoader.sort 固定序已被
-            //本页的规则切换取代）；卡包展示(sort=false)保留卡包原顺序，直接填入不套规则
-            showSearchResultCards(sort ? applyResultSortRule(cardList) : cardList, false);
+            // 关联卡片走移动端自己的固定序（mCardLoader.sort，高星/高攻在前那一族规则），
+            // 卡包展示(sort=false)则保留卡包原顺序：两者都是本页的“原始顺序”，
+            // 顶部规则下拉只在挑了攻击/守备/名称时才在其上重排（用户规格：默认档维持改造前排序）
+            showSearchResultCards(sort ? mCardLoader.sort(cardList) : cardList, false);
             //sort为true代表点击“关联卡片”按钮（卡包展示为false），以当前卡片名作为关键词计入搜索历史
             if (sort && mCardDetail != null && mCardDetail.getCardInfo() != null) {
                 mCardSearcher.recordHistoryKeyword(mCardDetail.getCardInfo().Name);

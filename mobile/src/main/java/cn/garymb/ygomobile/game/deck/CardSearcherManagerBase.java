@@ -12,6 +12,7 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -22,8 +23,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import cn.garymb.ygomobile.AppsSettings;
+import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.audio.SoundManager;
@@ -60,6 +64,13 @@ public abstract class CardSearcherManagerBase {
 
     public interface SearchListener {
         void onSearchResultsUpdated(int count);
+
+        /**
+         * 禁限下拉当前选中项 id 变了（6=OCG、7=TCG、8=简体中文、10=OCG独有、11=TCG独有 这几档
+         * 卡面要画赛制独有标识，其余档位不画）。默认空实现：只关心结果的调用方不必接管。
+         */
+        default void onAvailDisplayChanged(int availLm) {
+        }
     }
 
     protected final Activity activity;
@@ -75,6 +86,11 @@ public abstract class CardSearcherManagerBase {
     protected Spinner spinnerFilterType;
     protected Spinner spinnerFilterType2, spinnerFilterAttribute, spinnerFilterRace, spinnerFilterLimit;
     protected Spinner spinnerSortType;
+    /**
+     * 搜索结果列的展现模式切换键（行/宫格），与卡查页、卡组编辑页同一语义：
+     * 图标始终表示当前模式，开关状态按本页设置项持久化
+     */
+    protected ImageButton btnResultViewMode;
     protected SimpleSpinnerAdapter attrAdapter, raceAdapter;
     protected EditText etAttack, etDefense, etStar, etScale, etKeyword;
     protected Button btnFilterEffect, btnFilterSearch, btnFilterClear, btnFilterMarks;
@@ -83,7 +99,6 @@ public abstract class CardSearcherManagerBase {
     protected LinkMarkerPopupWindow linkMarkerPopup;
     protected EffectCategoryPopupWindow effectCategoryPopup;
 
-    protected String searchResultPrefix = "搜索结果:";
     protected Runnable pendingKeywordSearch;
     protected final AtomicInteger searchGeneration = new AtomicInteger(0);
     protected TextWatcher keywordTextWatcher;
@@ -126,6 +141,8 @@ public abstract class CardSearcherManagerBase {
 
     public void setCardSize(int w, int h) {
         if (searchAdapter != null) searchAdapter.setCardSize(w, h);
+        // 单格卡宽随卡组网格定高回调变化，宫格列数要跟着复核
+        applyResultLayout();
     }
 
     public void setDragState(int touchSlop, boolean disabled) {
@@ -134,6 +151,42 @@ public abstract class CardSearcherManagerBase {
 
     public RecyclerView getSearchRecyclerView() {
         return rvSearchResults;
+    }
+
+    // ==== 搜索结果列的展现模式（行/宫格）====
+
+    /**
+     * 按当前展现模式装配搜索结果列的布局管理器：布局管理器与列数变化都会 requestLayout，
+     * 故 post 到本轮布局之外；宽或卡尺寸还没量出来时适配器先给 1 列兜底，
+     * 等 {@link #setCardSize} 与下一次刷新再复核
+     */
+    public void applyResultLayout() {
+        if (rvSearchResults == null || searchAdapter == null) return;
+        rvSearchResults.post(() -> searchAdapter.applyListLayout(rvSearchResults));
+    }
+
+    /**
+     * 展现模式切换键的入口：翻转行/宫格并成对换上布局管理器（条目布局与布局管理器不能错开），
+     * 然后把图标与本页设置项同步。点击回调不在布局过程中，换 LM 可当场做
+     */
+    protected void toggleResultViewMode() {
+        if (searchAdapter == null || rvSearchResults == null) return;
+        boolean grid = searchAdapter.toggleListLayout(rvSearchResults);
+        AppsSettings.get().saveIntSettings(Constants.PREF_DECK_EDITOR_RESULT_GRID, grid ? 1 : 0);
+        refreshResultViewModeIcon();
+    }
+
+    /** 本页设置项里保存的展现模式（缺省列表），视图装配时读一次 */
+    protected boolean loadResultViewMode() {
+        return AppsSettings.get().getIntSettings(Constants.PREF_DECK_EDITOR_RESULT_GRID,
+                Constants.PREF_DEF_RESULT_GRID) == 1;
+    }
+
+    /** 展现模式按钮的图标即当前模式：宫格→宫格图标，列表→列表图标 */
+    protected void refreshResultViewModeIcon() {
+        if (btnResultViewMode == null || searchAdapter == null) return;
+        btnResultViewMode.setImageResource(searchAdapter.isGridLayout()
+                ? R.drawable.ic_view_grid_24 : R.drawable.ic_view_list_24);
     }
 
     public DeckCardAdapter getSearchAdapter() {
@@ -156,9 +209,35 @@ public abstract class CardSearcherManagerBase {
         return (int) SimpleSpinnerAdapter.getSelect(spinnerFilterLimit);
     }
 
+    /**
+     * 把禁限下拉当前选中项 id 作为赛制独有标识档位下发：搜索结果条目走
+     * {@link DeckCardAdapter#setAvailLm(int)}，三个卡组网格经宿主的
+     * {@link SearchListener#onAvailDisplayChanged(int)} 重画。
+     * <p>
+     * 这一路原先是断的：setupSpinners 的监听里只留了一句“availLm 更新由 DeckEditorManager 通过
+     * onAvailDisplayChanged 回调处理”，而该回调从未定义、setAvailLm 也从未被任何人调用，
+     * 于是选了 OCG/TCG/简体中文/OCG独有/TCG独有 也看不到卡底的独有标识（用户报的问题）
+     */
+    protected void applyAvailDisplay() {
+        int availLm = getSelectedFilterLimit();
+        if (searchAdapter != null) searchAdapter.setAvailLm(availLm);
+        if (listener != null) listener.onAvailDisplayChanged(availLm);
+    }
+
+
+    /**
+     * 结果计数格只显示统计数字（用户规格：不再带“搜索结果:”前缀），搜索中走省略号
+     */
+    protected void showSearchResultCount(int count) {
+        if (tvSearchResult != null) tvSearchResult.setText(String.valueOf(count));
+    }
+
+    protected void showSearchResultSearching() {
+        if (tvSearchResult != null) tvSearchResult.setText("…");
+    }
 
     protected void executeFilterAsync() {
-        if (tvSearchResult != null) tvSearchResult.setText(searchResultPrefix + " ...");
+        showSearchResultSearching();
         int gen = searchGeneration.incrementAndGet();
         List<String> keywordTerms = parseKeywordTerms();
         new Thread(() -> {
@@ -179,9 +258,10 @@ public abstract class CardSearcherManagerBase {
     protected void applySearchResults(int gen, List<Card> results) {
         if (searchGeneration.get() != gen) return;
         searchResults.clear();
-        searchResults.addAll(results);
-        if (tvSearchResult != null)
-            tvSearchResult.setText(searchResultPrefix + " " + searchResults.size());
+        // 卡名与关键词完全命中的卡一律置顶，且不随排序档位变化（用户规格：
+        // 卡组管理页、卡查页、本页三处都要保持这个顺序）
+        searchResults.addAll(pinKeywordMatches(results, getKeywordText()));
+        showSearchResultCount(searchResults.size());
         if (searchAdapter != null) searchAdapter.setCards(searchResults);
         if (rvSearchResults != null) rvSearchResults.scrollToPosition(0);
         if (listener != null) listener.onSearchResultsUpdated(searchResults.size());
@@ -280,8 +360,10 @@ public abstract class CardSearcherManagerBase {
         if (effectCategoryPopup != null && effectCategoryPopup.isShowing())
             effectCategoryPopup.dismiss();
         searchResults.clear();
-        if (tvSearchResult != null) tvSearchResult.setText(searchResultPrefix + " 0");
+        showSearchResultCount(0);
         if (searchAdapter != null) searchAdapter.setCards(searchResults);
+        // 禁限下拉已被重置回“（无）”：独有标识也跟着收掉
+        applyAvailDisplay();
         if (listener != null) listener.onSearchResultsUpdated(0);
     }
 
@@ -306,6 +388,73 @@ public abstract class CardSearcherManagerBase {
     // === 对应 deck_con.cpp: SortList ===
     public void sortSearchResults() {
         Collections.sort(searchResults, buildSortComparator());
+        // 重排后补回完全命中置顶：排序不得把同名卡押回普通位置（稳定分区，组内次序不变）
+        List<Card> repinned = pinKeywordMatches(searchResults, getKeywordText());
+        if (repinned != searchResults) {
+            // 没命中时上面直接返的是入参本身，此时 clear 再 addAll 等于把列表清空，必须避开
+            searchResults.clear();
+            searchResults.addAll(repinned);
+        }
+    }
+
+    /** 检索词输入框的当前原文，完全命中置顶的判定依据 */
+    public String getKeywordText() {
+        return etKeyword != null ? etKeyword.getText().toString() : "";
+    }
+
+    /**
+     * 卡名与关键词完全命中的卡置顶（用户规格：三处搜索结果列、任何排序档位都保持）。
+     * <p>
+     * 判定为“卡名去空白后与检索词全等”（忽略大小写），多词检索时任一分词项全等也算命中；
+     * 排除项 {@code -xx} 与串名项 {@code @系列} 不参与全等判定。
+     * <p>
+     * 实现上是个<b>稳定分区</b>：命中组与非命中组各自保持传入列表的次序，所以不会打乱
+     * 已选定的排序档位，也不会因为重绘而抖动；命中为空或关键词为空时原样返回，不新建列表。
+     * 命中组与非命中组拼成一个新列表返回，绝不改动入参（那是搜索线程或全卡表的产物）。
+     */
+    public static List<Card> pinKeywordMatches(List<Card> cards, String keyword) {
+        if (cards == null || cards.isEmpty()) {
+            return cards == null ? new ArrayList<>() : cards;
+        }
+        String key = keyword == null ? "" : keyword.trim();
+        if (key.isEmpty()) {
+            return cards;
+        }
+        // 整串 + 分词项都当候选关键词：单串时两者一致，多词时任一词全等也算命中
+        List<String> terms = new ArrayList<>();
+        terms.add(key.toLowerCase(Locale.US));
+        terms.addAll(splitKeywordTerms(key));
+        List<Card> hits = new ArrayList<>();
+        List<Card> rest = new ArrayList<>(cards.size());
+        for (Card card : cards) {
+            if (isExactNameMatch(card, terms)) {
+                hits.add(card);
+            } else {
+                rest.add(card);
+            }
+        }
+        if (hits.isEmpty()) {
+            return cards;
+        }
+        hits.addAll(rest);
+        return hits;
+    }
+
+    private static boolean isExactNameMatch(Card card, List<String> terms) {
+        if (card == null || card.Name == null) {
+            return false;
+        }
+        String name = card.Name.trim().toLowerCase(Locale.US);
+        if (name.isEmpty()) {
+            return false;
+        }
+        for (String term : terms) {
+            if (term.isEmpty() || term.startsWith("-") || term.startsWith("@")) continue;
+            if (name.equals(term)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     protected static int getCardClassRank(Card card) {
@@ -628,8 +777,7 @@ public abstract class CardSearcherManagerBase {
     }
 
     public void updateSearchResultCount() {
-        if (tvSearchResult != null)
-            tvSearchResult.setText(searchResultPrefix + " " + searchResults.size());
+        showSearchResultCount(searchResults.size());
     }
 
     public void scrollToTop() {

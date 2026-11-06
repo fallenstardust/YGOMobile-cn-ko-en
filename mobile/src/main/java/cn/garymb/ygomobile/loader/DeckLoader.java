@@ -11,7 +11,6 @@ import android.util.SparseArray;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -22,6 +21,7 @@ import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.DeckInfo;
 import cn.garymb.ygomobile.ui.cards.deck.DeckItemType;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
+import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.IOUtils;
 import cn.hutool.core.util.ArrayUtil;
 import ocgcore.data.Card;
@@ -30,14 +30,25 @@ public class DeckLoader {
     private static Boolean isChanged;
 
     public static DeckInfo readDeck(CardLoader cardLoader, File file) {
+        return file == null ? null : readDeck(cardLoader, file.getAbsolutePath());
+    }
+
+    /**
+     * 读任意 ydk：磁盘实体文件，或卡包档案内的 ydk（路径形式见
+     * {@link cn.garymb.ygomobile.utils.DeckUtil#YDK_ARCHIVE_SEP}，由 DeckUtil.openYdk 就地读包）。
+     * <p>
+     * 压缩包内的 ydk 只读：不能像实体文件那样在密码对照表变动时回写，否则会在磁盘上
+     * 造出一个名为“xxx.ypk!/pack/xxx.ydk”的垃圾文件，所以那条自动回写只对实体文件保留。
+     */
+    public static DeckInfo readDeck(CardLoader cardLoader, String ydkPath) {
         DeckInfo deckInfo = null;
-        FileInputStream fileinputStream = null;
+        InputStream inputStream = null;
         try {
-            fileinputStream = new FileInputStream(file);
-            deckInfo = readDeck(cardLoader, fileinputStream);
+            inputStream = DeckUtil.openYdk(ydkPath);
+            deckInfo = readDeck(cardLoader, inputStream);
             if (deckInfo != null) {
-                deckInfo.source = file;
-                if (isChanged) {
+                deckInfo.source = new File(ydkPath);
+                if (isChanged && !DeckUtil.isArchiveYdk(ydkPath)) {
                     DeckUtils.save(deckInfo, deckInfo.source);
                     isChanged = false;
                 }
@@ -45,7 +56,7 @@ public class DeckLoader {
         } catch (Exception e) {
             Log.e("deckreader", "read 1", e);
         } finally {
-            IOUtils.close(fileinputStream);
+            IOUtils.close(inputStream);
         }
         return deckInfo;
     }

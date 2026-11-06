@@ -33,6 +33,7 @@ import cn.garymb.ygomobile.loader.ImageLoader;
 import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.cards.CardListProvider;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
+import cn.garymb.ygomobile.ui.widget.CardGridInfoView;
 import cn.garymb.ygomobile.utils.BitmapUtil;
 import cn.garymb.ygomobile.utils.CardUtils;
 import cn.garymb.ygomobile.utils.YGOUtil;
@@ -64,14 +65,44 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
     /**
      * 条目布局按宫格标志选：行模式用 item_search_card（卡图 + 卡名/属性/攻守等文字），
      * 宫格模式用 item_search_card_grid（只有卡图与左上角角标）；
+     * 布局一律按 viewType 选，与 {@link #getDefItemViewType} 同一口径，不在这里读 mGrid
+     * （mGrid 可能在条目创建与绑定之间被切换）；
      * 返回类型写全限定名：本类体内简名 BaseViewHolder 被
      * {@link BaseRecyclerAdapterPlus.BaseViewHolder} 遮蔽，与父类签名不匹配
      */
     @Override
     protected com.chad.library.adapter.base.viewholder.BaseViewHolder onCreateDefViewHolder(
             ViewGroup parent, int viewType) {
-        return createBaseViewHolder(parent,
-                mGrid ? R.layout.item_search_card_grid : R.layout.item_search_card);
+        com.chad.library.adapter.base.viewholder.BaseViewHolder holder = createBaseViewHolder(parent,
+                viewType == VIEW_TYPE_GRID ? R.layout.item_search_card_grid : R.layout.item_search_card);
+        if (viewType == VIEW_TYPE_GRID) {
+            // 卡查页与卡组编辑页的宫格数字沿用原来的 8sp（用户规格：这两页文字大小保持不变，
+            // 放大只给决斗内卡组编辑器），行高与图标仍按卡宽等比走
+            CardGridInfoView info = holder.getView(R.id.card_grid_info);
+            if (info != null) {
+                info.setFixedTextSizeSp(GRID_TEXT_SP_ORIGINAL);
+            }
+        }
+        return holder;
+    }
+
+    /** 宫格两行数字的固定字号（sp），与列表态与改造前的宫格一致 */
+    private static final float GRID_TEXT_SP_ORIGINAL = 8f;
+
+    /**
+     * 行/宫格两种条目布局各自的 viewType（不得与父类的 HEADER/FOOTER/EMPTY/LOAD_MORE 同值）：
+     * RecyclerView 的复用池与缓存队列都按 viewType 分桶，两态共用一个 viewType 时，
+     * 切换模式后旧布局的条目会被当成新模式直接复用，而两种布局的控件树完全不同——
+     * 宫格态会拿到 item_search_card（自带 list_item_bg 背景与整行高度、且带左右外边距），
+     * 于是卡图被拉成一整行、背景残留，宫格排列散乱（用户报的问题）
+     */
+    private static final int VIEW_TYPE_LIST = 1;
+    private static final int VIEW_TYPE_GRID = 2;
+
+    /** 父类 {@code getItemViewType} 内部路由到本方法（头/尾/空布局的类型由父类自己占用） */
+    @Override
+    protected int getDefItemViewType(int position) {
+        return mGrid ? VIEW_TYPE_GRID : VIEW_TYPE_LIST;
     }
 
     public void setSearchKeyword(String keyword) {
@@ -105,15 +136,16 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
 
     // === 搜索结果两种展现（行模式：卡图 + 文字信息；宫格模式：只卡图与禁限/起源点角标）===
 
-    /** 当前是否宫格展现；默认行为 false（用户规格：默认开列表，顶部按钮点一下换宫格） */
+    /** 当前是否宫格展现；缺省 false（列表），三个页面各自在初始化时按本页设置项调 {@link #setGridLayout} */
     private boolean mGrid;
     /** 宫格单列最小宽（px），列数 = 列表可用宽 / 该值；取行模式的卡图宽 card_small_width 保证两处观感一致 */
     private int mGridMinCell;
 
     /**
-     * 切换搜索结果列的展现形式（宫格/行）。本方法只改标志并重建 holder
-     * （两种条目布局的控件树完全不同），布局管理器要另外调
-     * {@link #applyListLayout(RecyclerView)} 或直接用 {@link #toggleListLayout(RecyclerView)}
+     * 切换搜索结果列的展现形式（宫格/行）。本方法只改标志并重建 holder：标志一变
+     * {@link #getDefItemViewType} 跟着换档，旧布局的条目因此不会被新模式复用（两种条目布局的
+     * 控件树完全不同）；布局管理器要另外调 {@link #applyListLayout(RecyclerView)}
+     * 或直接用 {@link #toggleListLayout(RecyclerView)}
      */
     public void setGridLayout(boolean grid) {
         if (mGrid == grid) return;
@@ -162,7 +194,7 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
      * 顶部展现模式按钮的入口：翻转列表/宫格两态并成对换上对应的布局管理器
      * （条目布局与布局管理器不能错开，否则宫格布局配线性 LM 会把卡图拉成满宽）
      *
-     * @return 切换后的模式（true = 宫格），页面据此刷新按钮图标
+     * @return 切换后的模式（true = 宫格），页面据此刷新按钮图标并写入本页设置项
      */
     public boolean toggleListLayout(RecyclerView list) {
         setGridLayout(!mGrid);
@@ -171,9 +203,48 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
     }
 
     /**
+     * 结果排序规则的第 0 档（下拉位序“星数↑”）：卡查页与卡组管理页维持改造前的原样顺序，
+     * 即搜索线程按移动端 {@link cn.garymb.ygomobile.utils.CardSort} 排好的序列（高星在前、
+     * 怪兽→连接→魔法→陷阱）。置顶不靠这里，一律由
+     * {@link CardSearcherManagerBase#pinKeywordMatches} 在任何档位后统一保证。
+     * 决斗内卡组编辑器不读这里，它用自己的档位（{@link CardSearcherManagerBase} 的比较器）
+     */
+    public static final int SORT_RULE_ORIGINAL = 0;
+
+    /**
+     * 搜索线程交来的原始顺序（未套本页规则）：规则下拉重排时始终以它为底，
+     * 切回第 0 档才能完整回到原样，而不是在已排过的结果上再排一次
+     */
+    private final List<Card> mRawCards = new ArrayList<>();
+
+    /** 记住原始顺序；各页面在拿到搜索结果时先调本方法，再调 {@link #applySortRule(int)} */
+    public void setRawCards(List<Card> cards) {
+        mRawCards.clear();
+        if (cards != null) {
+            mRawCards.addAll(cards);
+        }
+    }
+
+    /**
+     * 按本页当前选中的规则档位把原始顺序填入适配器：第 0 档直接原样，其余档位走
+     * {@link #sortByRule}；无论哪一档，卡名与检索词完全命中的卡都排到最前
+     * （用户规格：置顶不随排序档位变）。
+     * 本方法自己 notifyDataSetChanged，调用方不必再设数据
+     */
+    public void applySortRule(int sortSel) {
+        List<Card> ordered = sortSel == SORT_RULE_ORIGINAL
+                ? mRawCards : sortByRule(mRawCards, sortSel);
+        // 置顶靠稳定分区完成：命中组与非命中组各自保持上面排好的次序，不会打乱档位
+        set(CardSearcherManagerBase.pinKeywordMatches(ordered, mSearchKeyword));
+        notifyDataSetChanged();
+    }
+
+    /**
      * 按卡组编辑器的搜索结果排序规则重排（sortSel 与编辑器排序下拉位序同义：
-     * 0=星数↑ / 1=攻击↑ / 2=守备↑ / 3=名称↓）；比较器取自 {@link CardSearcherManagerBase}，
-     * 三个界面共用同一套规则而不各自实现。返回新列表，不改动传入列表（那是搜索线程的产物）。
+     * 0=星数↑ / 1=攻击↑ / 2=守备↑ / 3=名称↓）；比较器取自 {@link CardSearcherManagerBase}。
+     * 返回新列表，不改动传入列表（那是搜索线程的产物）。
+     * <p>
+     * 注：两个页面只在第 1~3 档走这里，第 0 档按 {@link #SORT_RULE_ORIGINAL} 保持原样
      */
     public static List<Card> sortByRule(List<Card> cards, int sortSel) {
         List<Card> sorted = new ArrayList<>(cards == null ? 0 : cards.size());
@@ -261,10 +332,17 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
 
     @Override
     protected void convert(com.chad.library.adapter.base.viewholder.BaseViewHolder holder, Card item) {
-        // 宫格模式只呈现卡图与角标（用户规格），卡名/属性/攻守与加卡键不属于宫格条目
-        if (mGrid) {
+        // 宫格模式只呈现卡图、角标与底部两行卡面信息（用户规格），
+        // 卡名/灵摆刻度/加卡键不属于宫格条目；
+        // 判据取条目自己的 viewType 而非 mGrid，避免旧布局的 holder 走到新模式的绑定分支
+        final boolean grid = holder.getItemViewType() == VIEW_TYPE_GRID;
+        if (grid) {
             imageLoader.bindImage(holder.getView(R.id.card_image), item, ImageLoader.Type.small);
             bindLimitBadge(holder, item);
+            CardGridInfoView info = holder.getView(R.id.card_grid_info);
+            if (info != null) {
+                info.bind(item);
+            }
             return;
         }
         int position = holder.getBindingAdapterPosition() - getHeaderLayoutCount();
@@ -450,43 +528,48 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
     /**
      * 禁限 / 起源点(GeneSys)点数角标绑定：行模式与宫格模式共用这一段（两种条目布局的
      * right_top / tv_limit_num 同名），保证两种展现下的判定口径与贴图完全一致。
+     * <p>
+     * 数字TextView的可见性必须在这里当场定（有数字才显）：它原先只靠布局默认值，
+     * 行模式 item_search_card 写的是 visible 所以能显形，宫格 item_search_card_grid
+     * 写的是 gone，于是宫格切换后禁止与起源点的数字全部消失。
      */
     private void bindLimitBadge(com.chad.library.adapter.base.viewholder.BaseViewHolder holder, Card item) {
         if (mImageTop == null) {
             mImageTop = new ImageTop(context);
         }
         TextView tv_limit_num = holder.getView(R.id.tv_limit_num);//创建该布局的对象，以便对它的字体颜色，大小，文本进行自由设置
+        // 角标图与数字的判定一次走完，末尾统一写回文本与可见性
+        boolean badgeShown = false;
+        String limitNum = "";
         if (mLimitList != null) {
-
-            holder.setGone(R.id.right_top, false);
             if (mLimitList.check(item, LimitType.Forbidden)) {
+                badgeShown = true;
                 holder.setImageBitmap(R.id.right_top, mImageTop.forbidden);
-                tv_limit_num.setText("");
             } else if (mLimitList.check(item, LimitType.Limit)) {
+                badgeShown = true;
                 holder.setImageBitmap(R.id.right_top, mImageTop.limit);
-                tv_limit_num.setText("1");
+                limitNum = "1";
                 tv_limit_num.setTextSize(12);
                 tv_limit_num.setTextColor(YGOUtil.c(R.color.yellow));
             } else if (mLimitList.check(item, LimitType.SemiLimit)) {
+                badgeShown = true;
                 holder.setImageBitmap(R.id.right_top, mImageTop.semiLimit);
-                tv_limit_num.setText("2");
+                limitNum = "2";
                 tv_limit_num.setTextSize(12);
                 tv_limit_num.setTextColor(YGOUtil.c(R.color.yellow));
             } else if (mLimitList.check(item, LimitType.GeneSys)) {
                 // 统一使用 getGeneSysCredit 取值：与 check(GeneSys) 同口径，命中“宽松同名折叠键”或“卡片自身code”
                 Integer creditValue = mLimitList.getGeneSysCredit(item);
+                badgeShown = true;
                 holder.setImageBitmap(R.id.right_top, mImageTop.credits);
-                tv_limit_num.setText(creditValue == null ? "---" : creditValue.toString());
+                limitNum = creditValue == null ? "---" : creditValue.toString();
                 tv_limit_num.setTextSize(creditValue == null ? 8 : ((creditValue > -10 && creditValue < 100) ? 10 : 8));
                 tv_limit_num.setTextColor(creditValue == null ? YGOUtil.c(R.color.red) : YGOUtil.c(R.color.holo_blue_bright));
-            } else {
-                holder.setGone(R.id.right_top, true);
-                holder.setText(R.id.tv_limit_num, "");
             }
-        } else {
-            holder.setGone(R.id.right_top, true);
-            holder.setText(R.id.tv_limit_num, "");
         }
+        holder.setGone(R.id.right_top, !badgeShown);
+        holder.setText(R.id.tv_limit_num, limitNum);
+        tv_limit_num.setVisibility(limitNum.isEmpty() ? View.GONE : View.VISIBLE);
     }
 
     /**

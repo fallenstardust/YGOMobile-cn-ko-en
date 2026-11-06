@@ -309,11 +309,12 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
 
         mListView = layoutView.findViewById(R.id.list_cards);
 
-        // 设置卡片列表适配器并启用滑动删除功能；展现模式默认走原列表（用户规格），
+        // 搜索结果列的展现模式按本页设置项初始化（用户规格：三页各存各的开关，未设置过走原列表），
         // 顶部计数行的按钮可切成宫格（只留卡图与禁限/起源点角标，列数按宽度自适应），
         // 两种展现都保留加卡键与行上的卡名/属性/攻守信息（宫格态则由卡详与长按拖动加卡）
         mCardListAdapter = new CardListAdapter(getContext(), activity.getImageLoader());
         mCardListAdapter.setShowAddButtons(true); // 显示添加按钮
+        mCardListAdapter.setGridLayout(isResultGridPreferred());
         mListView.setLayoutManager(new FastScrollLinearLayoutManager(getContext()));
         mListView.setAdapter(mCardListAdapter);
         // 顶部计数同一行的排序规则切换与展现模式切换
@@ -322,6 +323,9 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
         btnResultViewMode = layoutView.findViewById(R.id.btn_result_view_mode);
         btnResultViewMode.setOnClickListener(v -> toggleResultViewMode());
         refreshResultViewModeIcon();
+        // 初始化态可能是宫格（从设置读回），行 LM 必须当场换掉；
+        // 列数在宽度未量出时先给 1 列兜底，下一次填结果数据时再复核
+        applyResultLayout();
 
         // 设置各类监听器
         setListeners();
@@ -603,27 +607,23 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
         });
     }
 
-    /** 按当前排序规则重排（sortByRule 返回新列表，不动搜索线程交来的列表） */
-    protected List<Card> applyResultSortRule(List<Card> cards) {
-        return CardListAdapter.sortByRule(cards, resultSortSel);
-    }
-
     /**
-     * 结果列表填入数据与刷新，再复核一次展现布局；
-     * 本方法不排序，排序由调用方决定（关键词搜索与收藏走规则，
-     * 卡包展示需要保留卡包原来的顺序）
+     * 结果列表填入数据与刷新：先记住搜索线程交来的原始顺序，再按本页当前档位填入，
+     * 最后复核一次展现布局。第 0 档（星数↑）就是改造前的原样顺序（含关键词完全命中置顶），
+     * 卡包展示的原始顺序就是卡包顺序本身，因此也不会被打乱
      */
     protected void fillSearchResultList(List<Card> cards) {
         if (mCardListAdapter == null) return;
-        mCardListAdapter.set(cards);
-        mCardListAdapter.notifyDataSetChanged();
+        mCardListAdapter.setRawCards(cards);
+        mCardListAdapter.applySortRule(resultSortSel);
         applyResultLayout();
     }
 
-    /** 排序规则变更后只重排当前结果，不重新搜索 */
+    /** 排序规则变更后只重排当前结果，不重新搜索：以适配器里记下的原始顺序为底 */
     protected void resortSearchResults() {
         if (mCardListAdapter == null) return;
-        fillSearchResultList(applyResultSortRule(mCardListAdapter.getItems()));
+        mCardListAdapter.applySortRule(resultSortSel);
+        applyResultLayout();
     }
 
     /**
@@ -635,15 +635,23 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
         mListView.post(() -> mCardListAdapter.applyListLayout(mListView));
     }
 
+    /** 本页上一次的展现模式开关（与卡查页、决斗内卡组编辑器各存一份） */
+    protected boolean isResultGridPreferred() {
+        return mSettings.getIntSettings(Constants.PREF_DECK_MANAGE_RESULT_GRID,
+                Constants.PREF_DEF_RESULT_GRID) == 1;
+    }
+
     /**
      * 切换搜索结果展现模式（列表/宫格）并同步按钮图标：模式由点击当场切换，
      * 条目布局与布局管理器必须同一帧换完（toggleListLayout 里成对处理），
      * 不能走 applyResultLayout 的 post 路径，否则中间会有一帧宫格条目配在线性布局上、
-     * 卡图被拉成满宽的大图；而点击回调本身不在布局过程中，可以直接换 LM
+     * 卡图被拉成满宽的大图；而点击回调本身不在布局过程中，可以直接换 LM；
+     * 开关结果写回本页设置项供下次初始化
      */
     protected void toggleResultViewMode() {
         if (mCardListAdapter == null) return;
-        mCardListAdapter.toggleListLayout(mListView);
+        boolean grid = mCardListAdapter.toggleListLayout(mListView);
+        mSettings.saveIntSettings(Constants.PREF_DECK_MANAGE_RESULT_GRID, grid ? 1 : 0);
         refreshResultViewModeIcon();
     }
 

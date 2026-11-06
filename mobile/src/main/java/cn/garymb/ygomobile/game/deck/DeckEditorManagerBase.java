@@ -182,8 +182,24 @@ abstract class DeckEditorManagerBase {
 
     public void setListener(DeckEditorListener listener) {
         this.listener = listener;
-        this.cardSearcherManager.setListener(count -> {
-            if (listener != null) listener.onSearchResultsUpdated(count);
+        this.cardSearcherManager.setListener(new CardSearcherManagerBase.SearchListener() {
+            @Override
+            public void onSearchResultsUpdated(int count) {
+                if (listener != null) listener.onSearchResultsUpdated(count);
+            }
+
+            /**
+             * 禁限下拉选了 OCG/TCG/简体中文/OCG独有/TCG独有：记下档位并让三个网格就地重画
+             * 卡底的赛制独有标识。只走 updateAvail 而不重建网格（notifyDeckChanged 会把卡片视图
+             * 全部重做，连拖拽监听与批量勾选都要重贴，为个标识不值得）
+             */
+            @Override
+            public void onAvailDisplayChanged(int availLm) {
+                DeckEditorManagerBase.this.availLm = availLm;
+                if (cgvMain != null) cgvMain.updateAvail(mImageTop, availLm);
+                if (cgvExtra != null) cgvExtra.updateAvail(mImageTop, availLm);
+                if (cgvSide != null) cgvSide.updateAvail(mImageTop, availLm);
+            }
         });
     }
     public void refreshLimitList() {
@@ -249,13 +265,14 @@ abstract class DeckEditorManagerBase {
         // 旧内容”推成会话游标，末尾就没有更晚的未保存修改可采纳，还会反过来把对端刷回磁盘版本
         if (historyPanel != null) historyPanel.beginDeckLoad(deckPath);
         try {
-            File deckFile = new File(deckPath);
+            // ydk 可能在磁盘上，也可能在卡包 zip/ypk 里（引用路径，无实体文件），
+            // 因此统一用 DeckUtil.ydkExists 守门、readDeck(path) 读取
             boolean loaded = false;
-            if (deckFile.exists()) {
-                DeckInfo loadedDeck = DeckLoader.readDeck(cardLoader, deckFile);
+            if (DeckUtil.ydkExists(deckPath)) {
+                DeckInfo loadedDeck = DeckLoader.readDeck(cardLoader, deckPath);
                 if (loadedDeck != null) {
                     currentDeck.update(loadedDeck);
-                    currentDeck.source = deckFile;
+                    currentDeck.source = new File(deckPath);
                     isModified = false;
                     loaded = true;
                 }
@@ -478,7 +495,8 @@ abstract class DeckEditorManagerBase {
     }
 
     public void saveDeck() {
-        if (isReadonly) return;
+        // 卡包档案里的 ydk 没有实体文件可写：写回会在磁盘上造出“xxx.ypk!/pack/xxx.ydk”这种垃圾文件
+        if (isReadonly || DeckUtil.isArchiveYdk(currentDeckFilePath)) return;
         if (currentDeckFilePath == null || currentDeckFilePath.isEmpty()) {
             YGOUtil.showTextToast("请先选择或另存卡组");
             return;
@@ -666,10 +684,10 @@ abstract class DeckEditorManagerBase {
         // 优先打开共享会话里正在编辑的那份卡组：settings 的 lastdeckpath 只由本编辑器写入，
         // 卡组编辑页切卡组不会更新它，直接沿用它会让两侧停在不同卡组上、看不到对方最后修改
         String sessionPath = historyPanel != null ? historyPanel.sessionDeckPath() : "";
-        if (!sessionPath.isEmpty() && new File(sessionPath).exists()) {
+        if (!sessionPath.isEmpty() && DeckUtil.ydkExists(sessionPath)) {
             currentDeckFilePath = sessionPath;
             currentDeckCategoryName = DeckUtil.getDeckTypeName(sessionPath);
-            currentDeckName = new File(sessionPath).getName().replace(".ydk", "");
+            currentDeckName = DeckUtil.ydkDisplayName(sessionPath);
             loadDeckFromPath(sessionPath);
             updateDeckManagerButtonText();
             return;
@@ -682,17 +700,19 @@ abstract class DeckEditorManagerBase {
 
         String savedPath = settings.getSettings("lastdeckpath");
         if (savedPath != null && !savedPath.isEmpty()) {
-            if (!new File(savedPath).exists()) {
+            if (!DeckUtil.ydkExists(savedPath)) {
+                // 旧版本把卡包 ydk 解压到 cacheDeck 再把那条实体路径存为“最后卡组”；
+                // 现在不再解压，同一个卡包只能从档案里读，按同名换回引用路径，
+                // 升级后打开编辑器仍然落在同一份卡包上
                 String cacheDeckDir = settings.getCacheDeckDir();
                 if (cacheDeckDir != null && savedPath.startsWith(cacheDeckDir)) {
-                    try {
-                        DeckUtil.getExpansionsDeckList();
-                    } catch (Exception e) {
-                        // ignore
+                    String relocated = DeckUtil.findPackYdkByName(new File(savedPath).getName());
+                    if (relocated != null) {
+                        savedPath = relocated;
                     }
                 }
             }
-            if (new File(savedPath).exists()) {
+            if (DeckUtil.ydkExists(savedPath)) {
                 currentDeckFilePath = savedPath;
                 currentDeckCategoryName = lastCategory != null ? lastCategory : "";
                 currentDeckName = lastDeckName != null ? lastDeckName : "";
@@ -747,8 +767,8 @@ abstract class DeckEditorManagerBase {
         }
         if (currentDeckFilePath != null && !currentDeckFilePath.isEmpty()) {
             AppsSettings.get().saveSettings("lastdeckpath", currentDeckFilePath);
-            String deckName = new File(currentDeckFilePath).getName().replace(".ydk", "");
-            AppsSettings.get().saveSettings("lastdeck", deckName);
+            // 卡包 ydk 现在可能是压缩包引用路径，取名字不能用 File.getName 之外的目录假设
+            AppsSettings.get().saveSettings("lastdeck", DeckUtil.ydkDisplayName(currentDeckFilePath));
         }
     }
 

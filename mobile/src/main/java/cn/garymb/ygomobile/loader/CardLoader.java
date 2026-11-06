@@ -161,7 +161,10 @@ public class CardLoader implements ICardSearcher {
                 }
                 if (searchInfos == null || searchInfos.stream().anyMatch(searchInfo -> searchInfo.isValid(card))) {
                     if (searchInfos != null && card.Name.equals(searchInfos.get(0).getKeyWord().getValue())) {
-                        cards.remove(i);
+                        // 完全命中卡名的卡走“置顶组”，不进普通结果组
+                        // （不能再调 cards.remove(i)：getAllCards() 返回的就是 CardManager 的
+                        // cardDataHashMap 本体，那样会把这张卡从全卡表里永久删掉，
+                        // 而且索引前移会让下一张卡在当次搜索里被直接跳过）
                         keywordTmp.add(card);
                         continue;//避免重复
                     }
@@ -171,6 +174,8 @@ public class CardLoader implements ICardSearcher {
 
             // 对列表进行排序
             list.sort(CardSort.ASC_inCards(inCards));
+            // 完全命中卡名的置顶段 + 普通段：与 CardSearcherManagerBase.pinKeywordMatches
+            // 同一口径，后者在展现层再保证一次（排序档位切换后仍然置顶）
             keywordTmp.addAll(list);
             return keywordTmp;
         }).fail((e) -> {

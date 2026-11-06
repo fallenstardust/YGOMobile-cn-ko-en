@@ -67,6 +67,15 @@ public interface Constants {
     String PREF_DECK_DELETE_DILAOG = "pref_key_deck_delete_dialog";
     boolean PREF_DEF_DECK_DELETE_DILAOG = false;
 
+    /***
+     * 搜索结果列的展现模式（0=列表，1=宫格），按用户规格三页各存各的开关：
+     * 决斗内卡组编辑器、卡查页、卡组编辑页互不影响，缺省 0 走原来的行列表
+     */
+    String PREF_DECK_EDITOR_RESULT_GRID = "pref_key_deck_editor_result_grid";
+    String PREF_CARD_SEARCH_RESULT_GRID = "pref_key_card_search_result_grid";
+    String PREF_DECK_MANAGE_RESULT_GRID = "pref_key_deck_manage_result_grid";
+    int PREF_DEF_RESULT_GRID = 0;
+
     String SETTINGS_COVER = "settings_game_diy_card_cover";
     String SETTINGS_AVATAR = "settings_game_avatar";
     String SETTINGS_CARD_BG = "settings_game_diy_card_bg";
