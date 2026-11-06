@@ -66,6 +66,10 @@ jobs:
         rm -r .git
         cd ..
         zip -r pics.zip pics
+        #主脚本压成 scripts.zip：APK 内是一个大档案，资源检查原样拷到资源根目录，
+        #native 引擎侧直接按中央目录索引读它（不再解压落地）；散文件形态会让
+        #1.3 万次 assets.open/list 与小文件写入成为瓶颈
+        rm -f script/.gitignore script/.gitattributes
         zip -r scripts.zip script
         mv *.zip mobile/assets/data/
 

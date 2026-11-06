@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.engine;
 
+import android.content.Context;
 import android.os.SystemClock;
 import android.util.Log;
 
@@ -29,16 +30,19 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.NativeInitOptions;
 import cn.garymb.ygomobile.utils.CrashHandler;
+import cn.garymb.ygomobile.utils.IOUtils;
 
 /**
  * native 决斗引擎（libygoengine.so）的启动引导：脚本与卡包物化 + 引擎初始化。
  *
- * <p>JNI 侧（ygo_engine_jni.cpp::engineScriptReader）只认资源根目录下的<b>实体文件</b>：
- * 卡片脚本优先 {@code root/expansions/script/*.lua}，其次 {@code root/script/*.lua}
- *（对齐 C++ data_manager.cpp::ScriptReaderEx 在 prefer_expansion_script=1 时的
- * “expansions 散文件 > 卡包档案 > 主脚本”语义）；卡片数据库仅认传入的实体 cdb
- * 路径列表，按“优先级从低到高、后加载覆盖”装载（对齐 game.cpp 先 LoadDB(mDbList)
- * 后 LoadExpansions() 的净效果：扩展覆盖主库同名卡）。
+ * <p>JNI 侧（ygo_engine_jni.cpp::engineScriptReader）的卡片脚本取法（对齐 C++
+ * data_manager.cpp::ScriptReaderEx 在 prefer_expansion_script=1 时的“expansions 散文件
+ * ＞ 卡包档案 ＞ 主脚本”语义）：① {@code <root>/expansions/script/*.lua}（散调试文件与
+ * 已物化的卡包脚本）② {@code <root>/scripts.zip}（主脚本档案：native 扫一遍中央目录建
+ * “文件名→偏移/长度/方法”索引，按需 pread+inflate 就地取，不再落地解压出上万个 lua）
+ * ③ {@code <root>/script/*.lua}（仅作老安装残留/手工调试的兜底）；
+ * 卡片数据库仅认传入的实体 cdb 路径列表，按“优先级从低到高、后加载覆盖”装载（对齐
+ * game.cpp 先 LoadDB(mDbList) 后 LoadExpansions() 的净效果：扩展覆盖主库同名卡）。
  *
  * <p>由此，资源根目录（ygocore/）与 expansions/ 下的每张卡包压缩包（.zip/.ypk）
  * 必须物化两样东西，否则扩展包卡片在主卡片数据/脚本完备时仍会因引擎侧
@@ -49,14 +53,16 @@ import cn.garymb.ygomobile.utils.CrashHandler;
  *       {@code AppsSettings#makeCdbList} 纳入引擎列表。</li>
  * </ul>
  * 同种数据源的统一读取优先级（高→低）：expansions 散文件 ＞ 卡包 zip/ypk
- *（文件名字典序，靠后的包覆盖靠前的包）＞ 主资源（cards.cdb / scripts.zip / pics.zip）
- * ＞ 主散目录，cdb/script/pics 三类一致（参考 game.cpp、data_manager.cpp、
+ *（文件名字典序，靠后的包覆盖靠前的包）＞ 主资源档案（cards.cdb / pics.zip /
+ * scripts.zip）＞ 主散目录，cdb/script/pics 三类一致（参考 game.cpp、data_manager.cpp、
  * image_manager.cpp）。
  *
  * <p>局域网主机（LanGameServer 监听就绪后的后台引导）与旧格式录像回放（EngineReplaySource）
- * 均经 {@link #ensureEngineReady()} 完成“解压脚本∥物化卡包（两子线程并行）→
- * OcgDuelEngine.init”引导；卡包增删/变更后 cdb 列表变化时热重载（{@code reloadCards}），
- * 无需重启应用。
+ * 均经 {@link #ensureEngineReady()} 完成“物化卡包 → OcgDuelEngine.init”引导；主脚本不再
+ * 解压落地，Java 只负责把 {@code scripts.zip} 拷到资源根目录（{@link #copyScriptsZipFromAssets}），
+ * 档案内容变化时 native 侧按 size+mtime 自查重建索引；旧格式回放、MSG_RETRY 重派与开局
+ * 因此必然读同一份档案字节，不存在两套脚本版本；卡包增删/变更后 cdb 列表变化时热重载
+ * （{@code reloadCards}），无需重启应用。
  */
 public final class NativeScriptBootstrap {
     private static final String TAG = "NativeScriptBootstrap";
@@ -75,7 +81,8 @@ public final class NativeScriptBootstrap {
     }
 
     /**
-     * 引导引擎：确保 script/ 目录已就绪后调用 {@link OcgDuelEngine#init}。
+     * 引导引擎：主脚本走 {@code scripts.zip} 直读（无需落地），物化卡包后调用
+     * {@link OcgDuelEngine#init}。
      *
      * @return 引擎可用且初始化成功返回 true
      */
@@ -90,73 +97,35 @@ public final class NativeScriptBootstrap {
             String rootPath = AppsSettings.get().getResourcePath();
             final String extractRoot = rootPath;
             long t0 = SystemClock.uptimeMillis();
-            // 脚本解压与卡包物化并行：主 scripts.zip 解到 <root>/script/、卡包物化到
-            // <root>/expansions/，两阶段产物目录/标记文件均无交集，低配设备上用两条
-            // 子线程同时进行，引导墙钟时间从“两者之和”压缩为“两者较大者”。
-            // cdb 列表须在二者全部完成后解算（makeCdbList 扫描物化产物目录）
-            final long[] phaseMs = new long[2];
-            final Throwable[] phaseErr = new Throwable[2];
-            Thread mainScripts = new Thread(() -> {
-                long s = SystemClock.uptimeMillis();
-                try {
-                    ensureScriptsExtracted(extractRoot);
-                } catch (Throwable t) {
-                    phaseErr[0] = t;
-                }
-                phaseMs[0] = SystemClock.uptimeMillis() - s;
-            }, "EngineBootMainScripts");
-            Thread packMaterialize = new Thread(() -> {
-                long s = SystemClock.uptimeMillis();
-                try {
-                    // 扩展卡包物化：ygocore/ 与 expansions/ 下全部 .zip/.ypk 的 script/*.lua →
-                    // <root>/expansions/script/，包内 *.cdb → <root>/expansions/cdb/；否则
-                    // 卡包卡片因引擎无数据无脚本只能盖放（见类注释）。包间字典序升序
-                    // 覆写的优先级在本线程内串行保持，不受并行影响
-                    ensureExpansionScriptsExtracted(extractRoot);
-                } catch (Throwable t) {
-                    phaseErr[1] = t;
-                }
-                phaseMs[1] = SystemClock.uptimeMillis() - s;
-            }, "EngineBootPacks");
-            mainScripts.setDaemon(true);
-            packMaterialize.setDaemon(true);
-            mainScripts.start();
-            packMaterialize.start();
+            // 主脚本已不需解压，本处只物化卡包；档案拷贝晚于本次 init 也没关系，
+            // native 侧每次读脚本都按 size+mtime 自查索引
+            // cdb 列表须在物化完成后解算（makeCdbList 扫描物化产物目录）
             try {
-                mainScripts.join();
-                packMaterialize.join();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                Log.w(TAG, "引擎引导等待解压线程时被中断");
-            }
-            if (phaseErr[0] != null) {
-                Log.e(TAG, "主脚本解压异常", phaseErr[0]);
-            }
-            if (phaseErr[1] != null) {
-                Log.e(TAG, "卡包物化异常", phaseErr[1]);
+                // 扩展卡包物化：ygocore/ 与 expansions/ 下全部 .zip/.ypk 的 script/*.lua →
+                // <root>/expansions/script/，包内 *.cdb → <root>/expansions/cdb/；否则
+                // 卡包卡片因引擎无数据无脚本只能盖放（见类注释）
+                ensureExpansionScriptsExtracted(extractRoot);
+            } catch (Throwable t) {
+                Log.e(TAG, "卡包物化异常", t);
             }
             long t1 = SystemClock.uptimeMillis();
             NativeInitOptions options = AppsSettings.get().getNativeInitOptions();
             rootPath = options.mWorkPath;
             String[] cdbPaths = options.mDbList.toArray(new String[0]);
             long t2 = SystemClock.uptimeMillis();
-            // 诊断：内置引擎（LAN 建主/残局/旧格式回放）的真实脚本根目录——卡片 lua 脚本
-            // 优先读 <root>/expansions/script/（散调试文件+卡包物化区），其次 <root>/script/
-            //（主，scripts.zip 解出）；scripts.zip 指纹变化时 ensureScriptsExtracted 会
-            // 用 zip 内容覆写主脚本区（手改主脚本会被冲掉）
+            // 诊断：脚本三档来源的当前态——卡包物化区、主脚本档案、老安装残留实体目录
+            File mainScriptDir = new File(rootPath, Constants.CORE_SCRIPT_PATH);
+            String[] mainScriptFiles = mainScriptDir.list();
+            File scriptsZip = new File(rootPath, Constants.CORE_SCRIPTS_ZIP);
             Log.i(TAG, "engine bootstrap root=" + rootPath
-                    + " script/init.lua exists=" + new File(new File(rootPath,
-                    Constants.CORE_SCRIPT_PATH), "init.lua").exists()
+                    + " scripts.zip=" + (scriptsZip.isFile() ? scriptsZip.length() + "B" : "缺失")
+                    + " 残留script/条目=" + (mainScriptFiles == null ? 0 : mainScriptFiles.length)
                     + " expansions/script/init.lua exists=" + new File(new File(rootPath,
                     Constants.CORE_EXPANSIONS + "/" + Constants.CORE_SCRIPT_PATH),
                     "init.lua").exists()
-                    + " packcdb=" + listPackCdbCount(rootPath)
-                    + " scripts.zip exists=" + new File(rootPath,
-                    Constants.CORE_SCRIPTS_ZIP).exists());
-            // 分段耗时：开局卡顿定位用（预热未完成时 startDuel 闸门会同步等到这里全部结束）；
-            // 解压两阶段为并行线程，各自耗时与并行墙钟（取较大者）分别记录
-            Log.i(TAG, "engine bootstrap 耗时(ms) 主脚本解压=" + phaseMs[0]
-                    + " 卡包物化=" + phaseMs[1] + "（并行墙钟=" + (t1 - t0) + "）"
+                    + " packcdb=" + listPackCdbCount(rootPath));
+            // 分段耗时：开局卡顿定位用（预热未完成时 startDuel 闸门会同步等到这里全部结束）
+            Log.i(TAG, "engine bootstrap 耗时(ms) 卡包物化=" + (t1 - t0)
                     + " 选项解算=" + (t2 - t1));
             if (rootPath.equals(sInitedRootPath)) {
                 // 已初始化：卡包增删/变更导致 cdb 列表变化时热重载引擎卡数据
@@ -195,7 +164,7 @@ public final class NativeScriptBootstrap {
 
     /**
      * 后台预热入口：在创建时刻立即起子线程执行 {@link #ensureEngineReady()}
-     * （解压脚本∥物化卡包两线程并行 → cdb 加载），把开局闸门需要等待的引导
+     *（物化卡包 → cdb 加载），把开局闸门需要等待的引导
      * 全量提前到进程/界面创建时刻，用后续全部自然操作耗时（资源检查/导航/
      * 建房/猜拳/选先后攻）覆盖引导总时长。瞬态失败（如首次安装时资源目录
      * 尚未就绪）每 3 秒重试一次、至多 3 次；native 库缺失（非 ARM ABI/未打包）
@@ -234,100 +203,15 @@ public final class NativeScriptBootstrap {
     }
 
     /**
-     * {@code scripts.zip} 自上次解压后已更新（比对 大小+lastModified 指纹标记）时，把
-     * zip 重新解压到资源根目录（zip 条目自带 script/ 、single/ 前缀，直接按相对路径
-     * 覆写落盘）。
+     * 把包内 {@code scripts.zip} 落到资源根目录：单条大档案一次流式拷贝，只在内容变化时重写
+     *（保留 mtime，native 侧的 size+mtime 自查因此不会反复重建索引），进度按字节上报。
+     * 主脚本由 native 直接读这个档案，不再解压成 {@code script/} 下的散文件。
      *
-     * <p>快速路径仅认指纹标记，<b>不</b>叠加 {@code script/init.lua} 存在条件：部分
-     * 资源包的 scripts.zip 本就不含 init.lua（实测 bootstrap 诊断行 exists=false，
-     * 引擎靠卡脚本+内置常量照样开局），旧判定 {@code initLua.exists() && 指纹一致}
-     * 在此类资源上永不命中，导致每次 ensureEngineReady（预热/建主引导/开局闸门
-     * 各一次）都串行重做全量解压（实测 15039ms/次），开局闸门等待被叠成多次重解
-     * 之和（实测 34875ms）。标记只在解压成功后写入，指纹一致即该 zip 已完整解出
-     * 过；{@code script/} 被手工清空时标记同灭，自愈重解。
-     *
-     * <p>必须比对指纹而不能只看解压过：JNI 侧 engineScriptReader 只认实体文件，而
-     * C++ gframe 的 ScriptReaderEx 优先读 zip 挂载——资源升级后若不解压更新，Java 引擎重跑
-     * 用的是陈旧脚本、行为与录制时代分叉，是旧格式回放中途 MSG_RETRY 的根因之一。
-     *
-     * <p>应用版本升级不再误触发本方法：{@code ResCheckTask} 拷 scripts.zip 已改走
-     * {@code IOUtils#copyFileFromAssetsIfChanged}，包内资源逐字节未变就不重写目标，目标的
-     * lastModified 保持不变，指纹因此命中快速路径；只有脚本包内容真的变了才重解一轮。
+     * @param update true 才做“内容变了就重写”；false 时目标存在就不动（正常启动靠它零开销）
      */
-    public static void ensureScriptsExtracted(String resourcePath) {
-        if (resourcePath == null || resourcePath.isEmpty()) {
-            return;
-        }
-        File root = new File(resourcePath);
-        File scriptDir = new File(root, Constants.CORE_SCRIPT_PATH);
-        File initLua = new File(scriptDir, "init.lua");
-        File zip = new File(root, Constants.CORE_SCRIPTS_ZIP);
-        if (!zip.exists()) {
-            if (!initLua.exists()) {
-                Log.w(TAG, "scripts.zip 不存在，无法解压脚本目录: " + zip.getAbsolutePath());
-            }
-            return;
-        }
-        File marker = new File(scriptDir, ".scripts_zip_mark");
-        // 快速路径仅认指纹标记（见方法注释）：旧版叠加的 initLua.exists() 条件在
-        // 不含 init.lua 的资源包上永不命中，每次引导都全量重解压 15s
-        if (zipFingerprint(zip).equals(readMarker(marker))) {
-            return;
-        }
-        ZipFile zf = null;
-        boolean ok = false;
-        try {
-            zf = new ZipFile(zip);
-            String rootCanonical = root.getCanonicalPath();
-            Enumeration<? extends ZipEntry> entries = zf.entries();
-            int count = 0;
-            while (entries.hasMoreElements()) {
-                ZipEntry entry = entries.nextElement();
-                if (entry.isDirectory()) {
-                    continue;
-                }
-                String name = entry.getName().replace('\\', '/');
-                // 档案里夹带的仓库/系统垃圾条目不落盘：老设备上每个多余文件都要付一次
-                // 建目录+写盘+关闭的开销，且会在 script/ 里留下无意义文件
-                if (isJunkEntry(name)) {
-                    continue;
-                }
-                File out = new File(root, name);
-                // 防 zip slip：目标必须落在资源根目录内
-                if (!out.getCanonicalPath().startsWith(rootCanonical + File.separator)) {
-                    Log.w(TAG, "跳过非法条目: " + entry.getName());
-                    continue;
-                }
-                File parent = out.getParentFile();
-                if (parent != null && !parent.exists() && !parent.mkdirs()) {
-                    continue;
-                }
-                try (InputStream is = zf.getInputStream(entry);
-                        OutputStream os = new FileOutputStream(out)) {
-                    byte[] buf = new byte[65536];
-                    int n;
-                    while ((n = is.read(buf)) > 0) {
-                        os.write(buf, 0, n);
-                    }
-                }
-                count++;
-            }
-            ok = true;
-            Log.i(TAG, "scripts.zip 解压完成，共 " + count + " 个文件 → " + rootCanonical);
-        } catch (IOException e) {
-            Log.e(TAG, "解压 scripts.zip 失败", e);
-        } finally {
-            if (zf != null) {
-                try {
-                    zf.close();
-                } catch (IOException e) {
-                    // ignore
-                }
-            }
-            if (ok) {
-                writeMarker(marker, zipFingerprint(zip));   // 指纹未落盘则下次仍重解，自愈
-            }
-        }
+    public static void copyScriptsZipFromAssets(Context context, String assetZip, File resDir,
+            boolean update, IOUtils.CopyProgress progress) throws IOException {
+        IOUtils.copyFileFromAssetsIfChanged(context, assetZip, resDir, update, progress);
     }
 
     private static String zipFingerprint(File zip) {
@@ -337,7 +221,7 @@ public final class NativeScriptBootstrap {
     /**
      * 档案内与决斗无关的仓库/系统垃圾条目：{@code .git/}、{@code .gitignore}、
      * {@code .gitattributes}、{@code .DS_Store}、{@code Thumbs.db}、{@code desktop.ini}、
-     * {@code __MACOSX/}。主脚本包与卡包解压时统一跳过，不落盘也不计入物化清单。
+     * {@code __MACOSX/}。卡包物化时统一跳过，不落盘也不计入物化清单。
      */
     private static boolean isJunkEntry(String name) {
         String lower = name.toLowerCase(Locale.ROOT);
@@ -355,7 +239,7 @@ public final class NativeScriptBootstrap {
 
     /**
      * 扩展卡包物化引导（修复卡包卡片"只能盖放"的关键）：薄 JNI 引擎只认<b>实体文件</b>——
-     * 脚本走 engineScriptReader 的两级查找（{@code <root>/expansions/script/} 优先，
+     * 卡片脚本走 engineScriptReader 的三档查找（{@code <root>/expansions/script/} 优先，
      * 对齐 data_manager.cpp::ScriptReaderEx 的 prefer_expansion_script=1），卡片数据走
      * nativeInit/reloadCards 的实体 cdb 路径列表。因此资源根目录（ygocore/）与
      * expansions/ 下的每张卡包压缩包（.zip/.ypk）必须物化两样东西：
@@ -411,7 +295,8 @@ public final class NativeScriptBootstrap {
         }
     }
 
-    /** 收集目录下的卡包压缩包（.zip/.ypk，排除主脚本包 scripts.zip 与非普通文件）。 */
+    /** 收集目录下的卡包压缩包（.zip/.ypk）。资源根目录的 {@code scripts.zip} 是主脚本档案
+     * （native 直读），必须排除，否则会被当卡包物化到 expansions/script 而抢在主线脚本之前。 */
     private static void collectScriptArchives(File dir, List<File> out) {
         if (dir == null || !dir.isDirectory()) {
             return;
@@ -637,11 +522,6 @@ public final class NativeScriptBootstrap {
         return -1;
     }
 
-    private static String readMarker(File marker) {
-        List<String> lines = readMarkerLines(marker);
-        return lines.isEmpty() ? null : lines.get(0);
-    }
-
     /** 读标记全部行（UTF-8，逐行 trim、跳过空行）；缺失/异常返回空列表。 */
     private static List<String> readMarkerLines(File marker) {
         if (!marker.isFile()) {
@@ -661,12 +541,6 @@ public final class NativeScriptBootstrap {
             return Collections.emptyList();
         }
         return out;
-    }
-
-    private static void writeMarker(File marker, String fingerprint) {
-        List<String> lines = new ArrayList<>(1);
-        lines.add(fingerprint);
-        writeMarkerLines(marker, lines);
     }
 
     /** 覆写标记全部行（UTF-8，每行一文件）；父目录自动创建。 */

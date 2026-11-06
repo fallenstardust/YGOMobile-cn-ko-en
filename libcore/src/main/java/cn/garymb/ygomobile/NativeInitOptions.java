@@ -18,7 +18,7 @@ public final class NativeInitOptions {
     // /data/data/cards.cdb;a.cdb;b.cdb
     public final List<String> mDbList;
 
-    //pics.zip;scripts.zip;a.zip;b.zip
+    //pics.zip;a.zip;b.zip（主卡片脚本由 native 直读 scripts.zip，不再以档案挂载）
     public final List<String> mArchiveList;
 
     //int main(int argc, char*[] argv)

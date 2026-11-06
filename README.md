@@ -23,6 +23,7 @@ ndk编译环境(请用迅雷，旋风，或者翻墙vpn下载)
 1.准备数据
 --------------------------
     从官网发布的apk提取，或者自己提供，scripts.zip里面是script文件夹
+    （资源检查时原样拷到游戏目录 ygocore\scripts.zip，引擎直接按中央目录索引读取，不再解压落地）
     mobile\assets\data\cards.cdb
     mobile\assets\data\pics.zip
     mobile\assets\data\scripts.zip

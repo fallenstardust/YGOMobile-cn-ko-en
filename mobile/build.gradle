@@ -45,9 +45,16 @@ android {
         }
     }
     android.applicationVariants.all { variant ->
-        variant.outputs.all {
-            def fileName = "YGOMobile_${versionName}.Apk"
-            outputFileName = fileName
+        // 只重命名发布用的 release，debug 保 AGP 默认产物名：
+        // AGP 8 下用这种旧 API 给全部 variant 改名，IDE 侧的产物清单（outputs/apk 下的
+        // output.json）与实际文件名对不齐，Studio 枚举到 0 个 APK 产物，安装时报
+        // "The currently selected variant "cnDebug" uses split APKs, but none of the 0 split
+        // apks are compatible with the current device with ABIs ..."
+        if (variant.buildType.name != 'debug') {
+            variant.outputs.all {
+                def fileName = "YGOMobile_${versionName}.Apk"
+                outputFileName = fileName
+            }
         }
     }
     sourceSets {

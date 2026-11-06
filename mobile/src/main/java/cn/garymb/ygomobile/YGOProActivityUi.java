@@ -81,7 +81,7 @@ abstract class YGOProActivityUi extends YGOProActivityBase {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // 引擎引导放在 onCreate 第一时间拉起：脚本解压、卡包物化、cdb 加载全在
+        // 引擎引导放在 onCreate 第一时间拉起：卡包物化、cdb 加载全在
         // 子线程与界面初始化并行进行，用主菜单/建房/猜拳/选先后攻的全部自然耗时
         // 覆盖首次引导开销，使 ServerDuel#startDuel 开局闸门即时通过、选完直接发牌
         warmUpDuelEngine();

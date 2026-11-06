@@ -165,6 +165,12 @@ public interface Constants {
     String PREF_WINDOW_TOP_BOTTOM = "pref_settings_window_top_bottom";
     int DEF_PREF_WINDOW_TOP_BOTTOM = 0;
 
+    /*** 资源检查的并行路数（上限见 ResCheckTask.RES_CHECK_MAX_THREADS，共 9 个并行单元）：
+     * 存储快的机器可多路重叠 IO，老机/eMMC 上多路可能反而抢带宽，故留成可调参数
+     */
+    String PREF_RES_CHECK_THREADS = "pref_settings_res_check_threads";
+    int DEF_PREF_RES_CHECK_THREADS = 4;
+
     int REQUEST_CUT_IMG = 0x1000 + 0x10;
     int REQUEST_CHOOSE_FILE = 0x1000 + 0x20;
     int REQUEST_CHOOSE_IMG = 0x1000 + 0x21;

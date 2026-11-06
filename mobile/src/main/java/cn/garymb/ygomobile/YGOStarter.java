@@ -13,6 +13,7 @@ import android.os.Build;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
@@ -27,8 +28,10 @@ import java.util.HashMap;
 import cn.garymb.ygodata.YGOGameOptions;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.ui.home.ResCheckTask;
 import cn.garymb.ygomobile.ui.plus.ViewTargetPlus;
 import cn.garymb.ygomobile.utils.ComponentUtils;
+import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
 
 
@@ -174,6 +177,15 @@ public class YGOStarter {
      *                 或者(播放完不退出游戏)：-k -r 1111.yrp
      */
     public static void startGame(Activity activity, YGOGameOptions options, String... args) {
+        // 首次资源检查还在进行中：cards.cdb / 卡包 / 脚本可能尚未落地，此时进对局会拿到
+        // 空卡池或半套脚本（卡无法召唤/效果不生效），故不进对局并给出提示。这道闸门只拦对局
+        // 入口（服务器列表加入/单机/录像/残局/外部 uri 等全部经本方法），界面其它操作照常；
+        // 检查完成前无法操作的旧行为，已由顶部的进度条浮窗代替
+        if (ResCheckTask.isCheckRunning()) {
+            Log.w(TAG, "startGame 被拒：资源检查尚未完成");
+            YGOUtil.showTextToast(R.string.dont_start_game, Toast.LENGTH_SHORT);
+            return;
+        }
         //如果距离上次加入游戏的时间大于1秒才处理
         if (System.currentTimeMillis() - lasttime >= 1000) {
             lasttime = System.currentTimeMillis();

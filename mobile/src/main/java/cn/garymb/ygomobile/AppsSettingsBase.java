@@ -323,10 +323,12 @@ abstract class AppsSettingsBase {
     /**
      * native 档案挂载列表：C++ 侧 CFileSystem::createAndOpenFile 对 FileArchives
      * <b>正序遍历（最先挂载者优先）</b>，后接物理工作目录，故卡包按文件名字典序
-     * <b>倒序</b>加入（靠后的包最先挂载=优先），最后加入 pics.zip、scripts.zip
-     *（主资源优先级最低）——与 cdb/script/pics 统一优先级“expansions 散文件 ＞
-     * 卡包 zip/ypk（后名优先）＞ 主资源 ＞ 主散目录”一致（参考 game.cpp、
-     * data_manager.cpp、image_manager.cpp）。
+     * <b>倒序</b>加入（靠后的包最先挂载=优先），最后加入 pics.zip（主资源优先级最低）
+     *——与 cdb/script/pics 统一优先级“expansions 散文件 ＞ 卡包 zip/ypk（后名优先）＞
+     * 主资源 ＞ 主散目录”一致（参考 game.cpp、data_manager.cpp、image_manager.cpp）。
+     * 主卡片脚本不挂载 scripts.zip 档案：该档案由 native 侧 engineScriptReader 自己按中央
+     * 目录索引直读（见 ygo_engine_jni.cpp）。若挂进 irrlicht FileArchives，一旦设备里残留
+     * 旧版 zip，它会以更高优先级盖掉卡包物化区的新脚本。
      */
     protected void makeZipList(List<String> pathList) {
         if (isReadExpansions()) {
@@ -338,7 +340,6 @@ abstract class AppsSettingsBase {
             }
         }
         pathList.add(new File(getResourcePath(), Constants.CORE_PICS_ZIP).getAbsolutePath());
-        pathList.add(new File(getResourcePath(), Constants.CORE_SCRIPTS_ZIP).getAbsolutePath());
     }
 
     /***

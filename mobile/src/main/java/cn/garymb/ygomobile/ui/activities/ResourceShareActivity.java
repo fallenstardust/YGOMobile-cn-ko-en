@@ -177,6 +177,7 @@ public class ResourceShareActivity extends Activity implements ResCheckTask.ResC
                     name = getString(R.string.resource_pics);
                     break;
                 case RESOURCE_SCRIPTS:
+                    //资源检查已把包内 scripts.zip 拷到资源根目录，直接分享该档案
                     file = new File(AppsSettings.get().getResourcePath(), CORE_SCRIPTS_ZIP);
                     name = getString(R.string.resource_scripts);
                     break;

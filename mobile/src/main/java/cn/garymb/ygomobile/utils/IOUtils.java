@@ -107,9 +107,55 @@ public class IOUtils {
     }
 
     /**
+     * 资源拷贝进度回调：{@code done}/{@code total} 为当前一段工作已完成的条目数或字节数。
+     * 一个阶段可能分多段上报（如先读资源算校验和、再读目标、最后重写），各段都从 0 跑到
+     * total，由调用方自己保证单调（见 {@code ResCheckTask#subStep}）；total&lt;=0 表示无法预估。
+     */
+    public interface CopyProgress {
+        void onProgress(long done, long total);
+    }
+
+    /**
      * 将文件从工程的assets文件夹拷贝到目录中
      */
     public static int copyFilesFromAssets(Context context, String assets, String toPath, boolean update) throws IOException {
+        return copyFilesFromAssets(context, assets, toPath, update, null);
+    }
+
+    /**
+     * 同上，额外上报进度：先预统计整棵资源子树的条目数作为 total（此类目录都是几十到
+     * 几百量级，计数开销可忽略），每处理完一个条目（含跳过的已存在项）上报一次。
+     */
+    public static int copyFilesFromAssets(Context context, String assets, String toPath, boolean update,
+            CopyProgress progress) throws IOException {
+        int[] counter = progress == null ? null : new int[]{0, countAssetEntries(context, assets)};
+        return copyFilesFromAssets(context, assets, toPath, update, progress, counter);
+    }
+
+    /** 资源子树的条目总数（目录递归，单文件计 1），供进度条算百分比。 */
+    private static int countAssetEntries(Context context, String path) {
+        String[] files;
+        try {
+            files = context.getAssets().list(path);
+        } catch (IOException e) {
+            return 0;
+        }
+        if (files == null) {
+            return 0;
+        }
+        if (files.length == 0) {
+            return 1;     // 指到单个资源文件
+        }
+        int n = 0;
+        for (String f : files) {
+            String p = join(path, f);
+            n += isDirectory(context, p) ? countAssetEntries(context, p) : 1;
+        }
+        return n;
+    }
+
+    private static int copyFilesFromAssets(Context context, String assets, String toPath, boolean update,
+            CopyProgress progress, int[] counter) throws IOException {
         AssetManager am = context.getAssets();
         String[] files = am.list(assets);
         if (files == null) {
@@ -129,11 +175,12 @@ public class IOUtils {
                 } catch (Exception e) {
                 }
                 if (inputStream != null) {
-                    copyToFile(inputStream, tofile.getAbsolutePath());
+                    copyToFile(inputStream, tofile.getAbsolutePath(), progress);
                 } else {
                     return 0;
                 }
             }
+            step(counter, progress);
             return 1;
         } else {
             int count = 0;
@@ -145,23 +192,32 @@ public class IOUtils {
                     if (Constants.DEBUG)
                         Log.i(TAG, "copy dir:" + path + "-->" + join(toPath, file));
                     createFolderByFile(new File(toPath, file));
-                    count += copyFilesFromAssets(context, path, join(toPath, file), update);
+                    count += copyFilesFromAssets(context, path, join(toPath, file), update, progress, counter);
                 } else {
                     File f = new File(join(toPath, file));
                     createFolderByFile(f);
                     if (update || !f.exists()) {
                         if (Constants.DEBUG)
                             Log.d(TAG, "copy2:" + path + "-->" + f.getAbsolutePath());
-                        copyToFile(am.open(path), f.getAbsolutePath());
+                        copyToFile(am.open(path), f.getAbsolutePath(), progress);
                     } else {
                         if (Constants.DEBUG)
                             Log.d(TAG, "copy ignore:" + path + "-->" + f.getAbsolutePath());
                     }
+                    step(counter, progress);
                     count++;
                 }
             }
             return count;
         }
+    }
+
+    /** 条目计数上报：counter[0]=已完成，counter[1]=预估总数。 */
+    private static void step(int[] counter, CopyProgress progress) {
+        if (progress == null || counter == null) {
+            return;
+        }
+        progress.onProgress(++counter[0], counter[1]);
     }
 
     /**
@@ -182,11 +238,22 @@ public class IOUtils {
      */
     public static boolean copyFileFromAssetsIfChanged(Context context, String assets,
             File targetDir, boolean update) throws IOException {
+        return copyFileFromAssetsIfChanged(context, assets, targetDir, update, null);
+    }
+
+    /**
+     * 同上，额外上报字节进度。一轮最多跑“读资源算校验和”“读目标兜底比对”“重写”三段，
+     * 每段占整轮刻度的三分之一（{@code grand = 3 * 档案长}）：上报值因此永远单调且不会跑在
+     * 真实进度前面（宁可少报），避免“校验和读完就显示本阶段已完成”的假象。
+     */
+    public static boolean copyFileFromAssetsIfChanged(Context context, String assets,
+            File targetDir, boolean update, CopyProgress progress) throws IOException {
         AssetManager am = context.getAssets();
         File target = new File(targetDir, getName(assets));
         File sigFile = signatureFile(targetDir, target.getName());
         if (!target.isFile()) {
-            copyToFile(am.open(assets), target.getAbsolutePath());
+            // 目标不存在：重写就是本轮全部工作，直接按自段 0..档案长 上报
+            copyToFile(am.open(assets), target.getAbsolutePath(), progress);
             writeFileSignature(sigFile, fileSignature(target));
             if (Constants.DEBUG)
                 Log.i(TAG, "copy new:" + assets + "-->" + target.getAbsolutePath());
@@ -197,21 +264,24 @@ public class IOUtils {
         }
         // 长度探测：AssetInputStream.available() 给出解压后的总长，与目标文件长度不等即
         // 内容必已变化，可直接重写，省掉“资源+目标”两遍全量读
-        long assetLen = -1;
+        long probeLen = -1;
         try (InputStream probe = am.open(assets)) {
-            assetLen = probe.available();
+            probeLen = probe.available();
         } catch (Exception e) {
             Log.w(TAG, "available() 探测失败，退回校验和比对: " + assets, e);
         }
+        final long assetLen = probeLen;
+        // 多段共用一个大刻度；档案长度不可得时不分段（各段自报 0..自身总长）
+        final long grand = assetLen > 0 ? assetLen * 3 : -1;
         if (assetLen >= 0 && assetLen != target.length()) {
-            copyToFile(am.open(assets), target.getAbsolutePath());
+            copyToFile(am.open(assets), target.getAbsolutePath(), scaled(progress, 2 * assetLen, grand));
             writeFileSignature(sigFile, fileSignature(target));
             Log.i(TAG, "资源长度变化，重拷: " + assets + " " + target.length() + "->" + assetLen);
             return true;
         }
         String sig;
         try (InputStream is = am.open(assets)) {
-            sig = streamSignature(is);
+            sig = streamSignature(is, scaled(progress, 0, grand));
         }
         String recorded = readFileSignature(sigFile);
         if (sig.equals(recorded)) {
@@ -219,27 +289,56 @@ public class IOUtils {
             return false;
         }
         // 无历史记录（首次跑到本逻辑的升级）：目标与资源内容其实一致时只补记录，不重拷
-        if (recorded == null && sig.equals(fileSignature(target))) {
+        if (recorded == null && sig.equals(fileSignature(target, scaled(progress, assetLen, grand)))) {
             writeFileSignature(sigFile, sig);
             Log.i(TAG, "资源内容与目标一致，补记校验和并跳过重拷: " + target.getAbsolutePath());
             return false;
         }
-        copyToFile(am.open(assets), target.getAbsolutePath());
+        copyToFile(am.open(assets), target.getAbsolutePath(), scaled(progress, 2 * assetLen, grand));
         writeFileSignature(sigFile, fileSignature(target));
         Log.i(TAG, "资源内容已变，重拷: " + target.getAbsolutePath());
         return true;
     }
 
+    /** 把本段字节进度接到大刻度 {@code grand} 上（{@code base} 为本段起点）；不可预估时原样返回。 */
+    private static CopyProgress scaled(final CopyProgress progress, final long base, final long grand) {
+        if (progress == null || grand <= 0) {
+            return progress;
+        }
+        return new CopyProgress() {
+            @Override
+            public void onProgress(long done, long total) {
+                progress.onProgress(Math.min(grand, base + done), grand);
+            }
+        };
+    }
+
     /** 一次流式读取同时算出“长度:CRC32(十六进制)”签名，读完即关闭入流。 */
     private static String streamSignature(InputStream in) throws IOException {
+        return streamSignature(in, null);
+    }
+
+    /** 同上，{@code progress} 非空时按已读字节上报（total 取起始 available()，不可得则不报）。 */
+    private static String streamSignature(InputStream in, CopyProgress progress) throws IOException {
         CRC32 crc = new CRC32();
         byte[] buf = new byte[8192];
         long len = 0;
         int n;
+        long total = -1;
+        if (progress != null) {
+            try {
+                total = in.available();
+            } catch (Exception e) {
+                total = -1;
+            }
+        }
         try {
             while ((n = in.read(buf)) > 0) {
                 crc.update(buf, 0, n);
                 len += n;
+                if (progress != null && total > 0) {
+                    progress.onProgress(len, total);
+                }
             }
         } finally {
             close(in);
@@ -250,11 +349,16 @@ public class IOUtils {
     /** 读文件算“长度:CRC32”签名；文件不可读返回 null（按未匹配处理，宁可重拷）。 */
     @Nullable
     private static String fileSignature(File file) {
+        return fileSignature(file, null);
+    }
+
+    @Nullable
+    private static String fileSignature(File file, CopyProgress progress) {
         if (file == null || !file.isFile()) {
             return null;
         }
         try (InputStream in = new BufferedInputStream(new FileInputStream(file))) {
-            return streamSignature(in);
+            return streamSignature(in, progress);
         } catch (IOException e) {
             Log.w(TAG, "读取文件校验和失败: " + file, e);
             return null;
@@ -316,10 +420,30 @@ public class IOUtils {
     }
 
     public static void copy(InputStream in, OutputStream out) throws IOException {
+        copy(in, out, null);
+    }
+
+    /** 同上，{@code progress} 非空时按已写字节上报（total 取起始 available()，不可得则不报）。 */
+    public static void copy(InputStream in, OutputStream out, CopyProgress progress) throws IOException {
         byte[] cache = new byte[1024 * 8];
         int len;
+        long done = 0;
+        long total = progress == null ? -1 : available(in);
         while ((len = in.read(cache)) != -1) {
             out.write(cache, 0, len);
+            if (progress != null && total > 0) {
+                done += len;
+                progress.onProgress(done, total);
+            }
+        }
+    }
+
+    /** 起始可读总长；不可得（非资源流、实现不支持）返回 -1，调用方据此不报进度。 */
+    private static long available(InputStream in) {
+        try {
+            return in.available();
+        } catch (Exception e) {
+            return -1;
         }
     }
 
@@ -336,6 +460,11 @@ public class IOUtils {
     }
 
     public static void copyToFile(InputStream in, String file) throws IOException {
+        copyToFile(in, file, null);
+    }
+
+    /** 同上，{@code progress} 非空时按写入字节上报总长与进度（拷贝段在大档案上最耗时）。 */
+    public static void copyToFile(InputStream in, String file, CopyProgress progress) throws IOException {
         if (in == null) {
             throw new IOException("copyToFile: source stream is null");
         }
@@ -352,7 +481,7 @@ public class IOUtils {
         boolean success = false;
         try {
             outputStream = new FileOutputStream(tmp);
-            copy(in, outputStream);
+            copy(in, outputStream, progress);
             outputStream.flush();
             outputStream.getFD().sync();
             outputStream.close();

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 资源检查顶部进度条浮窗：由 ResCheckTask 挂到 Activity 内容视图根（android.R.id.content）上，
+     取代原来的模态 DialogPlus——本视图不设点击响应，落在其之外的触摸照常传给下方界面，
+     检查未完成时用户也能继续操作；整批检查结束即由 ResCheckTask 动画收起并移除。
+     进度条为 0~100 确定态，数值由 ResCheckTask 按“阶段权重 + 阶段内条目/字节”
+     算出并同步到旁边文字，不再用不确定态动画。 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="top"
+    android:layout_marginStart="12dp"
+    android:layout_marginTop="8dp"
+    android:layout_marginEnd="12dp"
+    android:background="@drawable/radius"
+    android:clickable="false"
+    android:focusable="false"
+    android:orientation="vertical"
+    android:paddingStart="12dp"
+    android:paddingTop="8dp"
+    android:paddingEnd="12dp"
+    android:paddingBottom="10dp">
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/tv_res_check_step"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="1"
+        android:text="@string/check_res"
+        android:textColor="@color/white"
+        android:textSize="11sp" />
+
+    <ProgressBar
+        android:id="@+id/pb_res_check"
+        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:clickable="false"
+        android:focusable="false"
+        android:indeterminate="false"
+        android:max="100"
+        android:progress="0" />
+</LinearLayout>

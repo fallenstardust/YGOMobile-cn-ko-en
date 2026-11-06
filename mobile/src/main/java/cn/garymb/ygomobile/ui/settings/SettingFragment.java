@@ -81,6 +81,7 @@ import cn.garymb.ygomobile.adapter.DialogImageAdapter;
 import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.bean.ImageItem;
 import cn.garymb.ygomobile.bean.events.ExCardEvent;
+import cn.garymb.ygomobile.engine.NativeScriptBootstrap;
 import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.adapters.SimpleListAdapter;
@@ -444,16 +445,18 @@ public class SettingFragment extends SettingFragmentBase implements View.OnClick
             try {
                 //.nomedia
                 IOUtils.createNoMedia(mSettings.getResourcePath());
-                //删除script文件夹，因为已经直接从scripts.zip读取script
-                FileUtils.delFile(mSettings.getResourcePath() + "/" + Constants.CORE_SCRIPT_PATH);
+                //删掉旧版解压落地的 script/ 目录：主脚本已由 native 直读 scripts.zip，
+                //实体目录只剩兜底档，重建时不必再生成（顺带回收 31.5MB）
+                File scriptDir = new File(mSettings.getResourcePath(), Constants.CORE_SCRIPT_PATH);
+                FileUtils.delFile(scriptDir.getAbsolutePath());
                 //复制卡图包
                 if (IOUtils.hasAssets(getContext(), getDatapath(Constants.CORE_PICS_ZIP))) {
                     IOUtils.copyFilesFromAssets(getContext(), getDatapath(Constants.CORE_PICS_ZIP), mSettings.getResourcePath(), true);
                 }
-                //复制脚本包
-                if (IOUtils.hasAssets(getContext(), getDatapath(Constants.CORE_SCRIPTS_ZIP))) {
-                    IOUtils.copyFilesFromAssets(getContext(), getDatapath(Constants.CORE_SCRIPTS_ZIP), mSettings.getResourcePath(), true);
-                }
+                //主脚本：只把包内 scripts.zip 重拷一份（CRC 未变则不碰盘）；native 侧按
+                //size+mtime 自查并重建索引，Java 不再做解压也不需要等待
+                NativeScriptBootstrap.copyScriptsZipFromAssets(getContext(),
+                        getDatapath(Constants.CORE_SCRIPTS_ZIP), scriptDir.getParentFile(), true, null);
                 //复制textures下的贴图文件
                 IOUtils.copyFilesFromAssets(getContext(), getDatapath(Constants.CORE_SKIN_PATH), mSettings.getCoreSkinPath(), false);
                 //先删除已存在的字体再复制字体

@@ -156,7 +156,8 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/../Classes/sqlite3
 # 故须带 jni/ 前缀，否则会在 libcore/ 下找不到 ygo_engine_jni.cpp。
 LOCAL_SRC_FILES := jni/ygo_engine_jni.cpp
 
-LOCAL_LDLIBS := -llog
+# -lz：scripts.zip 直读索引需要 zlib 的 raw inflate（deflate 条目）
+LOCAL_LDLIBS := -llog -lz
 
 LOCAL_STATIC_LIBRARIES := libocgcore_static liblua5.4 sqlite3
 
