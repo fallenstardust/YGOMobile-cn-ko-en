@@ -1,14 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><!-- 卡组编辑器侧边按钮列·竖屏变体（横屏 layout/ 为纵向贴卡组编辑器左缘）：
-     按用户规格竖屏为底部横向一行，整行宽度贴屏（由 layout_deck_editor 末尾 include 的
-     match_parent 提供），根为 FrameLayout + 两个分组子布局：
-     左组 layout_gravity=left——设置(btn_deck_settings)/音乐开关(btn_deck_sound) 靠左贴界面左下缘；
-     中组 layout_gravity=center——退出多选(btn_deck_batch_exit)/撤销(btn_deck_undo)/重做(btn_deck_redo)
-     在屏幕底部居中。
-     与横屏变体同文件名同 ID（btn_deck_*），按方向限定符各自解析；运行时每个方向只有一份副本。
-     根节点默认 GONE，进/出卡组编辑器由 DeckEditorViewHost.show/hide 点亮/收起。
-     ID 仍须与决斗场 layout_image_buttons_panel 的 btn_settings 等不同名。
-     点击行为与图标纹理由 DeckEditorManager.setupDeckSideButtons、DeckBatchSelectionManager
-     与 DeckEditorHistoryPanel 接线 -->
+<?xml version="1.0" encoding="utf-8"?><!-- 卡组编辑器侧边按钮列·竖屏变体 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/layout_deck_side_buttons"
     android:layout_width="match_parent"
@@ -57,8 +47,8 @@
              点击即清空全部勾选并退出多选模式；按用户规格取左绿勾右多选 -->
         <Button
             android:id="@+id/btn_deck_batch_exit"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:layout_marginEnd="5dp"
             android:background="@drawable/button_radius_black_transparents"
             android:clickable="true"
