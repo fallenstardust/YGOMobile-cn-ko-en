@@ -437,7 +437,15 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
         // 观战「跳到当前」瞬间排空期间：丢弃各局胜负文字覆盖与胜负 BGM 覆盖（对齐其他动画回调的 replaySkip 抑制），多局制下不逐局回显 you win/you lose，直接落位到当前最终局面
         if (activity.engine != null && activity.engine.replaySkip) return;
         activity.runOnUiThread(() -> {
-            boolean selfWon = winner != 2 && activity.engine.isSelfSide(winner);
+            // 纯单人（solo）下胜负归属按“当前视角的我方”算，不能走 isSelfSide 的 solo 恒真短路：
+            // 该短路是为“两侧都是同一人、卡片恒可点”设计的，用在胜负文字上会把任何一局都说成
+            // YOU WIN，且把败者名字写成非行动侧（displayName(1)）——而投降判定的败方正是当回合方
+            //（服务端 ServerDuelBase.surrender 按 liveTurnPlayer 取席位）。solo 每回合都把当回合方
+            // 翻到视角下方（localPlayer==0，见 DuelEventHandlerBase.onNewTurn 的 solo 分支），
+            // 故按胜者席位换算视角即可：行动侧胜=YOU WIN、行动侧负=YOU LOSE，败者名取视角下方那侧
+            boolean selfWon = winner != 2 && (activity.engine.soloMode
+                    ? activity.engine.localPlayer(winner & 1) == 0
+                    : activity.engine.isSelfSide(winner));
             int code = winner == 2 ? SpecEffectOverlay.TEXT_DRAW_GAME
                     : (selfWon ? SpecEffectOverlay.TEXT_YOU_WIN
                        : SpecEffectOverlay.TEXT_YOU_LOSE);

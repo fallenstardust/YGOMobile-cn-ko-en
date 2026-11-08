@@ -519,6 +519,18 @@ abstract class ServerDuelBase implements YGOProtocol {
             return;
         }
         int player = dp.type;
+        // solo（纯单人）一条连接同时占两个席位，dp.type 只是开局先攻选择归位后的固定席位号，
+        // 用它判投降方会出现「回合在 A 侧、投降的却是 B 侧」（客户端每回合把当回合方翻到自己
+        // 视角的下方，见 DuelEventHandlerBase.onNewTurn 的 solo 分支），故按服务端从消息流导出的
+        // 当前回合玩家判定席位；liveTurnPlayer 在实况与撤回静默重放里都会重写，-1=尚未定档时退回席位号
+        if (room.soloMode) {
+            int tp = analyzer.liveTurnPlayer;
+            if (tp >= 0 && tp <= 1) {
+                player = tp;
+            }
+            Log.i(TAG, "solo surrender: turnPlayer=" + player + " connSeat=" + dp.type
+                    + " winner=" + (1 - player));
+        }
         byte[] wbuf = new byte[]{(byte) EngineMessage.MSG_WIN, (byte) (1 - player), (byte) 0};
         room.broadcastGameMsg(wbuf);
         if (replay != null) {

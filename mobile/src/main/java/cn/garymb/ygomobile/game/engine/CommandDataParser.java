@@ -55,9 +55,26 @@ public class CommandDataParser {
             if (len > 8 && card != null) {
                 ByteBuffer sub = data.slice().order(ByteOrder.LITTLE_ENDIAN);
                 sub.limit(Math.min(sub.limit(), len - 4));
-                card.updateQuery(sub);
+                applyQuery(card, sub);
             }
             data.position(next);
+        }
+    }
+
+    /**
+     * 写入一条查询并同步堆叠区的姿态落点（对齐 client_card.cpp UpdateInfo L61-68 的 QUERY_POSITION 分支）：
+     * 除外区/额外卡组两区的正背面完全由姿态字节决定（getCardLocation 读 {@code position & POS_FACEUP}），
+     * 而渲染层取的是动画插值后的 curRotY，故姿态变化时必须像 C++ 那样再发一次 {@code MoveCard(1)} 重算落点：
+     * 否则卡片停在占位时算出的 rotY=π 上，拿着真实卡码仍被画成卡背（撤回重同步即此形态：
+     * MSG_RELOAD_FIELD 对堆叠区只给张数、姿态与卡码全靠随后的区域刷新补齐）。
+     * 手卡/场上区的姿态变化不经此路径：手卡走相机 billboard 不读 curRot*，场上区的翻开自有
+     * MSG_POS_CHANGE 的 moveCardAnimated 负责，与 C++ 的判定范围一致。
+     */
+    private void applyQuery(ClientCard card, ByteBuffer sub) {
+        int posBefore = card.position;
+        card.updateQuery(sub);
+        if (card.position != posBefore && (card.location & (0x20 | 0x40)) != 0) {
+            engine.field.moveCardAnimated(card, 1);
         }
     }
 
@@ -146,7 +163,7 @@ public class CommandDataParser {
         }
         ByteBuffer sub = data.slice().order(ByteOrder.LITTLE_ENDIAN);
         sub.limit(Math.min(sub.limit(), len - 4));
-        card.updateQuery(sub);
+        applyQuery(card, sub);
     }
 
     public void parseBattleCmd(ByteBuffer data) {

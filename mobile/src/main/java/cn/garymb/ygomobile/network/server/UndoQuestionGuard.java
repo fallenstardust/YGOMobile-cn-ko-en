@@ -26,9 +26,9 @@ final class UndoQuestionGuard implements YGOProtocol {
 
     /**
      * 撤回成功后把回退后的局面一次性推给全体（对齐“全量重载场地位”语义）：
-     * ① MSG_RELOAD_FIELD 广播双方与观战；② Mzone/Szone/Hand/Grave/Extra 各自 refresh，沿用既有
-     * 遮蔽语义（Mzone 用 {@link DuelAnalyzer#RESYNC_MZONE_FLAG} 额外携素材卡码；Extra 走双视角，
-     * 因为 reload 不写姿态与卡码，堆顶表侧卡的身份与朝向只能靠这次刷新送到对手与观战侧）；
+     * ① MSG_RELOAD_FIELD 广播双方与观战；② Mzone/Szone/Hand/Grave/Removed/Extra 各自 refresh，沿用既有
+     * 遮蔽语义（Mzone 用 {@link DuelAnalyzer#RESYNC_MZONE_FLAG} 额外携素材卡码；Extra 与 Removed 走双视角，
+     * 因为 reload 不写它们的姿态与卡码，堆顶表侧卡与表侧除外卡的身份、朝向只能靠这次刷新送到双方与观战侧）；
      * ③ 引擎处于卡组翻转态（天变地异）时补发 MSG_REVERSE_DECK + 双方 MSG_DECK_TOP，
      * 使正面朝上的卡组在回退后仍是正面朝上且顶卡可见卡图；④ 复位两席位
      * 状态并记下待重挂询问席位（{@link DuelAnalyzer#undoAskResponder}），询问由
@@ -56,6 +56,10 @@ final class UndoQuestionGuard implements YGOProtocol {
             analyzer.refreshHand(1, DuelAnalyzer.REFRESH_HAND_FLAG, 0);
             analyzer.refreshGrave(0, DuelAnalyzer.REFRESH_GRAVE_FLAG, 0);
             analyzer.refreshGrave(1, DuelAnalyzer.REFRESH_GRAVE_FLAG, 0);
+            // 除外区必须一并刷：reload 只给张数、实况链路又从不为它发区域刷新，漏刷则撤回后
+            // 整个除外区停在无卡码无姿态的占位卡上，我方表侧除外的卡被画成卡背且点不出详情
+            analyzer.refreshRemovedResync(0, DuelAnalyzer.REFRESH_REMOVED_FLAG, 0);
+            analyzer.refreshRemovedResync(1, DuelAnalyzer.REFRESH_REMOVED_FLAG, 0);
             analyzer.refreshExtraResync(0, DuelAnalyzer.REFRESH_EXTRA_FLAG, 0);
             analyzer.refreshExtraResync(1, DuelAnalyzer.REFRESH_EXTRA_FLAG, 0);
             // 卡组翻面（天变地异）状态回退补齐：query_field_info 的 reload 载荷不携 core.deck_reversed，

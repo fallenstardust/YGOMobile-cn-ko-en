@@ -24,6 +24,8 @@ abstract class DuelAnalyzerBase implements YGOProtocol {
     static final int REFRESH_GRAVE_FLAG = 0x81fff;
     static final int REFRESH_EXTRA_FLAG = 0xe81fff;
     static final int REFRESH_SINGLE_FLAG = 0xf81fff;
+    /** 除外区撤回重同步查询掩码：与墓地同档（公开区，无指示物/素材语义），只为客户端补齐占位卡的卡码与姿态。 */
+    static final int REFRESH_REMOVED_FLAG = 0x81fff;
     protected static final int SHUFFLE_HAND_FLAG = 0x781fff;
     protected static final int SHUFFLE_SET_FLAG = 0x181fff;
 
@@ -191,6 +193,8 @@ abstract class DuelAnalyzerBase implements YGOProtocol {
     void refreshExtra(int player, int flag, int useCache) { zoneRefresh.refreshExtra(player, flag, useCache); }
     /** 撤回重同步专用：额外卡组按双视角发送（本人全量、对手/观战遮蔽里侧），见 {@link DuelZoneRefresh#refreshExtraResync}。 */
     void refreshExtraResync(int player, int flag, int useCache) { zoneRefresh.refreshExtraResync(player, flag, useCache); }
+    /** 撤回重同步专用：除外区按双视角发送（本人全量、对手/观战遮蔽里侧），见 {@link DuelZoneRefresh#refreshRemovedResync}。 */
+    void refreshRemovedResync(int player, int flag, int useCache) { zoneRefresh.refreshRemovedResync(player, flag, useCache); }
     void refreshSingle(int player, int location, int sequence) { zoneRefresh.refreshSingle(player, location, sequence); }
     void refreshSingle(int player, int location, int sequence, int flag) { zoneRefresh.refreshSingle(player, location, sequence, flag); }
 

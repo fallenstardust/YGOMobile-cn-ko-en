@@ -123,6 +123,22 @@ final class DuelZoneRefresh {
         refreshMaskedZone(player, OcgDuelEngine.LOCATION_EXTRA, flag, useCache);
     }
 
+    /**
+     * 撤回重同步专用的除外区刷新：与 {@link #refreshExtraResync} 同法走
+     * {@link DuelViewBroadcaster#sendDualViewAndRecord} 双视角发送（本人全量、对手与观战收遮蔽版，
+     * 里侧除外段整块清零），遮蔽判据 {@link EngineMessage#shouldHideFacedownCode} 与
+     * {@link #refreshSingle} 对非场上区的口径一致。
+     * <p>必须有这一步：{@code query_field_info} 的 reload 载荷对五个堆叠区只写张数、不写姿态也不写卡码，
+     * 客户端重建出的除外占位卡因此既无卡码也无表侧姿态；而 ocgcore 从不为除外区发区域刷新消息
+     *（实况里卡片只靠进出除外区的 MSG_MOVE 逐张携带卡码与姿态），其余四区在重同步批里都有对应的
+     * refresh，唯独本区漏掉——于是撤回后我方表侧除外的卡一律退回卡背且点不出详情（用户反馈的
+     *「人机/单人局我方表侧除外显示成卡背」）。表侧除外是双方可见的公开信息，本包让双方都拿到
+     * 卡码与姿态，卡片随之恢复正面并可点开卡详。
+     */
+    void refreshRemovedResync(int player, int flag, int useCache) {
+        refreshMaskedZone(player, OcgDuelEngine.LOCATION_REMOVED, flag, useCache);
+    }
+
     void refreshSingle(int player, int location, int sequence) {
         refreshSingle(player, location, sequence, DuelAnalyzer.REFRESH_SINGLE_FLAG);
     }
