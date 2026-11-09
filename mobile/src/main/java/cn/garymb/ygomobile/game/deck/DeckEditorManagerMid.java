@@ -334,6 +334,8 @@ abstract class DeckEditorManagerMid extends DeckEditorManagerBase {
         }
     }
     // === 对应 duelclient.cpp: STOC_CHANGE_SIDE 进入副卡组替换模式 ===
+    // 换侧期间的每次增删拖拽都不写卡组修改历史（见 DeckEditorHistoryPanel#isSidingSession），
+    // 换侧结果只经 onSideDeckFinished 提交给本局，故 refreshReadonly 里两键也随会话态熄灭。
     public void enterSideMode() {
         isSiding = true;
         isReadonly = false;
@@ -369,7 +371,12 @@ abstract class DeckEditorManagerMid extends DeckEditorManagerBase {
 
     //副卡组替换完成/取消后退出副卡组模式
     public void exitSideMode() {
+        // 幂等：除了换侧提交完成，编辑器关闭（DeckEditorViewHost.hide）也会调本方法收口换侧会话，
+        // 未处于换侧态时（普通卡组编辑退出）无事可做，不得去改动布局显隐
+        if (!isSiding) return;
         isSiding = false;
+        // 换侧会话结束：会话期间被压住的 undo/redo 两键按现态重新点亮（编辑器仍可见时生效）
+        if (historyPanel != null) historyPanel.refresh();
         if (layoutDeckInfoPanel != null) layoutDeckInfoPanel.setVisibility(View.VISIBLE);
         if (layoutFilterPanel != null) layoutFilterPanel.setVisibility(View.VISIBLE);
         if (llSideController != null) llSideController.setVisibility(View.GONE);

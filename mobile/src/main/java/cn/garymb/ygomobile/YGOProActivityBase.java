@@ -26,6 +26,7 @@ import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import java.io.File;
 import java.nio.ByteBuffer;
@@ -597,11 +598,14 @@ public abstract class YGOProActivityBase extends AppCompatActivity {
      * <li>横屏：直接用原始横向图作窗口背景，layout_game_right 不设区域背景（透出窗口原图）；</li>
      * <li>竖屏：不再把横向图旋转 90° 后按高等比 REPEAT 平铺——旋转得到的纵向图窄于屏宽，
      * 平铺补边会在屏幕正中留下可见的图片拼贴边（历史 PlayerWaitingDialog 竖屏背景“正中显示
-     * 图片边缘”根因）。改为保持原本横向图，用 {@link RightAlignedTiledDrawable} 以<b>整个窗口</b>
-     * 为基准做 cover 缩放并右对齐（只显示图片最右侧的部分，左侧超出屏幕的部分被裁掉，X 方向
+     * 图片边缘”根因）。改为保持原本横向图，用 {@link RightAlignedTiledDrawable} 以<b>基准区</b>
+     * （顶部面板底缘以下，即 layout_game_right 那一段；顶部面板未显示时退回整窗口）为基准做
+     * cover 缩放并右对齐（只显示图片最右侧的部分，左侧超出屏幕的部分被裁掉，X 方向
      * CLAMP 不再平铺补边）：窗口背景与 layout_game_right 区域背景共用同一映射，区域显示的就是
      * 它实机宽度所处位置的那一片图，两者逐像素连续、无拼接缝——决斗(bg.jpg)/卡组编辑(bg_deck.jpg)/
-     * 大厅等待界面同规格。</li>
+     * 大厅等待界面同规格。基准区之上（卡片详情那一段）按用户规格不得透出背景图：窗口背景的宿主是
+     * 整个 DecorView，若不做处理会把图铺到顶部面板区域、且 cover 会按整屏高把图放大，故同一
+     * drawable 传入顶部面板作锚视图并把该段重涂为与面板同色——背景高度止于 layout_game_right 顶部。</li>
      * </ul>
      * 原始解码位图不改动，故旋转切换（rebuildUiForOrientation）与缓存命中（setWindowBackground）都会重算。
      */
@@ -615,10 +619,17 @@ public abstract class YGOProActivityBase extends AppCompatActivity {
         boolean portrait = getResources().getConfiguration().orientation
                 == Configuration.ORIENTATION_PORTRAIT;
         if (portrait) {
-            // 竖屏：保持原本横向图，右对齐裁剪左侧超出（每张单独实例，避免窗口背景与区域背景共享）
-            getWindow().setBackgroundDrawable(new RightAlignedTiledDrawable(lastBgBitmap));
+            // 竖屏：保持原本横向图，右对齐裁剪左侧超出（每张单独实例，避免窗口背景与区域背景共享）。
+            // 基准区取顶部面板底缘以下（用户规格：背景高度只到 layout_game_right 顶部，不得延伸到
+            // 卡片详情区）；面板未显示（大厅聊天/主菜单，决斗场区升为整屏）时锚视图 isShown() 为假，
+            // drawable 内部自行退回整窗口基准，与旧行为一致
+            View anchor = topPanelForBackground();
+            int aboveRegionColor = ContextCompat.getColor(this, R.color.ygopro_list_background);
+            getWindow().setBackgroundDrawable(
+                    new RightAlignedTiledDrawable(lastBgBitmap, anchor, aboveRegionColor));
             if (layoutGameRight != null) {
-                layoutGameRight.setBackground(new RightAlignedTiledDrawable(lastBgBitmap));
+                layoutGameRight.setBackground(
+                        new RightAlignedTiledDrawable(lastBgBitmap, anchor, aboveRegionColor));
             }
         } else {
             getWindow().setBackgroundDrawable(new BitmapDrawable(getResources(), lastBgBitmap));
@@ -629,16 +640,33 @@ public abstract class YGOProActivityBase extends AppCompatActivity {
     }
 
     /**
+     * 竖屏决斗背景基准区锚视图（顶部面板 layout_game_top_panel）：本字段在 initViews 与旋转重建
+     * 里绑定，而首次 setWindowBackground 可能早于视图装配，故为空时按 ID 兜底再取一次；
+     * 横屏布局无该节点，取不到就返回 null（调用处据此退回整窗口基准）。
+     */
+    private View topPanelForBackground() {
+        if (layoutGameTopPanel == null) {
+            layoutGameTopPanel = findViewById(R.id.layout_game_top_panel);
+        }
+        return layoutGameTopPanel;
+    }
+
+    /**
      * 竖屏顶部面板显隐（与 layout_game_right 的决斗/卡组编辑器生命周期同步）：
      * 决斗场显示/卡组编辑器（需卡片详情+卡组按钮）→ VISIBLE（占屏高 1/3，
      * layout_game_right 余 2/3）；菜单/大厅聊天 → GONE（不占位，区域升为整屏）。
      * 横屏布局无该节点，findViewById 为 null 时静默跳过。
+     * <p>
+     * 面板底缘就是竖屏背景图的基准区上边界（见 {@link #updateFieldRegionBackground}），切换后
+     * 必须让窗口背景按新边界重画一次：否则“决斗结束回菜单”这类面板收起的过渡里，
+     * 上一帧的背景仍按旧边界只铺下部 2/3，上方露出纯色空窗。
      */
     void setGameTopPanelVisible(boolean visible) {
         if (layoutGameTopPanel == null)
             layoutGameTopPanel = findViewById(R.id.layout_game_top_panel);
         if (layoutGameTopPanel != null)
             layoutGameTopPanel.setVisibility(visible ? View.VISIBLE : View.GONE);
+        getWindow().getDecorView().invalidate();
     }
 
     /**

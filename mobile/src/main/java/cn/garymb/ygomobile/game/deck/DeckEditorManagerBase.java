@@ -296,10 +296,19 @@ abstract class DeckEditorManagerBase {
     }
 
     /** Solo match 换 side：按席位卡组文件路径载入该副卡组到编辑器，
-     *  供 {@code EngineCallbackDelegate} 在 SIDING 时先载入再 enterSideMode。路径为空则不动。 */
+     *  供 {@code EngineCallbackDelegate} 在 SIDING 时先载入再 enterSideMode。路径为空则不动。
+     *  <p>
+     *  载入全程标为换 side 会话（本方法先于 enterSideMode，那之后由 isSiding 接棒）：这次载入
+     *  既不 bindDeck 换户、也不把读盘内容写成快照，否则换 side 一起手就把卡组编辑页那份卡组的
+     *  修改历史清零，或把页上的未保存修改采纳成换侧起点（换侧结果只提交给本局，不入卡组修改历史）。*/
     public void loadDeckForSideSwap(String deckPath) {
         if (deckPath == null || deckPath.isEmpty()) return;
-        loadDeckFromPath(deckPath);
+        if (historyPanel != null) historyPanel.setSideSwapLoading(true);
+        try {
+            loadDeckFromPath(deckPath);
+        } finally {
+            if (historyPanel != null) historyPanel.setSideSwapLoading(false);
+        }
     }
 
     // === 对应 deck_con.cpp: push_main ===

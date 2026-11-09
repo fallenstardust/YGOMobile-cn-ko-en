@@ -130,6 +130,10 @@ class DeckEditorViewHost {
                         activity.deckEditorManager.exitSideMode();
                     }
                     hide();
+                    // 与隐藏编辑器同一帧把决斗场区接回（用户规格）：否则换 side 提交后到下一局开始
+                    // 之间会剩一帧“编辑器已收、GL 决斗场视图与聊天输入行仍隐”的中间态——
+                    // 竖屏下顶部面板成为内容区唯一带权重的可见子 View 而被顶成整屏高
+                    activity.restoreDuelAreaAfterSideSwap();
                 }
             });
         }
@@ -148,8 +152,11 @@ class DeckEditorViewHost {
 
     void hide() {
         // 退出卡组编辑：收口批量勾选模式（清空勾选与打勾图标，下次进入编辑器回到单卡语义），
-        // 并摘除对共享卡组历史的监听（下次 show 经 initialize/rebind 重新挂上）
+        // 并摘除对共享卡组历史的监听（下次 show 经 initialize/rebind 重新挂上）。
+        // 换 side 会话也在此收口：决斗中途断开/退出时不会有人再调 exitSideMode，
+        // 残留的换侧态会让下次编辑一直误以为还在换 side 而完全不落卡组修改历史（方法内幂等）
         if (activity.deckEditorManager != null) {
+            activity.deckEditorManager.exitSideMode();
             activity.deckEditorManager.exitBatchSelectionMode();
             activity.deckEditorManager.releaseHistoryListener();
         }

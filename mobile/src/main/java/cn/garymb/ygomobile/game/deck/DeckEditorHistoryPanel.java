@@ -31,6 +31,9 @@ import cn.garymb.ygomobile.utils.IOUtils;
  * 换卡组文件必须换户：{@link #beginDeckLoad(String)} 会调 {@link DeckHistory#bindDeck(String, int)}，
  * key 变化即整段清零，避免把上一个卡组的快照 undo 进当前卡组。反过来说，key 未变时历史里就躺着
  * 另一侧的未保存修改，因此采纳它就能做到“没打开的那一侧下次打开直接到最后修改状态”。
+ * <p>
+ * 例外边界：match 局间换 side（{@link #isSidingSession()}）全程不入这条历史——换侧结果只提交给
+ * 本局，不是对 ydk 卡组的修改，既不写入也不采纳、还不换户，undo/redo 两键一并熄灭。
  * 仅在 UI 线程调用。
  */
 class DeckEditorHistoryPanel implements DeckHistory.Listener {
@@ -55,6 +58,13 @@ class DeckEditorHistoryPanel implements DeckHistory.Listener {
     private DeckInfo pendingShared;
     /** 本次载入的卡组不在同步范围内（只读/卡包展示/尚未选定），载入全程不得碰会话 */
     private boolean loadOutsideScope;
+    /**
+     * 换 side 的席位卡组载入期：{@code applySidingScreen} 是先 {@code loadDeckForSideSwap}
+     * 再 {@code enterSideMode}，载入那一刻 {@code isSiding} 还没置上，故由
+     * {@link #setSideSwapLoading(boolean)} 单独括住这一段，与 {@code isSiding} 一起构成
+     * {@link #isSidingSession()}。
+     */
+    private boolean sideSwapLoading;
 
     DeckEditorHistoryPanel(DeckEditorManager owner) {
         this.owner = owner;
@@ -94,6 +104,26 @@ class DeckEditorHistoryPanel implements DeckHistory.Listener {
     }
 
     /**
+     * 换 side 会话的起点标记：由 {@code DeckEditorManagerBase#loadDeckForSideSwap} 用
+     * try/finally 括住席位卡组载入，载入结束（enterSideMode 已把 {@code isSiding} 接棒）即复位。
+     */
+    void setSideSwapLoading(boolean loading) {
+        sideSwapLoading = loading;
+    }
+
+    /**
+     * 是否处于 match 局间换 side 会话（席位卡组载入 + 副卡组替换期间）。
+     * <p>
+     * 换 side 的结果只经 STOC_CHANGE_SIDE 提交给本局，不是对 ydk 那份卡组的修改，因此全程
+     * <b>不落共享历史</b>：不写快照、不换户、不采纳对端的未保存内容，undo/redo 两键一并熄灭。
+     * 否则这些临时状态会留在卡组修改历史里——决斗结束后卡组编辑页能 undo 进换侧中间态，
+     * 换侧结果还会被当成未保存修改广播过去、甚至保存落盘覆盖原卡组。
+     */
+    private boolean isSidingSession() {
+        return sideSwapLoading || owner.isSiding;
+    }
+
+    /**
      * 卡组载入开始：先拍下会话里属于这份卡组的未保存内容，再按目标路径换户。
      * <p>
      * 必须先取共享内容再 bindDeck：bindDeck 在 key 变化时会清零历史，先绑后取就什么都拿不到了；
@@ -104,6 +134,7 @@ class DeckEditorHistoryPanel implements DeckHistory.Listener {
      * 时顺手载入一份只读卡组”会清掉编辑页那份卡组的修改历史并把页头抢过去。
      */
     void beginDeckLoad(String path) {
+        if (isSidingSession()) return;
         loadingDeck = true;
         pendingShared = null;
         loadOutsideScope = DeckHistory.isOutsideSyncScope(path);
@@ -123,6 +154,7 @@ class DeckEditorHistoryPanel implements DeckHistory.Listener {
      * 错置为 true 并白白重建一次网格。
      */
     void endDeckLoad() {
+        if (isSidingSession()) return;
         loadingDeck = false;
         DeckInfo shared = pendingShared;
         pendingShared = null;
@@ -147,6 +179,7 @@ class DeckEditorHistoryPanel implements DeckHistory.Listener {
      * 另存为新卡组：会话跟着换户到新路径，并把当前内容记为第一条快照与原点。
      */
     void markSavedAs(String path) {
+        if (isSidingSession()) return;
         history.bindDeck(path, DeckHistory.PUBLISHER_DECK_EDITOR);
         history.push(owner.currentDeck, DeckHistory.PUBLISHER_DECK_EDITOR);
         history.markOrigin();
@@ -154,6 +187,7 @@ class DeckEditorHistoryPanel implements DeckHistory.Listener {
 
     /** 保存成功：当前内容成为新的原点（不换户也不广播，两侧内容本就一致） */
     void markOrigin() {
+        if (isSidingSession()) return;
         history.markOrigin();
     }
 
@@ -166,7 +200,7 @@ class DeckEditorHistoryPanel implements DeckHistory.Listener {
      * 这里由本侧重新换户回自己的卡组，让两边回到同一份（页若有未保存修改会先弹确认）。
      */
     void recordSnapshot() {
-        if (applyingRemote || loadingDeck) return;
+        if (applyingRemote || loadingDeck || isSidingSession()) return;
         String path = owner.currentDeckFilePath == null ? "" : owner.currentDeckFilePath;
         if (DeckHistory.isOutsideSyncScope(path)) return;
         if (!path.equals(history.getDeckKey())) {
@@ -180,6 +214,7 @@ class DeckEditorHistoryPanel implements DeckHistory.Listener {
      * 也不允许动——那是另一侧那份卡组的时间线，隔着界回退等于改人家的卡组。
      */
     private boolean canRollback() {
+        if (isSidingSession()) return false;
         if (owner.isReadonly || owner.isPackMode) return false;
         String path = owner.currentDeckFilePath == null ? "" : owner.currentDeckFilePath;
         return !DeckHistory.isOutsideSyncScope(path) && path.equals(history.getDeckKey());
@@ -204,7 +239,7 @@ class DeckEditorHistoryPanel implements DeckHistory.Listener {
     public void onDeckKeyChanged(String key, int publisher) {
         if (publisher == DeckHistory.PUBLISHER_DECK_EDITOR) return;
         if (key == null || key.isEmpty() || key.equals(owner.currentDeckFilePath)) return;
-        if (owner.isReadonly || owner.isPackMode || owner.isSiding) return;
+        if (owner.isReadonly || owner.isPackMode || isSidingSession()) return;
         switchTo(key);
     }
 
@@ -219,7 +254,7 @@ class DeckEditorHistoryPanel implements DeckHistory.Listener {
      * 把共享会话游标处的内容应用到本侧（仅当会话确实属于当前这份卡组且内容不同）。
      */
     private void syncContentFromSession() {
-        if (applyingRemote || owner.currentDeck == null) return;
+        if (applyingRemote || owner.currentDeck == null || isSidingSession()) return;
         String path = owner.currentDeckFilePath;
         // 只读/卡包展示卡组不吃对端内容：不然一份人机卡组会被编辑页的未保存修改直接盖掉
         if (DeckHistory.isOutsideSyncScope(path) || !path.equals(history.getDeckKey())) return;

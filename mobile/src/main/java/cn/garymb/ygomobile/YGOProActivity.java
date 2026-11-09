@@ -258,6 +258,28 @@ public class YGOProActivity extends YGOProActivityEngine {
     public void showDeckEditorView() {
         deckEditorHost.show();
     }
+
+    /**
+     * match 局间换 side 结束的场地收口（用户规格：隐藏卡组编辑器的同时把决斗场区与聊天输入行
+     * 一并恢复显示，不留中间帧）。
+     * <p>
+     * 换 side 进编辑器时 {@code showInternal} 走过 {@code hideGameUI}：{@code layout_game_right}
+     * 与其内的 {@code game_field_view}、底部聊天输入行全部退场，只剩顶部面板与编辑器两个权重格。
+     * 若提交完副卡组只收掉编辑器，这一帧只剩顶部面板是 {@code layout_game_content} 里唯一带权重
+     * 的可见子 View——它会被顶成整屏高（卡详图跟着放大），而聊天输入行因决斗场区仍 GONE 根本不显示，
+     * 直到下一局 STOC_DUEL_START 才回正，观感就是闪一下。故这里在同一帧把决斗场区整体接回：
+     * 内容区与决斗场区显示、顶部面板保持决斗几何（1/3 + 2/3）、退出大厅聊天态以恢复 GL 决斗场视图，
+     * 最后按新场景重算聊天输入框与 FPS 角标显隐。下一局 {@code enterDuelingUI} 再走一遍相同调用，幂等。
+     */
+    void restoreDuelAreaAfterSideSwap() {
+        if (layoutGameContent != null) layoutGameContent.setVisibility(View.VISIBLE);
+        if (layoutGameRight != null) layoutGameRight.setVisibility(View.VISIBLE);
+        setGameTopPanelVisible(true);
+        // game_field_view 恢复 VISIBLE 并退出大厅聊天列表态（本就不在大厅态时内部自行短路，无副作用）
+        exitLobbyChatUI();
+        updateFpsVisibility();
+        updateChatUIVisibility();
+    }
     /**
      * 投降入口（对齐 event_handler.cpp BUTTON_LEAVE_GAME → wSurrender(1359) 确认 → CTOS_SURRENDER）：
      * 先弹 YesOrNoDialog 二次确认，确认后才发送投降通讯；
