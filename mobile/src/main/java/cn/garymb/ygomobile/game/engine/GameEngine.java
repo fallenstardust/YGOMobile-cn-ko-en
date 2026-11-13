@@ -467,9 +467,10 @@ public class GameEngine {
         connection.startBotDuel(host, port, botCommand, deckFile);
     }
 
-    /** 启动 WindBot 加入指定主机（人机对战），实现见 ConnectionManager */
-    public void launchWindBot(String host, int port, String botCommand, String deckFile) {
-        connection.launchWindBot(host, port, botCommand, deckFile);
+    /** 启动 WindBot 加入指定主机（人机对战），实现见 ConnectionManager；
+     *  botCommands/deckFiles 按下标一一对应待拉起的人机席位（TAG 为 3 席） */
+    public void launchWindBot(String host, int port, List<String> botCommands, List<String> deckFiles) {
+        connection.launchWindBot(host, port, botCommands, deckFiles);
     }
 
     // ==== 录像回放控制（实现见 ConnectionManager） ====

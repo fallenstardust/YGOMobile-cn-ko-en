@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+    带尾部标记列的列表条目：仅供人机 TAG 席位标记（②③④）使用——名称列占满余宽，
+    标记列贴右；未设置标记时标记列 GONE，观感与 item_bot_list 完全一致。
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal">
+
+    <TextView
+        android:id="@+id/tv_bot_item"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center_vertical"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        android:textColor="#FFFFFF"
+        android:textSize="13sp" />
+
+    <TextView
+        android:id="@+id/tv_bot_item_mark"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical|end"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:textColor="@color/gold"
+        android:textSize="13sp"
+        android:visibility="gone" />
+</LinearLayout>
