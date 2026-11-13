@@ -60,7 +60,9 @@ final class DuelZoneRefresh {
             DuelAnalyzer.zeroRange(blocks, seg[0], seg[1] - 4);
         }
         byte[] masked = updateDataPayload(player, location, blocks, len);
-        analyzer.broadcaster.sendDualViewAndRecord(player, full, masked);
+        // Mzone/Szone 属队级公开信息：真 TAG 下本队两席位都收全量
+        //（对齐 tag_duel.cpp RefreshMzone/RefreshSzone 的 players[pid] 与 players[pid+1]）。
+        analyzer.broadcaster.sendTeamPairViewAndRecord(player, full, masked);
     }
 
     void refreshHand(int player) {
@@ -105,7 +107,8 @@ final class DuelZoneRefresh {
 
     void refreshExtra(int player, int flag, int useCache) {
         byte[] blocks = OcgDuelEngine.queryFieldCard(analyzer.pduel(), player, OcgDuelEngine.LOCATION_EXTRA, flag, useCache);
-        analyzer.sendToPlayer(analyzer.room.players[player],
+        // 额外卡组只给该队当前行动席位（对齐 tag_duel.cpp RefreshExtra L1703-1708）
+        analyzer.sendToPlayer(analyzer.room.duelPlayer(player),
                 updateDataPayload(player, OcgDuelEngine.LOCATION_EXTRA, blocks, blocks.length));
     }
 
@@ -147,7 +150,11 @@ final class DuelZoneRefresh {
         byte[] blocks = OcgDuelEngine.queryCard(analyzer.pduel(), player, location, sequence, flag, 0);
         int len = blocks.length;
         if (len <= EngineMessage.LEN_HEADER) {
-            analyzer.sendToPlayer(analyzer.room.players[player], updateCardPayload(player, location, sequence, blocks, len));
+            // 空查询：只给所属队的席位（真 TAG 两席），不发另一队与观战（对齐 tag_duel.cpp RefreshSingle L1719-1723）
+            byte[] payload = updateCardPayload(player, location, sequence, blocks, len);
+            for (ServerConnection c : analyzer.room.teamSeats(player)) {
+                analyzer.sendToPlayer(c, payload);
+            }
             return;
         }
         int position = EngineMessage.getPosition(blocks, 12);
@@ -169,7 +176,8 @@ final class DuelZoneRefresh {
             sendLen = 16;
         }
         byte[] masked = updateCardPayload(player, location, sequence, blocks, sendLen);
-        analyzer.broadcaster.sendDualViewAndRecord(player, full, masked);
+        // 场上/非场上单卡刷新同样属队级公开：本队两席位收全量（对齐 tag_duel.cpp L1730-1743）
+        analyzer.broadcaster.sendTeamPairViewAndRecord(player, full, masked);
     }
 
     static byte[] updateDataPayload(int player, int location, byte[] blocks, int len) {

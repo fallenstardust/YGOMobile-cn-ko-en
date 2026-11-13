@@ -54,7 +54,7 @@ final class ServerDuel extends ServerDuelBase {
      * <p>录像：清空已录应答/消息帧，由静默重放整段重录，产物与“那一步从未做过”逐帧等价。
      */
     void undoLastResponse(ServerConnection requester) {
-        if (requester == null || requester.type > 1 || pduel == 0L
+        if (requester == null || requester.type >= room.seatCount() || pduel == 0L
                 || room.duelStage != DUEL_STAGE_DUELING || undoSteps.isEmpty()) {
             Log.i(TAG, "undo 拒绝：duelStage=" + room.duelStage + " pduel=" + pduel
                     + " steps=" + undoSteps.size() + " requesterType="
@@ -77,8 +77,9 @@ final class ServerDuel extends ServerDuelBase {
         UndoStep targetStep = undoSteps.get(target);
         boolean askIsRollbackTarget = target == undoSteps.size() - 1
                 && room.lastResponse == targetStep.responder;
-        ServerConnection asking = room.lastResponse >= 0 && room.lastResponse < room.players.length
-                ? room.players[room.lastResponse] : null;
+        // lastResponse 是引擎侧 player（TAG 即队伍）：待答席位经 duelPlayer 解析
+        ServerConnection asking = room.lastResponse >= 0 && room.lastResponse <= 1
+                ? room.duelPlayer(room.lastResponse) : null;
         if (asking != null && asking != requester && !askIsRollbackTarget
                 && (asking.state == CTOS_RESPONSE || asking.state == CTOS_TIME_CONFIRM)) {
             Log.i(TAG, "undo 拒绝：对方席位 " + room.lastResponse + " 正在待应答，不得打断其询问");
@@ -99,13 +100,14 @@ final class ServerDuel extends ServerDuelBase {
         room.timeLimit[0] = step.timeLimit0;
         room.timeLimit[1] = step.timeLimit1;
         room.timeElapsed = step.timeElapsed;
-        // 不接受 reload 重同步的席位（本机拉起的人机）：整局重放与重同步批跳过只在本次撤回期间生效，
-        // 窗口一结束立即置回 null，以免影响后续实况消息的正常下发
-        analyzer.undoReplaySink = replayResyncPeer(requester);
-        final ServerConnection replaySink = analyzer.undoReplaySink;
+        // 不接受 reload 重同步的席位（本机拉起的人机，TAG 下可多席）：整局重放与重同步批跳过只在本次撤回期间生效，
+        // 窗口一结束立即清空，以免影响后续实况消息的正常下发
+        analyzer.undoReplaySinks.clear();
+        analyzer.undoReplaySinks.addAll(replayResyncPeers(requester));
+        final List<ServerConnection> replaySinks = new ArrayList<>(analyzer.undoReplaySinks);
         try {
-            if (analyzer.undoReplaySink != null) {
-                Log.i(TAG, "undo 整局重放：席位 " + analyzer.undoReplaySink.type
+            for (ServerConnection sink : replaySinks) {
+                Log.i(TAG, "undo 整局重放：席位 " + sink.type
                         + " 先收开局帧、再重放回退点前 " + keep + " 步应答的消息流");
             }
             if (rebuildAndReplay(keep)) {
@@ -117,7 +119,7 @@ final class ServerDuel extends ServerDuelBase {
                         analyzer.silentTurnPlayer, analyzer.silentPhase,
                         analyzer.silentChainEvents, ackRound);
                 analyzer.resyncAfterUndo(OcgDuelEngine.queryFieldInfo(pduel));
-                scheduleUndoQuestionHang(replaySink);
+                scheduleUndoQuestionHang(replaySinks);
                 sendUndoStateToAll();
                 return;
             }
@@ -134,7 +136,7 @@ final class ServerDuel extends ServerDuelBase {
                         analyzer.silentTurnPlayer, analyzer.silentPhase,
                         analyzer.silentChainEvents, ackRound);
                 analyzer.resyncAfterUndo(OcgDuelEngine.queryFieldInfo(pduel));
-                scheduleUndoQuestionHang(replaySink);
+                scheduleUndoQuestionHang(replaySinks);
                 sendUndoStateToAll();
             } else {
                 // 两次重建均失败：引擎句柄已不可用，只能告知客户端撤回无效
@@ -142,12 +144,13 @@ final class ServerDuel extends ServerDuelBase {
                 denyUndo(requester);
             }
         } finally {
-            analyzer.undoReplaySink = null;
+            analyzer.undoReplaySinks.clear();
         }
     }
 
     /**
-     * 本局需要靠「整局重放」回到回退点的席位：人机房（{@code GameRoomBase#peerNeedsReplayResync}）里那个非房主的决斗位。
+     * 本局需要靠「整局重放」回到回退点的席位：人机房（{@code GameRoomBase#peerNeedsReplayResync}）里
+     * 除房主（本机客户端）与发起撤回者以外的全部决斗位；TAG 4 席位下即为其余 2~3 个人机席位。
      *
      * <p>为什么必需：WindBot 的引擎消息注册表里没有 {@code MSG_RELOAD_FIELD}(162)，它的 {@code OnPacket} 对未注册
      * 消息整条丢弃，所以撤回的全量重同步对它等于什么都没发生——它的本地场面仍停在被撤掉的那个动作之后；
@@ -158,21 +161,25 @@ final class ServerDuel extends ServerDuelBase {
      * <p>双人局域网对局不受影响：连入的真人客户端实现了 reload，照旧走全量重同步；观战连接不重放。
      *
      * @param requester 本次发起撤回的连接（即本机客户端自己的席位，绝不能被当成重放目标）
-     * @return 需要整局重放的连接；null = 本局不需要为任何连接重放
+     * @return 需要整局重放的连接（可为空表 = 本局不需要为任何连接重放）
      */
-    private ServerConnection replayResyncPeer(ServerConnection requester) {
+    private List<ServerConnection> replayResyncPeers(ServerConnection requester) {
+        List<ServerConnection> peers = new ArrayList<>();
         if (!room.peerNeedsReplayResync) {
-            return null;
+            return peers;
         }
-        ServerConnection a = room.players[0];
-        ServerConnection b = room.players[1];
-        if (a == null || b == null || a == b) {
-            // solo（一条连接占两席位）没有第三方对席，无需重放
-            return null;
+        for (int i = 0; i < room.seatCount(); i++) {
+            ServerConnection conn = room.players[i];
+            // 房主连接就是本机自己的客户端（实现了 reload，不得当成重放目标）；先攻选边会交换席位，
+            // 故按连接身份而不是席位号判定（玩家也可能坐在 seats[1]）
+            if (conn == null || conn == requester || conn == room.hostPlayer) {
+                continue;
+            }
+            if (!peers.contains(conn)) {
+                peers.add(conn);
+            }
         }
-        // 房主连接就是本机自己的客户端，人机只能是非房主那一席（先攻选边会交换席位，故按连接身份而不席位号判定）
-        ServerConnection peer = a == room.hostPlayer ? b : a;
-        return peer == requester ? null : peer;
+        return peers;
     }
 
     /**
@@ -224,6 +231,14 @@ final class ServerDuel extends ServerDuelBase {
             sendReplayStartFrame();
             analyzer.refreshExtra(0);
             analyzer.refreshExtra(1);
+            // TAG：重建后行动席位轮转与投降态必须回到开局初始值，再由重放的消息流（MSG_NEW_TURN）
+            // 自然推到回退点，否则撤回后的 curPlayer/turnCount 会停在撤回前的值、后续追问挂错席位
+            room.turnCount = 0;
+            Arrays.fill(room.surrender, false);
+            if (room.isMultiSeatTag()) {
+                room.curPlayer[0] = room.players[0];
+                room.curPlayer[1] = room.players[3];
+            }
             OcgDuelEngine.startDuel(pduel, undoOpt);
             ok = processSilent();
             for (int i = 0; ok && i < keep; i++) {
@@ -246,14 +261,16 @@ final class ServerDuel extends ServerDuelBase {
      * 因此逐帧跟着回到回退点。不经 sendToPlayer（那会连带进录像与终端询问留存），也不写录像。
      */
     private void sendReplayStartFrame() {
-        ServerConnection sink = analyzer.undoReplaySink;
-        if (sink == null || undoStartFrame == null) {
+        if (undoStartFrame == null || analyzer.undoReplaySinks.isEmpty()) {
             return;
         }
-        byte[] frame = Arrays.copyOf(undoStartFrame, undoStartFrame.length);
-        // 视角字节与实况开局一致：players[0] 收 0、players[1] 收 1（先攻选边交换席位后仍按当前席号取位）
-        frame[1] = (byte) (room.players[0] == sink ? 0 : 1);
-        sink.send(STOC_GAME_MSG, frame);
+        for (ServerConnection sink : analyzer.undoReplaySinks) {
+            if (sink == null) continue;
+            byte[] frame = Arrays.copyOf(undoStartFrame, undoStartFrame.length);
+            // 视角字节与实况开局一致：本队席位收 player=队伍号（TAG 下 A 队 0、B 队 1；非 TAG 即席位号）
+            frame[1] = (byte) room.seatTeam(sink.type);
+            sink.send(STOC_GAME_MSG, frame);
+        }
     }
 
     /**
@@ -305,12 +322,11 @@ final class ServerDuel extends ServerDuelBase {
                                     int ackRound) {
         byte[] ack = undoAckPayload(result, turn, player, phase, chainEvents, ackRound);
         ServerConnection p0 = room.players[0];
-        ServerConnection p1 = room.players[1];
-        if (p0 != null) {
-            p0.send(STOC_UNDO_ACK, ack);
-        }
-        if (p1 != null && p1 != p0) {
-            p1.send(STOC_UNDO_ACK, ack);
+        for (int i = 0; i < room.seatCount(); i++) {
+            ServerConnection p = room.players[i];
+            if (p != null && (i == 0 || p != p0)) {
+                p.send(STOC_UNDO_ACK, ack);
+            }
         }
         for (ServerConnection o : room.observers) {
             o.send(STOC_UNDO_ACK, ack);
@@ -347,7 +363,7 @@ final class ServerDuel extends ServerDuelBase {
      * 此时界面上只可能存在本次新局面派下来的弹窗与命令列表，应答链路重新干净。
      * 重挂任务回投到单线程房间执行器上，与应答/撤回串行；代次比较使连续撤回时旧任务作废。
      */
-    protected void scheduleUndoQuestionHang(final ServerConnection replaySink) {
+    protected void scheduleUndoQuestionHang(final List<ServerConnection> replaySinks) {
         if (analyzer.undoAskResponder < 0) {
             return;
         }
@@ -357,7 +373,7 @@ final class ServerDuel extends ServerDuelBase {
             exec = Executors.newSingleThreadScheduledExecutor();
             undoHangTimer = exec;
         }
-        hangUndoQuestionWhenDrained(exec, gen, replaySink,
+        hangUndoQuestionWhenDrained(exec, gen, replaySinks,
                 SystemClock.uptimeMillis() + REPLAY_DEBT_DRAIN_TIMEOUT_MS, UNDO_HANG_DELAY_MS);
         // 重挂之后开一路保活：延后重挂跑在另一个线程上（回投房间执行器），它可能因执行器已关、
         // 代次作废、或客户端把询问包吞在动画闸门里而落空；落空就是永久卡死（界面无询问、点卡弹不
@@ -369,24 +385,37 @@ final class ServerDuel extends ServerDuelBase {
      * 把回退点的询问挂回席位，先等整局重放的旧答复欠账排空：人机消化整段重放需要时间，它对这些旧询问的
      * 答复可能恰好在用户重新操作、引擎转回来问它之后才到，届时会被当成对新询问的应答喂进引擎
      * （{@code GameRoom#handlePacket} 的欠账闸门负责吞掉，先等干净就免了那一轮重挂）。
+     * TAG 下重放席位可能不止一个，须等全部席位的欠账都排空。
      * 超过时限不再等（欠账保留、闸门继续吞），宁慢不卡。
      */
     private void hangUndoQuestionWhenDrained(final ScheduledExecutorService exec, final int gen,
-                                            final ServerConnection replaySink,
+                                            final List<ServerConnection> replaySinks,
                                             final long drainDeadline, final long delayMs) {
         exec.schedule(() -> room.server.post(() -> {
             if (gen != undoHangGen || pduel == 0L || room.duelStage != DUEL_STAGE_DUELING) {
                 return;
             }
-            if (replaySink != null && replaySink.replayAnswerDebt > 0) {
+            int debt = replayDebtOf(replaySinks);
+            if (debt > 0) {
                 if (SystemClock.uptimeMillis() < drainDeadline) {
-                    hangUndoQuestionWhenDrained(exec, gen, replaySink, drainDeadline, REPLAY_DEBT_POLL_MS);
+                    hangUndoQuestionWhenDrained(exec, gen, replaySinks, drainDeadline, REPLAY_DEBT_POLL_MS);
                     return;
                 }
-                Log.w(TAG, "undo 重挂不再等人机重放欠账（剩 " + replaySink.replayAnswerDebt + " 笔），照常挂出");
+                Log.w(TAG, "undo 重挂不再等人机重放欠账（剩 " + debt + " 笔），照常挂出");
             }
             analyzer.hangUndoTerminalQuestion();
         }), delayMs, TimeUnit.MILLISECONDS);
+    }
+
+    /** 重放席位集合尚未消化的旧询问总数（非重放席位的欠账不计）。 */
+    private static int replayDebtOf(List<ServerConnection> replaySinks) {
+        int debt = 0;
+        for (ServerConnection sink : replaySinks) {
+            if (sink != null) {
+                debt += sink.replayAnswerDebt;
+            }
+        }
+        return debt;
     }
 
     /**
@@ -422,15 +451,16 @@ final class ServerDuel extends ServerDuelBase {
      */
     void onResponseDropped(ServerConnection conn) {
         if (pduel == 0L || room.duelStage != DUEL_STAGE_DUELING
-                || conn == null || conn.type < 0 || conn.type > 1) {
+                || conn == null || conn.type < 0 || conn.type >= room.seatCount()) {
             return;
         }
         // 撤回的延后重挂仍在路上：此刻被吞的应答本就由那次重挂接管，不可拿撤回前的旧询问抢先挂回
         if (analyzer.undoAskResponder >= 0) {
             return;
         }
-        // 只修“引擎此刻等的正是这个席位”：其余情形的被吞应答属于已被回退的那一段，本就应当丢弃
-        if (room.lastResponse != conn.type) {
+        // 只修“引擎此刻等的正是这个席位”：lastResponse 为队伍时先把席位归队再比对（TAG 下席位≠队伍）
+        if (room.lastResponse != (room.soloMode ? room.lastResponse : room.seatTeam(conn.type))
+                || conn != room.duelPlayer(room.lastResponse)) {
             return;
         }
         if (!analyzer.canRedeliverQuestion(QUESTION_KEEPALIVE_MAX_REDELIVERIES)) {
@@ -459,10 +489,14 @@ final class ServerDuel extends ServerDuelBase {
         if (pduel == 0L || room.duelStage != DUEL_STAGE_DUELING) {
             return;
         }
-        // solo 一条连接占两席位，引擎等待方按 room.lastResponse 计（与 getResponse 同一套换算）
-        int responder = room.soloMode ? room.lastResponse : (conn == null ? -1 : conn.type);
-        if (conn == null || conn.type < 0 || conn.type > 1 || responder != room.lastResponse) {
-            Log.i(TAG, "ask-resend from seat " + (conn == null ? -1 : conn.type)
+        if (conn == null || conn.type < 0 || conn.type >= room.seatCount()) {
+            return;
+        }
+        // solo 一条连接占两席位，引擎等待方按 room.lastResponse 计（与 getResponse 同一套换算）；
+        // 真 TAG 先把请求席位归队，并只接受该队当前行动席位的求援
+        int responder = room.soloMode ? room.lastResponse : room.seatTeam(conn.type);
+        if (responder != room.lastResponse || conn != room.duelPlayer(responder)) {
+            Log.i(TAG, "ask-resend from seat " + conn.type
                     + " ignored: engine is waiting on " + room.lastResponse);
             return;
         }

@@ -4,6 +4,7 @@ import android.util.Log;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -43,10 +44,16 @@ abstract class GameRoomBase implements YGOProtocol {
     final HostInfo hostInfo = new HostInfo();
     ServerConnection hostPlayer;
 
-    // —— 玩家座位（对齐 SingleDuel::players/pplayer/ready）——
-    final ServerConnection[] players = new ServerConnection[2];
-    final ServerConnection[] pplayer = new ServerConnection[2];
-    final boolean[] ready = new boolean[2];
+    // —— 玩家座位（对齐 TagDuel::players/pplayer/ready；TAG 下 0..3 为四个席位，其余只用 0/1）——
+    final ServerConnection[] players = new ServerConnection[4];
+    final ServerConnection[] pplayer = new ServerConnection[4];
+    final boolean[] ready = new boolean[4];
+    /** TAG 逐席位投降确认态（对齐 TagDuel::surrender[4]），每回合开始复位。 */
+    final boolean[] surrender = new boolean[4];
+    /** TAG 每队当前行动席位（对齐 TagDuel::cur_player[2]）：引擎侧只认队伍 0/1，询问发给该队此刻轮到的人。 */
+    final ServerConnection[] curPlayer = new ServerConnection[2];
+    /** TAG 回合计数（对齐 TagDuel::turn_count）：逐回合在本队两席位间轮转。 */
+    int turnCount = 0;
     final Set<ServerConnection> observers = new LinkedHashSet<>();
 
     // —— 卡组（校验后按 main/extra 拆分，见 ServerDuel 装载）——
@@ -72,7 +79,8 @@ abstract class GameRoomBase implements YGOProtocol {
 
     /** Solo mode flag (decoded from hostInfo.mode & 0x10). */
     boolean soloMode = false;
-    /** Solo 房间且赛制为 TAG：4 席位全部由房主一人操控（对齐 TagDuel 的 4 副卡组装载）。 */
+    /** 引擎以 TAG 开局（DUEL_TAG_MODE + 4 副卡组）：纯单人 TAG 由房主一条连接操控 4 席位，
+     *  其余（人机 TAG、真 LAN TAG）为 4 条连接各占一席位。 */
     boolean tagMode = false;
     /** Track how many decks have been submitted in solo mode (expect 2, or 4 for TAG). */
     int soloDeckCount = 0;
@@ -85,6 +93,63 @@ abstract class GameRoomBase implements YGOProtocol {
     /** solo 开局前需收集的卡组份数：TAG 4 份、其余 2 份。 */
     int requiredSoloDecks() {
         return tagMode ? 4 : 2;
+    }
+
+    // ==================================================================
+    // 席位 / 队伍寻址（TAG 4 席位：引擎侧 player 恒为队伍，席位 2t/2t+1 同队）
+    // ==================================================================
+
+    /** 真 4 席位 TAG（每条连接一个席位）；纯单人 TAG 不属本路。 */
+    boolean isMultiSeatTag() {
+        return tagMode && !soloMode;
+    }
+
+    /** 本房间的决斗位数量：TAG 4 席位、其余 2。 */
+    int seatCount() {
+        return isMultiSeatTag() ? 4 : 2;
+    }
+
+    /**
+     * 引擎侧 player（TAG 下即队伍：0=A 队、1=B 队）此刻应当应答的连接：
+     * 真 TAG 取该队当前行动席位，其余情形即该座位连接。
+     */
+    ServerConnection duelPlayer(int team) {
+        if (!isMultiSeatTag()) {
+            return players[team];
+        }
+        ServerConnection c = curPlayer[team];
+        return c != null ? c : players[team * 2];
+    }
+
+    /** 队伍首席位（猜拳与先攻选择由两队首席操作）：真 TAG 为 0/2，其余为 0/1。 */
+    int teamCaptainSeat(int team) {
+        return isMultiSeatTag() ? team * 2 : team;
+    }
+
+    /** 席位所属队伍（引擎侧 player）：真 TAG 取 seat&gt;&gt;1，其余席位号即队伍号。 */
+    int seatTeam(int seat) {
+        return isMultiSeatTag() ? (seat >> 1) : seat;
+    }
+
+    /** 某队的全部决斗位连接（真 TAG 两席，其余单席）。 */
+    ServerConnection[] teamSeats(int team) {
+        if (!isMultiSeatTag()) {
+            return new ServerConnection[]{players[team]};
+        }
+        return new ServerConnection[]{players[team * 2], players[team * 2 + 1]};
+    }
+
+    /** 除 keep 之外的全部决斗位连接（遮蔽版发送对象），按连接身份去重避免同连接双收。 */
+    ServerConnection[] otherSeats(ServerConnection keep) {
+        ArrayList<ServerConnection> out = new ArrayList<>();
+        int n = seatCount();
+        for (int i = 0; i < n; i++) {
+            ServerConnection c = players[i];
+            if (c != null && c != keep && !out.contains(c)) {
+                out.add(c);
+            }
+        }
+        return out.toArray(new ServerConnection[0]);
     }
 
     /**
@@ -145,17 +210,15 @@ abstract class GameRoomBase implements YGOProtocol {
         }
     }
 
-    /** 向双方玩家与观战广播同一条 GAME_MSG（对齐 SendBufferToPlayer + ReSendToPlayer）。 */
+    /** 向全体决斗位与观战广播同一条 GAME_MSG（对齐 SendBufferToPlayer + ReSendToPlayer）。 */
     void broadcastGameMsg(byte[] data) {
         ServerConnection p0 = players[0];
-        ServerConnection p1 = players[1];
-        if (p0 != null) {
-            p0.send(STOC_GAME_MSG, data);
-        }
-        // Solo mode: p1 == p0 is the same connection; sending to both would deliver the
-        // message (e.g. MSG_WIN overlay) twice, so dedupe by connection identity.
-        if (p1 != null && p1 != p0) {
-            p1.send(STOC_GAME_MSG, data);
+        for (int i = 0; i < seatCount(); i++) {
+            ServerConnection p = players[i];
+            // Solo mode / 同连接重入：按身份去重，避免同一条消息（如 MSG_WIN）双发
+            if (p != null && (i == 0 || p != p0)) {
+                p.send(STOC_GAME_MSG, data);
+            }
         }
         for (ServerConnection o : observers) {
             o.send(STOC_GAME_MSG, data);
@@ -163,11 +226,10 @@ abstract class GameRoomBase implements YGOProtocol {
     }
 
     void broadcastToEmpty(int proto, byte[] data) {
-        if (players[0] != null) {
-            players[0].send(proto, data);
-        }
-        if (players[1] != null) {
-            players[1].send(proto, data);
+        for (int i = 0; i < seatCount(); i++) {
+            if (players[i] != null) {
+                players[i].send(proto, data);
+            }
         }
         for (ServerConnection o : observers) {
             o.send(proto, data);
@@ -176,13 +238,12 @@ abstract class GameRoomBase implements YGOProtocol {
 
     protected void sendToAllPresent(int proto, byte[] payload) {
         ServerConnection p0 = players[0];
-        ServerConnection p1 = players[1];
-        if (p0 != null) {
-            p0.send(proto, payload);
-        }
-        // Solo mode: p1 == p0 is the same connection; dedupe by identity.
-        if (p1 != null && p1 != p0) {
-            p1.send(proto, payload);
+        for (int i = 0; i < seatCount(); i++) {
+            ServerConnection p = players[i];
+            // Solo mode: 席位可能共享同一连接，按身份去重
+            if (p != null && (i == 0 || p != p0)) {
+                p.send(proto, payload);
+            }
         }
         for (ServerConnection o : observers) {
             o.send(proto, payload);

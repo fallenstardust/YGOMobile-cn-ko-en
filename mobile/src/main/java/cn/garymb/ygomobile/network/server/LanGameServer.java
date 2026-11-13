@@ -370,10 +370,21 @@ public final class LanGameServer implements YGOProtocol {
         return room;
     }
 
-    /** 房间第二名玩家（人机模式下的 AI）是否已入座，供启动端做加入超时判定。 */
-    public boolean isSecondPlayerJoined() {
+    /**
+     * 人机模式所需 AI 席位是否已全部入座：房主占 seats[0]，AI 依序占 seats[1..botCount]，
+     * 单局/比赛 botCount=1，TAG botCount=3。供启动端做加入超时判定。
+     */
+    public boolean isBotSeatsJoined(int botCount) {
         GameRoom r = room;
-        return r != null && r.players[1] != null;
+        if (r == null) {
+            return false;
+        }
+        for (int seat = 1; seat <= botCount; seat++) {
+            if (seat >= r.players.length || r.players[seat] == null) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /** 房间已建好且房主已入座（环回客户端 CTOS_CREATE_GAME 处理完成），

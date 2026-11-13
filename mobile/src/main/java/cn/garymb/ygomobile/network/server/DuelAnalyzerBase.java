@@ -1,6 +1,8 @@
 package cn.garymb.ygomobile.network.server;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import cn.garymb.ygomobile.engine.OcgDuelEngine;
 import cn.garymb.ygomobile.network.YGOProtocol;
@@ -49,12 +51,18 @@ abstract class DuelAnalyzerBase implements YGOProtocol {
     /** 静默重放期间捕获的终端询问消息原字节（撤回后原样重发给待应答方）。 */
     byte[] silentTerminal;
     /**
-     * 撤回整局重放的接收连接：本机拉起的人机席位（见 {@code GameRoomBase#peerNeedsReplayResync}）。
-     * 非空时静默重放不再只录不发，而是把整段消息流按原屏蔽语义发给它，使它的本地局面跟着回到回退点；
-     * 仅在 {@code ServerDuel#undoLastResponse} 的「重建重放 + reload 重同步」窗口内非空，窗口结束即置回 null。
+     * 撤回整局重放的接收连接（本机拉起的人机席位，见 {@code GameRoomBase#peerNeedsReplayResync}；
+     * TAG 下可多席）。非空时静默重放不再只录不发，而是把整段消息流按原屏蔽语义发给它们，使它们的
+     * 本地局面跟着回到回退点；仅在 {@code ServerDuel#undoLastResponse} 的「重建重放 + reload 重同步」
+     * 窗口内非空，窗口结束即清空。
      */
-    ServerConnection undoReplaySink;
-    /** 此刻正处于 {@link UndoQuestionGuard#resyncAfterUndo} 的 reload/refresh 批内：{@link #undoReplaySink} 整批跳过（它已由重放同步）。 */
+    final List<ServerConnection> undoReplaySinks = new ArrayList<>();
+
+    /** dp 是否属于撤回整局重放的接收席位集合。 */
+    boolean isUndoReplaySink(ServerConnection dp) {
+        return dp != null && undoReplaySinks.contains(dp);
+    }
+    /** 此刻正处于 {@link UndoQuestionGuard#resyncAfterUndo} 的 reload/refresh 批内：{@link #undoReplaySinks} 整批跳过（它们已由重放同步）。 */
     boolean undoResyncBurst;
     /** waitforResponse 已置位、等待下一条 sendToPlayer 作为终端询问的标记。 */
     boolean silentWaitPending;
@@ -143,7 +151,7 @@ abstract class DuelAnalyzerBase implements YGOProtocol {
                     waitforResponse(player);
                     // 战斗指令的应答 = 攻击宣言 / 切 M2 / 结束阶段，是撤回的动作锚点
                     pendingActionQuestion = EngineMessage.MSG_SELECT_BATTLECMD;
-                    sendToPlayer(room.players[player], range(msg, start, cursor));
+                    sendToPlayer(room.duelPlayer(player), range(msg, start, cursor));
                     return 1;
     }
 
@@ -173,7 +181,7 @@ abstract class DuelAnalyzerBase implements YGOProtocol {
                     waitforResponse(player);
                     // 空闲指令的应答 = 召唤/特召/盖卡/发动/切阶段，是撤回的动作锚点
                     pendingActionQuestion = EngineMessage.MSG_SELECT_IDLECMD;
-                    sendToPlayer(room.players[player], range(msg, start, cursor));
+                    sendToPlayer(room.duelPlayer(player), range(msg, start, cursor));
                     return 1;
     }
 

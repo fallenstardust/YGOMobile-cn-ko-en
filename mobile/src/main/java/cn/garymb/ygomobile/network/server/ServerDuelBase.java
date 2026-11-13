@@ -113,15 +113,28 @@ abstract class ServerDuelBase implements YGOProtocol {
         boolean swapped = false;
         room.pplayer[0] = room.players[0];
         room.pplayer[1] = room.players[1];
-        // 选对方先攻时交换座位（含各自卡组）；TAG 下 4 席位同一连接，只整体交换两队卡组
+        if (room.isMultiSeatTag()) {
+            room.pplayer[2] = room.players[2];
+            room.pplayer[3] = room.players[3];
+        }
+        // 选对方先攻时交换座位（含各自卡组）；TAG 下整队交换（席位连接 + 卡组槽位）
         boolean chooseFirst = tp != 0;
-        if ((chooseFirst && dp.type == 1) || (!chooseFirst && dp.type == 0)) {
+        boolean dpIsTeam1 = room.isMultiSeatTag() ? dp.type >= 2 : dp.type == 1;
+        if ((chooseFirst && dpIsTeam1) || (!chooseFirst && !dpIsTeam1)) {
             if (tag) {
                 swapTagDecks();
             } else {
                 swapPlayersAndDecks();
             }
             swapped = true;
+        }
+        // TAG：初始化两队当前行动席位（A 队首席、B 队次席），之后的逐回合轮转在分析器里做
+        //（对齐 tag_duel.cpp L380-382）；本局回合数与逐席投降态一并复位
+        room.turnCount = 0;
+        Arrays.fill(room.surrender, false);
+        if (room.isMultiSeatTag()) {
+            room.curPlayer[0] = room.players[0];
+            room.curPlayer[1] = room.players[3];
         }
         dp.state = CTOS_RESPONSE;
 
@@ -133,10 +146,14 @@ abstract class ServerDuelBase implements YGOProtocol {
         int startTime = (int) (System.currentTimeMillis() / 1000L);
         int replayFlag = YrpWriter.REPLAY_UNIFORM | (tag ? YrpWriter.REPLAY_TAG : 0);
         replay = new YrpWriter(seed, Constants.PRO_VERSION, replayFlag, startTime);
-        replay.writeName(room.players[0].name);
-        replay.writeName(room.players[1].name);
         if (tag) {
-            // TAG 录像头需 4 个席位名；solo 下协议不上传各席位卡组名，服务器不可知，统一写房主名
+            // TAG 录像头需 4 个席位名：真 4 席位取各席连接昵称；
+            // solo 下协议不上传席位卡组名、服务器不可知，四席统一写房主名
+            for (int i = 0; i < 4; i++) {
+                ServerConnection p = room.players[i];
+                replay.writeName(p != null ? p.name : room.players[0].name);
+            }
+        } else {
             replay.writeName(room.players[0].name);
             replay.writeName(room.players[1].name);
         }
@@ -227,6 +244,17 @@ abstract class ServerDuelBase implements YGOProtocol {
             // Perspective will auto-flip on turn changes via solo branch in DuelEventHandler.
             room.sendGameMsg(room.players[0], Arrays.copyOf(startBuf, startLen));
             startBuf[1] = (byte) (swapped ? 0x11 : 0x10);
+        } else if (room.isMultiSeatTag()) {
+            // 真 4 席位 TAG：A 队两席位收 player=0、B 队两席位收 player=1
+            //（对齐 tag_duel.cpp L457-461），观战再收 0x10/0x11 变体
+            byte[] teamA = Arrays.copyOf(startBuf, startLen);
+            room.players[0].send(STOC_GAME_MSG, teamA);
+            room.players[1].send(STOC_GAME_MSG, teamA);
+            startBuf[1] = 1;
+            byte[] teamB = Arrays.copyOf(startBuf, startLen);
+            room.players[2].send(STOC_GAME_MSG, teamB);
+            room.players[3].send(STOC_GAME_MSG, teamB);
+            startBuf[1] = (byte) (swapped ? 0x11 : 0x10);
         } else {
             room.sendGameMsg(room.players[0], Arrays.copyOf(startBuf, startLen));
             startBuf[1] = 1;
@@ -261,14 +289,29 @@ abstract class ServerDuelBase implements YGOProtocol {
         room.decks[1] = d;
     }
 
-    /** TAG 选后攻时整队交换卡组槽位（对齐 TagDuel::TPResult 的 pdeck0↔2/pdeck1↔3）。 */
+    /**
+     * TAG 选后攻时整队交换（对齐 tag_duel.cpp TPResult L370-378）：席位 0↔2、1↔3 连同卡组槽位一起对调。
+     * solo TAG 下四席位共用房主一条连接，只需交换两队卡组槽位（连接不动）。
+     */
     protected void swapTagDecks() {
-        PlayerDeck a = room.decks[0];
+        if (room.isMultiSeatTag()) {
+            ServerConnection a = room.players[0];
+            room.players[0] = room.players[2];
+            room.players[2] = a;
+            ServerConnection b = room.players[1];
+            room.players[1] = room.players[3];
+            room.players[3] = b;
+            room.players[0].type = 0;
+            room.players[1].type = 1;
+            room.players[2].type = 2;
+            room.players[3].type = 3;
+        }
+        PlayerDeck x = room.decks[0];
         room.decks[0] = room.decks[2];
-        room.decks[2] = a;
-        PlayerDeck b = room.decks[1];
+        room.decks[2] = x;
+        PlayerDeck y = room.decks[1];
         room.decks[1] = room.decks[3];
-        room.decks[3] = b;
+        room.decks[3] = y;
     }
 
     protected void loadDeckToEngine(PlayerDeck deck, int player) {
@@ -390,8 +433,20 @@ abstract class ServerDuelBase implements YGOProtocol {
         if (pduel == 0L) {
             return;
         }
+        // 非决斗位（观战/未入座）的应答一律不收：seatTeam 对越界席位号会解出越界队伍下标
+        if (dp.type < 0 || dp.type >= room.seatCount()) {
+            return;
+        }
         // Solo mode: dp.type is always 0 (same connection), but engine may wait for player 1's response
-        int responder = room.soloMode ? room.lastResponse : dp.type;
+        // 真 TAG：席位先归队（引擎侧只认队伍 0/1），且只接受该队当前行动席位的答复
+        int team = room.soloMode ? room.lastResponse : room.seatTeam(dp.type);
+        if (!room.soloMode && dp != room.duelPlayer(team)) {
+            ServerConnection asked = room.duelPlayer(team);
+            Log.i(TAG, "CTOS_RESPONSE dropped: seat " + dp.type + " is not the acting seat of team " + team
+                    + " (asked=" + (asked == null ? -1 : asked.type) + ")");
+            return;
+        }
+        int responder = team;
         int len = Math.min(resp.length, EngineMessage.SIZE_RETURN_VALUE - 1);
         byte[] resb = new byte[EngineMessage.SIZE_RETURN_VALUE];
         System.arraycopy(resp, 0, resb, 0, len);
@@ -415,7 +470,7 @@ abstract class ServerDuelBase implements YGOProtocol {
                 room.timeLimit[0], room.timeLimit[1], room.timeElapsed, anchorType));
         lastReplayResponseSize = replay.writeResponse(resb, len);
         OcgDuelEngine.setResponseB(pduel, resb);
-        room.players[responder].state = ServerConnection.STATE_NONE;
+        dp.state = ServerConnection.STATE_NONE;
         if (room.hostInfo.timeLimit != 0) {
             if (room.timeLimit[responder] >= room.timeElapsed) {
                 room.timeLimit[responder] -= room.timeElapsed;
@@ -437,7 +492,9 @@ abstract class ServerDuelBase implements YGOProtocol {
      * 与录像回退会一并弹掉。
      */
     void applyForcedPass(int seat, byte[] resb) {
-        if (pduel == 0L || seat < 0 || seat >= room.players.length || room.players[seat] == null) {
+        // 传入的是引擎侧 player（TAG 即队伍）：统一经 duelPlayer 解为此刻应答复务的连接
+        ServerConnection target = room.duelPlayer(seat);
+        if (pduel == 0L || seat < 0 || seat > 1 || target == null) {
             return;
         }
         int len = 4;
@@ -445,7 +502,7 @@ abstract class ServerDuelBase implements YGOProtocol {
                 room.timeLimit[0], room.timeLimit[1], room.timeElapsed, 0));
         lastReplayResponseSize = replay.writeResponse(resb, len);
         OcgDuelEngine.setResponseB(pduel, resb);
-        room.players[seat].state = ServerConnection.STATE_NONE;
+        target.state = ServerConnection.STATE_NONE;
         if (room.hostInfo.timeLimit != 0) {
             if (room.timeLimit[seat] >= room.timeElapsed) {
                 room.timeLimit[seat] -= room.timeElapsed;
@@ -457,10 +514,15 @@ abstract class ServerDuelBase implements YGOProtocol {
     }
 
     void timeConfirm(ServerConnection dp) {
-        if (room.hostInfo.timeLimit == 0 || dp.type != room.lastResponse) {
+        if (room.hostInfo.timeLimit == 0) {
             return;
         }
-        room.players[room.lastResponse].state = CTOS_RESPONSE;
+        // 限时确认只接受引擎此刻等待的那一席（TAG 下 dp.type 是席位、lastResponse 是队伍）
+        ServerConnection asked = room.duelPlayer(room.lastResponse);
+        if (asked == null || dp != asked) {
+            return;
+        }
+        asked.state = CTOS_RESPONSE;
         if (room.timeElapsed < 10) {
             room.timeElapsed = 0;
         }
@@ -475,7 +537,9 @@ abstract class ServerDuelBase implements YGOProtocol {
         if (anchor < 0) {
             return -1;
         }
-        if (room.soloMode || undoSteps.get(anchor).responder == requester.type) {
+        // responder 存的是引擎侧 player（TAG 即队伍），请求者按席位归队后比对：TAG 下同队两席位
+        // （本人与 AI 队友）的最近动作都可撤回，与纯单人 TAG 的“整队任意锚点算本方”口径一致
+        if (room.soloMode || undoSteps.get(anchor).responder == room.seatTeam(requester.type)) {
             return anchor;
         }
         return -1;
@@ -493,7 +557,7 @@ abstract class ServerDuelBase implements YGOProtocol {
 
     /** 本连接当前是否有可撤回的动作（决定客户端撤回图标是否闪动发光提示）：仅当最近一个动作锚点由本方宣言。 */
     protected boolean canUndoFor(ServerConnection conn) {
-        if (conn == null || conn.type > 1) {
+        if (conn == null || conn.type >= room.seatCount()) {
             return false;
         }
         return lastIndexOfOwnAnchor(conn) >= 0;
@@ -501,21 +565,26 @@ abstract class ServerDuelBase implements YGOProtocol {
 
     /**
      * 按连接身份下发 STOC_UNDO_STATE（solo 下一条连接占两席位，去重只发一份）。
-     * 观战连接不显示撤回入口，故不下发。
+     * 观战连接不显示撤回入口，故不下发；TAG 四席位则各席各收一份。
      */
     protected void sendUndoStateToAll() {
         ServerConnection p0 = room.players[0];
-        ServerConnection p1 = room.players[1];
-        if (p0 != null) {
-            p0.send(STOC_UNDO_STATE, new byte[]{(byte) (canUndoFor(p0) ? 1 : 0)});
-        }
-        if (p1 != null && p1 != p0) {
-            p1.send(STOC_UNDO_STATE, new byte[]{(byte) (canUndoFor(p1) ? 1 : 0)});
+        for (int i = 0; i < room.seatCount(); i++) {
+            ServerConnection p = room.players[i];
+            if (p != null && (i == 0 || p != p0)) {
+                p.send(STOC_UNDO_STATE, new byte[]{(byte) (canUndoFor(p) ? 1 : 0)});
+            }
         }
     }
 
     void surrender(ServerConnection dp) {
-        if (dp.type > 1 || pduel == 0L) {
+        if (dp.type >= room.seatCount() || pduel == 0L) {
+            return;
+        }
+        if (room.isMultiSeatTag()) {
+            // TAG：同队两席位都确认才判负（对齐 tag_duel.cpp Surrender L505-532）：
+            // 首个确认只逐席下发 STOC_TEAMMATE_SURRENDER，队友也投降后才真正结束本局
+            surrenderTagTeam(dp);
             return;
         }
         int player = dp.type;
@@ -542,6 +611,34 @@ abstract class ServerDuelBase implements YGOProtocol {
         } else {
             room.matchResult[room.duelCount++] = player;
             room.tpPlayer = 1 - player;
+        }
+        endDuel();
+        duelEndProc();
+    }
+
+    /** TAG 逐队投降确认：本席先记账并请队友回应，队友已确认后同队两人一起判负。 */
+    private void surrenderTagTeam(ServerConnection dp) {
+        int seat = dp.type;
+        if (room.surrender[seat]) {
+            return;
+        }
+        int teammate = (seat & 1) == 0 ? seat + 1 : seat - 1;
+        if (!room.surrender[teammate]) {
+            room.surrender[seat] = true;
+            if (room.players[seat] != null) {
+                room.players[seat].send(STOC_TEAMMATE_SURRENDER, null);
+            }
+            if (room.players[teammate] != null) {
+                room.players[teammate].send(STOC_TEAMMATE_SURRENDER, null);
+            }
+            return;
+        }
+        // winplayermap: 席位 0/1 投降→胜方 1，席位 2/3 投降→胜方 0（引擎侧队伍号）
+        int winner = (seat >= 2) ? 0 : 1;
+        byte[] wbuf = new byte[]{(byte) EngineMessage.MSG_WIN, (byte) winner, (byte) 0};
+        room.broadcastGameMsg(wbuf);
+        if (replay != null) {
+            replay.writeMessage(wbuf, wbuf.length);
         }
         endDuel();
         duelEndProc();
@@ -576,13 +673,20 @@ abstract class ServerDuelBase implements YGOProtocol {
         if (room.hostPlayer == dp) {
             room.hostPlayer = null;
         }
-        for (int i = 0; i < 2; i++) {
+        // 对齐 TagDuel::OnPlayerDisconnected：席位表、开局前席位、当前行动席位与投降态一并清理
+        for (int i = 0; i < room.players.length; i++) {
             if (room.players[i] == dp) {
                 room.players[i] = null;
                 room.ready[i] = false;
+                room.surrender[i] = false;
             }
             if (room.pplayer[i] == dp) {
                 room.pplayer[i] = null;
+            }
+        }
+        for (int i = 0; i < room.curPlayer.length; i++) {
+            if (room.curPlayer[i] == dp) {
+                room.curPlayer[i] = null;
             }
         }
         room.observers.remove(dp);
@@ -597,12 +701,13 @@ abstract class ServerDuelBase implements YGOProtocol {
             return;
         }
         byte[] yrp = replay.build();
-        if (room.players[0] != null) {
-            room.players[0].send(STOC_REPLAY, yrp);
-        }
-        // Solo mode: players[1] == players[0] is the same connection; send replay once.
-        if (room.players[1] != null && room.players[1] != room.players[0]) {
-            room.players[1].send(STOC_REPLAY, yrp);
+        ServerConnection p0 = room.players[0];
+        for (int i = 0; i < room.seatCount(); i++) {
+            ServerConnection p = room.players[i];
+            // Solo mode: 席位可能共享同一连接，按身份去重只发一份录像（TAG 四席位则各收一份）
+            if (p != null && (i == 0 || p != p0)) {
+                p.send(STOC_REPLAY, yrp);
+            }
         }
         for (ServerConnection o : room.observers) {
             o.send(STOC_REPLAY, yrp);

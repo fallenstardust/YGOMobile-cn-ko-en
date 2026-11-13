@@ -40,9 +40,11 @@ final class UndoQuestionGuard implements YGOProtocol {
         analyzer.recordSuppressed = true;
         // 整批 reload/refresh 对整局重放席位跳过（两个出站口共用这一个闸门，见 DuelViewBroadcaster#emit/sendToPlayer）
         analyzer.undoResyncBurst = true;
-        if (analyzer.undoReplaySink != null) {
-            Log.i(TAG, "undo 重同步：席位 " + analyzer.undoReplaySink.type
-                    + " 已靠整局重放回到回退点，reload/refresh 批不再发给它");
+        for (ServerConnection sink : analyzer.undoReplaySinks) {
+            if (sink != null) {
+                Log.i(TAG, "undo 重同步：席位 " + sink.type
+                        + " 已靠整局重放回到回退点，reload/refresh 批不再发给它");
+            }
         }
         try {
             analyzer.broadcastMsg(reloadField);
@@ -89,8 +91,8 @@ final class UndoQuestionGuard implements YGOProtocol {
                     pl.state = ServerConnection.STATE_NONE;
                 }
             }
-            if (terminal == null || responder < 0 || responder >= analyzer.room.players.length
-                    || analyzer.room.players[responder] == null) {
+            if (terminal == null || responder < 0 || responder > 1
+                    || analyzer.room.duelPlayer(responder) == null) {
                 // 重挂落空不再静默 return：把这条询问的字节与当代次留在 liveQuestion 槽（静默重放
                 // 不写该槽，beginSilentReplay 又把它清空，否则 hasLiveAsk 恒假），使客户端
                 // CTOS_ASK_RESEND 与被吞应答的自愈入口（两者只读 liveQuestion）后续仍能把它补挂出去，
@@ -148,7 +150,7 @@ final class UndoQuestionGuard implements YGOProtocol {
     void hangUndoTerminalQuestion() {
         int responder = analyzer.undoAskResponder;
         analyzer.undoAskResponder = -1;
-        if (responder < 0 || responder >= analyzer.room.players.length) {
+        if (responder < 0 || responder > 1) {
             return;
         }
         // 捕获槽为空时退回 liveQuestion 兜底（重挂落空时留在该槽里的那条），但必须经
@@ -157,7 +159,8 @@ final class UndoQuestionGuard implements YGOProtocol {
         // 把回退前那段已被丢弃的询问错挂出去；代次不配则视同无兜底，宁等下一次自愈
         byte[] terminal = analyzer.silentTerminal != null ? analyzer.silentTerminal
                 : (hasLiveAsk() ? analyzer.liveQuestion : null);
-        ServerConnection dp = analyzer.room.players[responder];
+        // responder 是引擎侧 player（TAG 即队伍）：经 duelPlayer 解为此刻应答复务的席位
+        ServerConnection dp = analyzer.room.duelPlayer(responder);
         if (terminal == null || dp == null) {
             return;
         }
@@ -207,10 +210,10 @@ final class UndoQuestionGuard implements YGOProtocol {
             return false;
         }
         int seat = analyzer.room.lastResponse;
-        if (seat < 0 || seat >= analyzer.room.players.length) {
+        if (seat < 0 || seat > 1) {
             return false;
         }
-        ServerConnection dp = analyzer.room.players[seat];
+        ServerConnection dp = analyzer.room.duelPlayer(seat);
         if (dp == null) {
             return false;
         }
@@ -230,10 +233,10 @@ final class UndoQuestionGuard implements YGOProtocol {
             return false;
         }
         int seat = analyzer.room.lastResponse;
-        if (seat < 0 || seat >= analyzer.room.players.length) {
+        if (seat < 0 || seat > 1) {
             return false;
         }
-        ServerConnection dp = analyzer.room.players[seat];
+        ServerConnection dp = analyzer.room.duelPlayer(seat);
         if (dp == null) {
             return false;
         }
