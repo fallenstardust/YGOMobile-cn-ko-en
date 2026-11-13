@@ -52,8 +52,52 @@ import ocgcore.StringManager;
  */
 public class DeckSelectorDialog extends DeckSelectorDialogBase {
 
+    /** 多席位选择的席位标记（如 {"②","④"}）；null/空 = 普通单选模式 */
+    private String[] seatMarks;
+    /** 逐席位已选卡组（与 seatMarks 同序，空串 = 未选）；用于预填与撤销 */
+    private final List<String> seatDeckPaths = new ArrayList<>();
+    private final List<String> seatDeckNames = new ArrayList<>();
+    private final List<String> seatDeckCategories = new ArrayList<>();
+
     public DeckSelectorDialog(Context context) {
         super(context);
+    }
+
+    /**
+     * 进入多席位选择模式（人机 TAG 的 P2 占多个席位时使用）：按 seatMarks 顺序逐席指定卡组，
+     * 每点一个卡组即分配给下一个未指定席位；分类/卡组列表条目末尾会显示已分配的席位号。
+     *
+     * @param marks          按席位顺序的标记（如 {"②","④"}）
+     * @param deckPaths      预填的逐席位卡组路径（可为 null 或空串，表示该席位尚未指定）
+     * @param deckNames      预填的逐席位卡组名
+     * @param categoryNames  预填的逐席位分类名
+     */
+    public void setSeatSelection(String[] marks, String[] deckPaths, String[] deckNames,
+                                 String[] categoryNames) {
+        this.seatMarks = marks;
+        seatDeckPaths.clear();
+        seatDeckNames.clear();
+        seatDeckCategories.clear();
+        if (marks == null) return;
+        for (int i = 0; i < marks.length; i++) {
+            seatDeckPaths.add(deckPaths != null && i < deckPaths.length && deckPaths[i] != null ? deckPaths[i] : "");
+            seatDeckNames.add(deckNames != null && i < deckNames.length && deckNames[i] != null ? deckNames[i] : "");
+            seatDeckCategories.add(categoryNames != null && i < categoryNames.length && categoryNames[i] != null ? categoryNames[i] : "");
+        }
+    }
+
+    /** 是否多席位选择模式 */
+    private boolean isSeatSelection() {
+        return seatMarks != null && seatMarks.length > 0;
+    }
+
+    /** 下一个待指定席位（= 已指定个数）；无待指定席位时返回席位总数 */
+    private int nextSeat() {
+        for (int i = 0; i < seatDeckPaths.size(); i++) {
+            String p = seatDeckPaths.get(i);
+            if (p == null || p.isEmpty()) return i;
+        }
+        return seatDeckPaths.size();
     }
 
     public void setOnDeckSelectedListener(OnDeckSelectedListener listener) {
@@ -111,6 +155,13 @@ public class DeckSelectorDialog extends DeckSelectorDialogBase {
         lvCategories.setAdapter(categoryAdapter);
 
         restoreLastSelection(lvCategories);
+        applyCategoryMarks(categoryAdapter);
+        if (isSeatSelection()) {
+            // 多席位：不作单选中高亮（席位归属看条目尾部标记），并把预填的席位标记刷上去
+            selectedDeckPos[0] = -1;
+            if (currentDeckAdapter != null) currentDeckAdapter.setSelectedPosition(-1);
+            refreshSeatMarks();
+        }
 
         lvCategories.setOnItemClickListener((parent, view, position, id) -> {
             selectedCategoryPos[0] = position;
@@ -122,11 +173,14 @@ public class DeckSelectorDialog extends DeckSelectorDialogBase {
                 DeckSelectorUtil.DeckItem deck = category.deckList.get(0);
                 selectedDeckPath[0] = deck.deckPath;
                 selectedDeckName[0] = deck.deckName;
-                if (currentDeckAdapter != null) currentDeckAdapter.setSelectedPosition(0);
-                if (listener != null) {
-                    String categoryName = position < displayCategoryNames.size()
-                            ? displayCategoryNames.get(position) : "";
-                    listener.onDeckItemClicked(deck.deckPath, deck.deckName, categoryName);
+                // 多席位下不默认选中首个卡组，也不触发即时加载回调（席位由玩家逐一点选）
+                if (!isSeatSelection()) {
+                    if (currentDeckAdapter != null) currentDeckAdapter.setSelectedPosition(0);
+                    if (listener != null) {
+                        String categoryName = position < displayCategoryNames.size()
+                                ? displayCategoryNames.get(position) : "";
+                        listener.onDeckItemClicked(deck.deckPath, deck.deckName, categoryName);
+                    }
                 }
             } else {
                 selectedDeckPos[0] = -1;
@@ -137,27 +191,46 @@ public class DeckSelectorDialog extends DeckSelectorDialogBase {
         });
 
         lvDecks.setOnItemClickListener((parent, view, position, id) -> {
+            if (selectedCategoryPos[0] < 0 || selectedCategoryPos[0] >= displayCategories.size()) {
+                return;
+            }
+            DeckSelectorUtil.DeckCategory category = displayCategories.get(selectedCategoryPos[0]);
+            if (position < 0 || position >= category.deckList.size()) {
+                return;
+            }
+            DeckSelectorUtil.DeckItem deck = category.deckList.get(position);
+            String categoryName = selectedCategoryPos[0] < displayCategoryNames.size()
+                    ? displayCategoryNames.get(selectedCategoryPos[0]) : "";
+            if (isSeatSelection()) {
+                handleSeatDeckClick(deck, categoryName);
+                return;
+            }
             selectedDeckPos[0] = position;
             if (currentDeckAdapter != null) {
                 currentDeckAdapter.setSelectedPosition(position);
             }
-            if (selectedCategoryPos[0] >= 0 && selectedCategoryPos[0] < displayCategories.size()) {
-                DeckSelectorUtil.DeckCategory category = displayCategories.get(selectedCategoryPos[0]);
-                if (position >= 0 && position < category.deckList.size()) {
-                    DeckSelectorUtil.DeckItem deck = category.deckList.get(position);
-                    selectedDeckPath[0] = deck.deckPath;
-                    selectedDeckName[0] = deck.deckName;
-                    //点击即加载：通知调用方立即加载该卡组
-                    if (listener != null) {
-                        String categoryName = selectedCategoryPos[0] < displayCategoryNames.size()
-                                ? displayCategoryNames.get(selectedCategoryPos[0]) : "";
-                        listener.onDeckItemClicked(deck.deckPath, deck.deckName, categoryName);
-                    }
-                }
+            selectedDeckPath[0] = deck.deckPath;
+            selectedDeckName[0] = deck.deckName;
+            //点击即加载：通知调用方立即加载该卡组
+            if (listener != null) {
+                listener.onDeckItemClicked(deck.deckPath, deck.deckName, categoryName);
             }
         });
 
         btnConfirm.setOnClickListener(v -> {
+            if (isSeatSelection()) {
+                if (nextSeat() < seatDeckPaths.size()) {
+                    // 仍有席位未指定卡组：沿用单选的提示方式，不关窗以便继续点选
+                    YGOUtil.show("请先选择一个卡组", Gravity.CENTER);
+                    return;
+                }
+                popupWindow.dismiss();
+                if (listener != null) {
+                    listener.onSeatDecksSelected(new ArrayList<>(seatDeckPaths),
+                            new ArrayList<>(seatDeckNames), new ArrayList<>(seatDeckCategories));
+                }
+                return;
+            }
             if (selectedDeckPath[0].isEmpty()) {
                 YGOUtil.show("请先选择一个卡组", Gravity.CENTER);
                 return;
@@ -231,6 +304,89 @@ public class DeckSelectorDialog extends DeckSelectorDialogBase {
         if (popupWindow != null && popupWindow.isShowing()) {
             popupWindow.dismiss();
         }
+    }
+
+    /**
+     * 多席位模式下的卡组点击：依次分配给下一个未指定席位；再点一次「最后一个已分配」的卡组即撤销它；
+     * 已全部分配后再点新卡组 = 清空重选（从首个席位重新开始），便于整组换卡组。
+     */
+    private void handleSeatDeckClick(DeckSelectorUtil.DeckItem deck, String categoryName) {
+        int next = nextSeat();
+        if (next > 0 && deck.deckPath.equals(seatDeckPaths.get(next - 1))) {
+            // 再点刚分配的那一个 = 撤销该席位
+            setSeatDeck(next - 1, "", "", "");
+        } else if (next < seatDeckPaths.size()) {
+            setSeatDeck(next, deck.deckPath, deck.deckName, categoryName);
+        } else {
+            // 所有席位都已指定：清空后从首个席位重新分配
+            for (int i = 0; i < seatDeckPaths.size(); i++) {
+                setSeatDeck(i, "", "", "");
+            }
+            setSeatDeck(0, deck.deckPath, deck.deckName, categoryName);
+        }
+        // 多席位下不作单选中高亮：席位归属统一看条目尾部标记
+        selectedDeckPos[0] = -1;
+        if (currentDeckAdapter != null) {
+            currentDeckAdapter.setSelectedPosition(-1);
+        }
+        refreshSeatMarks();
+    }
+
+    private void setSeatDeck(int seat, String path, String name, String category) {
+        if (seat < 0 || seat >= seatDeckPaths.size()) return;
+        seatDeckPaths.set(seat, path);
+        seatDeckNames.set(seat, name);
+        seatDeckCategories.set(seat, category);
+    }
+
+    /** 刷新分类与当前分类卡组列表的席位标记（如「闪刀姬 ②④」） */
+    private void refreshSeatMarks() {
+        if (!isSeatSelection()) return;
+        applyCategoryMarks(categoryAdapter);
+        if (selectedCategoryPos[0] >= 0 && selectedCategoryPos[0] < displayCategories.size()) {
+            applyDeckMarks(currentDeckAdapter, displayCategories.get(selectedCategoryPos[0]));
+        }
+    }
+
+    @Override
+    protected void applyCategoryMarks(CategoryListAdapter adapter) {
+        if (adapter == null || !isSeatSelection()) return;
+        List<String> marks = new ArrayList<>(displayCategories.size());
+        for (DeckSelectorUtil.DeckCategory category : displayCategories) {
+            StringBuilder sb = new StringBuilder();
+            for (int s = 0; s < seatDeckPaths.size(); s++) {
+                if (categoryContains(category, seatDeckPaths.get(s))) {
+                    sb.append(seatMarks[s]);
+                }
+            }
+            marks.add(sb.toString());
+        }
+        adapter.setMarks(marks);
+    }
+
+    @Override
+    protected void applyDeckMarks(DeckListAdapter adapter, DeckSelectorUtil.DeckCategory category) {
+        if (adapter == null || category == null || !isSeatSelection()) return;
+        List<String> marks = new ArrayList<>(category.deckList.size());
+        for (DeckSelectorUtil.DeckItem deck : category.deckList) {
+            StringBuilder sb = new StringBuilder();
+            for (int s = 0; s < seatDeckPaths.size(); s++) {
+                String path = seatDeckPaths.get(s);
+                if (!path.isEmpty() && path.equals(deck.deckPath)) {
+                    sb.append(seatMarks[s]);
+                }
+            }
+            marks.add(sb.toString());
+        }
+        adapter.setMarks(marks);
+    }
+
+    private static boolean categoryContains(DeckSelectorUtil.DeckCategory category, String deckPath) {
+        if (deckPath == null || deckPath.isEmpty()) return false;
+        for (DeckSelectorUtil.DeckItem deck : category.deckList) {
+            if (deckPath.equals(deck.deckPath)) return true;
+        }
+        return false;
     }
 
     /** 当前是否正在显示：供调用方实现"再次点击收起"的切换式交互 */

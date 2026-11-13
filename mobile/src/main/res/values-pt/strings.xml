@@ -181,6 +181,8 @@
     <string name="refresh">Atualizar</string>
     <string name="select_deck">Escolher deck</string>
     <string name="solo_mode">Modo solo</string>
+    <string name="bot_p2_deck_label">Deck do P2:</string>
+    <string name="bot_tag_max_select">O modo TAG permite escolher até 3 IAs. Toque em um item já selecionado para cancelá-lo antes de trocar.</string>
     <string name="quit_deck_tip">O deck ainda não foi salvo, você deseja sair do aplicativo?</string>
     <string name="deck_discard_switch_tip">As alterações do deck atual serão descartadas, deseja continuar?</string>
     <string name="deck_delete_text">Arraste aqui para excluir</string>

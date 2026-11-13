@@ -50,6 +50,13 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:visibility="gone"
+            android:orientation="vertical">
+
+        <!-- 上部两列：模式列表 + AI 信息/开局参数/选项与按钮（决斗模式、基本分、手卡、抽卡均已并入右列） -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:orientation="horizontal">
 
             <!-- 左侧：模式列表（人机/残局共用同一 ListView，切 tab 换 adapter） -->
@@ -68,11 +75,12 @@
                 android:layout_weight="0.45"
                 android:orientation="vertical">
 
+                <!-- AI 信息区：设置区新增两行后压缩占比，描述仍可显数行 -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
                     android:layout_marginStart="5dp"
-                    android:layout_weight="1"
+                    android:layout_weight="0.8"
                     android:orientation="vertical">
 
                     <!-- AI信息标题 -->
@@ -98,41 +106,205 @@
                         android:textSize="10sp" />
                 </LinearLayout>
 
+                <!-- 设置区四行：行1 初始基本分 + P2 卡组按钮；行2 初始手卡数 + 每回合抽卡数；
+                     行3 决斗模式 + 规则选择（残局专属“回卡顶”复选框同在行3，此时两个 Spinner 均 GONE 使其占满整行）；
+                     行4 选项复选框 + 确定/退出 -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
-                    android:layout_weight="1"
+                    android:layout_weight="1.9"
                     android:orientation="vertical">
 
-                    <!-- 选择卡组按钮 -->
-                    <Button
-                        android:id="@+id/btn_select_deck"
-                        android:layout_width="match_parent"
-                        android:layout_height="0dp"
-                        android:layout_marginStart="5dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/button3_bg"
-                        android:text="@string/select_deck"
-                        android:textAllCaps="false"
-                        android:textColor="@color/white"
-                        android:textSize="10sp" />
-
-                    <!-- 规则选择 + 残局专属"不洗切时回卡顶"复选框：同一行；复选框仅残局模式显示，
-                         人机模式直接隐藏（初始 visibility=gone，代码切残局模式时才点亮） -->
+                    <!-- 行1：初始基本分（仅人机页） + 选择卡组按钮 -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="0dp"
-                        android:layout_marginVertical="2dp"
                         android:layout_marginStart="5dp"
                         android:layout_weight="1"
                         android:orientation="horizontal">
 
-                        <Spinner
-                            android:id="@+id/spinner_rule"
+                        <LinearLayout
+                            android:id="@+id/layout_bot_start_lp"
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_weight="1"
-                            android:background="@drawable/ygopro_spinner" />
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/bot_tv_start_lp_label"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="初始基本分："
+                                android:textColor="@color/white"
+                                android:textSize="8sp" />
+
+                            <EditText
+                                android:id="@+id/bot_et_start_lp"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/ygopro_base_background"
+                                android:gravity="center"
+                                android:inputType="number"
+                                android:text="8000"
+                                android:textColor="@color/white"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+
+                        <!-- P2 卡组选择：与人机页初始基本分同行，上方同样带提示文本；
+                             仅在选中支持自选卡组的人机时整块显示（提示文字与按钮同隐同显） -->
+                        <LinearLayout
+                            android:id="@+id/layout_bot_p2_deck"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="5dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/bot_tv_p2_deck_label"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="P2卡组："
+                                android:textColor="@color/white"
+                                android:textSize="8sp" />
+
+                            <Button
+                                android:id="@+id/btn_select_deck"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/button3_bg"
+                                android:text="@string/select_deck"
+                                android:textAllCaps="false"
+                                android:textColor="@color/white"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- 行2：初始手卡数 + 每回合抽卡数（仅人机页，整行随残局隐藏） -->
+                    <LinearLayout
+                        android:id="@+id/layout_bot_hand_draw"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginTop="2dp"
+                        android:layout_marginStart="5dp"
+                        android:layout_weight="1"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/bot_tv_start_hand_label"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="初始手卡数："
+                                android:textColor="@color/white"
+                                android:textSize="8sp" />
+
+                            <EditText
+                                android:id="@+id/bot_et_start_hand"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/ygopro_base_background"
+                                android:gravity="center"
+                                android:inputType="number"
+                                android:text="5"
+                                android:textColor="@color/white"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="5dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/bot_tv_draw_count_label"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="每回合抽卡："
+                                android:textColor="@color/white"
+                                android:textSize="8sp" />
+
+                            <EditText
+                                android:id="@+id/bot_et_draw_count"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/ygopro_base_background"
+                                android:gravity="center"
+                                android:inputType="number"
+                                android:text="1"
+                                android:textColor="@color/white"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- 行3：决斗模式 + 规则选择 同一行（与输入框同样文本在上）；残局专属"不洗切时回卡顶"
+                         复选框也在本行，残局模式两个参数整块 GONE、复选框即占满整行（与修改前同一口径） -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_marginTop="2dp"
+                        android:layout_marginBottom="2dp"
+                        android:layout_marginStart="5dp"
+                        android:layout_weight="1"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:id="@+id/layout_bot_duel_mode"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/bot_tv_duel_mode_label"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="决斗模式："
+                                android:textColor="@color/white"
+                                android:textSize="8sp" />
+
+                            <Spinner
+                                android:id="@+id/bot_spinner_duel_mode"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/ygopro_spinner" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/layout_bot_rule"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="5dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/bot_tv_rule_label"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="规则："
+                                android:textColor="@color/white"
+                                android:textSize="8sp" />
+
+                            <Spinner
+                                android:id="@+id/spinner_rule"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/ygopro_spinner" />
+                        </LinearLayout>
 
                         <CheckBox
                             android:id="@+id/chk_return_to_top"
@@ -222,6 +394,8 @@
                     </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
+        </LinearLayout>
+
         </LinearLayout>
 
         <!-- ============ 纯单人模式(左右互搏)区：对齐 create_host 布局，去掉 solo 勾选/主机名/主机密 ============ -->

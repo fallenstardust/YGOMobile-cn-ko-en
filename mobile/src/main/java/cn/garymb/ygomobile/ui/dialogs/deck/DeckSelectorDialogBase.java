@@ -121,6 +121,11 @@ abstract class DeckSelectorDialogBase {
         //点击卡组item即触发（用于卡组编辑器即时加载）；默认空实现，玩家等待界面等无需处理
         default void onDeckItemClicked(String deckPath, String deckName, String categoryName) {
         }
+
+        /** 多席位卡组选择回传（人机 TAG 的 P2 占多个席位时）：三个列表按下标一一对应席位顺序 */
+        default void onSeatDecksSelected(List<String> deckPaths, List<String> deckNames,
+                                         List<String> categoryNames) {
+        }
     }
     public void setOperationButtonsEnabled(boolean enabled) {
         for (Button btn : operationButtons) {
@@ -257,6 +262,7 @@ abstract class DeckSelectorDialogBase {
 
         if (categoryAdapter != null) {
             categoryAdapter.setData(displayCategories);
+            applyCategoryMarks(categoryAdapter);
         }
         selectedCategoryPos[0] = -1;
         selectedDeckPos[0] = -1;
@@ -335,7 +341,16 @@ abstract class DeckSelectorDialogBase {
             DeckSelectorUtil.DeckCategory category = displayCategories.get(selectedCategoryPos[0]);
             currentDeckAdapter = new DeckListAdapter(context, category.deckList);
             lvDecks.setAdapter(currentDeckAdapter);
+            applyDeckMarks(currentDeckAdapter, category);
         }
+    }
+
+    /** 卡组列表的尾部席位标记（多席位选择时由子类覆盖）；默认无标记。 */
+    protected void applyDeckMarks(DeckListAdapter adapter, DeckSelectorUtil.DeckCategory category) {
+    }
+
+    /** 分类列表的尾部席位标记（多席位选择时由子类覆盖）；默认无标记。 */
+    protected void applyCategoryMarks(CategoryListAdapter adapter) {
     }
 
     protected void selectUncategorizedCategory() {
@@ -534,6 +549,16 @@ abstract class DeckSelectorDialogBase {
         return (context instanceof Activity) ? (Activity) context : null;
     }
 
+    /**
+     * 取条目尾部席位标记（多席位卡组选择用）：marks 与条目一一对应，空串/越界不显示，
+     * 有值时前导数一个空格以便与名称分开，例如名称为「闪刀姬」时显示为「闪刀姬 ②④」。
+     */
+    static String seatMarkOf(List<String> marks, int position) {
+        if (marks == null || position < 0 || position >= marks.size()) return "";
+        String mark = marks.get(position);
+        return mark == null || mark.isEmpty() ? "" : " " + mark;
+    }
+
     protected static boolean deleteFolderRecursive(File dir) {
         if (dir == null || !dir.exists()) return false;
         if (dir.isDirectory()) {
@@ -567,6 +592,8 @@ abstract class DeckSelectorDialogBase {
         private Context context;
         private List<DeckSelectorUtil.DeckCategory> categories;
         private int selectedPosition = -1;
+        /** 与条目一一对应的尾部席位标记（多席位选择用，空串不显示） */
+        private List<String> marks;
 
         public CategoryListAdapter(Context context, List<DeckSelectorUtil.DeckCategory> categories) {
             this.context = context;
@@ -575,6 +602,12 @@ abstract class DeckSelectorDialogBase {
 
         public void setData(List<DeckSelectorUtil.DeckCategory> data) {
             this.categories = data;
+            notifyDataSetChanged();
+        }
+
+        /** 刷新尾部席位标记（与分类条目一一对应） */
+        public void setMarks(List<String> marks) {
+            this.marks = marks;
             notifyDataSetChanged();
         }
 
@@ -609,7 +642,7 @@ abstract class DeckSelectorDialogBase {
             } else {
                 holder = (ViewHolder) convertView.getTag();
             }
-            holder.textView.setText(categories.get(position).categoryName);
+            holder.textView.setText(categories.get(position).categoryName + seatMarkOf(marks, position));
             holder.textView.setTextSize(8);
             holder.textView.setBackgroundColor(position == selectedPosition ? SELECTED_BG_COLOR : Color.TRANSPARENT);
             holder.textView.setTextColor(YGOUtil.c(position == selectedPosition ? R.color.colorNavy : R.color.white));
@@ -626,10 +659,18 @@ abstract class DeckSelectorDialogBase {
         private Context context;
         private List<DeckSelectorUtil.DeckItem> decks;
         private int selectedPosition = -1;
+        /** 与条目一一对应的尾部席位标记（多席位选择用，空串不显示） */
+        private List<String> marks;
 
         public DeckListAdapter(Context context, List<DeckSelectorUtil.DeckItem> decks) {
             this.context = context;
             this.decks = decks;
+        }
+
+        /** 刷新尾部席位标记（与当前分类的卡组条目一一对应） */
+        public void setMarks(List<String> marks) {
+            this.marks = marks;
+            notifyDataSetChanged();
         }
 
         public void setSelectedPosition(int position) {
@@ -663,7 +704,7 @@ abstract class DeckSelectorDialogBase {
             } else {
                 holder = (ViewHolder) convertView.getTag();
             }
-            holder.textView.setText(decks.get(position).toString());
+            holder.textView.setText(decks.get(position).toString() + seatMarkOf(marks, position));
             holder.textView.setTextSize(8);
             holder.textView.setBackgroundColor(position == selectedPosition ? SELECTED_BG_COLOR : Color.TRANSPARENT);
             holder.textView.setTextColor(YGOUtil.c(position == selectedPosition ? R.color.colorNavy : R.color.white));

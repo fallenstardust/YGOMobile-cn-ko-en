@@ -519,6 +519,8 @@
     <string name="settings_native_game_mode">原生 UI 遊戲模式</string>
     <string name="settings_native_game_mode_summary">比原版有更多新功能</string>
     <string name="solo_mode">純單人模式</string>
+    <string name="bot_p2_deck_label">P2卡組：</string>
+    <string name="bot_tag_max_select">TAG模式最多選擇3個人機，請先點擊已選條目取消後再換人</string>
 
     <!-- System Strings for UI Localization (index 1740+) -->
     <string name="spectator_skip_to_current">跳到當前</string>

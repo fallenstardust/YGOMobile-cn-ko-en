@@ -204,6 +204,8 @@
     <string name="refresh">刷新</string>
     <string name="select_deck">点击选择卡组</string>
     <string name="solo_mode">纯单人模式</string>
+    <string name="bot_p2_deck_label">P2卡组：</string>
+    <string name="bot_tag_max_select">TAG模式最多选择3个人机，请先点击已选条目取消后再换人</string>
     <string name="quit_deck_tip">卡组未保存，是否退出本应用？</string>
     <string name="deck_discard_switch_tip">此操作将放弃对当前卡组的修改，是否继续？</string>
     <string name="deck_delete_text">拖到这里删除</string>

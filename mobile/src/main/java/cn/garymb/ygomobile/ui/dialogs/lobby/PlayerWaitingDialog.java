@@ -216,6 +216,10 @@ public class PlayerWaitingDialog extends PlayerWaitingDialogMid {
     public static void showPlayerWaitingForBotHost(YGOProActivity activity) {
         activity.hideGameUI();
         final String playerName = Constants.PlayerName;
+        // 人机 TAG 为 4 席位（房主 + 队友 AI + 对手 AI×2），建主时已把 duelMode 预写入 engine.gameMode，
+        // 据此展开队友席位区（与 LAN 建主 showPlayerWaiting(nickname, tagMode) 同一路径）
+        final GameEngine engine = activity.getEngine();
+        final boolean tagMode = engine != null && engine.getGameMode() == YGOProtocol.MODE_TAG;
         View anchor = activity.getDialogContainer();
         anchor.post(() -> {
             if (activity.isFinishing() || activity.isDestroyed()) return;
@@ -224,6 +228,7 @@ public class PlayerWaitingDialog extends PlayerWaitingDialogMid {
             dialog.setOnDismissListener(() -> activity.getMainMenuDialog().restoreMainMenu());
             dialog.show(anchor);
             dialog.setPlayerName(0, playerName);
+            dialog.setTagPlayersVisible(tagMode);
 		});
     }
 

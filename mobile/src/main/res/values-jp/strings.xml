@@ -185,6 +185,8 @@
     <string name="refresh">リフレッシュ</string>
     <string name="select_deck">デッキを選択</string>
     <string name="solo_mode">ソロモード</string>
+    <string name="bot_p2_deck_label">P2デッキ：</string>
+    <string name="bot_tag_max_select">TAGモードではAIを最大3体まで選択できます。差し替えるには選択済みの項目をタップして解除してください。</string>
     <string name="quit_deck_tip">変更を破棄しますか？</string>
     <string name="deck_discard_switch_tip">現在のデッキの変更を破棄します。続行しますか？</string>
     <string name="deck_delete_text">デッキ削除</string>
