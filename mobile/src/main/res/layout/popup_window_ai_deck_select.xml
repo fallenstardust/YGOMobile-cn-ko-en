@@ -3,9 +3,8 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/sdialogl"
-    android:orientation="vertical"
-    android:padding="10dp">
+    android:background="@drawable/window2s"
+    android:orientation="vertical">
 
     <!-- 标题由代码按房间禁卡表动态设置：符合 <卡表名> 的人机列表 -->
     <TextView
@@ -13,7 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textColor="@color/white"
-        android:textSize="11sp"
+        android:textSize="10sp"
         android:textStyle="bold" />
 
     <ListView
@@ -33,10 +32,10 @@
         <Button
             android:id="@+id/btn_ai_deck_ok"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:maxHeight="40dp"
+            android:layout_height="40dp"
             android:layout_weight="1"
             android:background="@drawable/button3_bg"
+            android:minWidth="40dp"
             android:text="@string/OK"
             android:textColor="@color/white"
             android:textSize="10sp" />
@@ -44,11 +43,11 @@
         <Button
             android:id="@+id/btn_ai_deck_cancel"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:maxHeight="40dp"
+            android:layout_height="40dp"
             android:layout_marginStart="5dp"
             android:layout_weight="1"
             android:background="@drawable/button3_bg"
+            android:minWidth="40dp"
             android:text="@string/cancel"
             android:textColor="@color/white"
             android:textSize="10sp" />
