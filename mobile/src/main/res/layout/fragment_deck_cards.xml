@@ -495,12 +495,11 @@
                      （列表态 ic_view_list_24，宫格态 ic_view_grid_24），由页面点击后刷新 -->
                 <ImageButton
                     android:id="@+id/btn_result_view_mode"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:layout_gravity="center_vertical"
                     android:layout_marginEnd="10dp"
-                    android:background="@drawable/button_radius_black_transparents"
-                    android:padding="5dp"
+                    android:background="@drawable/ic_radius_bg"
                     android:scaleType="fitCenter"
                     android:src="@drawable/ic_view_list_24" />
 
@@ -511,6 +510,7 @@
                     android:id="@+id/sp_result_sort"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:background="@drawable/ygopro_spinner"
                     android:layout_gravity="center_vertical"
                     android:layout_weight="1" />
             </LinearLayout>

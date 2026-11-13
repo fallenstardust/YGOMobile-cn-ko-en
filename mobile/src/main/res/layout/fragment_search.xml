@@ -35,7 +35,7 @@
                  的子项，不依赖彼此位置，改高度要同时改两处 -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="36dp"
+                android:layout_height="wrap_content"
                 android:layout_gravity="top"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
@@ -60,12 +60,11 @@
                      本页不读卡组，因此行模式仍不装配加卡键 -->
                 <ImageButton
                     android:id="@+id/btn_result_view_mode"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:layout_gravity="center_vertical"
                     android:layout_marginEnd="10dp"
-                    android:background="@drawable/button_radius_black_transparents"
-                    android:padding="5dp"
+                    android:background="@drawable/ic_radius_bg"
                     android:scaleType="fitCenter"
                     android:src="@drawable/ic_view_list_24" />
 
@@ -75,6 +74,7 @@
                     android:id="@+id/sp_result_sort"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:background="@drawable/ygopro_spinner"
                     android:layout_weight="1" />
             </LinearLayout>
 

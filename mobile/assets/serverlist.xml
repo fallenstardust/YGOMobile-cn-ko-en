@@ -7,7 +7,15 @@
         <name>萌卡直连正式+超先行服</name>
         <desc>与本应用正式卡同步支持使用右下角下载的扩展卡</desc>
         <ip>mygo.superpre.pro</ip>
-        <port>888</port>
+        <port>8888</port>
+        <keep>true</keep>
+    </server>
+    <server>
+        <player-name>Knight of Hanoi</player-name>
+        <name>娱乐服</name>
+        <desc>有娱乐服专属禁卡表</desc>
+        <ip>e.ygo.pro</ip>
+        <port>23333</port>
         <keep>true</keep>
     </server>
     <server>
