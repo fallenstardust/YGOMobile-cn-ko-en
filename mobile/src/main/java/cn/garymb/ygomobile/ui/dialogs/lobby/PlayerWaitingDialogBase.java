@@ -95,6 +95,8 @@ abstract class PlayerWaitingDialogBase {
     protected static final long PW_EMOTE_DURATION_MS = 3000L;
     protected CheckBox chkPwPlayer1Ready, chkPwPlayer2Ready, chkPwPlayer3Ready, chkPwPlayer4Ready;
     protected Button btnPwDuelistMode, btnPwSpectatorMode, btnPwReady, btnPwDeckSelect, btnPwExitWaiting;
+    /** “/ai”召唤人机入口，位于→决斗者按钮右侧 */
+    protected Button btnAiSummon;
     protected Button btnPwStartGame;
     protected ImageButton btnPwKickPlayer1, btnPwKickPlayer2, btnPwKickPlayer3, btnPwKickPlayer4;
     protected TextView tvRoomInfo;
@@ -105,6 +107,8 @@ abstract class PlayerWaitingDialogBase {
     protected boolean isSelfReady = false;
     protected boolean isHost = false;
     protected boolean isTagMode = false;
+    /** 当前房间禁卡表哈希（STOC_JOIN_GAME 的 lflist，0=N/A 无禁限）：供 /ai 人机列表过滤 */
+    protected int roomLflist = 0;
     protected int watchCount = 0;
     protected final List<String> observerNames = new ArrayList<>();
 
@@ -133,6 +137,9 @@ abstract class PlayerWaitingDialogBase {
          *  seat 为席位下标，deckName 需同步回填到 GameTopInfo 展示；
          *  deckPath 为该席位卡组文件路径，match 换 side 时据此载入对应卡组供编辑 */
         void onSoloSeatDeckUpdated(int seat, String deckName, String deckPath);
+
+        /** “/ai”人机卡组选择弹窗已确定：以聊天消息 /ai &lt;deckName&gt; 请求主机端拉起该人机 */
+        void onAiSummonRequested(String deckName);
     }
 
     protected final OnPlayerWaitingListener listener;

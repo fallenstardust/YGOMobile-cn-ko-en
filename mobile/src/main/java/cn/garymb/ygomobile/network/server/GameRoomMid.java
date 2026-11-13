@@ -586,6 +586,11 @@ abstract class GameRoomMid extends GameRoomBase {
         if (lastChar != 0) {
             return;
         }
+        String text = decodeChatText(msg);
+        // 聊天 “/ai <卡组名>” 命令（本工程扩展）：主机端据此拉起人机加入本房间
+        if (text.startsWith(AI_CHAT_COMMAND + " ")) {
+            handleAiChatCommand(text.substring(AI_CHAT_COMMAND.length() + 1).trim());
+        }
         byte[] payload = chatPayload(dp.type, msg);
         // 中继统一走 sendToAllPresent：solo 模式下 players[1] == players[0] 为同一连接，
         // 按连接身份去重，避免同一条聊天被双发（历史缺陷：双端收到重复消息/重复弹幕）
@@ -594,11 +599,6 @@ abstract class GameRoomMid extends GameRoomBase {
         // 与引擎消息同处单线程房间执行器，追加顺序即时序。playerType 取 dp.type（与实时
         // STOC_CHAT 首字节同值，回放分侧/命名一致）；文本取 UTF-16LE 并去除尾部 NUL 码元。
         if (isDueling() && duel != null && duel.replay != null) {
-            int units = msg.length / 2;
-            while (units > 0 && ((msg[units * 2 - 2] & 0xFF) | ((msg[units * 2 - 1] & 0xFF) << 8)) == 0) {
-                units--;
-            }
-            String text = new String(msg, 0, units * 2, StandardCharsets.UTF_16LE);
             duel.replay.writeChatFrame(dp.type, text);
             // 录制验证落点：每条对局聊天录为 0xF1 伪帧均留痕，logcat 过滤 "GameRoom" 即可
             // 确认聊天已落盘；回放开场信息另标注文件内聊天帧总条数（ReplayPlayer.buildReplayInfo）
@@ -607,5 +607,25 @@ abstract class GameRoomMid extends GameRoomBase {
             Log.d(TAG, "chat not recorded (dueling=" + isDueling()
                     + " duel=" + (duel != null) + "): stage not in-duel");
         }
+    }
+
+    /** 聊天 “/ai” 命令前缀（后跟一个空格与卡组名，与线上服务器约定一致）。 */
+    private static final String AI_CHAT_COMMAND = "/ai";
+
+    /** UTF-16LE 聊天文本解码：去掉尾部 NUL 码元，供 /ai 命令判定与录像帧共用。 */
+    private static String decodeChatText(byte[] msg) {
+        int units = msg.length / 2;
+        while (units > 0 && ((msg[units * 2 - 2] & 0xFF) | ((msg[units * 2 - 1] & 0xFF) << 8)) == 0) {
+            units--;
+        }
+        return new String(msg, 0, units * 2, StandardCharsets.UTF_16LE);
+    }
+
+    /** “/ai 卡组名” 命令：仅建房等待阶段、非纯单人且仍有空闲决斗位时，请求主机端拉起指定卡组的人机。 */
+    private void handleAiChatCommand(String deckName) {
+        if (deckName.isEmpty()) return;
+        if (duelStage != DUEL_STAGE_BEGIN || soloMode) return;
+        if (firstFreeSeat() < 0) return;
+        server.requestChatBot(deckName);
     }
 }

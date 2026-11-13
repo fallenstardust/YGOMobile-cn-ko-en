@@ -20,16 +20,38 @@
             android:layout_weight="0.6"
             android:orientation="vertical">
 
-            <Button
-                android:id="@+id/btn_duelist_mode"
-                android:layout_width="wrap_content"
+            <!-- 首页席行：→决斗者 居左，/ai 居右，与下一行 →观战/点击准备 的左右对齐一致 -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
                 android:layout_marginBottom="5dp"
-                android:background="@drawable/button3_bg"
-                android:text="→决斗者"
-                android:textColor="@color/white"
-                android:textSize="10sp" />
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btn_duelist_mode"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/button3_bg"
+                    android:text="→决斗者"
+                    android:textColor="@color/white"
+                    android:textSize="10sp" />
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1" />
+
+                <Button
+                    android:id="@+id/btn_ai_summon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/button3_bg"
+                    android:text="@string/btn_ai_summon"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textSize="10sp" />
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"

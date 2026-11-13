@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- “/ai”人机卡组选择弹窗：列表只显示符合当前房间禁卡表的人机卡组（去 AI_ 前缀展示），确定后发送 /ai 卡组名。 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/sdialogl"
+    android:orientation="vertical"
+    android:padding="10dp">
+
+    <!-- 标题由代码按房间禁卡表动态设置：符合 <卡表名> 的人机列表 -->
+    <TextView
+        android:id="@+id/tv_ai_deck_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/white"
+        android:textSize="11sp"
+        android:textStyle="bold" />
+
+    <ListView
+        android:id="@+id/lv_ai_deck_list"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="5dp"
+        android:layout_weight="1"
+        android:background="@drawable/ygopro_base_background" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btn_ai_deck_ok"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:maxHeight="40dp"
+            android:layout_weight="1"
+            android:background="@drawable/button3_bg"
+            android:text="@string/OK"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+
+        <Button
+            android:id="@+id/btn_ai_deck_cancel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:maxHeight="40dp"
+            android:layout_marginStart="5dp"
+            android:layout_weight="1"
+            android:background="@drawable/button3_bg"
+            android:text="@string/cancel"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+    </LinearLayout>
+</LinearLayout>

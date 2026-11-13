@@ -5,9 +5,12 @@ import android.content.Intent;
 import android.util.Log;
 
 
+import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
+import cn.garymb.ygomobile.AppsSettings;
+import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.GameApplication;
 import cn.garymb.ygomobile.network.LanDiscoveryManager;
 import cn.garymb.ygomobile.network.YGOProtocol;
@@ -58,6 +61,8 @@ public class ConnectionManager {
             server = new LanGameServer();
             localServer = server;
         }
+        // 聊天 “/ai 卡组名” 命令的拉起实现：仅本地建主才有 launcher，加入他人房间时命令由对方主机处理
+        server.setChatBotLauncher(this::launchWindBotFromChat);
         if (server.isRunning()) {
             return true;
         }
@@ -298,6 +303,38 @@ public class ConnectionManager {
                 });
             }
         });
+    }
+
+    /** 主机端收到聊天 “/ai 卡组名” 后在本机拉起对应卡组的 WindBot 连回本地服务器入房（加入者无 localServer，命令由对方主机处理）。 */
+    private void launchWindBotFromChat(String deckName) {
+        if (deckName == null || deckName.isEmpty()) return;
+        // 卡组名经聊天转发而来，只接受安全字符，避免借 “AI_<名>.ydk” 拼出目录穿越路径
+        if (!deckName.matches("[A-Za-z0-9_.\\-]+")) {
+            Log.w(TAG, "Rejected /ai deck name: " + deckName);
+            return;
+        }
+        final LanGameServer server = localServer;
+        if (server == null || !server.isRunning()) return;
+        final File deckFile = new File(AppsSettings.get().getAiDeckDir(),
+                "AI_" + deckName + Constants.YDK_FILE_EX);
+        if (!deckFile.exists()) {
+            Log.w(TAG, "/ai deck not found: " + deckFile.getAbsolutePath());
+            return;
+        }
+        // 人机作为决斗位加入本房间：预先标记其靠整局重放接受撤回后的重同步（同 launchWindBot）
+        server.markPeerNeedsReplayResync();
+        // 参数格式同 buildWindBotArgs：Key=Value，含空格的路径用单引号包裹
+        String args = "Host=127.0.0.1 Port=" + server.getPort()
+                + " Name=WindBot DeckFile='" + deckFile.getAbsolutePath() + "'";
+        try {
+            Intent intent = new Intent();
+            intent.putExtra("args", args);
+            intent.setAction("RUN_WINDBOT");
+            GameApplication.get().sendBroadcast(intent);
+            Log.i(TAG, "Launching WindBot from /ai chat: " + args);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to launch WindBot from /ai", e);
+        }
     }
 
     /**

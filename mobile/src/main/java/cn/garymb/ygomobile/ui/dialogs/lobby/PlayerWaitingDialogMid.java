@@ -43,6 +43,7 @@ import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import ocgcore.DataManager;
 import ocgcore.LimitManager;
 import ocgcore.StringManager;
+import ocgcore.data.LimitList;
 
 /**
  * Player waiting lobby dialog, middle layer of the split inheritance chain.
@@ -51,6 +52,9 @@ import ocgcore.StringManager;
  * button setup on top of the base state helpers.
  */
 abstract class PlayerWaitingDialogMid extends PlayerWaitingDialogBase {
+
+    /** “/ai”人机卡组选择子窗（与卡组选择子窗一样随口窗展示/关闭） */
+    protected AiDeckSelectDialog aiDeckSelectDialog;
 
     protected PlayerWaitingDialogMid(Context context, OnPlayerWaitingListener listener) {
         super(context, listener);
@@ -200,6 +204,7 @@ abstract class PlayerWaitingDialogMid extends PlayerWaitingDialogBase {
         // 再次点击"选择卡组"按钮收起已展开的卡组选择窗（切换式交互）
         btnPwDeckSelect.setOnClickListener(v -> {
             if (deckSelectorDialog == null) return;
+            if (aiDeckSelectDialog != null) aiDeckSelectDialog.dismiss();
             if (deckSelectorDialog.isShowing()) {
                 deckSelectorDialog.dismiss();
             } else {
@@ -225,6 +230,7 @@ abstract class PlayerWaitingDialogMid extends PlayerWaitingDialogBase {
             if (targetPos >= 0) {
                 boolean wasReady = isSelfReady;
                 String selfName;
+                final int fromPos = selfPos;
                 if (isSpectator) {
                     selfName = getPlayerName(targetPos);
                 } else {
@@ -234,6 +240,11 @@ abstract class PlayerWaitingDialogMid extends PlayerWaitingDialogBase {
                 }
                 selfPos = targetPos;
                 isSelfReady = wasReady;
+                // TAG 切席：原位置清空玩家 ID、背景随空名还原为未占位态；必须放在 selfPos 更新后，否则 setPlayerReady 会把 isSelfReady 改回未准备
+                if (!isSpectator && isTagMode) {
+                    setPlayerName(fromPos, "");
+                    setPlayerReady(fromPos, false);
+                }
                 updateSelfCheckboxInteractivity();
                 if (listener != null) listener.onPlayerWaitingToDuelist();
                 btnPwSpectatorMode.setEnabled(true);
@@ -241,6 +252,8 @@ abstract class PlayerWaitingDialogMid extends PlayerWaitingDialogBase {
                 refreshPlayerDisplay();
             }
         });
+
+        btnAiSummon.setOnClickListener(v -> showAiDeckSelect());
 
         btnPwSpectatorMode.setOnClickListener(v -> {
             String selfName = "";
@@ -295,6 +308,7 @@ abstract class PlayerWaitingDialogMid extends PlayerWaitingDialogBase {
         chkPwPlayer3Ready = root.findViewById(R.id.chk_player3_ready);
         chkPwPlayer4Ready = root.findViewById(R.id.chk_player4_ready);
         btnPwDuelistMode = root.findViewById(R.id.btn_duelist_mode);
+        btnAiSummon = root.findViewById(R.id.btn_ai_summon);
         btnPwSpectatorMode = root.findViewById(R.id.btn_spectator_mode);
         btnPwReady = root.findViewById(R.id.btn_ready);
         btnPwDeckSelect = root.findViewById(R.id.btn_deck_select);
@@ -313,6 +327,8 @@ abstract class PlayerWaitingDialogMid extends PlayerWaitingDialogBase {
         // 1215 开始、1210 退出、1254 卡组选择），XML 中的中文仅作兜底
         if (btnPwDuelistMode != null)
             btnPwDuelistMode.setText(mStringManager.getSystemString(1251, "→决斗者"));
+        if (btnAiSummon != null)
+            btnAiSummon.setText(R.string.btn_ai_summon);
         if (btnPwSpectatorMode != null)
             btnPwSpectatorMode.setText(mStringManager.getSystemString(1252, "→观战"));
         if (btnPwStartGame != null)
@@ -326,9 +342,43 @@ abstract class PlayerWaitingDialogMid extends PlayerWaitingDialogBase {
             tvWatchCount.setOnClickListener(v -> showWatchersToast());
         }
     }
+    /** 点击“/ai”：列出符合当前房间禁卡表的人机卡组（显示 bot.conf 人机名），确定后由宿主发送 /ai 卡组名 聊天命令。 */
+    protected void showAiDeckSelect() {
+        if (deckSelectorDialog != null && deckSelectorDialog.isShowing()) deckSelectorDialog.dismiss();
+        List<AiDeckSelectDialog.AiDeckOption> decks = AiDeckSelectDialog.loadCompliantDecks(
+                new File(AppsSettings.get().getAiDeckDir()),
+                new File(AppsSettings.get().getResourcePath(), Constants.CORE_BOT_CONF_PATH),
+                resolveRoomLimitList());
+        if (decks.isEmpty()) {
+            Toast.makeText(context, R.string.ai_deck_empty, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (aiDeckSelectDialog == null) {
+            aiDeckSelectDialog = new AiDeckSelectDialog(context);
+            aiDeckSelectDialog.setOnDeckSelectedListener(deckName -> {
+                if (listener != null) listener.onAiSummonRequested(deckName);
+            });
+        }
+        aiDeckSelectDialog.show(btnAiSummon, decks, getBanlistName(roomLflist));
+    }
+
+    /** 当前房间禁卡表限制表：按 lflist 哈希反查同名禁卡表（与房间信息同口径）；N/A、未收录或空表返回 null（无禁限）。 */
+    protected LimitList resolveRoomLimitList() {
+        if (roomLflist == 0) return null;
+        LimitManager lm = DataManager.get().getLimitManager();
+        if (lm == null) return null;
+        String name = getBanlistName(roomLflist);
+        if (name == null || "N/A".equals(name)) return null;
+        LimitList list = lm.getLimit(name);
+        if (list == null) list = lm.getGenesysLimit(name);
+        if (list != null && list.getCodeList().isEmpty()) return null;
+        return list;
+    }
+
     public void updateRoomInfo(int lflist, int rule, int mode, int duelRule,
                                int noCheckDeck, int noShuffleDeck,
                                int startLp, int startHand, int drawCount, int timeLimit) {
+        roomLflist = lflist;
         StringBuilder sb = new StringBuilder();
         sb.append(mStringManager.getSystemString(1226, "禁限卡表：")).append(getBanlistName(lflist)).append("\n");
         sb.append(mStringManager.getSystemString(1225, "卡片允许：")).append(getCardAllowedName(rule)).append("\n");
@@ -599,6 +649,7 @@ abstract class PlayerWaitingDialogMid extends PlayerWaitingDialogBase {
 
     protected void openDeckSelectorForSeat(int seat) {
         if (deckSelectorDialog == null) return;
+        if (aiDeckSelectDialog != null) aiDeckSelectDialog.dismiss();
         if (deckSelectorDialog.isShowing() && deckPickTarget == seat) {
             deckSelectorDialog.dismiss();
         } else {
@@ -668,6 +719,7 @@ abstract class PlayerWaitingDialogMid extends PlayerWaitingDialogBase {
      * 弹窗退场动画会延迟触发 onDismiss，抑制标志由回调内消费复位 */
     public void hideForNavigation() {
         dismissDeckErrorDialog();
+        if (aiDeckSelectDialog != null) aiDeckSelectDialog.dismiss();
         if (popupWindow == null) return;
         if (popupWindow.isShowing()) {
             suppressDismiss = true;
@@ -683,6 +735,7 @@ abstract class PlayerWaitingDialogMid extends PlayerWaitingDialogBase {
     public void dismiss() {
         hideAllSeatEmotes();
         dismissDeckErrorDialog();
+        if (aiDeckSelectDialog != null) aiDeckSelectDialog.dismiss();
         if (popupWindow != null && popupWindow.isShowing()) {
             popupWindow.dismiss();
         }
@@ -711,6 +764,10 @@ abstract class PlayerWaitingDialogMid extends PlayerWaitingDialogBase {
     public void releaseOnExit() {
         hideAllSeatEmotes();
         dismissDeckErrorDialog();
+        if (aiDeckSelectDialog != null) {
+            aiDeckSelectDialog.dismiss();
+            aiDeckSelectDialog = null;
+        }
         if (deckSelectorDialog != null) {
             deckSelectorDialog.dismiss();
             deckSelectorDialog = null;

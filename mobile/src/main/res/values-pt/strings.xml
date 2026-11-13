@@ -528,5 +528,10 @@
     <string name="applying_effects_opponent">Efeitos em aplicação do oponente</string>
     <string name="applying_effect_scope_turn">Neste turno</string>
     <string name="applying_effect_scope_duel">Duelo inteiro</string>
+    <!-- /ai 人机召唤 UI -->
+    <string name="btn_ai_summon">/ai (Chamar Bot)</string>
+    <string name="ai_deck_select_title">Decks de IA para %1$s</string>
+    <string name="ai_deck_empty">Nenhum deck de IA compatível com a lista de banidas atual</string>
+    <string name="cancel">Cancelar</string>
 </resources>
 

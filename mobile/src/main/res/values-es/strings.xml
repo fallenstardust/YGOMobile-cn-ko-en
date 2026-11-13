@@ -528,6 +528,11 @@
     <string name="applying_effects_opponent">Efectos aplicados del rival</string>
     <string name="applying_effect_scope_turn">Este turno</string>
     <string name="applying_effect_scope_duel">Todo el duelo</string>
+    <!-- /ai 人机召唤 UI -->
+    <string name="btn_ai_summon">/ai (Llamar Bot)</string>
+    <string name="ai_deck_select_title">Decks de IA para %1$s</string>
+    <string name="ai_deck_empty">No hay decks de IA compatibles con la lista de prohibidas actual</string>
+    <string name="cancel">Cancelar</string>
 </resources>
 
 

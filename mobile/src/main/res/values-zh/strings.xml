@@ -531,4 +531,9 @@
     <string name="applying_effects_opponent">对方持续适用中的效果</string>
     <string name="applying_effect_scope_turn">本回合</string>
     <string name="applying_effect_scope_duel">整局决斗</string>
+    <!-- /ai 人机召唤 UI -->
+    <string name="btn_ai_summon">/ai（呼叫Bot）</string>
+    <string name="ai_deck_select_title">符合%1$s的人机列表</string>
+    <string name="ai_deck_empty">没有符合当前禁卡表的人机卡组</string>
+    <string name="cancel">取消</string>
 </resources>

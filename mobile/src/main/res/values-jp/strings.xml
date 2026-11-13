@@ -531,4 +531,9 @@
     <string name="applying_effects_opponent">相手の適用中の効果</string>
     <string name="applying_effect_scope_turn">このターン</string>
     <string name="applying_effect_scope_duel">決闘中</string>
+    <!-- /ai 人机召唤 UI -->
+    <string name="btn_ai_summon">/ai（Bot呼び出し）</string>
+    <string name="ai_deck_select_title">%1$s に適合するAIデッキ一覧</string>
+    <string name="ai_deck_empty">現在のリミットレギュレーションに適合するAIデッキがありません</string>
+    <string name="cancel">キャンセル</string>
 </resources>

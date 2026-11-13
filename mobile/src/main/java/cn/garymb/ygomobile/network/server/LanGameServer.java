@@ -77,6 +77,26 @@ public final class LanGameServer implements YGOProtocol {
     /** 后台引擎引导已成功（失败时保持 false，开局闸门会重试引导）。 */
     private volatile boolean engineBootDone;
 
+    /** 聊天 “/ai 卡组名” 命令的拉起实现（由 ConnectionManager 注入）：主机端在本机拉起对应卡组的人机入房。 */
+    public interface ChatBotLauncher {
+        void onChatAiCommand(String deckName);
+    }
+
+    private volatile ChatBotLauncher chatBotLauncher;
+
+    /** 注入聊天 “/ai” 命令拉人机的实现（本地建主时由 ConnectionManager 设置）。 */
+    public void setChatBotLauncher(ChatBotLauncher launcher) {
+        this.chatBotLauncher = launcher;
+    }
+
+    /** 房间内收到 “/ai” 命令：转给注入的拉起实现；未注入（非本机建主）时忽略。 */
+    void requestChatBot(String deckName) {
+        ChatBotLauncher launcher = chatBotLauncher;
+        if (launcher != null) {
+            launcher.onChatAiCommand(deckName);
+        }
+    }
+
     /**
      * 启动服务器：打开 TCP/UDP 监听、拉起后台线程，随后在后台引导引擎。
      *
