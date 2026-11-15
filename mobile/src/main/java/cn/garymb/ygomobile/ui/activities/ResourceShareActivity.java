@@ -3,7 +3,9 @@ package cn.garymb.ygomobile.ui.activities;
 import static cn.garymb.ygomobile.Constants.CORE_LIMIT_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_PICS_ZIP;
 import static cn.garymb.ygomobile.Constants.CORE_SCRIPTS_ZIP;
+import static cn.garymb.ygomobile.Constants.CORE_SKIN_PATH;
 import static cn.garymb.ygomobile.Constants.CORE_STRING_PATH;
+import static cn.garymb.ygomobile.Constants.DEFAULT_THEME_NAME;
 import static cn.garymb.ygomobile.Constants.RESOURCE_CDB;
 import static cn.garymb.ygomobile.Constants.RESOURCE_LFLIST;
 import static cn.garymb.ygomobile.Constants.RESOURCE_PICS;
@@ -37,10 +39,12 @@ import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.home.ResCheckTask;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
+import cn.garymb.ygomobile.utils.FileUtils;
+import cn.garymb.ygomobile.utils.TexturesNameTable;
 
 /**
- * 资源分享/卡组保存 Activity
- * 透明主题，用于通过FileProvider分享游戏资源文件 或 保存卡组文件
+ * 资源分享/卡组保存/主题使用 Activity
+ * 透明主题，用于通过FileProvider分享游戏资源文件、保存卡组文件、安装主题资源
  */
 public class ResourceShareActivity extends Activity implements ResCheckTask.ResCheckListener {
     private static final String TAG = "ResourceShareActivity";
@@ -54,6 +58,8 @@ public class ResourceShareActivity extends Activity implements ResCheckTask.ResC
         String action = getIntent().getAction();
         if (Constants.ACTION_SAVE_DECK.equals(action)) {
             handleSaveDeck();
+        } else if (Constants.ACTION_SAVE_THEME.equals(action)) {
+            handleSaveTheme();
         } else if (Constants.ACTION_SHARE_RESOURCE.equals(action)) {
             handleShareResource();
         } else {
@@ -118,6 +124,200 @@ public class ResourceShareActivity extends Activity implements ResCheckTask.ResC
             return null;
         }
         return clipData.getItemAt(0).getUri();
+    }
+
+    private void handleSaveTheme() {
+        ClipData clipData = getIntent().getClipData();
+        if (clipData == null || clipData.getItemCount() == 0) {
+            Log.w(TAG, "handleSaveTheme no clip data");
+            setResult(RESULT_CANCELED);
+            finish();
+            return;
+        }
+
+        int type = getIntent().getIntExtra(Constants.ARG_THEME_TYPE, -1);
+        switch (type) {
+            case Constants.THEME_TYPE_ZIP:
+                handleThemeZip(clipData);
+                break;
+            case Constants.THEME_TYPE_FILES:
+                handleThemeFiles(clipData);
+                break;
+            default:
+                Log.w(TAG, "handleSaveTheme unsupported type: " + type);
+                setResult(RESULT_CANCELED);
+                finish();
+                break;
+        }
+    }
+
+    /**
+     * 主题压缩包：最外层目录为 textures，解压到资源根目录覆盖原有 textures 内文件
+     */
+    private void handleThemeZip(ClipData clipData) {
+        Uri zipUri = clipData.getItemAt(0).getUri();
+        if (zipUri == null) {
+            Log.w(TAG, "handleThemeZip missing uri");
+            setResult(RESULT_CANCELED);
+            finish();
+            return;
+        }
+
+        String themeName = getIntent().getStringExtra(Constants.ARG_THEME_NAME);
+        if (TextUtils.isEmpty(themeName)) {
+            themeName = DEFAULT_THEME_NAME;
+        }
+
+        String requestingApp = getRequestingAppName();
+        String message = getString(R.string.theme_apply_zip_message, requestingApp, themeName);
+
+        DialogPlus dialog = new DialogPlus(this);
+        dialog.setTitle(R.string.theme_apply_title);
+        dialog.setMessage(message);
+        dialog.setLeftButtonText(R.string.cancel);
+        dialog.setRightButtonText(R.string.ok);
+        dialog.setOnCloseLinster(dlg -> {
+            setResult(RESULT_CANCELED);
+            finish();
+        });
+        dialog.setLeftButtonListener((dlg, s) -> {
+            setResult(RESULT_CANCELED);
+            finish();
+        });
+        dialog.setRightButtonListener((dlg, s) -> {
+            dlg.dismiss();
+            showThemeProgress();
+            new Thread(() -> {
+                File resourcePath = new File(AppsSettings.get().getResourcePath());
+                boolean result = FileUtils.unzipFromUri(ResourceShareActivity.this, zipUri, resourcePath);
+                Log.i(TAG, "handleThemeZip result: " + result);
+                finishWithResult(result);
+            }).start();
+        });
+        dialog.show();
+    }
+
+    /**
+     * 多文件：按传入的textures内相对路径(含文件名)保存并覆盖
+     */
+    private void handleThemeFiles(ClipData clipData) {
+        String[] filePaths = getIntent().getStringArrayExtra(Constants.ARG_THEME_FILE_PATH_LIST);
+        if (filePaths == null || filePaths.length == 0) {
+            Log.w(TAG, "handleThemeFiles no file paths");
+            setResult(RESULT_CANCELED);
+            finish();
+            return;
+        }
+
+        if (clipData.getItemCount() != filePaths.length) {
+            Log.w(TAG, "handleThemeFiles uri count(" + clipData.getItemCount()
+                    + ") != path count(" + filePaths.length + ")");
+            setResult(RESULT_CANCELED);
+            finish();
+            return;
+        }
+
+        int count = filePaths.length;
+
+        List<Uri> uris = new ArrayList<>();
+        List<String> paths = new ArrayList<>();
+        List<String> displayNames = new ArrayList<>();
+
+        for (int i = 0; i < count; i++) {
+            Uri uri = clipData.getItemAt(i).getUri();
+            if (uri == null) {
+                continue;
+            }
+            String relPath = filePaths[i];
+            uris.add(uri);
+            paths.add(relPath);
+            String fileName = new File(relPath).getName();
+            displayNames.add("• " + TexturesNameTable.getShowName(this, fileName));
+        }
+
+        if (uris.isEmpty()) {
+            Log.w(TAG, "handleThemeFiles no valid uri");
+            setResult(RESULT_CANCELED);
+            finish();
+            return;
+        }
+
+        String requestingApp = getRequestingAppName();
+        String message = getString(R.string.theme_apply_files_message, requestingApp,
+                TextUtils.join("\n", displayNames));
+
+        DialogPlus dialog = new DialogPlus(this);
+        dialog.setTitle(R.string.theme_apply_title);
+        dialog.setMessage(message);
+        dialog.setLeftButtonText(R.string.cancel);
+        dialog.setRightButtonText(R.string.ok);
+        dialog.setOnCloseLinster(dlg -> {
+            setResult(RESULT_CANCELED);
+            finish();
+        });
+        dialog.setLeftButtonListener((dlg, s) -> {
+            setResult(RESULT_CANCELED);
+            finish();
+        });
+        dialog.setRightButtonListener((dlg, s) -> {
+            dlg.dismiss();
+            showThemeProgress();
+            final List<Uri> urisF = uris;
+            final List<String> pathsF = paths;
+            new Thread(() -> {
+                boolean success = applyThemeFiles(urisF, pathsF);
+                finishWithResult(success);
+            }, "apply-theme-files").start();
+        });
+        dialog.show();
+    }
+
+    private boolean applyThemeFiles(List<Uri> uris, List<String> relativePaths) {
+        File texturesDir = new File(AppsSettings.get().getResourcePath(), CORE_SKIN_PATH);
+        boolean success = true;
+        for (int i = 0; i < uris.size(); i++) {
+            Uri uri = uris.get(i);
+            String normalized = relativePaths.get(i);
+            while (normalized.startsWith("/")) {
+                normalized = normalized.substring(1);
+            }
+            File targetFile = new File(texturesDir, normalized);
+            boolean ok = FileUtils.copyUriToFile(this, uri, targetFile);
+            if (ok) {
+                Log.i(TAG, "applyThemeFiles: " + targetFile.getAbsolutePath());
+            } else {
+                success = false;
+            }
+        }
+        return success;
+    }
+
+    private void showThemeProgress() {
+        if (mProgressDialog == null) {
+            mProgressDialog = new DialogPlus(this);
+        }
+        mProgressDialog.setTitle(null);
+        mProgressDialog.setMessage(getString(R.string.theme_applying));
+        mProgressDialog.setCancelable(false);
+        mProgressDialog.setCanceledOnTouchOutside(false);
+        mProgressDialog.hideButton(true);
+        mProgressDialog.showProgressBar();
+        mProgressDialog.show();
+    }
+
+    private void dismissProgress() {
+        if (mProgressDialog != null && mProgressDialog.isShowing()) {
+            mProgressDialog.dismiss();
+            mProgressDialog = null;
+        }
+    }
+
+    private void finishWithResult(boolean result) {
+        runOnUiThread(() -> {
+            dismissProgress();
+            setResult(result ? RESULT_OK : RESULT_CANCELED);
+            finish();
+        });
     }
 
     private void handleShareResource() {

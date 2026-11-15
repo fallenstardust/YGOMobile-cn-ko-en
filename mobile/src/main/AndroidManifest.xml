@@ -184,6 +184,10 @@
                 <action android:name="ygomobile.intent.action.SAVE_DECK" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="ygomobile.intent.action.SAVE_THEME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
 
 

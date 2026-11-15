@@ -310,6 +310,43 @@ public interface Constants {
      */
     String ACTION_SAVE_DECK = "ygomobile.intent.action.SAVE_DECK";
     String ARG_DECK_NAME = "deck_name";
+
+    /***
+     * 从其他应用接收并安装主题资源（textures目录下的素材），安装形式通过 {@link #ARG_THEME_TYPE} 区分：
+     * <p>
+     * 1. 主题包(zip，{@link #THEME_TYPE_ZIP})：ClipData 中传入一个 zip 的 Uri，
+     *    zip 最外层目录为 textures，解压后直接覆盖资源目录下 textures 内的同名文件。
+     *    <br/>{@code intent.putExtra(Constants.ARG_THEME_NAME, "主题名");  // 可选，缺省"未知主题"}
+     * <p>
+     * 2. 多文件({@link #THEME_TYPE_FILES})：ClipData 中按顺序传入多个文件 Uri，
+     *    并通过 String[] 传每个文件在 textures 内的相对路径(含文件名)，如 "bg.jpg" 或 "/extra/tsettings.png"，
+     *    前导 "/" 有无均可，空目录即 textures 根目录。
+     *    <br/>{@code intent.putExtra(Constants.ARG_THEME_FILE_PATHS, new String[]{"bg.jpg", "/extra/tsettings.png"});}
+     */
+    String ACTION_SAVE_THEME = "ygomobile.intent.action.SAVE_THEME";
+    /**
+     * 主题包名字，仅安装zip时使用
+     */
+    String ARG_THEME_NAME = "theme_name";
+    /**
+     * 主题安装类型
+     */
+    String ARG_THEME_TYPE = "theme_type";
+    /**
+     * zip主题包，最外层目录为textures
+     */
+    int THEME_TYPE_ZIP = 0;
+    /**
+     * textures文件夹里面的具体文件
+     */
+    int THEME_TYPE_FILES = 1;
+    /**
+     * 主题文件相对路径列表
+     * 多文件模式下，每个元素是 textures 内的相对路径(含文件名)，如 "bg.jpg" 或 "/extra/tsettings.png"
+     */
+    String ARG_THEME_FILE_PATH_LIST = "theme_file_path_list";
+    String DEFAULT_THEME_NAME = "未知主题";
+
     String ACTION_RELOAD = "ygomobile.intent.action.RELOAD";
     String IMAGE_URL = "https://github.com/fallenstardust/YGOMobile-pics/master/pics/%s.jpg";
     String IMAGE_FIELD_URL = "https://github.com/fallenstardust/YGOMobile-pics/master/pics/field/%s.jpg";
