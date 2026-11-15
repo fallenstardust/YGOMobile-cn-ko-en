@@ -11,11 +11,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
+import java.io.StringReader;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -38,6 +38,7 @@ import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.LogUtil;
 import cn.garymb.ygomobile.utils.MD5Util;
 import cn.garymb.ygomobile.utils.TxEndpoint;
+import cn.garymb.ygomobile.utils.UnzipUtils;
 import okhttp3.Call;
 import okhttp3.EventListener;
 import okhttp3.HttpUrl;
@@ -46,6 +47,10 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlPullParserFactory;
 
 /**
  * 先行卡包增量更新，做法同 MyCard 客户端：取新版本的校验清单，与本地旧包逐条目比对 sha256，
@@ -72,10 +77,8 @@ public final class ExCardIncrementalUpdate {
     private static final String ROOT = "expansions/";
 
     private static final Pattern VERSION = Pattern.compile("ygopro-super-pre-([0-9A-Za-z._-]+)\\.ypk\\s*$");
-    private static final Pattern FILE = Pattern.compile("<file name=\"([^\"]+)\">(.*?)</file>", Pattern.DOTALL);
-    private static final Pattern SIZE = Pattern.compile("<size>(\\d+)</size>");
-    private static final Pattern HASH = Pattern.compile("<hash type=\"sha-256\">([0-9a-f]{64})</hash>");
-    private static final Pattern URL = Pattern.compile("<url[^>]*>([^<]+)</url>");
+    /** 包的 sha256 也用作本地文件名，只收 64 位小写十六进制 */
+    private static final Pattern SHA256_HEX = Pattern.compile("[0-9a-f]{64}");
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     private static final int BUFFER_SIZE = 64 * 1024;
     /** 连续这么多次失败且没有进展就放弃，退避 1、2、4、8 秒 */
@@ -160,7 +163,7 @@ public final class ExCardIncrementalUpdate {
         String name;
         String sha256;
         String url;
-        long size;
+        long size = -1;
 
         /** 包名是 128 位十六进制，日志里只留开头 */
         String label() {
@@ -255,7 +258,7 @@ public final class ExCardIncrementalUpdate {
             if (versionHash == null) {
                 throw new FallbackException("校验清单 " + version + "（" + checksums.size() + " 个文件）里没有 " + ROOT + "version.txt");
             }
-            if (!versionHash.equals(sha256(dataVersion + "\n")) && !versionHash.equals(sha256(dataVersion))) {
+            if (!versionHash.equals(MD5Util.getStringSHA256(dataVersion + "\n")) && !versionHash.equals(MD5Util.getStringSHA256(dataVersion))) {
                 throw new TryLaterException("校验清单 " + version + " 不是本次检查到的那一版：清单里 version.txt 的 sha256 是 "
                         + versionHash.substring(0, 12) + "..，本次检查到的 version.txt 是 \"" + dataVersion + "\"");
             }
@@ -323,7 +326,8 @@ public final class ExCardIncrementalUpdate {
             LogUtil.e(TAG, "增量更新走不通，问用户要不要改下完整包：" + e.getMessage());
             cleanUpForFallback();
             listener.onFallback(e.getMessage());
-        } catch (Throwable e) {
+        } catch (Exception | LinkageError e) {
+            //LinkageError：zstd 原生库加载失败（UnsatisfiedLinkError）时完整下载仍可用；其他 Error 照常抛出
             LogUtil.e(TAG, "增量更新意外出错，问用户要不要改下完整包", e);
             cleanUpForFallback();
             listener.onFallback(describe(e));
@@ -340,24 +344,19 @@ public final class ExCardIncrementalUpdate {
         String what = "挑包请求 " + version + "（" + paths.size() + " 个文件）";
         String xml = call(what, new Request.Builder().url(Constants.URL_MYCARD_RELEASE_API + "update/" + APP_ID + "/" + version)
                 .post(RequestBody.create(JSON, new Gson().toJson(paths))));
-        List<Archive> archives = new ArrayList<>();
+        List<Archive> archives;
+        try {
+            archives = parseMetalink(xml);
+        } catch (XmlPullParserException | NumberFormatException e) {
+            throw new FallbackException(what + "：metalink 解析不了（" + e.getMessage() + "）：\"" + abbreviate(xml) + "\"");
+        }
         long total = 0;
-        Matcher file = FILE.matcher(xml);
-        while (file.find()) {
-            Matcher size = SIZE.matcher(file.group(2));
-            Matcher hash = HASH.matcher(file.group(2));
-            Matcher url = URL.matcher(file.group(2));
-            boolean hasSize = size.find(), hasHash = hash.find(), hasUrl = url.find();
-            if (!hasSize || !hasHash || !hasUrl) {
-                throw new FallbackException(what + "：metalink 条目 " + abbreviate(file.group(1)) + " 缺少"
+        for (Archive a : archives) {
+            boolean hasSize = a.size >= 0, hasHash = a.sha256 != null && SHA256_HEX.matcher(a.sha256).matches(), hasUrl = a.url != null;
+            if (a.name == null || !hasSize || !hasHash || !hasUrl) {
+                throw new FallbackException(what + "：metalink 条目 " + (a.name == null ? "（没有 name）" : abbreviate(a.name)) + " 缺少"
                         + (hasSize ? "" : " <size>") + (hasHash ? "" : " sha-256 <hash>") + (hasUrl ? "" : " <url>"));
             }
-            Archive a = new Archive();
-            a.name = file.group(1);
-            a.size = Long.parseLong(size.group(1));
-            a.sha256 = hash.group(1);
-            a.url = url.group(1).trim().replace("&amp;", "&");
-            archives.add(a);
             total += a.size;
         }
         if (archives.isEmpty()) {
@@ -366,6 +365,40 @@ public final class ExCardIncrementalUpdate {
         if (total >= installed.length()) {
             throw new FallbackException(what + "：" + archives.size() + " 个包共 " + total
                     + " 字节，不比已装的完整包（" + installed.length() + " 字节）小");
+        }
+        return archives;
+    }
+
+    /** metalink 里每个 {@code <file>} 的 name、size、sha-256 与第一个 url；缺的字段留空，由调用方检查 */
+    private static List<Archive> parseMetalink(String xml) throws XmlPullParserException, IOException {
+        XmlPullParser parser = XmlPullParserFactory.newInstance().newPullParser();
+        parser.setInput(new StringReader(xml));
+        List<Archive> archives = new ArrayList<>();
+        Archive a = null;
+        for (int event = parser.getEventType(); event != XmlPullParser.END_DOCUMENT; event = parser.next()) {
+            if (event == XmlPullParser.END_TAG && "file".equals(parser.getName())) {
+                a = null;
+            } else if (event == XmlPullParser.START_TAG && "file".equals(parser.getName())) {
+                a = new Archive();
+                a.name = parser.getAttributeValue(null, "name");
+                archives.add(a);
+            } else if (event == XmlPullParser.START_TAG && a != null) {
+                switch (parser.getName()) {
+                    case "size":
+                        a.size = Long.parseLong(parser.nextText().trim());
+                        break;
+                    case "hash":
+                        if ("sha-256".equals(parser.getAttributeValue(null, "type"))) {
+                            a.sha256 = parser.nextText().trim();
+                        }
+                        break;
+                    case "url":
+                        if (a.url == null) {
+                            a.url = parser.nextText().trim();
+                        }
+                        break;
+                }
+            }
         }
         return archives;
     }
@@ -379,7 +412,7 @@ public final class ExCardIncrementalUpdate {
                 fetch(a, file, done, total);
                 return null;
             });
-            got = sha256(new FileInputStream(file));
+            got = MD5Util.getStreamSHA256(new FileInputStream(file));
             if (a.sha256.equals(got)) {
                 return file;
             }
@@ -572,56 +605,43 @@ public final class ExCardIncrementalUpdate {
      * 写新包：先从下载的包里取有变化的文件（逐个校验），再从旧包拷贝没变的条目与目录条目，
      * 新版本没有的条目不再写入。
      *
-     * <p>包是服务端 {@code tar --zstd -cf} 产出的 GNU tar：只认普通文件（类型 0）与长文件名
-     * （类型 L），其他类型跳过内容；服务端按组打包，没请求的文件也跳过。
+     * <p>包是服务端 {@code tar --zstd -cf} 产出的 GNU tar（{@link UnzipUtils#readTar}）；服务端按组打包，
+     * 没请求的文件跳过。
      */
     private void rebuild(Map<String, String> target, Map<String, String> needed, List<File> archives) throws Exception {
         Set<String> written = new HashSet<>();
         byte[] buf = new byte[BUFFER_SIZE];
-        byte[] header = new byte[512];
         try (ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(output), BUFFER_SIZE));
              ZipFile zip = new ZipFile(installed)) {
             for (File archive : archives) {
                 String label = "包 " + archive.getName().substring(0, 12) + "..";
+                List<String> mismatches = new ArrayList<>();
                 try (InputStream in = new ZstdInputStream(new BufferedInputStream(new FileInputStream(archive), BUFFER_SIZE))) {
-                    String longName = null;
-                    String path = "（开头）";
-                    while (readFully(in, header, 512) && header[0] != 0) {
-                        long size = octal(header, 124, 12, label, path);
-                        long padding = (512 - size % 512) % 512;
-                        if (header[156] == 'L' && size < buf.length) {
-                            readFully(in, buf, (int) size);
-                            longName = cString(buf, 0, (int) size);
-                            skip(in, padding, label, longName);
-                            continue;
-                        }
-                        path = longName != null ? longName : cString(header, 0, 100);
-                        longName = null;
+                    UnzipUtils.readTar(in, (path, size, content) -> {
                         String name = path.startsWith(ROOT) ? path.substring(ROOT.length()) : null;
-                        String expected = header[156] == '0' && name != null ? needed.get(name) : null;
+                        String expected = name != null ? needed.get(name) : null;
                         if (expected == null || !written.add(name)) {
-                            skip(in, size + padding, label, path);
-                            continue;
+                            return;
                         }
-                        MessageDigest md = MessageDigest.getInstance("SHA-256");
+                        MessageDigest md = MD5Util.newSHA256();
                         zos.putNextEntry(new ZipEntry(name));
-                        for (long left = size; left > 0; ) {
-                            int n = in.read(buf, 0, (int) Math.min(buf.length, left));
-                            if (n < 0) {
-                                throw new FallbackException(label + " 在 " + path + " 中间就结束了（" + size + " 字节缺了 " + left + "）");
-                            }
+                        int n;
+                        while ((n = content.read(buf)) != -1) {
                             md.update(buf, 0, n);
                             zos.write(buf, 0, n);
-                            left -= n;
                         }
                         zos.closeEntry();
                         String got = MD5Util.toHexString(md.digest());
                         if (!expected.equals(got)) {
-                            throw new FallbackException(label + "：" + path + " 的 sha256 是 " + got.substring(0, 12)
-                                    + "..，校验清单里是 " + expected.substring(0, 12) + "..");
+                            mismatches.add(path + " 的 sha256 是 " + got.substring(0, 12) + "..，校验清单里是 " + expected.substring(0, 12) + "..");
                         }
-                        skip(in, padding, label, path);
-                    }
+                    });
+                } catch (IOException e) {
+                    throw new FallbackException(label + "：" + describe(e));
+                }
+                if (!mismatches.isEmpty()) {
+                    throw new FallbackException(label + "：" + mismatches.get(0)
+                            + (mismatches.size() > 1 ? "，另有 " + (mismatches.size() - 1) + " 个也不符" : ""));
                 }
             }
             if (written.size() != needed.size()) {
@@ -659,47 +679,6 @@ public final class ExCardIncrementalUpdate {
         }
     }
 
-    private static boolean readFully(InputStream in, byte[] buf, int length) throws IOException {
-        for (int off = 0; off < length; ) {
-            int n = in.read(buf, off, length - off);
-            if (n < 0) {
-                return false;
-            }
-            off += n;
-        }
-        return true;
-    }
-
-    private static void skip(InputStream in, long n, String label, String path) throws IOException, FallbackException {
-        byte[] buf = new byte[(int) Math.min(BUFFER_SIZE, Math.max(1, n))];
-        while (n > 0) {
-            int r = in.read(buf, 0, (int) Math.min(buf.length, n));
-            if (r < 0) {
-                throw new FallbackException(label + " 在 " + path + " 中间就结束了");
-            }
-            n -= r;
-        }
-    }
-
-    private static long octal(byte[] b, int off, int len, String label, String after) throws FallbackException {
-        long v = 0;
-        for (int i = off; i < off + len && b[i] != 0 && b[i] != ' '; i++) {
-            if (b[i] < '0' || b[i] > '7') {
-                throw new FallbackException(label + "：" + after + " 之后的 tar 头里大小字段不是八进制（不是 GNU tar 打的包？）");
-            }
-            v = v * 8 + (b[i] - '0');
-        }
-        return v;
-    }
-
-    private static String cString(byte[] b, int off, int len) {
-        int end = off;
-        while (end < off + len && b[end] != 0) {
-            end++;
-        }
-        return new String(b, off, end - off, StandardCharsets.UTF_8);
-    }
-
     private static Map<String, String> hashZip(File file) throws Exception {
         Map<String, String> hashes = new LinkedHashMap<>();
         try (ZipFile zip = new ZipFile(file)) {
@@ -707,28 +686,11 @@ public final class ExCardIncrementalUpdate {
             while (entries.hasMoreElements()) {
                 ZipEntry entry = entries.nextElement();
                 if (!entry.isDirectory()) {
-                    hashes.put(entry.getName(), sha256(zip.getInputStream(entry)));
+                    hashes.put(entry.getName(), MD5Util.getStreamSHA256(zip.getInputStream(entry)));
                 }
             }
         }
         return hashes;
-    }
-
-    /** 读完并关闭 {@code in} */
-    private static String sha256(InputStream in) throws Exception {
-        try (InputStream is = in) {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] buf = new byte[BUFFER_SIZE];
-            int n;
-            while ((n = is.read(buf)) != -1) {
-                md.update(buf, 0, n);
-            }
-            return MD5Util.toHexString(md.digest());
-        }
-    }
-
-    private static String sha256(String text) throws Exception {
-        return MD5Util.toHexString(MessageDigest.getInstance("SHA-256").digest(text.getBytes(StandardCharsets.UTF_8)));
     }
 
     private static String abbreviate(String s) {
