@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.text.format.Formatter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,8 +31,10 @@ import java.io.File;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.bean.events.ExCardEvent;
+import cn.garymb.ygomobile.lite.BuildConfig;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.home.MainActivity;
+import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.utils.DownloadUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.garymb.ygomobile.utils.LogUtil;
@@ -99,15 +102,54 @@ public class ExCardListFragment extends Fragment {
         clickLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                LogUtil.i(TAG, "start download");
-                if (downloadState != DownloadState.DOWNLOAD_ING) {
-                    downloadState = DownloadState.DOWNLOAD_ING;
-                    downloadfromWeb(ServerUtil.downloadUrl());
-                }
+                startDownload(false);
             }
+        });
+        /* 长按：能增量更新时让用户自己选，"完整下载"就是原来的方式；不能增量时按普通点按处理 */
+        clickLayout.setOnLongClickListener(v -> {
+            if (downloadState == DownloadState.DOWNLOAD_ING || incrementalBase() == null) {
+                return false;
+            }
+            DialogPlus dialog = new DialogPlus(context);
+            dialog.setTitleText(getString(R.string.superpre_inc_choose_title));
+            dialog.setMessage(R.string.superpre_inc_choose_message);
+            dialog.setLeftButtonText(R.string.superpre_inc_choose_incremental);
+            dialog.setLeftButtonListener((dlg, which) -> {
+                dlg.dismiss();
+                startDownload(false);
+            });
+            dialog.setRightButtonText(R.string.superpre_inc_choose_full);
+            dialog.setRightButtonListener((dlg, which) -> {
+                dlg.dismiss();
+                startDownload(true);
+            });
+            dialog.show();
+            return true;
         });
 
         changeDownloadText();
+    }
+
+    /** @param full 用户在长按菜单里选了完整下载：不走增量 */
+    private void startDownload(boolean full) {
+        LogUtil.i(TAG, "start download" + (full ? "（用户选择完整下载）" : ""));
+        if (downloadState != DownloadState.DOWNLOAD_ING) {
+            downloadState = DownloadState.DOWNLOAD_ING;
+            downloadfromWeb(ServerUtil.downloadUrl(), full);
+        }
+    }
+
+    /**
+     * 能增量更新时返回已装的旧包，否则 null（走完整下载）：开关打开、中文先行卡、需要更新、已装旧包。
+     * 非中文、重新下载（已是最新）、没有旧包都照旧下载完整包。
+     */
+    private File incrementalBase() {
+        File installed = new File(AppsSettings.get().getExpansionsPath(), Constants.officialExCardPackageName + Constants.YPK_FILE_EX);
+        boolean usable = BuildConfig.SUPERPRE_INCREMENTAL
+                && AppsSettings.get().getDataLanguage() == AppsSettings.languageEnum.Chinese.code
+                && ServerUtil.exCardState == ServerUtil.ExCardState.NEED_UPDATE
+                && installed.isFile();
+        return usable ? installed : null;
     }
 
     /**
@@ -141,6 +183,11 @@ public class ExCardListFragment extends Fragment {
     }
 
     private void downloadfromWeb(String fileUrl) {
+        downloadfromWeb(fileUrl, false);
+    }
+
+    /** @param full 用户在长按菜单里选了完整下载：不走增量 */
+    private void downloadfromWeb(String fileUrl, boolean full) {
         textDownload.setText("0%");//点击下载后，距离onDownloading触发要等几秒，这一延迟会造成软件响应慢的错觉，因此在下载函数开始就设置文本
         String fileName = Constants.officialExCardPackageName + Constants.YPK_FILE_EX;
         /* 新先行卡先下到应用现有 Cache 里，下载成功后才替换 expansions 下的旧包，以免下载失败时旧先行卡一并没了 */
@@ -150,6 +197,116 @@ public class ExCardListFragment extends Fragment {
         }
         File tempFile = new File(cacheDir, fileName);
 
+        /* 能增量更新就先走增量：只下有变化的文件再与旧包合成新包；否则照旧下载完整包 */
+        File installed = full ? null : incrementalBase();
+        if (installed != null) {
+            downloadIncremental(installed, cacheDir, tempFile);
+            return;
+        }
+        downloadFull(fileUrl, cacheDir, fileName, tempFile);
+    }
+
+    /**
+     * 增量更新先行卡包，按钮下的文字跟着显示当前阶段。成功后与完整下载一样落位；增量走不通（服务器或
+     * 数据问题）问用户要不要改下完整包；网络问题提示已保留多少，按钮恢复为“下载”，网络好了再点就接着下。
+     */
+    private void downloadIncremental(File installed, File cacheDir, File tempFile) {
+        ExCardIncrementalUpdate.start(installed, tempFile, cacheDir, ServerUtil.serverExCardVersion, new ExCardIncrementalUpdate.Listener() {
+            @Override
+            public void onStage(Stage stage) {
+                int text = stage == Stage.CHECKING ? R.string.superpre_inc_checking
+                        : stage == Stage.COMPARING ? R.string.superpre_inc_comparing
+                        : stage == Stage.REQUESTING ? R.string.superpre_inc_requesting : R.string.superpre_inc_merging;
+                onUi(() -> textDownload.setText(text));
+            }
+
+            @Override
+            public void onDownloadStart(int files, long bytes) {
+                onUi(() -> YGOUtil.showTextToast(getString(R.string.superpre_inc_start, files,
+                        Formatter.formatShortFileSize(context, bytes))));
+            }
+
+            @Override
+            public void onProgress(int percent) {
+                onUi(() -> textDownload.setText(getString(R.string.superpre_inc_downloading, percent)));
+            }
+
+            @Override
+            public void onRetry(boolean serverSide) {
+                onUi(() -> textDownload.setText(serverSide ? R.string.superpre_inc_retry_server : R.string.superpre_inc_retry_network));
+            }
+
+            @Override
+            public void onSuccess(File ypk) {
+                Message message = new Message();
+                message.what = installExCardPackage(ypk) ? DownloadUtil.TYPE_DOWNLOAD_OK : TYPE_INSTALL_FAILED;
+                handler.sendMessage(message);
+            }
+
+            @Override
+            public void onFallback(String reason) {
+                //改下完整包前问用户；页面已经离开就不问，下次再点下载
+                downloadState = DownloadState.NO_DOWNLOAD;
+                onUi(() -> {
+                    textDownload.setText(R.string.Download);
+                    DialogPlus dialog = new DialogPlus(context);
+                    dialog.setTitle(R.string.tip);
+                    dialog.setMessage(R.string.superpre_inc_fallback);
+                    dialog.setLeftButtonText(R.string.superpre_inc_choose_full);
+                    dialog.setLeftButtonListener((dlg, which) -> {
+                        dlg.dismiss();
+                        startDownload(true);
+                    });
+                    dialog.setRightButtonText(R.string.Cancel);
+                    dialog.setRightButtonListener((dlg, which) -> dlg.dismiss());
+                    dialog.show();
+                });
+            }
+
+            @Override
+            public void onNetworkFailure(Exception e, long keptBytes) {
+                downloadState = DownloadState.NO_DOWNLOAD;
+                onUi(() -> {
+                    textDownload.setText(R.string.Download);
+                    showEndDialog((keptBytes > 0
+                            ? getString(R.string.superpre_inc_network_failed, Formatter.formatShortFileSize(context, keptBytes))
+                            : getString(R.string.superpre_inc_network_failed_nothing_kept))
+                            + "\n\n" + getString(R.string.superpre_inc_long_press_tip));
+                });
+            }
+
+            @Override
+            public void onTryLater(String reason) {
+                downloadState = DownloadState.NO_DOWNLOAD;
+                onUi(() -> {
+                    textDownload.setText(R.string.Download);
+                    showEndDialog(getString(R.string.superpre_inc_try_later)
+                            + "\n\n" + getString(R.string.superpre_inc_long_press_tip));
+                });
+            }
+        });
+    }
+
+    /** 增量更新结束时的提示用对话框，点确定才关，不像 Toast 一闪而过就错过了 */
+    private void showEndDialog(String message) {
+        DialogPlus dialog = new DialogPlus(context);
+        dialog.setTitle(R.string.tip);
+        dialog.setMessage(message);
+        dialog.setLeftButtonText(R.string.OK);
+        dialog.setLeftButtonListener((dlg, which) -> dlg.dismiss());
+        dialog.show();
+    }
+
+    /** 增量更新的回调在后台线程，界面改动交给主线程；页面已离开就不再更新 */
+    private void onUi(Runnable action) {
+        handler.post(() -> {
+            if (isAdded() && context != null) {
+                action.run();
+            }
+        });
+    }
+
+    private void downloadFull(String fileUrl, File cacheDir, String fileName, File tempFile) {
         DownloadUtil.get().downloadSuperpre(fileUrl, cacheDir.getAbsolutePath(), fileName, new DownloadUtil.OnDownloadListener() {
             @Override
             public void onDownloadSuccess(File file) {
