@@ -84,7 +84,7 @@ public final class ExCardIncrementalUpdate {
     /** 连续这么多次失败且没有进展就放弃，退避 1、2、4、8 秒 */
     private static final int ATTEMPTS = 5;
     private static final int READ_TIMEOUT_S = 30;
-    /** 挑包请求在服务端要处理几秒到二十几秒才回首字节；响应只有几 KB，多等不费流量 */
+    /** 挑包请求平时不到 1 秒就回；读超时放宽作兜底，响应只有几 KB，多等不费流量 */
     private static final int UPDATE_READ_TIMEOUT_S = 90;
 
     /** 回调都在后台线程；界面显示什么由调用方决定 */
@@ -94,7 +94,7 @@ public final class ExCardIncrementalUpdate {
             CHECKING,
             /** 与本地旧包逐条目比对 */
             COMPARING,
-            /** 向发布接口要覆盖变化文件的包（服务端常要处理几秒到几十秒） */
+            /** 向发布接口要覆盖变化文件的包 */
             REQUESTING,
             /** 合成新包 */
             MERGING
