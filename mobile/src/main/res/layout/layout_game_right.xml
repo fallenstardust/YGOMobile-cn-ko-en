@@ -95,7 +95,9 @@
                                 android:scaleType="fitXY" />
 
                             <!-- 持续适用中效果徽标（用户新规格）：本侧头像左下角的金色外发光感叹号，
-                                 有整回合/整局一直适用中的效果时闪动，点击向下展开该侧列表；
+                                 有整回合/整局一直适用中的效果时闪动；点任一侧徽标都把两侧列表一起
+                                 向下展开（我方一份贴我方血条下、对方一份贴对方血条下，各自带本侧
+                                 标题，不混排）；
                                  尺寸/内边距随 HUD 系数由 GameTopInfoManager 设定，无条目时 invisible 恒占位 -->
                             <ImageView
                                 android:id="@+id/iv_player_applying"

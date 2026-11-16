@@ -40,12 +40,15 @@ abstract class FieldChatBoardBase {
 
     protected final GameFieldController ctl;
 
-    /** 每侧玩家聊天最大行数：超过 5 行向上滚动（清除第一条，最新一条落在最下行） */
-    protected static final int MAX_CHAT_LINES = 5;
+    /** 每侧玩家聊天最大行数：超过 3 行向上滚动（清除第一条，最新一条落在最下行）。
+     *  对齐 drawing.cpp DrawChatMsg L1551：决斗中玩家消息只取 chatMsg[0..2] 三个槽位
+     * （{@code if (i >= 3) continue;}），旧实现取 5 行明显多于桌面版 */
+    protected static final int MAX_CHAT_LINES = 3;
 
     /** 每侧聊天行数大于此值时，最早一条的在屏存活时长按 2 倍速消耗（提前一半即消失，
-     *  用户规格：刷屏时最早那条记录消失速度加快为现在的 2 倍） */
-    protected static final int CHAT_ACCELERATE_LINE_COUNT = 3;
+     *  用户规格：刷屏时最早那条记录消失速度加快为现在的 2 倍）。上限收到 3 行后本阈值
+     *  随之从 3 降到 2：否则 {@code size() > 3} 永不成立，刷屏加速规则在满屏时彻底失效 */
+    protected static final int CHAT_ACCELERATE_LINE_COUNT = 2;
 
     /**
      * 单条玩家聊天在屏存活时长（毫秒），超时后从最早一行开始自动清除——对齐
@@ -339,21 +342,24 @@ abstract class FieldChatBoardBase {
         return removed;
     }
     /** 构造一条血条下方聊天行 TextView（昵称前缀已由调用方拼好入 line）：9sp 白字 + 半透明黑底，
-     *  规格对齐 drawing.cpp chatColor[0..3] 玩家消息白色 / draw2DRectangle 0xa0000000 */
+     *  规格对齐 drawing.cpp chatColor[0..3] 玩家消息白色 / draw2DRectangle 0xa0000000。
+     *  <p>单行文本最多 3 行（旧 2 行会把长句截早），宽度取 WRAP_CONTENT：C++ 的黑底 rect 宽
+     *  = 文本宽 + 2（L1573/L1578），不是整行贯通；MATCH_PARENT 会让黑底一直铺到该侧带宽边缘，
+     *  与桌面版的「文本背景」观感不符（用户反馈）。 */
     protected TextView createChatRowView(TimedLine entry) {
         float density = ctl.activity.getResources().getDisplayMetrics().density;
         TextView tv = new TextView(ctl.activity);
         tv.setText(entry.text);
         tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 9);   // 与系统弹幕/大厅聊天统一 9sp
         tv.setTextColor(YGOUtil.c(R.color.white));                     // chatColor[0..3] 玩家消息白色
-        tv.setMaxLines(2);
+        tv.setMaxLines(3);
         tv.setEllipsize(android.text.TextUtils.TruncateAt.END);
         tv.setBackgroundColor(CHAT_BG_COLOR);            // 半透明黑底，对齐 drawing.cpp 0xa0000000
         int hPadding = (int) (3 * density);
         tv.setPadding(hPadding, 0, hPadding, 0);
         tv.setShadowLayer(1f, 1f, 1f, YGOUtil.c(R.color.black));
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         lp.bottomMargin = (int) (2 * density);
         tv.setLayoutParams(lp);
         return tv;

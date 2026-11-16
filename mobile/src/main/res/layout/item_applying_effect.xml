@@ -3,6 +3,8 @@
   文字只取携时长语的子句（如「这个回合，…」），字号硬 6sp（用户新规格：显示文字再缩小一档，
   不随 HUD 系数放大，否则长句在窄面板里显示不完）；卡图缩略版按 177:254 原比例，宽高由
   ApplyingEffectsPopup 按 HUD 系数等比设定。整行可点 → 在卡详面板看该卡完整描述与已打勾序号段。
+  卡图与文字间隙（用户新规格：可以再缩小）：只由本行 marginStart 2dp 提供（旧为 5dp margin
+  + 5dp 文本左内边距，叠加后间隙达 10dp），文本左内边距已由 Java 侧置 0。
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/layout_applying_effect_item"
@@ -30,7 +32,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:layout_marginStart="5dp"
+        android:layout_marginStart="2dp"
         android:ellipsize="end"
         android:maxLines="3"
         android:textColor="@color/white"

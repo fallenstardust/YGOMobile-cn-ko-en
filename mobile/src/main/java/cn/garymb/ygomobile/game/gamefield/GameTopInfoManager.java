@@ -23,7 +23,6 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.function.Consumer;
 
 import cn.garymb.ygomobile.AppsSettings;
@@ -81,8 +80,8 @@ public class GameTopInfoManager extends GameTopInfoManagerBase {
     private final Runnable applyingRefreshTask = this::refreshApplyingEffectsNow;
 
     /**
-     * 主线程解算并落地：两侧条目缓存→徽标闪动→已展开的下拉列表同步（该侧条目清空则收起，
-     * 否则原地刷新行以反映新发动/被无效/已过期的效果与新落账的召唤誓约）。
+     * 主线程解算并落地：两侧条目缓存→徽标闪动→已展开的下拉列表同步。列表是两侧同展的两份面板，
+     * 故只要任一侧还有条目就原地刷新两份（条目为空的那侧自己收掉它的窗口），两侧都空才整体收起。
      */
     private void refreshApplyingEffectsNow() {
         // 引擎权威来源（用户新规格）：解算前按各侧场上卡的 descHints（CHINT_DESC_ADD/REMOVE 维护）
@@ -98,42 +97,43 @@ public class GameTopInfoManager extends GameTopInfoManagerBase {
         setApplyingPrompt(0, !applyingMe.isEmpty());
         setApplyingPrompt(1, !applyingOpp.isEmpty());
         if (applyingPopup == null || !applyingPopup.isShowing()) return;
-        int side = applyingPopup.isShowing(0) ? 0 : (applyingPopup.isShowing(1) ? 1 : -1);
-        if (side < 0) return;
-        List<ContinuousEffectApplier.Applying> items = side == 0 ? applyingMe : applyingOpp;
-        if (items.isEmpty()) {
+        // 用户新规格：两侧列表同时展开，只要有一侧还有条目就原地刷新两份面板；两侧都空才整体收起
+        if (applyingMe.isEmpty() && applyingOpp.isEmpty()) {
             applyingPopup.dismiss();
             return;
         }
-        openApplyingPopup(side, items);
+        openApplyingPopup();
     }
 
-    /** 徽标点击：同侧再次点击收起，否则展开该侧列表（用户规格：只显示被点击那一侧） */
-    private void onApplyingBadgeClick(int side) {
-        if (applyingPopup != null && applyingPopup.isShowing(side)) {
+    /**
+     * 徽标点击：展开态下再点任一侧徽标即两侧一并收起；否则同时展开我方与对方两份列表
+     *（用户新规格：点我方或对方头像下的感叹号都把双方列表一起显示，但各自贴本侧血条下方、
+     * 各自带本侧标题，不混排进被点击侧的单一列表）。两侧都无条目时先重算一次再判。
+     */
+    private void onApplyingBadgeClick() {
+        if (applyingPopup != null && applyingPopup.isShowing()) {
             applyingPopup.dismiss();
             return;
         }
-        List<ContinuousEffectApplier.Applying> items = side == 0 ? applyingMe : applyingOpp;
-        if (items.isEmpty()) {
+        if (applyingMe.isEmpty() && applyingOpp.isEmpty()) {
             // 解算缓存为空（如进决斗前首次点击）：先重算一次再判，避免徽标在而列表空
             refreshApplyingEffectsNow();
-            items = side == 0 ? applyingMe : applyingOpp;
-            if (items.isEmpty()) return;
+            if (applyingMe.isEmpty() && applyingOpp.isEmpty()) return;
         }
-        openApplyingPopup(side, items);
+        openApplyingPopup();
     }
 
-    /** 展开指定侧的下拉列表（锚 layout_top_info 下缘、横向对齐该侧血条面板；已在展示则只原地刷新行） */
-    private void openApplyingPopup(int side, List<ContinuousEffectApplier.Applying> items) {
+    /** 同时展开双方列表（我方贴我方血条面板、对方贴对方血条面板，均锚 layout_top_info 下缘；
+     *  已在展示的一侧只原地刷新行，条目为空的一侧不建窗口） */
+    private void openApplyingPopup() {
         if (applyingPopup == null) {
             applyingPopup = new ApplyingEffectsPopup(activity, activity.getImageLoader());
             // 行点击→卡详面板（用户新规格）：列表只给时长语子句，完整效果文本与已打勾的
             // 序号段落回卡详看（与点场上卡/点询问窗卡图同一展示态路径）
             applyingPopup.setOnCardClick(this::showApplyingEffectCardDetail);
         }
-        View panel = side == 0 ? layoutPlayerPanel : layoutOpponentPanel;
-        applyingPopup.show(layoutTopInfo, panel, side, items, hudScaleFactor);
+        applyingPopup.show(layoutTopInfo, layoutPlayerPanel, layoutOpponentPanel,
+                applyingMe, applyingOpp, hudScaleFactor);
     }
 
     /**
@@ -199,9 +199,9 @@ public class GameTopInfoManager extends GameTopInfoManagerBase {
         ivOpponentCardBack = activity.findViewById(R.id.iv_opponent_card_back);
         ivPlayerApplying = activity.findViewById(R.id.iv_player_applying);
         ivOpponentApplying = activity.findViewById(R.id.iv_opponent_applying);
-        // 徽标点击展开该侧持续适用中效果列表（initViews 可随旋转重建重入，故需重新挂监听）
-        if (ivPlayerApplying != null) ivPlayerApplying.setOnClickListener(v -> onApplyingBadgeClick(0));
-        if (ivOpponentApplying != null) ivOpponentApplying.setOnClickListener(v -> onApplyingBadgeClick(1));
+        // 徽标点击同时展开两侧持续适用中效果列表（initViews 可随旋转重建重入，故需重新挂监听）
+        if (ivPlayerApplying != null) ivPlayerApplying.setOnClickListener(v -> onApplyingBadgeClick());
+        if (ivOpponentApplying != null) ivOpponentApplying.setOnClickListener(v -> onApplyingBadgeClick());
         // 重绑视图树后旧实例的呼吸动画会按字段引用驱动新视图（旋转重建场景）：先整体收口，
         // 再由 prepareForDisplay 的 refreshApplyingEffects 按当前账本重新点亮
         resetApplyingHints();

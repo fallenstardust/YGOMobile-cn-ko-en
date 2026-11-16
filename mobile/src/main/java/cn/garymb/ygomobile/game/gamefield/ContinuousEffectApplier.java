@@ -448,14 +448,14 @@ public final class ContinuousEffectApplier {
             // 取句时另按发动区域筛掉「从手卡/从盖放发动的场合」类前置条件不成立的句（用户新规格）
             String clause = durationClause(paragraph, maxGrade, a.location);
             if (clause.isEmpty()) clause = durationClause(str, maxGrade, a.location);
-            // 兜底（用户新规格：同类描述不许漏）：段落序能解出句子时不走——只有账本里的 offset
-            // 对不上本次文本（脚本序与文本圆圈序不一致、辅动/让位槽 offset 越界）且本框恰好一句适用句时才用它。
-            // 取句范围按框收紧（用户新规格）：灵摆怪兽卡发动的是怪兽框效果时，绝不能把灵摆框里含「这个回合」
-            // 的句子当成本次发动的适用句（反之亦然），故段落命中时只在发动段落所在框内兜底，不再扫整卡；
-            // 单框卡与整卡即单效果的传统卡（legacySingle）没有跨框误染风险，仍用整卡描述兜底
-            if (clause.isEmpty()) {
-                String scope = hit ? model.boxText(a.offset) : model.desc;
-                clause = uniqueCardClause(scope, maxGrade, a.location);
+            // 兜底范围按「只取发动过的那个效果」收紧（用户新规格）：段落命中（hit）时绝不再跨段落兜底——
+            // boxText 把本框全部序号段都扫进来、单框卡更是直接退到整卡 desc，没发动过的隔壁效果只要含
+            // 「这个回合」就会被当成本次发动的适用句列出（用户反馈：不要显示没有发动过的效果里包含关键词的文本）。
+            // 本次发动的段落（blockText 与它的 cdb str）抽不出适用句即整条丢弃，宁缺勿错列。
+            // 仅两类段落对不上的情形保留整卡唯一适用句兜底：全卡无①②序号的传统单效果卡（legacySingle，
+            // 整张卡的 desc 就是本次发动的效果，不存在跨段误染）与脚本序与文本圆圈序不一致（hit==false）。
+            if (clause.isEmpty() && !hit) {
+                clause = uniqueCardClause(model.desc, maxGrade, a.location);
             }
             // 兜底2（用户新规格：黑点子效果无协议帧可判定哪一个在生效）：发动段落抽不出任何时长语子句时，
             // 若段落块含「…以下效果适用」母句，列出母句本身，让本回合的锁不至于整条不显示。
@@ -487,10 +487,10 @@ public final class ContinuousEffectApplier {
 
     /**
      * 引擎在场提示来源（用户新规格：黑点子效果按 {@link GameField#collectApplyingHints} 上报的信号取句）：
-     * 逐条把 {@code {卡码，offset}} 解成一行——按发动段落所在框取句，与 {@link #forSide} 主循环同一
-     * durationClause→框内唯一句口径（不走整卡兜底、不走母句兜底：提示已精确指到生效段落，若该段落本身
-     * 没有时长语子句说明它是无持续语义的瞬时/代价提示，直接不成行）。已按 {@code canonical:offset} 去重，
-     * 同码同句不重复成行。提示为“当前在场适用”，回合基准取 nowTurn。
+     * 同 {@link #forSide} 主循环取句口径：段落存在时只用该段自身的段落块与它的 cdb str，抽不出即整条
+     * 丢弃（用户新规格：只列发动/适用过的那个效果的句子，不得扫本框其它段落；不走母句兜底：提示已精确
+     * 指到生效段落，若该段落本身没有时长语子句说明它是无持续语义的瞬时/代价提示）。
+     * 已按 {@code canonical:offset} 去重，同码同句不重复成行。提示为“当前在场适用”，回合基准取 nowTurn。
      * <p>例外（用户新规格：列王诗篇、灵王的波动、霆王的闪光、命王的螺旋类）：这类卡把附加处理效果的
      * {@code CLIENT_HINT} 注册放在「从手卡发动才成立」的分支里（脚本里是
      * {@code if e:GetHandler():IsStatus(STATUS_ACT_FROM_HAND) then e:SetLabel(100)} 才 RegisterEffect），
@@ -514,16 +514,20 @@ public final class ContinuousEffectApplier {
             int maxGrade = fieldNegated(GRADE_ALL, code, canonical, negatedOnField);
             // 提示本身不带发动区域信息，传 0 不做前置条件判定（条件本身已由提示存在与否保证）
             String clause = "";
-            if (model.hasParagraph(offset)) {
+            boolean paragraphKnown = model.hasParagraph(offset);
+            if (paragraphKnown) {
                 clause = durationClause(model.blockText(offset), maxGrade, 0);
                 if (clause.isEmpty()) {
                     String str = DataManager.get().getDesc((int) ((long) canonical * 16 + offset), "");
                     clause = durationClause(str, maxGrade, 0);
                 }
-                if (clause.isEmpty()) clause = uniqueCardClause(model.boxText(offset), maxGrade, 0);
+                // 与发动来源同一收紧口径（用户新规格：只列发动/适用过的那个效果的句子）：提示已精确
+                // 指到生效段落，该段落抽不出适用句即整条丢弃，不再扫本框其它段落（隔壁没发动过的序号句
+                // 含「这个回合」也不算本条）
+            } else {
+                // offset 对不上文本圆圈序（脚本侧偏移）时的整卡唯一适用句兜底
+                clause = uniqueCardClause(model.desc, maxGrade, 0);
             }
-            // offset 对不上文本圆圈序（脚本侧偏移）时的整卡唯一适用句兜底
-            if (clause.isEmpty()) clause = uniqueCardClause(model.desc, maxGrade, 0);
             if (clause.isEmpty()) continue;
             boolean duel = marksDuelDuration(clause);
             boolean span = !duel && hasNextTurnPledge(clause);
@@ -845,8 +849,10 @@ public final class ContinuousEffectApplier {
      * 给定范围内恰好只有一句适用句时用它（用户新规格：同类描述不许漏）：当发动账本里的段落序对不上
      * 本次文本（脚本 {@code aux.Stringid} 偏移与文本圆圈序不一致、或辅动/让位槽 offset 越界）时，
      * 入参 {@code text} 里恰好只有一句适用句则用它；多句（歧义，不知是哪条）或零句时不列。
-     * <p>调用方传入的范围已按框收紧（灵摆怪兽卡用 {@link EffectParagraphs#boxText}，只用发动段落
-     * 所在框；单框/传统单效果卡用整卡描述），故本方法不会把另一个框（如灵摆框）的誓约当成本次发动的。
+     * <p>调用方传入的范围只限于「本次发动/适用的那个效果自身」：段落命中时为段自身的 blockText/str，
+     * 抽不出适用句即整条丢弃，绝不再把同框（{@link EffectParagraphs#boxText}）或同卡其它没发动过的序号句
+     * 拿来凑数（用户新规格）；只有全卡无序号的传统单效果卡与 offset 对不上文本圆圈序（段落未知）两种
+     * 情形，才在整卡描述里取唯一适用句。
      * <p>本方法只用于兜底，段落序能解出句子时一律不走；同样按 {@code activateLoc} 筛掉前置条件不符的句。
      */
     private static String uniqueCardClause(String text, int maxGrade, int activateLoc) {

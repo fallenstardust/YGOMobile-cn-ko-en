@@ -117,13 +117,14 @@ abstract class GameTopInfoManagerBase {
     protected ImageView ivUndo;
     /**
      * 持续适用中效果徽标（用户新规格）：本侧头像下角的金色外发光感叹号（我方左下、对方右下），
-     * 该侧存在「整回合/整局一直适用中」的效果时呼吸闪动，点击向下展开该侧列表。
+     * 该侧存在「整回合/整局一直适用中」的效果时呼吸闪动；点任一侧徽标都把两侧列表一起展开
+     *（我方一份贴我方血条下、对方一份贴对方血条下，各自带本侧标题，不混排）。
      */
     protected ImageView ivPlayerApplying, ivOpponentApplying;
-    /** 两侧当前持续适用中的效果条目（解算后缓存，徽标点击据此展开，避免重复解算） */
+    /** 两侧当前持续适用中的效果条目（解算后缓存，徽标点击据此同时展开两份列表，避免重复解算） */
     protected List<ContinuousEffectApplier.Applying> applyingMe = Collections.emptyList();
     protected List<ContinuousEffectApplier.Applying> applyingOpp = Collections.emptyList();
-    /** 徽标点击展开的下拉列表（PopupWindow 层，不被 GL 曲面遮挡） */
+    /** 徽标点击展开的下拉列表（内含两侧各一个 PopupWindow 面板，不被 GL 曲面遮挡） */
     protected ApplyingEffectsPopup applyingPopup;
     /** 两侧徽标各自的呼吸动画（null=未播放） */
     protected ValueAnimator applyingPulseMe, applyingPulseOpp;

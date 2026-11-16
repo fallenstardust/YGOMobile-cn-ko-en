@@ -5,12 +5,14 @@
   聊天行的图层约定）。本文件只定义面板骨架，列表行按当前侧条目动态填充进
   @+id/layout_applying_rows；行高与卡图随 GameTopInfoManager 的 HUD 系数缩放，
   文字固定 6sp（用户新规格：显示文字再缩小一档，不随 HUD 放大）。
+  面板底（用户新规格）：由整块方角 blackLinght 改为圆角半透明 button_radius_black_transparents，
+  与卡组页/退出键等现有半透圆角面板同一 drawable，不再出现生硬黑块。
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/layout_applying_effects"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/blackLinght"
+    android:background="@drawable/button_radius_black_transparents"
     android:orientation="vertical"
     android:paddingStart="6dp"
     android:paddingEnd="6dp">

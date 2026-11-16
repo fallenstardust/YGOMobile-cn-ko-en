@@ -289,20 +289,56 @@ public class StringManager implements Closeable {
         return getSystemString(value.getLanguageIndex(), value.name());
     }
 
+    /**
+     * 属性码是位域（ocgcore common.h ATTRIBUTE_*：地0x1 水0x2 炎0x4 风0x8 光0x10 暗0x20 神0x40，
+     * ATTRIBUTES_COUNT=7），双属性卡（混沌士兵类）与被效果追加属性的卡，通讯里下发的就是多比特合值；
+     * {@link CardAttribute#valueOf(long)} 按整值匹配必然落空，旧写法于是直接把合值的十进制数字
+     * 当文字显示（用户反馈的「只显示了数字」）。现按 data_manager.cpp FormatAttribute 的口径逐位展开。
+     */
     public String getAttributeString(long id) {
         CardAttribute value = CardAttribute.valueOf(id);
-        if (value == null) {
-            return String.valueOf(id);
+        if (value != null) {
+            return getSystemString(value.getLanguageIndex(), value.name());
         }
-        return getSystemString(value.getLanguageIndex(), value.name());
+        String flags = joinFlagStrings(id, STRING_ID_ATTRIBUTE, ATTRIBUTES_COUNT);
+        return flags != null ? flags : String.valueOf(id);
     }
 
+    /**
+     * 种族码同为位域（RACE_*，共 RACES_COUNT=26 位，系统串 1020+i）：被效果改变/附加种族的卡
+     * 下发多比特合值，旧写法 valueOf 失配后直接回显 {@code 0x…} 原值（与属性同型问题），现按
+     * data_manager.cpp FormatRace 逐位展开并以 '|' 连接。
+     */
     public String getRaceString(long id) {
         CardRace value = CardRace.valueOf(id);
-        if (value == null) {
-            return String.format("0x%x", id);
+        if (value != null) {
+            return getSystemString(value.getLanguageIndex(), value.name());
         }
-        return getSystemString(value.getLanguageIndex(), value.name());
+        String flags = joinFlagStrings(id, STRING_ID_RACE, RACES_COUNT);
+        return flags != null ? flags : String.format("0x%x", id);
+    }
+
+    /** ocgcore strings.conf 系统串分段：属性 1010..1016（7 位）、种族 1020..1045（26 位），
+     *  与 data_manager.h 的 STRING_ID_ATTRIBUTE / STRING_ID_RACE 及 common.h 的
+     *  ATTRIBUTES_COUNT / RACES_COUNT 同值；CardAttribute/CardRace 枚举的 lang_index 已是同一偏移 */
+    private static final int STRING_ID_ATTRIBUTE = 1010;
+    private static final int ATTRIBUTES_COUNT = 7;
+    private static final int STRING_ID_RACE = 1020;
+    private static final int RACES_COUNT = 26;
+
+    /**
+     * 位域逐位展开（对齐 data_manager.cpp FormatAttribute/FormatRace）：第 i 位命中即接
+     * {@code baseId + i} 系统串，多段以 '|' 连接；一个都没命中返回 null，由调用方按原口径
+     * 回显数值（不返回空串，免得调用方的判空口径分叉把属性行整行抹掉）。
+     */
+    private String joinFlagStrings(long bits, int baseId, int count) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < count; i++) {
+            if ((bits & (0x1L << i)) == 0) continue;
+            if (sb.length() > 0) sb.append('|');
+            sb.append(getSystemString(baseId + i, ""));
+        }
+        return sb.length() > 0 ? sb.toString() : null;
     }
 
     /**

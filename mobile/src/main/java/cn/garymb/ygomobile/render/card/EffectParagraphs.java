@@ -123,7 +123,7 @@ public final class EffectParagraphs {
             paraOf[i] = para;
         }
         // 段落→段首序号：per-duel 条款判定时需要知道限制句中序号与本段的对应关系；
-        // 段落→所在框：灵摆怪兽卡据此把灵摆框与怪兽框分开（兜底取句不得跨框，见 {@link #boxText}）
+        // 段落→所在框：灵摆怪兽卡据此把灵摆框与怪兽框分开（取句不得跨框跳段，见 {@link #boxText}）
         int[] paraAnchor = new int[docIdx + 1];
         int[] frameOf = new int[docIdx + 1];
         for (int[] m : meta) {
@@ -225,11 +225,12 @@ public final class EffectParagraphs {
 
     /**
      * 该段所在「框」的全部段落块文本拼接（同 {@link #blockText} 的段级口径，只是把范围从单段
-     * 扩到本框的所有段），供「发动段落抽不出适用句、须在本框内按唯一适用句兜底」时用。
-     * <p>灵摆怪兽卡的灵摆框与怪兽框是两个互不相干的效果框：怪兽效果发动后绝不能再把灵摆框里
-     * 的「这个回合」句当作本次发动的适用句（反之亦然），故兜底取句范围必须按框收紧，不能扫整卡。
-     * <p>单框卡（{@link #frameCount}&lt;=1，无第 2 条框标题）没有跨框误染风险，直接返回整卡描述，
-     * 保持既有「同类描述不许漏」兜底口径；段不存在时空串。
+     * 扩到本框的所有段），仅供分框展示/定位用。
+     * <p>灵摆怪兽卡的灵摆框与怪兽框是两个互不相干的效果框（{@code frameOf/frameCount} 即此划分）。
+     * <p>注：「持续适用中效果」的兜底取句已按用户新规格收紧到「只取发动过的那个效果自身的段落」，
+     * 不得再用本方法把同框其它序号句（没发动过、但含「这个回合」一类关键词）当成本次发动的适用句，
+     * 见 {@code ContinuousEffectApplier#forSide}。
+     * <p>单框卡（{@link #frameCount}&lt;=1，无第 2 条框标题）没有跨框概念，直接返回整卡描述；段不存在时空串。
      */
     public String boxText(int offset) {
         if (!hasParagraph(offset)) return "";
