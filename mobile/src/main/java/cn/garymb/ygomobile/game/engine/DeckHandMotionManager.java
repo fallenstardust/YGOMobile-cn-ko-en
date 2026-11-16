@@ -386,22 +386,10 @@ public class DeckHandMotionManager {
         if (count > 1) {
             engine.soundManager.playSoundEffect(SoundManager.SFX.SHUFFLE); // L2663-2664
         }
-        // 对齐 C++ L2669-2681：对方手卡先进行一次整体翻面（聚拢 + 卡背朝外）
-        boolean needFlipForOpponent = (p == 1) && !engine.replayMode && !engine.isSingleMode;
-        if (needFlipForOpponent) {
-            for (ClientCard c : hand) {
-                if (c == null || c.code == 0) continue;
-                // 对齐 C++ L2673-2674：向玩家侧聚拢并旋转至卡背朝向观众
-                // Java 用 curX/curY 移动，通过 updateHandFlip 控制翻转
-                c.curX += (0.0f - c.curX) / 5.0f; // 向中心聚拢
-                // 对手手卡的翻转由 handFlipT 自动推进，此处不直接修改旋转角度
-                c.is_moving = true;
-                c.aniFrame = 5;
-            }
-            if (!engine.field.instantPlace) {
-                engine.animHoldUntilMs = System.currentTimeMillis() + 5L * 17L;
-            }
-        }
+        // 对齐 C++ L2669-2681：对方手卡先进行一次整体翻面（聚拢 + 卡背朝外）。
+        // 翻面由 updateHandFlip 依换入后的卡码自动推进；聚拢由下方 startHandShuffle 的关键帧统一驱动。
+        // 旧实现在此直接置 is_moving/aniFrame 却未设 animFrom/animTo，旧端点（多为 0）会把
+        // 手卡错误地抽向世界原点（画面上落在侧列/对方除外区一带）后再飞回——即用户反馈的假飞行。
         int maxTotal = 0;
         for (ClientCard c : hand) {
             if (c == null) continue;
@@ -526,17 +514,9 @@ public class DeckHandMotionManager {
         // 正面飞入（faceupEntry）的卡全程保持正面，不再归零翻面；
         // 不打断卡片飞入手牌的 is_moving 动画，于是观感为「飞进来 + 边落位边翻开」
         engine.field.startHandReveal(arrivingCard, flip && !faceupEntry);
-        
-        // 对齐 C++ L2669-2681：对方手卡先进行一次整体聚拢 + 卡背朝外的翻面动画
-        if (flip) {
-            arrivingCard.curX += (0.0f - arrivingCard.curX) / 5.0f; // 向中心聚拢
-            arrivingCard.is_moving = true;
-            arrivingCard.aniFrame = 5;
-            if (!engine.field.instantPlace) {
-                engine.animHoldUntilMs = System.currentTimeMillis() + 5L * 17L;
-            }
-        }
-        
+
+        // （已移除旧实现在此“向中心聚拢”的假移动：它只置 is_moving/aniFrame 而不设 animFrom/animTo，
+        //   遗留端点会把卡从错误坐标起飞；聚拢语义由上方飞入手牌动画 + 下方持闸展示承担）
         // 揭示持闸：飞入 10 帧 + 亮出展示 14 帧（对齐 C++ 翻面后 WaitFrameSignal 的停留段）。
         // 持闸期间后续消息（含引擎的 MSG_SHUFFLE_HAND）不放行，洗切紧接在揭示之后播一次
         final long hold = 24L * 17L;

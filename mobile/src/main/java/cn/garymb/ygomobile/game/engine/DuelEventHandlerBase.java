@@ -652,6 +652,11 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
             pcard = new ClientCard();
             pcard.owner = p;
             pcard.controler = p;
+            // 列表空位（张数与实际对象错位）的降级新建：先把起点落在卡组顶，否则新对象 cur 全 0，
+            // 飞入手牌时从世界原点（画面上是侧列/对方除外区一带）起飞，形成抽卡时的错误飞行
+            pcard.location = deckLoc;
+            pcard.sequence = Math.max(0, t);
+            engine.field.snapCardPos(pcard);
         }
         // 关键：立即写入本次收到的卡码（已含服务器的遮蔽处理：对手抽卡时为 0），防止复用卡组顶
         // 旧对象时残留上一次的卡码、或经 chain_code 回退取值，造成信息泄露。必须在设置 handFlipT

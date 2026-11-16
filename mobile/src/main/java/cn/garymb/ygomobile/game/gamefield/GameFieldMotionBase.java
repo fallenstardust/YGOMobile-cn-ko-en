@@ -508,6 +508,19 @@ abstract class GameFieldMotionBase {
             return;
         }
         float[] loc = field.getCardLocation(pcard);
+        // 目标几何无效（location 不属于任何已知区域分支，getCardLocation 返回全 0）：
+        // 不能飞向世界原点（画面上落在侧列/对方除外区一带后消失），保持当前位置不动
+        //（对齐 C++ GetCardLocation 对未处理分支不改 curPos 的语义）
+        if (loc[0] == 0f && loc[1] == 0f && loc[2] == 0f && pcard.location != 0) {
+            return;
+        }
+        // 飞行起点兜底（对齐 C++ MoveCard 从 curPos 起飞的语义）：新对象/异常路径的卡从未定位过
+        // （cur 全 0）时若直接起飞，会从世界原点——画面上恰好落在对方除外/侧列一带——飞向目标，
+        // 出现「卡片错误移动到对方除外区附近然后消失」的假飞行。此时先把起点吸附到它当前所在区。
+        if (pcard.curX == 0f && pcard.curY == 0f && pcard.curZ == 0f
+                && pcard.location != 0) {
+            setCardPos(pcard);
+        }
 
         pcard.animJitterX = jitterX;
         pcard.animDelayFrame = Math.max(0, delay);

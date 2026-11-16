@@ -856,6 +856,11 @@ public class GameField {
         motion.setCardPos(pcard);
     }
 
+    /** 供跨包调用：把卡片瞬吸到其当前 c/l/s 对应的几何位（不产生动画），常用于兜底定位保证飞行起点正确 */
+    public void snapCardPos(ClientCard pcard) {
+        motion.setCardPos(pcard);
+    }
+
     /** 飞行起点兜底落位（仅供从未定位过的卡使用）：临时回写旧 c/l/s 求旧区域几何位置再恢复 addCard 已写入的新值，使后续 moveCardAnimated 从旧位置飞向新位置，正常链路不会触达此路径 */
     public void setCardPosForMove(ClientCard pcard, int oldCtrl, int oldLocBase, int oldSeq) {
         if (pcard == null || oldLocBase == 0) return;

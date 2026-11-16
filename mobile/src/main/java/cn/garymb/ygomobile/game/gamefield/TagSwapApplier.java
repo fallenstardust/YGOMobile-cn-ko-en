@@ -69,9 +69,13 @@ public class TagSwapApplier {
      *  对应第一段甩离节拍）；extra_p_count 按消息值直接覆盖（C++ L4254） */
     private void applyTagSwapPiles(GameField field, int p, int mcount, int ecount, int pcount,
                                    int[] handCodes, int[] extraCodes, int topcode) {
-        resizeTagPile(field, p, CardLocation.Deck.value(), mcount, null);
-        resizeTagPile(field, p, CardLocation.Hand.value(), handCodes.length, handCodes);
-        resizeTagPile(field, p, CardLocation.Extra.value(), extraCodes.length, extraCodes);
+        resizeTagPile(field, p, CardLocation.Deck.value(), mcount, null, true);
+        // 手卡不播“逐张飞入”动画（对齐 C++ 两段“甩离-飞回”中“甩离阶段”已把旧手卡带走，
+        // 新手卡的入场是整堆换上；本端结构重建同步完成、无法复刻两段，逐张飞入会被看成
+        // 「对方抽卡」动画，而紧随其后还有真正的 MSG_DRAW 抽卡——用户反馈的就是这个多余动画）。
+        // 手卡直接按布局落位，换人的动感由卡组/额外堆叠承担。
+        resizeTagPile(field, p, CardLocation.Hand.value(), handCodes.length, handCodes, false);
+        resizeTagPile(field, p, CardLocation.Extra.value(), extraCodes.length, extraCodes, true);
         field.extraPCount[p] = pcount;
         List<ClientCard> deck = field.players[p].deck;
         if (!deck.isEmpty() && topcode != 0) {
@@ -86,7 +90,7 @@ public class TagSwapApplier {
         field.refreshCardCountDisplay();
     }
 
-    private void resizeTagPile(GameField field, int p, int loc, int count, int[] codes) {
+    private void resizeTagPile(GameField field, int p, int loc, int count, int[] codes, boolean animate) {
         List<ClientCard> list = field.players[p].getLocationList(loc);
         if (list == null) return;
         // Java 堆区列表为 null 填充定长（removeCard 置尾 null 不缩表），C++ 为 vector
@@ -119,6 +123,12 @@ public class TagSwapApplier {
             // C++ L4270/L4278 直接赋值（不走 SetCode）：整堆卡码全部按新行动选手回填
             if (codes != null && i < codes.length) c.code = codes[i];
             field.setCardPos(c);
+            if (!animate) {
+                // 手卡：仅按新布局落位，不产生飞入（见 applyTagSwapPiles 的说明）
+                c.is_moving = false;
+                c.aniFrame = 0;
+                continue;
+            }
             // 飞回起点：我方向屏幕外（+Y）/对方向场地深处（-Y）偏移（C++ L4262-4263
             // curPos.Y += 2.0f / -= 3.0f），5 帧延迟后 moveCardAnimated 归位
             c.curY += (p == 0 ? 2.0f : -3.0f);
