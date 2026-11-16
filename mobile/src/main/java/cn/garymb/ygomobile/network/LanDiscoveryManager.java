@@ -23,6 +23,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.GameApplication;
+import ocgcore.DataManager;
+import ocgcore.LimitManager;
 
 public class LanDiscoveryManager implements YGOProtocol {
     private static final String TAG = "LanDiscoveryManager";
@@ -49,7 +51,7 @@ public class LanDiscoveryManager implements YGOProtocol {
         public int timeLimit;
 
         public String getDisplayText() {
-            String banlistName = lflist != 0 ? "Banlist#" + lflist : "N/A";
+            String banlistName = resolveBanlistName(lflist);
             String ruleName = getRuleName(rule);
             String modeName = getModeName(mode);
             boolean isDefault = (drawCount == 1 && startHand == 5 && startLp == 8000
@@ -68,6 +70,16 @@ public class LanDiscoveryManager implements YGOProtocol {
                 sb.append(" | ").append(timeLimit).append("s");
             }
             return sb.toString();
+        }
+
+        /** 按 lflist 哈希反查本地禁卡表名称（常规表优先、其次 Genesys 表）；0/未收录显示 N/A。 */
+        private static String resolveBanlistName(int lflist) {
+            if (lflist == 0) return "N/A";
+            LimitManager lm = DataManager.get().getLimitManager();
+            if (lm == null) return "N/A";
+            String name = lm.getLimitNameByHash(lflist);
+            if (name == null) name = lm.getGenesysLimitNameByHash(lflist);
+            return name != null ? name : "N/A";
         }
 
         private static String getRuleName(int rule) {
