@@ -3,8 +3,11 @@ package cn.garymb.ygomobile.utils;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 public class MD5Util {
     private static final char[] hexChar = "0123456789abcdef".toCharArray();
@@ -76,5 +79,34 @@ public class MD5Util {
             IOUtils.close(in);
         }
         return hash;
+    }
+
+    /** 新的 SHA-256 摘要器；每个 Android 都有 SHA-256 */
+    public static MessageDigest newSHA256() {
+        try {
+            return MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    /**
+     * 读完并关闭 stream，返回 SHA-256 的十六进制小写；读失败时抛出，不返回 null
+     */
+    public static String getStreamSHA256(InputStream stream) throws IOException {
+        try (InputStream in = stream) {
+            MessageDigest sha256 = newSHA256();
+            byte[] buffer = new byte[64 * 1024];
+            int numRead;
+            while ((numRead = in.read(buffer)) != -1) {
+                sha256.update(buffer, 0, numRead);
+            }
+            return toHexString(sha256.digest());
+        }
+    }
+
+    /** 字符串按 UTF-8 编码后的 SHA-256 */
+    public static String getStringSHA256(String source) {
+        return toHexString(newSHA256().digest(source.getBytes(StandardCharsets.UTF_8)));
     }
 }

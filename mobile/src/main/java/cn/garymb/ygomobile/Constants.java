@@ -227,6 +227,10 @@ public interface Constants {
     String URL_CN_DATAVER = "https://cdn02.moecube.com:444/ygopro-super-pre/data/version.txt";
     String URL_PRE_CARD = "https://cdn02.moecube.com:444/ygopro-super-pre/data/test-release.json";
     String URL_SUPERPRE_CN_FILE = "https://cdn02.moecube.com:444/ygopro-super-pre/archive/ygopro-super-pre.ypk";
+    //内容为当前版本带版本号的完整包地址（如 ygopro-super-pre-29.33.ypk），增量更新从中取版本号
+    String URL_SUPERPRE_LATEST_TAG = "https://cdn02.moecube.com:444/ygopro-super-pre/data/latest-tag.txt";
+    //MyCard 发布接口，与 MyCard 客户端相同：checksums/<app>/<版本>、update/<app>/<版本>
+    String URL_MYCARD_RELEASE_API = "https://sapi.moecube.com:444/release/update/";
     int PORT_Mycard_Super_Pre_Server = 888;
     String URL_Mycard_Super_Pre_Server = "mygo.superpre.pro";
     String URL_Mycard_Super_Pre_Server_2 = "mygo2.superpre.pro";

@@ -325,4 +325,28 @@ public class FileUtils {
         }
         return result;
     }
+
+    //删除整个目录（含子目录与目录本身）；是文件就删文件
+    public static void deleteDir(File dir) {
+        File[] files = dir.listFiles();
+        if (files != null) {
+            for (File f : files) {
+                deleteDir(f);
+            }
+        }
+        dir.delete();
+    }
+
+    //目录下所有文件的总字节数；是文件就返回文件大小，不存在返回 0
+    public static long getDirSize(File dir) {
+        File[] files = dir.listFiles();
+        if (files == null) {
+            return dir.length();
+        }
+        long size = 0;
+        for (File f : files) {
+            size += getDirSize(f);
+        }
+        return size;
+    }
 }

@@ -13,6 +13,8 @@ android {
         versionName "3.14.0"
         // 主程序协议版本号（十六进制），供 Constants.PRO_VERSION 使用
         buildConfigField 'int', 'PRO_VERSION', '0x1362'
+        // 先行卡增量更新总开关；false 时先行卡一律走原来的完整下载
+        buildConfigField 'boolean', 'SUPERPRE_INCREMENTAL', 'true'
         flavorDimensions "versionCode"
         vectorDrawables.useSupportLibrary = true
         ndkVersion "29.0.14206865"
@@ -175,4 +177,6 @@ dependencies {
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
     // LZMA decompression for replay files
     implementation 'org.tukaani:xz:1.9'
+    // zstd decompression for incremental pre-release card package updates
+    implementation 'com.github.luben:zstd-jni:1.5.7-12@aar'
 }
