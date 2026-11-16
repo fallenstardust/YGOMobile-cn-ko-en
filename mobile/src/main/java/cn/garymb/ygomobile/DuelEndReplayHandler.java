@@ -44,7 +44,11 @@ class DuelEndReplayHandler {
     static final long ANIM_SETTLE_TIMEOUT_MS = 20000L;
     /** 本次决斗结束等待动画排空的截止时间戳（DUEL_END 置位，processPendingReplays 轮询至空或超时） */
     long animSettleDeadlineMs = 0L;
-    /** 决斗结束时本端是否观战（在 disconnect 前捕获，避免断开后身份丢失）：观战结算前才需等待动画排空（需求4），对战玩家不等待 */
+    /** 等待动画排空的留痕只打一次（真机核对观战/对战两种身份） */
+    boolean animSettleWaitLogged = false;
+    /** 决斗结束时本端是否观战（在 disconnect 前捕获，避免断开后身份丢失）：观战面对实况积压可无限等待并刷新截止，
+     *  对战方（含人机局）的 MSG 尾段是有限量，按统一 20s 截止兜底。两端都必须在 MSG 队列与动画排空后才弹保存录像，
+     *  对齐 gframe：C++ 的 STOC_REPLAY 处理挂在 EndDuel 后、而 EndDuel 只在消息队列耗尽（dInfo.curMsg == -1）时才执行 */
     boolean duelEndedAsSpectator = false;
     final Runnable duelEndReplayProcessor = new Runnable() {
         @Override
@@ -90,15 +94,38 @@ class DuelEndReplayHandler {
             pendingReplays.clear();
             return;
         }
-        // 观战（需求1）：已收的全部通讯 msg 可能仍在按动画序列逐个播放（统一闸门串行化），需等消息队列排空且无任何动画在播再弹保存录像 dialog；实况观战会「积压」（连锁/快速效果下发速度远超动画播放速度），故队列仍有存量（backlog）时无条件继续等待并每轮刷新兜底截止（backlog 被持续消化不是卡死，动画闸门另有 8s failsafe 强制推进，队列必然最终排空）；早前只取 DUEL_END 一次性 20s 截止、不随 backlog 刷新，导致观战积压超 20s 时 dialog 提前弹出打断动画，正是本次要修复的根因，队列已空仅剩收尾动画（胜负文字等）时才用超时兜底。
+        // 动画排空等待（全部身份适用）：MSG 可能仍在按动画序列逐个播放（统一闸门串行化），需等消息队列排空且
+        // 无任何动画在播再弹保存录像 dialog，否则会在胜负动画播完前就打断玩家（C++ 端 STOC_REPLAY 的保存流程
+        // 挂在 EndDuel 后，而 EndDuel 只在 dInfo.curMsg == -1、即全部消息处理完时才执行，所以没有这个问题）。
+        // 观战：实况会「积压」（连锁/快速效果下发速度远超动画播放），队列仍有存量时无条件继续等待并每轮刷新兜底
+        // 截止（backlog 被持续消化不是卡死，动画闸门另有 8s failsafe 强制推进，队列必然最终排空）；
+        // 对战方（含人机局）：MSG 尾段（伤害/胜负/收尾动画）是有限量，同样轮询但按统一 20s 截止兜底，避免闸门异常时不弹。
+        // 队列已空仅剩收尾动画（胜负文字等）时同样用超时兜底。
         GameEngine eng = activity.engine;
-        if (eng != null && duelEndedAsSpectator) {
-            if (eng.hasPendingMsgs() || !eng.isMsgQueueIdle()) {
-                animSettleDeadlineMs = System.currentTimeMillis() + ANIM_SETTLE_TIMEOUT_MS;
-                activity.mainHandler.postDelayed(duelEndReplayProcessor, ANIM_SETTLE_POLL_MS);
-                return;
+        if (eng != null) {
+            boolean backlog = eng.hasPendingMsgs() || !eng.isMsgQueueIdle();
+            boolean animBusy = eng.isAnyAnimationBusy();
+            boolean pastDeadline = System.currentTimeMillis() >= animSettleDeadlineMs;
+            boolean wait;
+            if (backlog) {
+                if (duelEndedAsSpectator) {
+                    // 观战：实况积压可持续消化，刷新截止继续等
+                    animSettleDeadlineMs = System.currentTimeMillis() + ANIM_SETTLE_TIMEOUT_MS;
+                    wait = true;
+                } else {
+                    wait = !pastDeadline;
+                }
+            } else {
+                wait = animBusy && !pastDeadline;
             }
-            if (eng.isAnyAnimationBusy() && System.currentTimeMillis() < animSettleDeadlineMs) {
+            if (wait) {
+                // 单次留痕：真机可据 spectator= 核对观战/对战两种身份都在等动画排空
+                if (!animSettleWaitLogged) {
+                    animSettleWaitLogged = true;
+                    Log.i(TAG, "replay dialog deferred until msgs/anim settle (spectator="
+                            + duelEndedAsSpectator + ", backlog=" + backlog
+                            + ", animBusy=" + animBusy + ")");
+                }
                 activity.mainHandler.postDelayed(duelEndReplayProcessor, ANIM_SETTLE_POLL_MS);
                 return;
             }
@@ -228,6 +255,7 @@ class DuelEndReplayHandler {
         duelEndHandling = false;
         duelEndedAsSpectator = false;
         animSettleDeadlineMs = 0L;
+        animSettleWaitLogged = false;
         pendingReplays.clear();
         if (replaySaveDialog != null) {
             replaySaveDialog.dismiss();
