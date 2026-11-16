@@ -100,6 +100,9 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
                 activity.cardDetailPanel.closeGameButtons();
                 duelEnd.duelEndHandling = true;
                 if (activity.dialogUtil != null) activity.dialogUtil.dismissOpenGameDialogs();
+                // 收尾需要等 MSG 尾段动画播完再弹录像/结算窗：释放可能残留的确认卡片持闸，
+                // 否则消息队列永远排不空，等待只能靠 20s 兜底
+                if (activity.engine != null) activity.engine.releaseMsgGateForDialog();
                 if (duelEnd.resultDialog != null) {
                     duelEnd.resultDialog.dismiss();
                     duelEnd.resultDialog = null;
@@ -107,7 +110,8 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
                 // 断开前捕获观战身份（需求4：观战结算前需等所有 msg 对应动画排空）
                 duelEnd.duelEndedAsSpectator = activity.engine != null && activity.engine.isSpectator();
                 if (activity.engine != null) activity.engine.disconnect();
-                // 观战结算前先置动画排空等待截止（processPendingReplays 轮询至消息队列空闲且无动画在播再弹保存录像 dialog，超时兜底防卡死；对战玩家无此等待）
+                // 结算前先置动画排空等待截止（processPendingReplays 轮询至消息队列空闲且无动画在播再弹保存录像 dialog，
+                // 超时兜底防卡死；观战积压可刷新截止，对战方按 20s 截止。对齐 gframe：保存流程只在消息队列耗尽后执行）
                 duelEnd.animSettleDeadlineMs = System.currentTimeMillis() + DuelEndReplayHandler.ANIM_SETTLE_TIMEOUT_MS;
                 // 顺序：先处理通讯发来的录像（保存/取消），全部完成后再弹「决斗结束」对话框
                 duelEnd.scheduleReplayProcessing();
@@ -210,7 +214,16 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
     @Override
     public void onChatReceived(int playerType, String message) {
         // 决斗中的聊天/观战发言以 0xF1 伪帧录入当前 MSG 段（回放模式与决斗外场景自动丢弃，见 GameEngine::recordChatFrame），保存录像时随 V2 尾段并入 yrp，无引擎回放按时间线重现；libygo 不读尾段，兼容性不受影响
-        if (activity.engine != null) activity.engine.recordChatFrame(playerType, message);
+        GameEngine eng = activity.engine;
+        if (eng != null) eng.recordChatFrame(playerType, message);
+        if (eng != null && eng.inDuel && !eng.replayMode) {
+            // 对齐 C++：StocChat 与引擎消息在同一条“被动画阻塞”的串行链上（duelclient.cpp ClientAnalyze
+            // 在 WaitFrameSignal 期间阻塞整条消息线程，STOC_CHAT 自然排在当前动画之后上屏）。
+            // 原先在主线程即时 append，没有积压时（如人机先攻首回合）台词会抢在对应操作动画前面
+            // 出现；改走消息队列后，队列里的动作消息播完动画才轮到聊天，观感与 C++ 一致。
+            eng.postOnMsgQueue(() -> activity.fieldCtl.appendChat(playerType, message));
+            return;
+        }
         activity.runOnUiThread(() -> activity.fieldCtl.appendChat(playerType, message));
     }
 
