@@ -18,6 +18,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import cn.garymb.ygomobile.Constants;
 
@@ -240,5 +242,87 @@ public class FileUtils {
             file.delete();
         }
 
+    }
+
+    /**
+     * 将 content Uri 指向的文件复制到目标文件，目标已存在则直接覆盖。
+     * 适用于 FileProvider 分享过来的单个文件。
+     *
+     * @return true 复制成功
+     */
+    public static boolean copyUriToFile(Context context, Uri srcUri, File destFile) {
+        InputStream in = null;
+        try {
+            in = context.getContentResolver().openInputStream(srcUri);
+            if (in == null) {
+                Log.e(Constants.TAG, "copyUriToFile: cannot open uri " + srcUri);
+                return false;
+            }
+            copyFile(in, destFile);
+            return true;
+        } catch (Exception e) {
+            Log.e(Constants.TAG, "copyUriToFile failed: " + destFile, e);
+            return false;
+        } finally {
+            closeQuietly(in);
+        }
+    }
+
+    /**
+     * 将 content Uri 指向的 zip 解压到目标目录，已存在的文件直接覆盖。
+     * 适用于 FileProvider 分享过来的 zip 包。
+     *
+     * @return true 解压成功；任意条目出错仍会继续处理其余条目，整体返回 false
+     */
+    public static boolean unzipFromUri(Context context, Uri zipUri, File destDir) {
+        InputStream is = null;
+        ZipInputStream zis = null;
+        boolean result = true;
+        try {
+            is = context.getContentResolver().openInputStream(zipUri);
+            if (is == null) {
+                Log.e(Constants.TAG, "unzipFromUri: cannot open uri " + zipUri);
+                return false;
+            }
+            IOUtils.createFolder(destDir);
+            String destCanonical = destDir.getCanonicalPath();
+            zis = new ZipInputStream(is);
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                File outFile = new File(destDir, entry.getName());
+                String outCanonical = outFile.getCanonicalPath();
+                // 防 zip slip：目标必须仍在解压根目录内
+                if (!outCanonical.equals(destCanonical)
+                        && !outCanonical.startsWith(destCanonical + File.separator)) {
+                    Log.w(Constants.TAG, "unzipFromUri: skip unsafe entry " + entry.getName());
+                    zis.closeEntry();
+                    continue;
+                }
+                if (entry.isDirectory()) {
+                    if (!outFile.exists()) {
+                        outFile.mkdirs();
+                    }
+                } else {
+                    File parent = outFile.getParentFile();
+                    if (parent != null && !parent.exists()) {
+                        parent.mkdirs();
+                    }
+                    FileOutputStream fos = new FileOutputStream(outFile);
+                    try {
+                        copy(zis, fos);
+                    } finally {
+                        closeQuietly(fos);
+                    }
+                }
+                zis.closeEntry();
+            }
+        } catch (Exception e) {
+            Log.e(Constants.TAG, "unzipFromUri failed", e);
+            result = false;
+        } finally {
+            closeQuietly(zis);
+            closeQuietly(is);
+        }
+        return result;
     }
 }
