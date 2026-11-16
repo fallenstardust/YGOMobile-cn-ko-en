@@ -536,6 +536,7 @@
     <!-- /ai 人机召唤 UI -->
     <string name="btn_ai_summon">/ai（呼叫Bot）</string>
     <string name="ai_deck_select_title">符合%1$s的人機列表</string>
+    <string name="ai_deck_random">隨機-不指定</string>
     <string name="ai_deck_empty">沒有符合當前禁卡表的人機卡組</string>
     <string name="cancel">取消</string>
 </resources>

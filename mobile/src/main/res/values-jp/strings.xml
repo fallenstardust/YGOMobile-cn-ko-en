@@ -534,6 +534,7 @@
     <!-- /ai 人机召唤 UI -->
     <string name="btn_ai_summon">/ai（Bot呼び出し）</string>
     <string name="ai_deck_select_title">%1$s に適合するAIデッキ一覧</string>
+    <string name="ai_deck_random">ランダム-指定なし</string>
     <string name="ai_deck_empty">現在のリミットレギュレーションに適合するAIデッキがありません</string>
     <string name="cancel">キャンセル</string>
 </resources>

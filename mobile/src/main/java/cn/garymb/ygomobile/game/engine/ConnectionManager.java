@@ -15,6 +15,7 @@ import cn.garymb.ygomobile.GameApplication;
 import cn.garymb.ygomobile.network.LanDiscoveryManager;
 import cn.garymb.ygomobile.network.YGOProtocol;
 import cn.garymb.ygomobile.network.server.LanGameServer;
+import cn.garymb.ygomobile.utils.AiDeckUtil;
 import cn.garymb.ygomobile.utils.CrashHandler;
 
 /**
@@ -305,18 +306,29 @@ public class ConnectionManager {
         });
     }
 
-    /** 主机端收到聊天 “/ai 卡组名” 后在本机拉起对应卡组的 WindBot 连回本地服务器入房（加入者无 localServer，命令由对方主机处理）。 */
-    private void launchWindBotFromChat(String deckName) {
-        if (deckName == null || deckName.isEmpty()) return;
-        // 卡组名经聊天转发而来，只接受安全字符，避免借 “AI_<名>.ydk” 拼出目录穿越路径
-        if (!deckName.matches("[A-Za-z0-9_.\\-]+")) {
-            Log.w(TAG, "Rejected /ai deck name: " + deckName);
-            return;
-        }
+    /** 主机端收到聊天 “/ai [卡组名]” 后在本机拉起 WindBot 入房；卡组名为空时从合规人机卡组中随机挑选（加入者无 localServer，命令由对方主机处理）。 */
+    private void launchWindBotFromChat(String deckName, int lflist) {
         final LanGameServer server = localServer;
         if (server == null || !server.isRunning()) return;
-        final File deckFile = new File(AppsSettings.get().getAiDeckDir(),
-                "AI_" + deckName + Constants.YDK_FILE_EX);
+        final File aiDeckDir = new File(AppsSettings.get().getAiDeckDir());
+        final String chosenDeck;
+        if (deckName == null || deckName.isEmpty()) {
+            // 纯 /ai：随机挑一个 bot.conf 有人机名且符合房间禁卡表的卡组
+            File botConf = new File(AppsSettings.get().getResourcePath(), Constants.CORE_BOT_CONF_PATH);
+            chosenDeck = AiDeckUtil.pickRandomDeckName(aiDeckDir, botConf, AiDeckUtil.resolveLimitList(lflist));
+            if (chosenDeck == null) {
+                Log.w(TAG, "/ai random: no compliant bot deck available");
+                return;
+            }
+        } else {
+            // 卡组名经聊天转发而来，只接受安全字符，避免借 “AI_<名>.ydk” 拼出目录穿越路径
+            if (!deckName.matches("[A-Za-z0-9_.\\-]+")) {
+                Log.w(TAG, "Rejected /ai deck name: " + deckName);
+                return;
+            }
+            chosenDeck = deckName;
+        }
+        final File deckFile = new File(aiDeckDir, "AI_" + chosenDeck + Constants.YDK_FILE_EX);
         if (!deckFile.exists()) {
             Log.w(TAG, "/ai deck not found: " + deckFile.getAbsolutePath());
             return;

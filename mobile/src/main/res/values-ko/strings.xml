@@ -550,6 +550,7 @@
     <!-- /ai 人机召唤 UI -->
     <string name="btn_ai_summon">/ai (Bot 호출)</string>
     <string name="ai_deck_select_title">%1$s 금제에 맞는 AI 덱 목록</string>
+    <string name="ai_deck_random">랜덤-지정 안 함</string>
     <string name="ai_deck_empty">현재 금제에 맞는 AI 덱이 없습니다</string>
     <string name="cancel">취소</string>
 </resources>

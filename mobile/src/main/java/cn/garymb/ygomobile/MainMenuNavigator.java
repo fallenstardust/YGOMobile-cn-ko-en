@@ -223,9 +223,9 @@ class MainMenuNavigator implements
 
     @Override
     public void onAiSummonRequested(String deckName) {
-        // “/ai”选出人机卡组：以聊天消息告知主机端拉起该人机（主机为本地局域网服务器时由其解析执行）
-        if (activity.engine == null || deckName == null || deckName.isEmpty()) return;
-        activity.engine.sendChat("/ai " + deckName);
+        // “/ai”选出人机卡组：以聊天消息告知主机端拉起该人机；卡组名为空表示“随机-不指定”，发送纯 /ai
+        if (activity.engine == null) return;
+        activity.engine.sendChat(deckName == null || deckName.isEmpty() ? "/ai" : "/ai " + deckName);
     }
 
     // === 建主 / 玩家等待对话框显示入口 ===

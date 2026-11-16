@@ -627,6 +627,7 @@
     <!-- /ai 人机召唤 UI -->
     <string name="btn_ai_summon">/ai (Call Bot)</string>
     <string name="ai_deck_select_title">AI Decks for %1$s</string>
+    <string name="ai_deck_random">Random - Unspecified</string>
     <string name="ai_deck_empty">No AI decks match the current banlist</string>
     <string name="cancel">Cancel</string>
 </resources>

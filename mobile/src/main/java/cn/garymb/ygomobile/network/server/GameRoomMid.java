@@ -586,9 +586,11 @@ abstract class GameRoomMid extends GameRoomBase {
         if (lastChar != 0) {
             return;
         }
-        String text = decodeChatText(msg);
-        // 聊天 “/ai <卡组名>” 命令（本工程扩展）：主机端据此拉起人机加入本房间
-        if (text.startsWith(AI_CHAT_COMMAND + " ")) {
+        String text = decodeChatText(msg).trim();
+        // 聊天 “/ai [卡组名]” 命令（本工程扩展）：主机端据此拉起人机加入本房间，纯 /ai 为随机
+        if (text.equals(AI_CHAT_COMMAND)) {
+            handleAiChatCommand("");
+        } else if (text.startsWith(AI_CHAT_COMMAND + " ")) {
             handleAiChatCommand(text.substring(AI_CHAT_COMMAND.length() + 1).trim());
         }
         byte[] payload = chatPayload(dp.type, msg);
@@ -621,11 +623,10 @@ abstract class GameRoomMid extends GameRoomBase {
         return new String(msg, 0, units * 2, StandardCharsets.UTF_16LE);
     }
 
-    /** “/ai 卡组名” 命令：仅建房等待阶段、非纯单人且仍有空闲决斗位时，请求主机端拉起指定卡组的人机。 */
+    /** “/ai [卡组名]” 命令：仅建房等待阶段、非纯单人且仍有空闲决斗位时，请求主机端拉起人机（空名=随机）。 */
     private void handleAiChatCommand(String deckName) {
-        if (deckName.isEmpty()) return;
         if (duelStage != DUEL_STAGE_BEGIN || soloMode) return;
         if (firstFreeSeat() < 0) return;
-        server.requestChatBot(deckName);
+        server.requestChatBot(deckName, hostInfo.lflist);
     }
 }

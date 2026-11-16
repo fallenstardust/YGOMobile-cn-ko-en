@@ -38,10 +38,9 @@ import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.network.YGOProtocol;
 import cn.garymb.ygomobile.render.field.TextureLoader;
 import cn.garymb.ygomobile.ui.dialogs.duel.YesOrNoDialog;
+import cn.garymb.ygomobile.utils.AiDeckUtil;
 import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
-import ocgcore.DataManager;
-import ocgcore.LimitManager;
 import ocgcore.StringManager;
 import ocgcore.data.LimitList;
 
@@ -342,17 +341,15 @@ abstract class PlayerWaitingDialogMid extends PlayerWaitingDialogBase {
             tvWatchCount.setOnClickListener(v -> showWatchersToast());
         }
     }
-    /** 点击“/ai”：列出符合当前房间禁卡表的人机卡组（显示 bot.conf 人机名），确定后由宿主发送 /ai 卡组名 聊天命令。 */
+    /** 点击“/ai”：首项为“随机-不指定”，其余为符合房间禁卡表且在 bot.conf 有人机名的卡组；确定后由宿主发送 /ai [卡组名]。 */
     protected void showAiDeckSelect() {
         if (deckSelectorDialog != null && deckSelectorDialog.isShowing()) deckSelectorDialog.dismiss();
-        List<AiDeckSelectDialog.AiDeckOption> decks = AiDeckSelectDialog.loadCompliantDecks(
+        List<AiDeckUtil.AiDeckOption> decks = new ArrayList<>();
+        decks.add(new AiDeckUtil.AiDeckOption(context.getString(R.string.ai_deck_random), ""));
+        decks.addAll(AiDeckUtil.loadNamedCompliantDecks(
                 new File(AppsSettings.get().getAiDeckDir()),
                 new File(AppsSettings.get().getResourcePath(), Constants.CORE_BOT_CONF_PATH),
-                resolveRoomLimitList());
-        if (decks.isEmpty()) {
-            Toast.makeText(context, R.string.ai_deck_empty, Toast.LENGTH_SHORT).show();
-            return;
-        }
+                resolveRoomLimitList()));
         if (aiDeckSelectDialog == null) {
             aiDeckSelectDialog = new AiDeckSelectDialog(context);
             aiDeckSelectDialog.setOnDeckSelectedListener(deckName -> {
@@ -362,17 +359,9 @@ abstract class PlayerWaitingDialogMid extends PlayerWaitingDialogBase {
         aiDeckSelectDialog.show(btnAiSummon, decks, getBanlistName(roomLflist));
     }
 
-    /** 当前房间禁卡表限制表：按 lflist 哈希反查同名禁卡表（与房间信息同口径）；N/A、未收录或空表返回 null（无禁限）。 */
+    /** 当前房间禁卡表限制表（与服务器 DeckChecker 同口径两表反查）；N/A、未收录或空表返回 null（无禁限）。 */
     protected LimitList resolveRoomLimitList() {
-        if (roomLflist == 0) return null;
-        LimitManager lm = DataManager.get().getLimitManager();
-        if (lm == null) return null;
-        String name = getBanlistName(roomLflist);
-        if (name == null || "N/A".equals(name)) return null;
-        LimitList list = lm.getLimit(name);
-        if (list == null) list = lm.getGenesysLimit(name);
-        if (list != null && list.getCodeList().isEmpty()) return null;
-        return list;
+        return AiDeckUtil.resolveLimitList(roomLflist);
     }
 
     public void updateRoomInfo(int lflist, int rule, int mode, int duelRule,
