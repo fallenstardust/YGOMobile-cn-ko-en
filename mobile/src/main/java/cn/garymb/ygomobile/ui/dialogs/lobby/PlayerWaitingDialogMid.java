@@ -326,8 +326,11 @@ abstract class PlayerWaitingDialogMid extends PlayerWaitingDialogBase {
         // 1215 开始、1210 退出、1254 卡组选择），XML 中的中文仅作兜底
         if (btnPwDuelistMode != null)
             btnPwDuelistMode.setText(mStringManager.getSystemString(1251, "→决斗者"));
-        if (btnAiSummon != null)
+        if (btnAiSummon != null) {
             btnAiSummon.setText(R.string.btn_ai_summon);
+            // 用户规格：/ai 呼叫 Bot 仅房主可见；TYPE_CHANGE 可能早于本窗创建，先按当前房主态初始化
+            btnAiSummon.setVisibility(isHost ? View.VISIBLE : View.GONE);
+        }
         if (btnPwSpectatorMode != null)
             btnPwSpectatorMode.setText(mStringManager.getSystemString(1252, "→观战"));
         if (btnPwStartGame != null)
@@ -461,6 +464,10 @@ abstract class PlayerWaitingDialogMid extends PlayerWaitingDialogBase {
 
         if (btnPwStartGame != null) {
             btnPwStartGame.setVisibility(isHost ? View.VISIBLE : View.INVISIBLE);
+        }
+        // 用户规格：/ai 呼叫 Bot 仅房主可用（非房主隐藏；转让房主时随 STOC_TYPE_CHANGE 回显即时显示/隐藏）
+        if (btnAiSummon != null) {
+            btnAiSummon.setVisibility(isHost ? View.VISIBLE : View.GONE);
         }
         updateStartButtonState();
 
