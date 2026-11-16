@@ -95,6 +95,10 @@ final class ServerDuel extends ServerDuelBase {
         int te = room.timeElapsed;
         ArrayList<UndoStep> before = new ArrayList<>(undoSteps);
         undoSteps.subList(target, undoSteps.size()).clear();
+        // 被撤掉那一段里的人机操作播报不得在撤回后补发
+        for (int i = 0; i < room.seatCount(); i++) {
+            room.clearPendingAiChat(room.players[i]);
+        }
         int keep = undoSteps.size();
         replay.resetRecordStream();
         room.timeLimit[0] = step.timeLimit0;
@@ -468,6 +472,8 @@ final class ServerDuel extends ServerDuelBase {
         }
         Log.w(TAG, "awaited seat " + conn.type
                 + " response swallowed by state gate: re-hang its question");
+        // 被吞掉的应答对应的操作播报同样作废（动作未生效），避免它在重挂后的下一次应答里被误放行
+        room.clearPendingAiChat(conn);
         analyzer.rehangPendingQuestion("dropped response");
     }
 

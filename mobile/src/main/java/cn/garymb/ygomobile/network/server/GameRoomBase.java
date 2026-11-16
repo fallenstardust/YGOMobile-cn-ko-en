@@ -175,6 +175,23 @@ abstract class GameRoomBase implements YGOProtocol {
     ServerDuel duel;
 
     /**
+     * 最近一次「某席位正在行动」的落点与时刻（挂出询问或收到应答时刷新）。仅供人机聊天闸门使用：
+     * 人机在别人回合发动卡片效果（连锁/手坑等）属于「正在行动」，其操作播报应放行；带时间窗，
+     * 避免长时间放行导致回刷屏。非人机房间不读这两个字段。
+     */
+    int lastActingSeat = -1;
+    long lastActingAtMs = 0L;
+
+    /** 记录某席位刚在行动（挂询问/收应答），供聊天闸门判断“它刚发动了效果”。 */
+    void noteSeatActing(int seat) {
+        if (seat < 0) {
+            return;
+        }
+        lastActingSeat = seat;
+        lastActingAtMs = System.currentTimeMillis();
+    }
+
+    /**
      * 本房间的对席由本机拉起（WindBot 人机），不接受撤回的全量重同步：libWindbot 的引擎消息注册表
      * 里没有 {@code MSG_RELOAD_FIELD}(162)，其 {@code OnPacket} 对未注册消息整条静默丢弃，于是 reload 之后
      * 它的场面模型仍停在「被撤掉的那个动作之后」，随后按回退后的区/序号取卡会直接抛异常并弄死它的收包
@@ -299,7 +316,26 @@ abstract class GameRoomBase implements YGOProtocol {
      * 客户端在等待界面与对局中均以「[System]: 内容」弹幕展示。
      */
     void broadcastSystemChat(String text) {
-        sendToAllPresent(STOC_CHAT, chatPayload(CHAT_PLAYER_TYPE_SYSTEM, text));
+        broadcastChat(chatPayload(CHAT_PLAYER_TYPE_SYSTEM, text));
+    }
+
+    /**
+     * 聊天/系统消息广播口：人机房间（peerNeedsReplayResync）只发给房主（玩家本人）与观战，
+     * AI 席位一律不收——AI 收到聊天会按自己的对话脚本回话，TAG 下三个 AI 互相回话会把
+     * 不属于它回合的动作台词刷满聊天框（用户反馈）；单人机房间同步生效，人机只播报自己的操作。
+     */
+    void broadcastChat(byte[] payload) {
+        if (!peerNeedsReplayResync) {
+            sendToAllPresent(STOC_CHAT, payload);
+            return;
+        }
+        ServerConnection host = hostPlayer;
+        if (host != null) {
+            host.send(STOC_CHAT, payload);
+        }
+        for (ServerConnection o : observers) {
+            o.send(STOC_CHAT, payload);
+        }
     }
 
     static byte[] playerEnterPayload(String name, int pos) {

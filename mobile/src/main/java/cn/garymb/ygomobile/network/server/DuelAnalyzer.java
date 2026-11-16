@@ -30,6 +30,10 @@ final class DuelAnalyzer extends DuelAnalyzerBase {
             int start = cursor;
             int engType = msg[cursor] & 0xFF;
             cursor++;
+            // 可见卡片动作计数：人机台词只在这一步真产生了看得见的动作后才放行（静默重放不计）
+            if (!silent && isVisibleActionMsg(engType)) {
+                actionMsgSeq++;
+            }
             int player;
             int count;
             switch (engType) {
@@ -46,6 +50,10 @@ final class DuelAnalyzer extends DuelAnalyzerBase {
                     }
                     // 应答不合法（引擎重问）：它不构成可撤回的一步，弹出刚压入的快照
                     owner.discardPendingUndoStep();
+                    // 刚被拒的这席位刚发的操作播报同样作废：它描述的非法动作并未发生，不得稍后被放行
+                    if (room.lastResponse >= 0 && room.lastResponse <= 1) {
+                        room.clearPendingAiChat(room.duelPlayer(room.lastResponse));
+                    }
                     // 询问权威源在服务端：直接把当前询问重发给应答方使界面必定重挂可应答项；仅无留存询问时才退回 C++ 语义（1 字节 MSG_RETRY）。
                     // 须在 waitforResponse 之前取：它会推进代次，取晚了配对判断恒为否
                     byte[] ask = hasLiveAsk() ? liveQuestion : null;
@@ -383,7 +391,14 @@ final class DuelAnalyzer extends DuelAnalyzerBase {
                     break;
                 }
                 case EngineMessage.MSG_NEW_TURN: {
-                    // TAG：先把本队行动席位轮转到下一位，再做区域刷新——手卡/额外类刷新
+                    // 回合边界：人机上一回合尚未放行的操作播报一律作废（多为未执行到的计划尾句，
+                    // 不得拖到下一回合的某个动作后面才冒出）。静默重放不涉队列（已被闸门丢弃）
+                    if (!silent) {
+                        for (int i = 0; i < room.seatCount(); i++) {
+                            room.clearPendingAiChat(room.players[i]);
+                        }
+                    }
+                    // TAG：先把本队行动席位轮转到下一位，再做区域刷新——手卡/额外区刷新
                     // 必须落到即将行动的那一席（对齐 tag_duel.cpp L896-919 的 cur_player 轮转）
                     rotateTagCurPlayer();
                     refreshMzone(0);

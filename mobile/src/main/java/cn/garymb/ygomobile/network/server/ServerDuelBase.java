@@ -132,6 +132,13 @@ abstract class ServerDuelBase implements YGOProtocol {
         //（对齐 tag_duel.cpp L380-382）；本局回合数与逐席投降态一并复位
         room.turnCount = 0;
         Arrays.fill(room.surrender, false);
+        // 人机聊天闸门的“刚在行动”痕迹也随新一局复位
+        room.lastActingSeat = -1;
+        room.lastActingAtMs = 0L;
+        // 上一局/等待阶段压住的人机播报不得带入本局（对应动作已不属于当前对局）
+        for (int i = 0; i < room.seatCount(); i++) {
+            room.clearPendingAiChat(room.players[i]);
+        }
         if (room.isMultiSeatTag()) {
             room.curPlayer[0] = room.players[0];
             room.curPlayer[1] = room.players[3];
@@ -276,6 +283,16 @@ abstract class ServerDuelBase implements YGOProtocol {
         process();
         // 新开局无任何已录动作，撤回提示初始为「不可撤回」
         sendUndoStateToAll();
+    }
+
+    /** 是否正处于撤回的静默重放窗口：重放期间 AI 会对重放的旧询问重复回话，这些台词不得再中继给玩家。 */
+    boolean isSilentReplay() {
+        return analyzer.silent;
+    }
+
+    /** 当前回合玩家（TAG 即队伍，0/1；-1 = 尚未定档）：TAG 下用来限定只有本回合队伍的人机可以发操作播报。 */
+    int currentTurnPlayer() {
+        return analyzer.liveTurnPlayer;
     }
 
     protected void swapPlayersAndDecks() {
@@ -471,6 +488,8 @@ abstract class ServerDuelBase implements YGOProtocol {
         lastReplayResponseSize = replay.writeResponse(resb, len);
         OcgDuelEngine.setResponseB(pduel, resb);
         dp.state = ServerConnection.STATE_NONE;
+        // 供人机聊天闸门：该席位刚完成一次行动（含对手回合的连锁/效果发动），其操作播报应放行
+        room.noteSeatActing(dp.type);
         if (room.hostInfo.timeLimit != 0) {
             if (room.timeLimit[responder] >= room.timeElapsed) {
                 room.timeLimit[responder] -= room.timeElapsed;
@@ -479,14 +498,22 @@ abstract class ServerDuelBase implements YGOProtocol {
             }
             room.timeElapsed = 0;
         }
+        // 本步是否真的产生了可见卡片动作（召唤/发动/攻击/移动等）：人机台词只在这种步子里放行一条，
+        // 否则「是否发动=否」、选位置/选格这类不产生动作的应答会把整轮计划提前放出去
+        final int actionSeqBefore = analyzer.actionMsgSeq;
         process();
         lastReplayResponseSize = 0;
+        // 人机操作播报的放行点：应答已被引擎接受、动作相关的消息也已下发给客户端，此刻补发一条台词
+        // 才能保证「先看到卡片操作、再看到对应聊天」（WindBot 自身是先发聊天后发应答）
+        if (analyzer.actionMsgSeq != actionSeqBefore) {
+            room.flushPendingAiChat(dp);
+        }
         // 本步（或其后的处理）可能新增了可撤回的动作锚点，刷新各席位的撤回提示状态
         sendUndoStateToAll();
     }
 
     /**
-     * 重试熔断落地（{@link DuelAnalyzer} 在 MSG_RETRY 调用）：代那个对同一询问连续非法应答的席位向引擎喂「放弃」，使决斗继续而非永久互等。
+     * 重试熔断落地（{@link DuelAnalyzer} 在 MSG_RETRY 调用）：向那个对同一询问连续非法应答的席位向引擎喂「放弃」，使决斗继续而非永久互等。
      * 回退只倒退服务端引擎、对端客户端局面无法倒退，回退后重发同名效果的旧答复恒非法——本席位手上无询问、点卡无菜单，故须代答。
      * 代答在录像与撤回栈各占一步（与真实答复逐字节同形、非行动锚点）；若引擎判非法，{@link ServerDuel#discardPendingUndoStep()}
      * 与录像回退会一并弹掉。
@@ -715,6 +742,10 @@ abstract class ServerDuelBase implements YGOProtocol {
         stopTimer();
         OcgDuelEngine.endDuel(pduel);
         pduel = 0L;
+        // 本局结束：尚未放行的人机播报一并作废
+        for (int i = 0; i < room.seatCount(); i++) {
+            room.clearPendingAiChat(room.players[i]);
+        }
     }
 
     protected void startTimer() {

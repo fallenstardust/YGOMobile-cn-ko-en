@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.ArrayDeque;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -58,6 +59,25 @@ public final class ServerConnection {
      * 它的 CTOS_RESPONSE 一律丢弃并递减（见 {@code GameRoom#handlePacket}），同时延后重挂直到欠账清零。
      */
     public int replayAnswerDebt;
+
+    /**
+     * 被压住的人机操作播报队列（等它的应答被引擎接受后再逐条中继）：WindBot 会在一个决策点把
+     * 整轮的行动说明一次发完（先发聊天、后发应答），立即中继会让台词早于实际卡片操作、
+     * 且一步步的计划会一股脑提前弹出。这里改为排队，每个被接受的应答只放行一条，
+     * 使台词与实际操作节点逐一对齐。只在人机席位使用。
+     */
+    public final ArrayDeque<PendingChat> pendingAiChats = new ArrayDeque<>();
+
+    /** 一条被压住的人机操作播报（载荷供中继，文本供录像帧）。 */
+    public static final class PendingChat {
+        public final byte[] payload;
+        public final String text;
+
+        PendingChat(byte[] payload, String text) {
+            this.payload = payload;
+            this.text = text;
+        }
+    }
 
     public ServerConnection(Socket socket, Sink sink) throws IOException {
         this.socket = socket;

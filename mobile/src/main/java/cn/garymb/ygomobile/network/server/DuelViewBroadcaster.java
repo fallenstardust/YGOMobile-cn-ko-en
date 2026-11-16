@@ -36,6 +36,10 @@ final class DuelViewBroadcaster implements YGOProtocol {
         analyzer.liveQuestionFromUndo = false;
         // 引擎侧 player 对应的应答连接：真 TAG 为该队当前行动席位，其余为该座位连接
         ServerConnection acting = analyzer.room.duelPlayer(playerid);
+        // 供人机聊天闸门：该席位正在行动（即将应答），其随后的操作播报应放行（含对手回合发动的效果）
+        if (acting != null) {
+            analyzer.room.noteSeatActing(acting.type);
+        }
         if (analyzer.soloMode && analyzer.room.players[0] == analyzer.room.players[1]) {
             // Solo mode: same connection; no MSG_WAITING needed, just set state
             if (acting != null) {

@@ -594,18 +594,84 @@ abstract class GameRoomMid extends GameRoomBase {
             handleAiChatCommand(text.substring(AI_CHAT_COMMAND.length() + 1).trim());
         }
         byte[] payload = chatPayload(dp.type, msg);
-        // 中继统一走 sendToAllPresent：solo 模式下 players[1] == players[0] 为同一连接，
-        // 按连接身份去重，避免同一条聊天被双发（历史缺陷：双端收到重复消息/重复弹幕）
-        sendToAllPresent(STOC_CHAT, payload);
-        // 录像：对局中把玩家/观战发言录为 0xF1 伪帧，使纯消息流回放血条下按时间线重现；
-        // 与引擎消息同处单线程房间执行器，追加顺序即时序。playerType 取 dp.type（与实时
-        // STOC_CHAT 首字节同值，回放分侧/命名一致）；文本取 UTF-16LE 并去除尾部 NUL 码元。
+        // 仅人机房间里的 AI 决斗席位（非房主、非观战）才过闸门；观战/房主/局域网对局一律照常
+        boolean aiSeat = peerNeedsReplayResync && dp != hostPlayer && duel != null
+                && dp.type >= 0 && dp.type < seatCount();
+        // 人机房间：AI 席位只在自己正要操作时才中继发言——
+        // ① 撤回的静默重放期一律丢弃（重放会让人机对旧询问重复回话）；
+        // ② 必须是本队当前行动席位；
+        // ③ 本回合属于它所在队伍，或它正在行动：引擎刚把询问交给它这一队（beingAsked），
+        //    或它刚完成一次行动（justActed，带时间窗）——对手回合发动卡片效果/连锁应答属于后者，应放行；
+        //    其余非本回合的牵连回话依旧丢弃。
+        // 玩家（房主）发言不受限；单局/比赛只有一个 AI 且免回合限制，观感与原先一致。
+        if (aiSeat) {
+            int team = seatTeam(dp.type);
+            boolean silentReplay = duel.isSilentReplay();
+            boolean acting = dp == duelPlayer(team);
+            boolean ownTurn = seatCount() <= 2 || duel.currentTurnPlayer() == team;
+            boolean beingAsked = lastResponse == team;
+            long sinceAct = System.currentTimeMillis() - lastActingAtMs;
+            boolean justActed = lastActingSeat == dp.type
+                    && sinceAct >= 0 && sinceAct <= AI_CHAT_ACTION_WINDOW_MS;
+            if (silentReplay || !acting || (!ownTurn && !beingAsked && !justActed)) {
+                Log.i(TAG, "chat dropped: AI seat " + dp.type
+                        + (silentReplay ? " during undo replay"
+                        : !acting ? " is not the acting seat of team " + team
+                        : " is neither on its own turn nor taking an action"));
+                return;
+            }
+        }
+        // 人机席位的操作播报排队等候：WindBot 会在一个决策点把整轮行动说明一次发完（先发聊天、后发应答），
+        // 立即中继会出现「台词先于动作」且「一股脑提前弹出所有步骤」。改为入队，每个被接受的应答只
+        // 放行一条（见 {@code ServerDuelBase#getResponse} → flushPendingAiChat），使台词与实际操作
+        // 节点逐一对齐；应答被拒/被吞、撤回、回合切换或本局终止时队列清空（未发生的动作不得播报）。
+        if (aiSeat && dp == duelPlayer(seatTeam(dp.type))) {
+            if (dp.pendingAiChats.size() >= AI_CHAT_QUEUE_LIMIT) {
+                Log.w(TAG, "chat queue overflow: AI seat " + dp.type + " drops new line");
+                return;
+            }
+            dp.pendingAiChats.addLast(new ServerConnection.PendingChat(payload, text));
+            Log.i(TAG, "chat queued until action lands: seat " + dp.type
+                    + " len=" + text.length() + " queue=" + dp.pendingAiChats.size());
+            return;
+        }
+        // 中继统一走 broadcastChat：人机房间只发给房主与观战（AI 不收聊天，避免回话刷屏）；
+        // solo 模式下 players[1] == players[0] 为同一连接，按连接身份去重，避免同一条聊天被双发
+        broadcastChat(payload);
+        recordChatFrame(dp.type, text);
+    }
+
+    /**
+     * 放行一条被压住的人机操作播报（它的应答已被引擎接受、动作消息已下发），并补录回放聊天帧。
+     * 每次应答只放一条：人机若在决策点把整轮计划一次说完，台词会随其后的逐个操作依次出现。
+     */
+    void flushPendingAiChat(ServerConnection dp) {
+        if (dp == null) {
+            return;
+        }
+        ServerConnection.PendingChat chat = dp.pendingAiChats.pollFirst();
+        if (chat == null) {
+            return;
+        }
+        broadcastChat(chat.payload);
+        recordChatFrame(dp.type, chat.text == null ? "" : chat.text);
+        Log.i(TAG, "chat released after action: seat " + dp.type
+                + " (left=" + dp.pendingAiChats.size() + ")");
+    }
+
+    /** 丢弃压住的人机操作播报（应答被拒/被吞、回合切换或本局终止：未发生的动作不得播报）。 */
+    void clearPendingAiChat(ServerConnection dp) {
+        if (dp != null) {
+            dp.pendingAiChats.clear();
+        }
+    }
+
+    /** 录像：对局中把玩家/观战/人机发言录为 0xF1 伪帧，使纯消息流回放血条下按时间线重现。 */
+    private void recordChatFrame(int playerType, String text) {
         if (isDueling() && duel != null && duel.replay != null) {
-            duel.replay.writeChatFrame(dp.type, text);
-            // 录制验证落点：每条对局聊天录为 0xF1 伪帧均留痕，logcat 过滤 "GameRoom" 即可
-            // 确认聊天已落盘；回放开场信息另标注文件内聊天帧总条数（ReplayPlayer.buildReplayInfo）
-            Log.i(TAG, "replay chat frame recorded: type=" + dp.type + " len=" + text.length());
-        } else if (dp.type < 4) {
+            duel.replay.writeChatFrame(playerType, text);
+            Log.i(TAG, "replay chat frame recorded: type=" + playerType + " len=" + text.length());
+        } else if (playerType < 4) {
             Log.d(TAG, "chat not recorded (dueling=" + isDueling()
                     + " duel=" + (duel != null) + "): stage not in-duel");
         }
@@ -613,6 +679,12 @@ abstract class GameRoomMid extends GameRoomBase {
 
     /** 聊天 “/ai” 命令前缀（后跟一个空格与卡组名，与线上服务器约定一致）。 */
     private static final String AI_CHAT_COMMAND = "/ai";
+
+    /** 人机聊天闸门的“刚行动过”时间窗：应答/挂询问后该时长内仍允许 AI 播报（覆盖应答与聊天包的先后错位）。 */
+    private static final long AI_CHAT_ACTION_WINDOW_MS = 5000L;
+
+    /** 人机操作播报的等待队列上限：超过则丢弃新台词（多为超出本轮实际操作步数的计划尾句）。 */
+    private static final int AI_CHAT_QUEUE_LIMIT = 8;
 
     /** UTF-16LE 聊天文本解码：去掉尾部 NUL 码元，供 /ai 命令判定与录像帧共用。 */
     private static String decodeChatText(byte[] msg) {

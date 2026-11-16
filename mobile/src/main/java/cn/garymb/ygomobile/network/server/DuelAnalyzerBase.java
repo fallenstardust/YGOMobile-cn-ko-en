@@ -50,6 +50,46 @@ abstract class DuelAnalyzerBase implements YGOProtocol {
     boolean recordSuppressed;
     /** 静默重放期间捕获的终端询问消息原字节（撤回后原样重发给待应答方）。 */
     byte[] silentTerminal;
+
+    /**
+     * 可见卡片动作消息的序号（每次发出一张真正看得见的动作消息 +1，见 {@link #isVisibleActionMsg}）。
+     * 仅供人机聊天闸门使用：{@code ServerDuelBase#getResponse} 用它判断“这一步到底有没有做出实际动作”，
+     * 只有真产生了动作才放行一条台词，避免「是否发动=否」/纯选择类应答把整轮计划提前放出去。
+     */
+    int actionMsgSeq;
+
+    /** 该引擎消息是否构成玩家能看到的卡片动作（召唤/发动/攻击/移动/攻守变化/伤害与 LP 变动等）。 */
+    static boolean isVisibleActionMsg(int type) {
+        switch (type) {
+            case EngineMessage.MSG_MOVE:
+            case EngineMessage.MSG_SET:
+            case EngineMessage.MSG_POS_CHANGE:
+            case EngineMessage.MSG_SUMMONING:
+            case EngineMessage.MSG_SUMMONED:
+            case EngineMessage.MSG_SPSUMMONING:
+            case EngineMessage.MSG_SPSUMMONED:
+            case EngineMessage.MSG_FLIPSUMMONING:
+            case EngineMessage.MSG_FLIPSUMMONED:
+            case EngineMessage.MSG_CHAINING:
+            case EngineMessage.MSG_CHAIN_SOLVED:
+            case EngineMessage.MSG_CHAIN_END:
+            case EngineMessage.MSG_ATTACK:
+            case EngineMessage.MSG_BATTLE:
+            case EngineMessage.MSG_DRAW:
+            case EngineMessage.MSG_DAMAGE:
+            case EngineMessage.MSG_RECOVER:
+            case EngineMessage.MSG_PAY_LPCOST:
+            case EngineMessage.MSG_LPUPDATE:
+            case EngineMessage.MSG_EQUIP:
+            case EngineMessage.MSG_CARD_TARGET:
+            case EngineMessage.MSG_SHUFFLE_HAND:
+            case EngineMessage.MSG_ADD_COUNTER:
+            case EngineMessage.MSG_REMOVE_COUNTER:
+                return true;
+            default:
+                return false;
+        }
+    }
     /**
      * 撤回整局重放的接收连接（本机拉起的人机席位，见 {@code GameRoomBase#peerNeedsReplayResync}；
      * TAG 下可多席）。非空时静默重放不再只录不发，而是把整段消息流按原屏蔽语义发给它们，使它们的
