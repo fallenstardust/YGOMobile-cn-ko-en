@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+    带左侧收藏星标与尾部标记列的列表条目：星标贴左（点星切换收藏），名称列占满余宽，
+    标记列贴右；未设置标记时标记列 GONE。仅在人机列表启用收藏时使用，观感对齐 item_bot_list_marked。
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal">
+
+    <!-- 星标单元：底色在代码中随整行选中态同色，保证高亮连续 -->
+    <FrameLayout
+        android:id="@+id/fl_bot_item_star"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical">
+
+        <ImageView
+            android:id="@+id/iv_bot_item_star"
+            android:layout_width="28dp"
+            android:layout_height="26dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@null"
+            android:paddingStart="6dp"
+            android:paddingTop="3dp"
+            android:paddingEnd="2dp"
+            android:paddingBottom="3dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_bot_favorite_star_off" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/tv_bot_item"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center_vertical"
+        android:paddingLeft="2dp"
+        android:paddingTop="4dp"
+        android:paddingRight="10dp"
+        android:paddingBottom="4dp"
+        android:textColor="#FFFFFF"
+        android:textSize="13sp" />
+
+    <TextView
+        android:id="@+id/tv_bot_item_mark"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical|end"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:textColor="@color/gold"
+        android:textSize="13sp"
+        android:visibility="gone" />
+</LinearLayout>

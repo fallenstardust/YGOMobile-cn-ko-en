@@ -1,6 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?><!-- 收藏按钮状态：选中/勾选为实心黄色圆角五角星，未选中为空心黄色圆角五角星（同人机列表星标） -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@drawable/ic_baseline_favorite_24" android:state_selected="true" />
-    <item android:drawable="@drawable/ic_baseline_favorite_24" android:state_checked="true" />
-    <item android:drawable="@drawable/ic_baseline_favorite_border_24" />
+    <item android:drawable="@drawable/ic_bot_favorite_star_on" android:state_selected="true" />
+    <item android:drawable="@drawable/ic_bot_favorite_star_on" android:state_checked="true" />
+    <item android:drawable="@drawable/ic_bot_favorite_star_off" />
 </selector>

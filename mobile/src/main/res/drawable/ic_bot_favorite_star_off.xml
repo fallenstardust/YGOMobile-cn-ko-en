@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?><!-- 收藏星标-未收藏：空心黄色五角星（5 个角均为圆角弧线，仅描边，与实心星同形同色） -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M12.705,4.029L14.351,8.764L19.363,8.866Q21.511,8.91 19.799,10.208L15.804,13.236L17.256,18.034Q17.878,20.09 16.115,18.863L12,16L7.885,18.863Q6.122,20.09 6.744,18.034L8.196,13.236L4.201,10.208Q2.489,8.91 4.637,8.866L9.649,8.764L11.295,4.029Q12,2 12.705,4.029Z"
+        android:strokeColor="@color/holo_green_bright"
+        android:strokeLineJoin="round"
+        android:strokeWidth="1.6" />
+</vector>

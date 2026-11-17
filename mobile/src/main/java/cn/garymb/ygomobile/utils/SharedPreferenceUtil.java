@@ -15,8 +15,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 import cn.garymb.ygomobile.App;
 import cn.garymb.ygomobile.AppsSettings;
@@ -31,7 +33,44 @@ public class SharedPreferenceUtil {
 
     private static final String USER_UNIQUE_ID_KEY = "user_unique_id";
     private static final String KEYWORD_HISTORY_KEY = "search_keyword_history";
+    private static final String BOT_FAVORITE_KEY = "bot_favorite_names";
     private static final int MAX_KEYWORD_HISTORY = 10;
+
+    /**
+     * 获取收藏的人机名单（按 bot.conf 显示的 AI 名称记录，供人机模式列表与 /ai 呼叫列表置顶用）
+     */
+    public static Set<String> getFavoriteBotNames() {
+        Set<String> names = new LinkedHashSet<>();
+        String data = getShareRecord().getString(BOT_FAVORITE_KEY, "[]");
+        try {
+            JSONArray arr = new JSONArray(data);
+            for (int i = 0; i < arr.length(); i++) {
+                String name = arr.optString(i, "");
+                if (!TextUtils.isEmpty(name)) {
+                    names.add(name);
+                }
+            }
+        } catch (JSONException ignored) {
+        }
+        return names;
+    }
+
+    /**
+     * 收藏/取消收藏一个人机（按显示名），返回操作后是否处于收藏状态
+     */
+    public static boolean setBotFavorite(String name, boolean favorite) {
+        if (TextUtils.isEmpty(name)) return false;
+        Set<String> names = getFavoriteBotNames();
+        boolean changed = favorite ? names.add(name) : names.remove(name);
+        if (changed) {
+            JSONArray arr = new JSONArray();
+            for (String n : names) {
+                arr.put(n);
+            }
+            getShareRecord().edit().putString(BOT_FAVORITE_KEY, arr.toString()).apply();
+        }
+        return favorite;
+    }
 
     /**
      * 获取搜索关键词历史记录（最近10条，按时间倒序）

@@ -31,6 +31,7 @@ import com.google.android.material.tabs.TabLayout;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
@@ -44,6 +45,7 @@ import cn.garymb.ygomobile.ui.adapters.SimpleSpinnerItem;
 import cn.garymb.ygomobile.utils.BotUtil;
 import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.PuzzleUtil;
+import cn.garymb.ygomobile.utils.SharedPreferenceUtil;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
@@ -105,10 +107,16 @@ public class SingleModeDialog {
     private final List<String> botDeckButtonLines = new ArrayList<>();
     /** TAG 复选顺序：下标即席位序（0→队友席 P2、1/2→对手席 P3/P4），元素为 botList 下标 */
     private final List<Integer> botSelectionOrder = new ArrayList<>();
+    /** 人机列表显示顺序：元素为 botList 原始下标（收藏项按原相对顺序置前，其余保持原顺序） */
+    private final List<Integer> botDisplayIndices = new ArrayList<>();
     // show() 中注入的人机页引用，供复选态与席位标记刷新使用
     private List<BotUtil.BotInfo> tagBotList;
     private List<String> tagBotBaseNames;
     private SimpleListAdapter tagBotAdapter;
+    /** 人机列表视图：reshow 时据此判断当前是否停在人机页并重排收藏 */
+    private ListView tagBotListView;
+    /** 当前单选人机的 botList 原始下标（-1 未选）：reshow 重排后据此恢复高亮 */
+    private int selectedBotIndex = -1;
     private Button tagBtnSelectDeck;
     private Button tagBtnStart;
     /** P2 卡组单元（提示文字 + 按钮）：仅在选中支持自选卡组的人机时整块显示 */
@@ -232,6 +240,15 @@ public class SingleModeDialog {
 
         final SimpleListAdapter botAdapter = new SimpleListAdapter(context);
         botAdapter.set(botNames);
+        // 人机条目左侧收藏星标：收藏记录存 SharedPreference，每次刷新按收藏重排（收藏项置顶、取消后回原位）；
+        // 需在首次布局前启用，避免列表复用池里混用两种条目布局
+        botAdapter.setFavoriteNames(SharedPreferenceUtil.getFavoriteBotNames());
+        botAdapter.setOnFavoriteClickListener((name, displayPosition) -> {
+            SharedPreferenceUtil.setBotFavorite(name, !SharedPreferenceUtil.getFavoriteBotNames().contains(name));
+            botAdapter.setFavoriteNames(SharedPreferenceUtil.getFavoriteBotNames());
+            // 重排后按原始下标把单选/复选高亮映射回新位置
+            refreshBotListDisplay(selectedPosition[0]);
+        });
         final SimpleListAdapter puzzleAdapter = new SimpleListAdapter(context);
         puzzleAdapter.set(puzzleNames);
 
@@ -241,6 +258,7 @@ public class SingleModeDialog {
         tagBotList = botList;
         tagBotBaseNames = botNames;
         tagBotAdapter = botAdapter;
+        tagBotListView = lvBotList;
         tagBtnSelectDeck = btnSelectDeck;
         tagBtnStart = btnStartBotDuel;
         tagBotDeckCell = layoutBotP2Deck;
@@ -368,16 +386,20 @@ public class SingleModeDialog {
 
         lvBotList.setOnItemClickListener((parent, view, position, id) -> {
             if (currentMode[0] == 0) {
+                // 列表按收藏重排过：显示位置需换算回 botList 原始下标，选择状态一律记原始下标；
+                // 适配器的高亮位置仍用显示位置
+                int botIndex = botIndexOf(position);
+                if (botIndex < 0) return;
                 if (tagListMode) {
                     // TAG 复选：点已选项即取消；已选满 3 个时先提示取消方式，不接受新选择
-                    if (botSelectionOrder.contains(position)) {
-                        botSelectionOrder.remove((Integer) position);
+                    if (botSelectionOrder.contains(botIndex)) {
+                        botSelectionOrder.remove((Integer) botIndex);
                         botAdapter.setItemSelected(position, false);
                     } else if (botSelectionOrder.size() >= TAG_BOT_SEATS) {
                         Toast.makeText(context, R.string.bot_tag_max_select, Toast.LENGTH_SHORT).show();
                         return;
                     } else {
-                        botSelectionOrder.add(position);
+                        botSelectionOrder.add(botIndex);
                         botAdapter.setItemSelected(position, true);
                     }
                     // 单选高亮与复选背景互斥：TAG 下只走复选背景，席位号取首个已选项供描述区显示
@@ -385,7 +407,7 @@ public class SingleModeDialog {
                     puzzleAdapter.setSelectedPosition(-1);
                     selectedPosition[0] = botSelectionOrder.isEmpty() ? -1 : botSelectionOrder.get(0);
                 } else {
-                    selectedPosition[0] = position;
+                    selectedPosition[0] = botIndex;
                     botAdapter.setSelectedPosition(position);
                     puzzleAdapter.setSelectedPosition(-1);
                 }
@@ -687,8 +709,8 @@ public class SingleModeDialog {
      * 进入 TAG 时把当前单选项作为复选首位（即 ② 席位）；离开 TAG 时把原 ② 席位（复选序首位）
      * 保留为单选，且单选卡组自动改为 ② 席位已选的卡组。
      *
-     * @param selectedPosition 当前单选位置（TAG 复选下传首个已选项或 -1）
-     * @return 切换后应使用的单选位置
+     * @param selectedPosition 当前单选位置（botList 原始下标；TAG 复选下传首个已选项或 -1）
+     * @return 切换后应使用的单选位置（botList 原始下标）
      */
     private int applyBotListSelectMode(boolean tagMode, int selectedPosition) {
         tagListMode = tagMode;
@@ -708,16 +730,11 @@ public class SingleModeDialog {
             selectedDeckName = botSeatDeckNames[0];
             selectedDeckCategory = botSeatDeckCategories[0];
         }
-        // 清一次复选集合再按需开启，避免上一轮复选高亮残留
+        // 清一次复选集合再按需开启，避免上一轮复选高亮残留；高亮位置由 refreshBotListDisplay
+        // 按原始下标统一映射（收藏重排后原位置已失效）
         tagBotAdapter.setMultiSelectMode(false);
         tagBotAdapter.clearMultiSelection();
         tagBotAdapter.setMultiSelectMode(tagMode);
-        tagBotAdapter.setSelectedPosition(tagMode ? -1 : keep);
-        if (tagMode) {
-            for (int idx : botSelectionOrder) {
-                tagBotAdapter.setItemSelected(idx, true);
-            }
-        }
         seedBotSeatDecks(keep);
         refreshBotListDisplay(keep);
         return keep;
@@ -820,20 +837,34 @@ public class SingleModeDialog {
     }
 
     /**
-     * 刷新人机列表与按钮态：TAG 下选中项末尾右对齐显示 ②③④ 席位标记（不足 3 席按已选顺序
-     * 循环补位，故只选 1 个时它同时带 ②③④）；P2 卡组单元仅当选中支持自选卡组的人机时
-     * 整块（提示文字 + 按钮）显示；确定按钮按“TAG 已选 1~3 个 / 其余赛型已单选 1 个”点亮。
+     * 刷新人机列表与按钮态：先按收藏重排（收藏项置顶，取消后回原位）；TAG 下选中项末尾右对齐
+     * 显示 ②③④ 席位标记（不足 3 席按已选顺序循环补位，故只选 1 个时它同时带 ②③④）；
+     * P2 卡组单元仅当选中支持自选卡组的人机时整块（提示文字 + 按钮）显示；
+     * 确定按钮按“TAG 已选 1~3 个 / 其余赛型已单选 1 个”点亮。
      */
     private void refreshBotListDisplay(int selectedPosition) {
+        selectedBotIndex = selectedPosition;
+        // 收藏重排：收藏项按原相对顺序置前，其余保持 bot.conf 原顺序（取消收藏即回到原位置）
+        rebuildBotDisplayOrder();
         int selected = botSelectionOrder.size();
-        int count = tagBotBaseNames.size();
-        // 条目文本固定为原始名称，席位标记走尾部右对齐列（单选赛型下全部为空串即不显示）
+        int count = botDisplayIndices.size();
+        // 条目文本按显示顺序排列；席位标记仍按原始下标计算再落到对应显示位置（单选赛型下全为空串）
+        List<String> names = new ArrayList<>(count);
         List<String> marks = new ArrayList<>(count);
-        for (int i = 0; i < count; i++) {
-            marks.add(tagListMode ? botSeatMarks(i, selected) : "");
+        for (int botIndex : botDisplayIndices) {
+            names.add(tagBotBaseNames.get(botIndex));
+            marks.add(tagListMode ? botSeatMarks(botIndex, selected) : "");
         }
-        tagBotAdapter.set(tagBotBaseNames);
-        tagBotAdapter.setTrailingMarks(marks);
+        // 单选位置与复选集合均记原始下标，重排后需换算成新的显示位置
+        List<Integer> selectedPositions = new ArrayList<>(selected);
+        if (tagListMode) {
+            for (int botIndex : botSelectionOrder) {
+                int display = botDisplayPositionOf(botIndex);
+                if (display >= 0) selectedPositions.add(display);
+            }
+        }
+        tagBotAdapter.setDisplayState(names, marks,
+                tagListMode ? -1 : botDisplayPositionOf(selectedPosition), selectedPositions);
 
         // P2 卡组单元：与所选人机是否支持自选卡组联动，并逐席位刷新按钮文字
         updateBotDeckButton(selectedPosition);
@@ -853,6 +884,33 @@ public class SingleModeDialog {
             }
         }
         return marks.toString();
+    }
+
+    /**
+     * 按收藏状态重建人机列表显示顺序：收藏项按原相对顺序置前，其余保持原顺序；
+     * 取消收藏后条目自然回到它在 bot.conf 中的原本位置。
+     */
+    private void rebuildBotDisplayOrder() {
+        botDisplayIndices.clear();
+        if (tagBotBaseNames == null) return;
+        Set<String> favorites = SharedPreferenceUtil.getFavoriteBotNames();
+        for (int i = 0; i < tagBotBaseNames.size(); i++) {
+            if (favorites.contains(tagBotBaseNames.get(i))) botDisplayIndices.add(i);
+        }
+        for (int i = 0; i < tagBotBaseNames.size(); i++) {
+            if (!favorites.contains(tagBotBaseNames.get(i))) botDisplayIndices.add(i);
+        }
+    }
+
+    /** 列表显示位置 → botList 原始下标（越界返回 -1） */
+    private int botIndexOf(int displayPosition) {
+        return displayPosition >= 0 && displayPosition < botDisplayIndices.size()
+                ? botDisplayIndices.get(displayPosition) : -1;
+    }
+
+    /** botList 原始下标 → 列表显示位置（收藏重排后位置会变；-1 或不存在返回 -1） */
+    private int botDisplayPositionOf(int botIndex) {
+        return botIndex < 0 ? -1 : botDisplayIndices.indexOf(botIndex);
     }
 
     /** 半宽三页签专用页签视图：显式应用 styles.xml 的 bot_duel_tab_layout 文字外观
@@ -899,6 +957,11 @@ public class SingleModeDialog {
     /** 重新显示此前隐藏的对话框：不重新 inflate/不重读 bot、残局列表，回到关闭前选择状态 */
     public void reshow(View anchorView) {
         if (popupWindow == null || draggableHelper == null || popupWindow.isShowing()) return;
+        // 收藏记录可能在关闭期间由其他入口（如 /ai 呼叫弹窗）变更：停在人机页时重排一次，
+        // 保证每次显示收藏项都置顶；残局页不动，避免误把 P2 卡组单元重新显示出来
+        if (tagBotListView != null && tagBotListView.getAdapter() == tagBotAdapter) {
+            refreshBotListDisplay(selectedBotIndex);
+        }
         draggableHelper.showPopup(popupWindow, anchorView);
     }
 
