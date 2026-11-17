@@ -419,9 +419,13 @@ void SingleDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	rh.base.version = PRO_VERSION;
 	rh.base.flag = REPLAY_UNIFORM;
 	rh.base.start_time = (uint32_t)std::time(nullptr);
+	rh.base.props[7] = host_info.no_shuffle_deck ? static_cast<uint8_t>(ShuffleVersion::None) : static_cast<uint8_t>(ShuffleVersion::MTRandomWithSalt);
 	for (auto& x : rh.seed_sequence)
 		x = rd();
-	mtrandom rnd(rh.seed_sequence, SEED_COUNT);
+	uint32_t shuffle_seed[SEED_COUNT + 1]{};
+	std::memcpy(shuffle_seed, rh.seed_sequence, sizeof rh.seed_sequence);
+	shuffle_seed[SEED_COUNT] = 1;
+	mtrandom rnd(shuffle_seed, SEED_COUNT + 1);
 	last_replay.BeginRecord();
 	last_replay.WriteHeader(rh);
 	last_replay.WriteData(players[0]->name, 40, false);

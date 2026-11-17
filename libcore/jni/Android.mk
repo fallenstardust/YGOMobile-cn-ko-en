@@ -41,6 +41,7 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/../Classes/libevent/include
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../Classes/libsndfile/include
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../Classes/mpg123/include
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../Classes/openal/include
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../Classes/liblzma/api
 
 LOCAL_SRC_FILES := $(LOCAL_PATH)/android/android_tools.cpp \
 				$(LOCAL_PATH)/android/xstring.cpp \
@@ -93,6 +94,7 @@ LOCAL_STATIC_LIBRARIES += libsndfile
 LOCAL_STATIC_LIBRARIES += libmpg123
 LOCAL_STATIC_LIBRARIES += openal
 LOCAL_STATIC_LIBRARIES += clzma
+LOCAL_STATIC_LIBRARIES += liblzma_xz
 LOCAL_STATIC_LIBRARIES += cspmemvfs
 LOCAL_STATIC_LIBRARIES += sqlite3
 LOCAL_STATIC_LIBRARIES += libft2
@@ -112,6 +114,7 @@ $(call import-module,mpg123)
 $(call import-module,openal)
 $(call import-module,freetype)
 $(call import-module,gframe/lzma)
+$(call import-module,liblzma)
 $(call import-module,gframe/spmemvfs)
 
 $(call import-module,android/native_app_glue)
