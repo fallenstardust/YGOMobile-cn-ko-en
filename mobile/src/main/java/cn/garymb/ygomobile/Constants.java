@@ -192,6 +192,12 @@ public interface Constants {
 
     int DIALOG_POPUP_WIDTH_DP = 420;
     int DIALOG_POPUP_HEIGHT_DP = 280;
+    /**
+     * 决斗设置弹窗（popup_window_settings）单独加高：两列各 11 个条目且每行带 2dp 纵向边距，
+     * 沿用通用弹窗高度时单行可用高度不足，系统字体放大后会被行高裁切。
+     * 仍经 fitSizeToScreen / orientedFitSize 随屏高限幅，短屏设备不会超屏。
+     */
+    int SETTINGS_POPUP_HEIGHT_DP = 320;
 
     /**
      * 弹窗尺寸竖屏自适应：宽度超出屏幕宽度时限制为屏幕宽度，高度按原宽高比等比缩小；

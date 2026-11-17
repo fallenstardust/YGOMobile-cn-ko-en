@@ -85,6 +85,13 @@ abstract class CmdMenuDialogBase {
     /** 手卡（ocgcore LOCATION_HAND）：手卡灵摆怪兽「发动」确认闸门按此区域判定 */
     protected static final int LOC_HAND = 0x02;
 
+    /**
+     * 「灵摆刻度放置」效果的系统字符串索引：脚本 procedure.lua 的 Auxiliary.EnablePendulumAttribute
+     * 为手卡灵摆怪兽注册的放置效果固定 SetDescription(1160)（strings.conf「在灵摆区域发动」）。
+     * 通讯报文只带 desc、不带效果类型，故只能按这个 desc 把手卡灵摆怪兽的刻度放置项与怪兽效果项分开。
+     */
+    protected static final int SYS_PENDULUM_PLACE = 1160;
+
     protected final YGOProActivity activity;
     protected final PopupWindow popupWindow;
     protected final View contentView;
@@ -115,9 +122,35 @@ abstract class CmdMenuDialogBase {
             }
         }
         if (!activateList.isEmpty()) {
-            options.add(activateText);
-            final List<GameEngine.CmdCardInfo> chosen = activateList;
-            actions.add(() -> showActivateOptions(cmdContext, chosen));
+            // 用户规格「单独灵摆刻度发动按钮」：开关开启时，手卡灵摆怪兽的刻度放置单独成一个按钮，
+            // 与怪兽效果互不干扰——两者都能发动时各占一个按钮，不再借 OptionDialog 二选一。
+            // 拆分依据只有 desc（见 SYS_PENDULUM_PLACE）；未开开关或非手卡灵摆怪兽时保持原有单按钮行为
+            List<GameEngine.CmdCardInfo> pendulumList = new ArrayList<>();
+            List<GameEngine.CmdCardInfo> monsterList = activateList;
+            if (isPendulumButtonEnabled() && isHandPendulumActivate(card, cmdContext)) {
+                monsterList = new ArrayList<>();
+                for (GameEngine.CmdCardInfo info : activateList) {
+                    if (isPendulumPlaceEntry(info)) {
+                        pendulumList.add(info);
+                    } else {
+                        monsterList.add(info);
+                    }
+                }
+            }
+            if (!pendulumList.isEmpty()) {
+                // 刻度放置：点一下直接宣告（经 showActivateOptions 走单条即发应答的路径，
+                // 决斗设置「召唤、盖放、灵摆发动前询问」开启时仍先弹确认）
+                options.add(activity.getString(R.string.cmd_pendulum_activate));
+                final List<GameEngine.CmdCardInfo> pendulumChosen = pendulumList;
+                actions.add(() -> showActivateOptions(cmdContext, pendulumChosen));
+            }
+            if (!monsterList.isEmpty()) {
+                // 刻度放置按钮同时在场时把「发动」改称「怪兽效果发动」以示区别，否则沿用「发动」
+                options.add(pendulumList.isEmpty() ? activateText
+                        : activity.getString(R.string.cmd_activate_monster_effect));
+                final List<GameEngine.CmdCardInfo> chosen = monsterList;
+                actions.add(() -> showActivateOptions(cmdContext, chosen));
+            }
         }
 
         // duelclient.cpp L2121 / event_handler.cpp BUTTON_CMD_RESET L501-538：
@@ -608,17 +641,40 @@ abstract class CmdMenuDialogBase {
     /**
      * 发动：单条直接应答，多条弹 OptionDialog 列出各效果脚本提示文字
      *（对齐 client_field.cpp ShowSelectOption + event_handler.cpp BUTTON_OPTION → SetResponseSelectedOption）。
-     * <p>手卡灵摆怪兽的「发动」在这里先过确认闸门：单效果时本方法会一路直发应答，
+     * <p>手卡灵摆怪兽的刻度放置项在这里先过确认闸门：单效果时本方法会一路直发应答，
      * 玩家点一下就已完成宣告并把怪兽压进灵摆区，没有任何可中断的中间步骤。
+     * 开了「单独灵摆刻度发动按钮」后闸门只盖「灵摆区域发动」按钮（列表里含放置项），
+     * 「怪兽效果发动」不带放置项、直接按效果数分流。
      */
     protected void showActivateOptions(int cmdContext, List<GameEngine.CmdCardInfo> infos) {
         ClientCard card = (infos == null || infos.isEmpty()) ? null : infos.get(0).card;
-        if (isHandPendulumActivate(card, cmdContext)) {
+        // 确认闸门只针对刻度放置本身：单独按钮模式下怪兽效果按钮送进来的是滤掉放置项的列表，
+        // 不应再被「在灵摆区域发动？」拦住；未拆分的旧路径两者同列，仍按整卡询问一次
+        if (isHandPendulumActivate(card, cmdContext) && containsPendulumPlace(infos)) {
             confirmIdleCommand(R.string.ask_cmd_pendulum_confirm, card,
                     () -> showOptionListForMode(cmdContext, infos, MODE_ACTIVATE));
             return;
         }
         showOptionListForMode(cmdContext, infos, MODE_ACTIVATE);
+    }
+
+    /** 决斗设置「单独灵摆刻度发动按钮」（键 chkPendulumActivateBtn）是否开启 */
+    protected static boolean isPendulumButtonEnabled() {
+        return AppsSettings.get().getIntSettings("chkPendulumActivateBtn", 0) == 1;
+    }
+
+    /** 该条可发动记录是否为脚本注册的「灵摆刻度放置」项（desc 恒取系统字符串 1160） */
+    protected static boolean isPendulumPlaceEntry(GameEngine.CmdCardInfo info) {
+        return info != null && info.desc == SYS_PENDULUM_PLACE;
+    }
+
+    /** 这批可发动记录里是否含「灵摆刻度放置」项 */
+    protected static boolean containsPendulumPlace(List<GameEngine.CmdCardInfo> infos) {
+        if (infos == null) return false;
+        for (GameEngine.CmdCardInfo info : infos) {
+            if (isPendulumPlaceEntry(info)) return true;
+        }
+        return false;
     }
 
     /**

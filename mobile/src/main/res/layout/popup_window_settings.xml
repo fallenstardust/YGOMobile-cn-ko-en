@@ -41,6 +41,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
+                android:layout_marginVertical="2dp"
                 android:text="自动选择怪兽卡片位置"
                 android:textColor="@color/white"
                 android:textSize="9sp" />
@@ -50,16 +51,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
+                android:layout_marginVertical="2dp"
                 android:text="自动选择魔陷卡片位置"
-                android:textColor="@color/white"
-                android:textSize="9sp" />
-
-            <CheckBox
-                android:id="@+id/chkAskIdleCmd"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:text="召唤、盖放、灵摆发动前询问"
                 android:textColor="@color/white"
                 android:textSize="9sp" />
 
@@ -68,8 +61,29 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
+                android:layout_marginVertical="2dp"
                 android:layout_marginLeft="10dp"
                 android:text="随机选择位置"
+                android:textColor="@color/white"
+                android:textSize="9sp" />
+
+            <CheckBox
+                android:id="@+id/chkAskIdleCmd"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_marginVertical="2dp"
+                android:text="召唤、盖放、灵摆发动前询问"
+                android:textColor="@color/white"
+                android:textSize="9sp" />
+
+            <CheckBox
+                android:id="@+id/chkPendulumActivateBtn"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_marginVertical="2dp"
+                android:text="单独灵摆刻度发动按钮"
                 android:textColor="@color/white"
                 android:textSize="9sp" />
 
@@ -78,6 +92,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
+                android:layout_marginVertical="2dp"
                 android:text="自动发动并排序必发效果"
                 android:textColor="@color/white"
                 android:textSize="9sp" />
@@ -87,6 +102,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
+                android:layout_marginVertical="2dp"
                 android:text="没有可连锁的卡时延迟回应"
                 android:textColor="@color/white"
                 android:textSize="9sp" />
@@ -96,6 +112,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
+                android:layout_marginVertical="2dp"
                 android:text="开局默认显示所有时点"
                 android:textColor="@color/white"
                 android:textSize="9sp" />
@@ -105,6 +122,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
+                android:layout_marginVertical="2dp"
                 android:text="隐藏玩家昵称"
                 android:textColor="@color/white"
                 android:textSize="9sp" />
@@ -114,6 +132,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
+                android:layout_marginVertical="2dp"
                 android:text="显示场地背景"
                 android:textColor="@color/white"
                 android:textSize="9sp" />
@@ -123,6 +142,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
+                android:layout_marginVertical="2dp"
                 android:text="只有连锁1也显示连锁动画"
                 android:textColor="@color/white"
                 android:textSize="9sp" />
@@ -139,6 +159,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
+                android:layout_marginVertical="2dp"
                 android:text="启用起源点数模式"
                 android:textColor="@color/white"
                 android:textSize="9sp" />
@@ -147,6 +168,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
+                android:layout_marginVertical="2dp"
                 android:gravity="center"
                 android:orientation="horizontal">
 
@@ -171,6 +193,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
+                android:layout_marginVertical="2dp"
                 android:text="忽略观战者发言"
                 android:textColor="@color/white"
                 android:textSize="9sp" />
@@ -180,6 +203,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
+                android:layout_marginVertical="2dp"
                 android:text="不提示保留对卡组的修改"
                 android:textColor="@color/white"
                 android:textSize="9sp" />
@@ -189,6 +213,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
+                android:layout_marginVertical="2dp"
                 android:text="左右互换「是/否」按钮位置"
                 android:textColor="@color/white"
                 android:textSize="9sp" />
@@ -198,6 +223,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
+                android:layout_marginVertical="2dp"
                 android:text="自动保存录像"
                 android:textColor="@color/white"
                 android:textSize="9sp" />
@@ -207,6 +233,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
+                android:layout_marginVertical="2dp"
                 android:text="按场景切换音乐"
                 android:textColor="@color/white"
                 android:textSize="9sp" />
@@ -215,6 +242,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
+                android:layout_marginVertical="2dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
@@ -242,6 +270,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
+                android:layout_marginVertical="2dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
@@ -270,9 +299,17 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
+                android:layout_marginVertical="2dp"
                 android:text="只有连锁1也显示连锁动画"
                 android:textColor="@color/white"
                 android:textSize="9sp" />
+
+            <!-- 占位行：左列新增「单独灵摆刻度发动按钮」后两列条目数保持一致，逐行行高才能对齐 -->
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_marginVertical="2dp" />
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

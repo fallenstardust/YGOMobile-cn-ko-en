@@ -335,6 +335,9 @@
     <string name="ask_cmd_summon_confirm" formatted="false">[%s](을)를 소환할까요?</string>
     <string name="ask_cmd_set_confirm" formatted="false">[%s](을)를 덮어서 세트할까요?</string>
     <string name="ask_cmd_pendulum_confirm" formatted="false">[%s](을)를 펜듈럼 존에서 발동할까요?</string>
+    <string name="settings_pendulum_activate_btn">펜듈럼 스케일 발동 버튼 분리</string>
+    <string name="cmd_pendulum_activate">펜듈럼 존에서 발동</string>
+    <string name="cmd_activate_monster_effect">몬스터 효과 발동</string>
     <string name="screenshoot">아트 공유</string>
     <string name="ydk_share">파일 공유</string>
     <string name="unable_to_edit_empty_deck">비어있는 덱을 사용할 수 없습니다</string>

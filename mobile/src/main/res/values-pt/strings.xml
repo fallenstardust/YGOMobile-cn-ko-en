@@ -167,6 +167,9 @@
     <string name="ask_cmd_summon_confirm" formatted="false">Deseja invocar [%s]?</string>
     <string name="ask_cmd_set_confirm" formatted="false">Deseja colocar [%s] com a face para baixo?</string>
     <string name="ask_cmd_pendulum_confirm" formatted="false">Deseja ativar [%s] na Zona de Pêndulo?</string>
+    <string name="settings_pendulum_activate_btn">Botão separado de ativação da escala de pêndulo</string>
+    <string name="cmd_pendulum_activate">Ativar na Zona de Pêndulo</string>
+    <string name="cmd_activate_monster_effect">Ativar efeito de monstro</string>
     <string name="screenshoot">Compartilhar captura de tela</string>
     <string name="ydk_share">Compartilhar arquivo ydk</string>
     <string name="no_share_app">Nenhum aplicativo para compartilhar foi encontrado</string>

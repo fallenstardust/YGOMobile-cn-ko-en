@@ -332,6 +332,9 @@
     <string name="ask_cmd_summon_confirm" formatted="false">Summon [%s]?</string>
     <string name="ask_cmd_set_confirm" formatted="false">Set [%s] face-down?</string>
     <string name="ask_cmd_pendulum_confirm" formatted="false">Activate [%s] in the Pendulum Zone?</string>
+    <string name="settings_pendulum_activate_btn">Separate Pendulum Scale activation button</string>
+    <string name="cmd_pendulum_activate">Activate in Pendulum Zone</string>
+    <string name="cmd_activate_monster_effect">Activate Monster Effect</string>
     <string name="screenshoot">Share Art</string>
     <string name="ydk_share">File share</string>
     <string name="unable_to_edit_empty_deck">unable to edit empty deck</string>

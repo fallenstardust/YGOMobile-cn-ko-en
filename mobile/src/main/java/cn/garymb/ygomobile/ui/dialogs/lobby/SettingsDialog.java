@@ -93,11 +93,11 @@ public class SettingsDialog {
         float density = context.getResources().getDisplayMetrics().density;
         View rootLayout = LayoutInflater.from(context).inflate(R.layout.popup_window_settings, null);
 
-        // 先定义基础尺寸
+        // 先定义基础尺寸（高度取设置弹窗专用值，比通用弹窗高一档，容纳两列各 11 行及 2dp 行边距）
         int popupWidth = (int) (Constants.DIALOG_POPUP_WIDTH_DP * density);
-        int popupHeight = (int) (Constants.DIALOG_POPUP_HEIGHT_DP * density);
+        int popupHeight = (int) (Constants.SETTINGS_POPUP_HEIGHT_DP * density);
         
-        // 横屏时，根据 Activity 的实际宽度的 2/3 来限制弹窗宽度；竖屏保持正方形样式
+        // 横屏时，根据 Activity 的实际宽度的 2/3 来限制弹窗宽度；竖屏则先把超屏的设计宽度收到屏宽
         final android.app.Activity act = context instanceof android.app.Activity
                 ? (android.app.Activity) context : null;
         if (act != null && act.getWindow() != null && act.getWindow().getAttributes() != null) {
@@ -117,8 +117,13 @@ public class SettingsDialog {
                 }
                 popupWidth = fitted[0];
                 popupHeight = fitted[1];
+            } else if (screen.widthPixels > 0 && popupWidth > screen.widthPixels) {
+                // 竖屏：设计宽 420dp 普遍超过手机屏宽，必须自主先限到屏宽再下传。若直接把超宽设计值
+                // 交下去，setupDraggablePopup 内的 fitSizeToScreen 会按同一比例压缩高度（360dp 屏宽时
+                // 只剩约 274dp），两列各 11 行、每行还要让出 2dp 纵向边距，打勾会被上下挤压（真机竖屏反馈）。
+                // 这里只收宽度、高度保持 SETTINGS_POPUP_HEIGHT_DP，竖屏单行可用高度即与横屏一致
+                popupWidth = screen.widthPixels;
             }
-            // 竖屏：保持原有设计尺寸不变（已适配正方形）
         }
 
         StringManager stringManager = DataManager.get().getStringManager();
@@ -133,6 +138,10 @@ public class SettingsDialog {
         chkAskIdleCmd.setText(context.getString(R.string.ask_idle_cmd_label));
         CheckBox chkRandomPos = rootLayout.findViewById(R.id.chkRandomPos);
         chkRandomPos.setText(stringManager.getSystemString(1275, ""));
+        // 单独灵摆刻度发动按钮：手卡灵摆怪兽的命令菜单把「刻度放置」拆成独立按钮（键 chkPendulumActivateBtn，
+        // CmdMenuDialogBase 按同一键名读取），文案同样走 app 资源以免随外部卡表包漂移
+        CheckBox chkPendulumActivateBtn = rootLayout.findViewById(R.id.chkPendulumActivateBtn);
+        chkPendulumActivateBtn.setText(context.getString(R.string.settings_pendulum_activate_btn));
         CheckBox chkAutoChain = rootLayout.findViewById(R.id.chkAutoChain);
         chkAutoChain.setText(stringManager.getSystemString(1276, ""));
         CheckBox chkWaitChain = rootLayout.findViewById(R.id.chkWaitChain);
@@ -180,6 +189,7 @@ public class SettingsDialog {
         chkAskIdleCmd.setChecked(appsSettings.getIntSettings("chkAskIdleCmd",
                 appsSettings.getIntSettings("chkAskMSet", 0)) == 1);
         chkRandomPos.setChecked(appsSettings.getIntSettings("chkRandomPos", 0) == 1);
+        chkPendulumActivateBtn.setChecked(appsSettings.getIntSettings("chkPendulumActivateBtn", 0) == 1);
         chkAutoChain.setChecked(appsSettings.getIntSettings("chkAutoChain", 0) == 1);
         chkWaitChain.setChecked(appsSettings.getIntSettings("chkWaitChain", 0) == 1);
         chkDefaultShowChain.setChecked(appsSettings.getIntSettings("chkDefaultShowChain", 0) == 1);
@@ -206,6 +216,7 @@ public class SettingsDialog {
         bindInstantSave(appsSettings, chkSTAutoPos, "chkSTAutoPos");
         bindInstantSave(appsSettings, chkAskIdleCmd, "chkAskIdleCmd");
         bindInstantSave(appsSettings, chkRandomPos, "chkRandomPos");
+        bindInstantSave(appsSettings, chkPendulumActivateBtn, "chkPendulumActivateBtn");
         bindInstantSave(appsSettings, chkAutoChain, "chkAutoChain");
         bindInstantSave(appsSettings, chkWaitChain, "chkWaitChain");
         bindInstantSave(appsSettings, chkDefaultShowChain, "chkDefaultShowChain");
