@@ -36,13 +36,23 @@ import ocgcore.enums.CardType;
  * 悬停即显示卡片详情，同时按需显示状态标签，离开隐藏标签）：
  * - ACTION_DOWN：立即回调 onCardPressed（宿主据此在 CardDetailPanel 显示该卡详情），并启动 300ms 计时；
  * - 按住满 {@link #HOLD_THRESHOLD_MS}：在该卡下边缘下方悬浮显示通讯状态标签；
- * - ACTION_UP：仅当计时未触发（未超过 0.3 秒）才回调 onSlotClick 视为选中，
- * 「是否已触发」而非「标签是否显示」作为判据 —— 无状态文字的卡（如卡组卡）长按同样不视为点击；
+ * - ACTION_UP：清定时器并隐藏本次手势显示中的标签（抬手即「离开」，同 EGET_ELEMENT_LEFT），
+ *   标签只随按住出现、抬手消失，不保留到下一次按下；仅当计时未触发（未超过 0.3 秒）才回调
+ *   onSlotClick 视为选中，「是否已触发」而非「标签是否显示」作为判据 —— 无状态文字的卡
+ *   （如卡组卡）长按同样不视为点击；
  * - ACTION_CANCEL（含拖动弹窗时包装层补发的 CANCEL）：清定时器、隐藏标签、不触发选中。
  * <p>
  * 标签容器：不额外包裹内容层（FrameLayout 以 WRAP_CONTENT 测量时会把标签高度并入弹窗高度），
  * 而是把标签挂到 DraggablePopupHelper 的包装层（DragFrameLayout，铺满窗口且 clipChildren=false）
  * 作为第 2 个子 View —— 该层所有命中/居中判定只看 getChildAt(0)，故不影响弹窗行为与尺寸。
+ * 位置一律由 LayoutParams margin 承载，绝不用 setX/setY（见 {@link #layoutTip}）：该层会把拖拽
+ * 与区域重锚的平移量写进「全部子视图」的 translation（applyDragOffsetToChildren /
+ * clearDragOffset，由 centerPopupInRegion、onSizeChanged、收缩、旋转重排触发），translation 里
+ * 承载的位置会被这些路径清零，标签随即贴到包装层原点，即屏幕左上角（用户反馈的「飞到左上角」）。
+ * margin 与平移正交后仍会残留一类错位：重锚只改内容子视图的 margin，气泡的 margin 不在其列，
+ * 按住满 0.3s 期间恰好重锚（输入法升降、区域重新居中、旋转后重解宽度）就会让气泡停在旧位置，
+ * 故 {@link #requestReposition()} 在包装层/内容子视图 bounds 变化时补一次落位（仅限气泡正在
+ * 显示中，抬手即 hide 后 holdFired=false，不会被布局回调再变出来）。
  * <p>
  * 标签文字 = 列表提示 ClientField::ShowCardInfoInList（event_handler.cpp L2919-2964）叠加
  * 场上悬停 stTip 的通讯当前值段（event_handler.cpp L1676-1737）：卡名/别名之外，即时显示
@@ -124,10 +134,36 @@ public class CardStatusTipHelper {
         }
     };
 
+    /** 已排队一次「重锚后补落位」：一次布局过程可能连发多个 bounds 变化回调，只留一份 */
+    private boolean repositionPending;
+
+    /**
+     * 补落位任务：到执行时再查一次「气泡是否仍在显示」，抬手/翻页/取消都已 hide，不重新显示
+     */
+    private final Runnable repositionTask = new Runnable() {
+        @Override
+        public void run() {
+            repositionPending = false;
+            if (!isTipShowing()) return;
+            showTip();
+        }
+    };
+
     public CardStatusTipHelper(Context context, View contentRoot) {
         this.context = context;
         this.density = context.getResources().getDisplayMetrics().density;
         this.overlay = findTipOverlay(contentRoot);
+        // 区域重锚/窗口尺寸变化都是改内容子视图的 margin（或重解其宽/弹窗高），只会引发对应
+        // bounds 变化回调：监听包装层本身（窗口 resize、旋转）与其第 0 个子视图（区域重新居中、
+        // 自定义旋转重解宽度），变化后在气泡仍显示时重算一次 margin，使气泡跟回它的卡片
+        if (overlay != null) {
+            View.OnLayoutChangeListener anchorChanged =
+                    (v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> requestReposition();
+            overlay.addOnLayoutChangeListener(anchorChanged);
+            if (overlay.getChildCount() > 0) {
+                overlay.getChildAt(0).addOnLayoutChangeListener(anchorChanged);
+            }
+        }
     }
 
     /**
@@ -238,12 +274,12 @@ public class CardStatusTipHelper {
         handler.removeCallbacks(holdTask);
         boolean held = holdFired;
         holdFired = false;
-        // 保留 holdingSlot 供 showTip 取锚点：与场上点击卡片一致，卡片确认（CardDisplayDialog）
-        // 与选卡（CardSelectDialog）两类弹窗内「点击」或「长按」都显示通讯状态标签（
-        // ClientField::ShowCardInfoInList 等价物），且抬手后持续保留到下一次按下/翻页/关闭；
-        // 旧逻辑抬手即 hide，标签只在按住满 0.3s 期间一闪而过，点击则完全不显示
-        holdingSlot = slot;
-        showTip();
+        // 抬手即「离开」：隐藏之前显示中的标签，不再重新落位保留（对齐 event_handler.cpp
+        // EGET_ELEMENT_LEFT 隐藏 stCardListTip）。按下/点击/长按其他卡片时的旧标签同样由
+        // {@link #onDown} 开头的 hide() 收起，两条路径合起来保证「不按着就没有标签」，
+        // 也就不会再出现抬手后标签被包装层重锚清零平移而停在屏幕左上角的情形。
+        holdingSlot = -1;
+        hide();
         if (!held && clickListener != null) clickListener.onSlotClick(slot);
     }
 
@@ -258,14 +294,46 @@ public class CardStatusTipHelper {
      */
     public void hide() {
         handler.removeCallbacks(holdTask);
+        if (overlay != null) overlay.removeCallbacks(repositionTask);
+        repositionPending = false;
         if (tipView != null) tipView.setVisibility(View.GONE);
+    }
+
+    /** 气泡当前是否处于显示中（计时已触发且槽位有效且视图可见）——补落位的唯一前提 */
+    private boolean isTipShowing() {
+        return holdFired && holdingSlot >= 0 && tipView != null
+                && tipView.getVisibility() == View.VISIBLE;
+    }
+
+    /**
+     * 包装层/内容 bounds 变化后延后补一次落位。绝不能在 onLayout 回调里直接改
+     * {@link #layoutTip}：那是 layout 过程中 setLayoutParams/requestLayout，Android 会记
+     * 「layout 中请求布局」并再走一遍 traversal，极端情况下反复；post 出本次 traversal 后执行，
+     * 且执行时重新判定「仍按着且气泡仍可见」（抬手/取消已把 holdFired 置 false、holdingSlot 置 -1），
+     * 所以不会把已隐藏的气泡再变出来，也不影响抬手即隐藏与 margin 定位的既有结论。
+     */
+    private void requestReposition() {
+        if (repositionPending || overlay == null) return;
+        if (!isTipShowing()) return;
+        repositionPending = true;
+        overlay.post(repositionTask);
     }
 
     private void showTip() {
         int slot = holdingSlot;
         if (overlay == null || tipProvider == null || slot < 0 || slot >= MAX_SLOTS) return;
         View anchor = anchors[slot];
-        if (anchor == null || !anchor.isShown()) return;
+        if (anchor == null || !anchor.isShown()) {
+            // 锚卡已不可见（翻页、收缩、槽位 GONE）：就地收起，不让旧气泡成为没有锚点的残影
+            // （补落位路径依赖此判定：重锚后卡片已经不在原处时宁可没有气泡）
+            if (tipView != null) tipView.setVisibility(View.GONE);
+            return;
+        }
+        // 包装层已脱离窗口或尚未完成布局时几何不可解：本次不显示，以免按退化度量把标签贴到
+        // 包装层原点（屏幕左上角）
+        if (!overlay.isAttachedToWindow() || overlay.getWidth() <= 0 || overlay.getHeight() <= 0) {
+            return;
+        }
         String text = tipProvider.getTipText(slot);
         // 对应 C++ if(str.length() > 0)：无内容时不显示标签，但按住仍不视为点击
         if (text == null || text.isEmpty()) return;
@@ -277,6 +345,7 @@ public class CardStatusTipHelper {
         tv.measure(View.MeasureSpec.makeMeasureSpec(maxW, View.MeasureSpec.AT_MOST),
                 View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
         int w = tv.getMeasuredWidth();
+        int h = tv.getMeasuredHeight();
 
         int[] aLoc = new int[2];
         anchor.getLocationOnScreen(aLoc);
@@ -292,8 +361,45 @@ public class CardStatusTipHelper {
         if (left < minLeft) left = minLeft;
         if (left > maxLeft) left = maxLeft;
         float top = aLoc[1] + anchor.getHeight() - oLoc[1] + TIP_ANCHOR_GAP_DP * density;
-        tv.setX(left);
-        tv.setY(top);
+        // 纵向同样限幅：位置改由 margin 承载后，父层复核测量的高度上限成为 overlayHeight-topMargin，
+        // 靠底行卡片不限住就会把多行状态文字直接截掉（旧 setY 写法下 mTop 始终为 0，可用高度是整屏）。
+        // 只做往上钉回而不做翻到卡片上方：列表语义贴 gframe，那里也只在左右按 10*xScale 钳制。
+        float maxTop = overlay.getHeight() - h - margin;
+        if (maxTop < margin) maxTop = margin;
+        if (top > maxTop) top = maxTop;
+        layoutTip(tv, Math.round(left), Math.round(top));
+    }
+
+    /**
+     * 以 LayoutParams margin 落位标签：不用 setX/setY —— 那对 translation 正是包装层
+     * DragFrameLayout 施加拖拽/区域重锚平移的字段（applyDragOffsetToChildren 会把每个子
+     * 视图的 translation 覆写为拖拽量，clearDragOffset 则覆写为 0），一旦本次重锚发生在标签
+     * 显示期间，标签就会被推到包装层原点而显示到屏幕左上角。margin 与之正交，落位时再把标签
+     * 自身 translation 归零，免历史拖拽量叠加到 margin 位置上（拖拽起手即发 CANCEL 隐藏标签）。
+     */
+    private void layoutTip(TextView tv, int left, int top) {
+        tv.setTranslationX(0f);
+        tv.setTranslationY(0f);
+        ViewGroup.LayoutParams raw = tv.getLayoutParams();
+        FrameLayout.LayoutParams lp;
+        if (raw instanceof FrameLayout.LayoutParams) {
+            lp = (FrameLayout.LayoutParams) raw;
+            // 已在该位就收尾：不再 setLayoutParams（免多走一轮 traversal），也给
+            // 「bounds 变化 → 补落位」一个幂等终点，不会因父层度量而来回自我重排
+            if (lp.gravity == (Gravity.TOP | Gravity.LEFT)
+                    && lp.leftMargin == left && lp.topMargin == top) {
+                return;
+            }
+        } else {
+            lp = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+        // 用 LEFT 而非 START：位置是按屏幕坐标向左解算的，START 在 RTL 下会改成贴右缘取
+        // rightMargin 语义，使 margin 与实际绘制边不符
+        lp.gravity = Gravity.TOP | Gravity.LEFT;
+        lp.leftMargin = left;
+        lp.topMargin = top;
+        tv.setLayoutParams(lp);
     }
 
     private TextView ensureTipView() {
@@ -313,7 +419,8 @@ public class CardStatusTipHelper {
         tv.setLongClickable(false);
         tv.setFocusable(false);
         overlay.addView(tv, new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                Gravity.TOP | Gravity.LEFT));
         tipView = tv;
         return tv;
     }
@@ -539,6 +646,9 @@ public class CardStatusTipHelper {
             tv.setText(text);
 
             final FrameLayout root = new FrameLayout(activity);
+            // 落位在 showAtLocation 之后的 post 回调里完成：先置 INVISIBLE（仍参与测量布局），
+            // 避免未定位的首帧把气泡画在窗口原点＝屏幕左上角，再由 positionTip 收尾可见
+            root.setVisibility(View.INVISIBLE);
             FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             lp.gravity = Gravity.START | Gravity.TOP;
@@ -615,6 +725,8 @@ public class CardStatusTipHelper {
 
             tv.setX(left);
             tv.setY(top);
+            // 已按卡片实际四边形落位，此前为避开左上角而隐藏的层次现在放开
+            root.setVisibility(View.VISIBLE);
         }
 
         public static void hide() {
