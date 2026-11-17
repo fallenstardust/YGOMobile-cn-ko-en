@@ -68,6 +68,10 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
                     break;
                 }
                 activity.enterDuelingUI();
+                // 新一局开场：上一局残留的居中特效（胜负/投降文字、召唤/发动大图等）与待播队列
+                // 一并清掉，不得在新一局里补播上一局的演出（用户反馈：上一局动画未完就投降时，
+                // 下一局会先把旧演出播完才开始）
+                clearSpecEffectsForNewDuel();
                 int selfSeat = activity.engine.getClient().selfType;
                 if (selfSeat >= 7) {
                     // 观战者（NETPLAYER_TYPE_OBSERVER）：不显示底部行动区与时点按钮，左侧面板常驻专用观战控制集（跳到当前/切换视角/退出，需求5）（对齐 event_handler.cpp BUTTON_REPLAY_SWAP / BUTTON_LEAVE_GAME 观战分支）
@@ -689,6 +693,18 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
             });
         }
         return specEffectOverlay;
+    }
+
+    /** 新一局开场：丢弃上一局残留的居中特效与待播队列（不新建实例），并告知引擎特效已空闲以重开消息闸门 */
+    private void clearSpecEffectsForNewDuel() {
+        if (specEffectOverlay == null) {
+            return;
+        }
+        specEffectOverlay.hide();
+        // 队列被中断不会自然排空 idle 回调：显式通知引擎解除特效侧动画屏障
+        if (activity.engine != null) {
+            activity.engine.notifySpecEffectIdle();
+        }
     }
 
     /** drawspec 覆盖层按需创建（供 YGOProActivity 弹幕入口转发；与特效回调共用同一实例与 idle 闸门接线） */

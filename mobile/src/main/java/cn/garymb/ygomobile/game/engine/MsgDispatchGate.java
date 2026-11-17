@@ -115,6 +115,32 @@ public class MsgDispatchGate {
     }
 
     /**
+     * 新一局开场的硬复位（对齐 C++ {@code duelclient.cpp} STOC_DUEL_START 的 {@code dField.Clear()}：
+     * 残留动画立即作废，不等上一局播完）：
+     * <ol>
+     *   <li>同步丢弃上一局遗留的全部待派发消息——本方法在通信读取线程上执行，而读取线程
+     *       「处理完本包才读下一包」，故此刻队列里的条目一定属于上一局，新一局的
+     *       MSG_START 尚未入队；</li>
+     *   <li>复位动画闸门/确认弹窗持闸/定时屏障并取消轮询与兜底，避免闸门仍闭把新一局的消息挂住；</li>
+     *   <li>把「清场」作为新一局的第一条串行动作重新入队再排空：它必定先于新一局的任何 MSG
+     *       执行（旧实现把清场排到队列尾部，局尾动画会先播完，且存在擦掉新局堆叠的竞态）。</li>
+     * </ol>
+     */
+    void prepareNewDuel() {
+        engine.pendingMsgs.clear();
+        engine.animGateClosed = false;
+        engine.dialogGateHeld = false;
+        engine.animHoldUntilMs = 0L;
+        // 不取消轮询/兜底回调：若上一局还有一条已取出的消息正在派发、又把闸门关上，
+        // 轮询器会照常把它缝完并重开闸门，保证下面这条清场动作一定能执行（避免永久挂起）
+        engine.pendingMsgs.offer(() -> {
+            engine.field.clear();
+            if (engine.listener != null) engine.listener.onFieldChanged();
+        });
+        drainPendingMsgs();
+    }
+
+    /**
      * 把一个一次性动作排到待派发通讯队列的尾部执行：与 {@code MSG_*} 走同一条串行链，
      * 因此它一定排在当前已入队（含被动画/确认弹窗闸门持住）的消息之后。用于会清空/重建场地的
      * {@code STOC_*}（见 {@code DuelStocHandler}）——C++ 的 {@code duelclient.cpp ClientAnalyze}

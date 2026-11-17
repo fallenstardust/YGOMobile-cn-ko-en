@@ -115,9 +115,10 @@ public class DuelStocHandler implements DuelClient.ClientListener {
 
     @Override
     public void onDuelStart() {
-        // 清场排到通讯队列尾部（与 MSG_* 同序，对齐 C++ ClientAnalyze 的单条串行链）：
-        // 观战积压时若在此即时 clear，会插到已入队消息（含下一局 MSG_START 建好的堆叠）之后
-        clearFieldAfterPendingMsgs();
+        // 新一局开场硬复位（对齐 C++ STOC_DUEL_START 的 dField.Clear()）：同步丢弃上一局遗留的
+        // 待派发消息与动画/持闸状态，并把清场作为新一局的第一条串行动作——旧实现把清场排到队列
+        // 尾，若上一局在对方动画播完前投降，会先把旧动画（含投降演出）全部播完才开始新一局。
+        engine.prepareNewDuel();
         // 新一场决斗（含 match 三局的开场包）：丢弃上一场未与录像配对的残留 MSG 段
         engine.resetMsgRecording();
         // 作废上一局可能残留的撤回 latch（ACK 先到、reload 因断线未落地），

@@ -674,6 +674,9 @@ public class GameEngine {
     /** 串行派发待处理消息：闸门开启时逐条处理，某条触发动画则停止循环；实现见 MsgDispatchGate */
     void drainPendingMsgs() { gate.drainPendingMsgs(); }
 
+    /** 新一局开场硬复位：丢弃上一局遗留的待派发消息与动画/持闸状态，并把清场作为新一局第一条串行动作（实现见 MsgDispatchGate） */
+    public void prepareNewDuel() { gate.prepareNewDuel(); }
+
     /**
      * 把一次性动作排到通讯队列尾部执行，使其与 {@code MSG_*} 同序（对齐 C++ ClientAnalyze 的单条串行链）。
      * 供会清空/重建场地的 {@code STOC_*}（STOC_DUEL_START / STOC_CHANGE_SIDE / STOC_WAITING_SIDE）使用，
