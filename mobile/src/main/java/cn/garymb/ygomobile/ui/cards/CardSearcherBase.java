@@ -184,7 +184,7 @@ public abstract class CardSearcherBase {
     protected View layout_monster;
     protected ICardSearcher mICardSearcher;// ICardSearcher 即为CardLoader的接口;
     protected Context mContext;
-    protected Button myFavButton;
+    protected View myFavButton;
     protected StringManager mStringManager;
     protected LimitManager mLimitManager;
     protected AppsSettings mSettings;
@@ -201,8 +201,7 @@ public abstract class CardSearcherBase {
 
     public void showFavorites(boolean showList) {
         mShowFavorite = true;
-        myFavButton.setSelected(true);
-        myFavButton.setBackground(mContext.getDrawable(R.drawable.radius));
+        refreshFavoriteButton();
         if (mCallBack != null) {
             mCallBack.onSearchStart();
         }
@@ -215,8 +214,7 @@ public abstract class CardSearcherBase {
 
     public void hideFavorites(boolean reload) {
         mShowFavorite = false;
-        myFavButton.setSelected(false);
-        myFavButton.setBackground(mContext.getDrawable(R.drawable.selected_dark));
+        refreshFavoriteButton();
         if (mCallBack != null) {
             mCallBack.onSearchStart();
         }
@@ -236,8 +234,18 @@ public abstract class CardSearcherBase {
      */
     protected void resetFavoriteState() {
         mShowFavorite = false;
-        myFavButton.setSelected(false);
-        myFavButton.setBackground(mContext.getDrawable(R.drawable.selected_dark));
+        refreshFavoriteButton();
+    }
+
+    /**
+     * 刷新收藏星标按钮的选中态：星标本身走 selector_favorite（选中=实心星，未选中=空心星），
+     * 背景保持与同行其它按钮一致的圆角底，不再像旧文字按钮那样整块换底色
+     */
+    protected void refreshFavoriteButton() {
+        if (myFavButton == null) {
+            return;
+        }
+        myFavButton.setSelected(mShowFavorite);
     }
 
     public void initItems() {

@@ -1423,27 +1423,14 @@
             android:layout_height="@dimen/label_width_small"
             android:orientation="horizontal">
 
+            <!-- 我的收藏已改为各页结果区顶行的星标按钮（btn_my_fav，见 fragment_search /
+                 fragment_deck_cards），本筛选面板只保留关键字拆分开关 -->
             <CheckBox
                 android:id="@+id/chk_multi_keyword"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/settings_key_words_split"
                 android:textSize="10sp" />
-
-            <View
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
-
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/btn_my_fav"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/selected_dark"
-                android:text="@string/my_favorites"
-                android:textSize="9sp"
-                android:textColor="@color/selector_text_color_white_gold"
-                android:visibility="visible" />
         </LinearLayout>
 
         <LinearLayout

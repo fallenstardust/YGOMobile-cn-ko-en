@@ -476,29 +476,41 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:layout_marginBottom="4dp"
+                android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingLeft="10dp">
+                android:paddingLeft="5dp">
 
                 <TextView
                     android:id="@+id/result_count"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
-                    android:layout_marginRight="10dp"
+                    android:layout_height="match_parent"
                     android:background="@drawable/radius"
-                    android:gravity="center_horizontal"
+                    android:gravity="center"
                     android:text="0"
                     android:textColor="@color/gold"
                     android:textStyle="bold" />
+
+                <!-- 我的收藏星标（用户规格：由右侧筛选面板移到本行，与计数/宫格/排序同行）：
+                     空心星=普通搜索态，实心星=当前正在展示收藏列表；点击行为与原来的文字按钮一致
+                     （首次点按进入收藏列表，再点回到上一次搜索结果） -->
+                <ImageButton
+                    android:id="@+id/btn_my_fav"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginHorizontal="5dp"
+                    android:background="@drawable/ic_radius_bg"
+                    android:contentDescription="@string/my_favorites"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/selector_favorite" />
 
                 <!-- 展现模式切换按钮（用户规格）：默认列表，点一下换宫格；图标始终显示当前模式
                      （列表态 ic_view_list_24，宫格态 ic_view_grid_24），由页面点击后刷新 -->
                 <ImageButton
                     android:id="@+id/btn_result_view_mode"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
-                    android:layout_marginEnd="10dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="5dp"
                     android:background="@drawable/ic_radius_bg"
                     android:scaleType="fitCenter"
                     android:src="@drawable/ic_view_list_24" />
@@ -508,11 +520,10 @@
                      切换只对当前结果重排，不重新发起搜索 -->
                 <androidx.appcompat.widget.AppCompatSpinner
                     android:id="@+id/sp_result_sort"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
                     android:background="@drawable/ygopro_spinner"
-                    android:layout_gravity="center_vertical"
-                    android:layout_weight="1" />
+                    android:layout_gravity="center_vertical" />
             </LinearLayout>
 
             <!-- 列表底部做半透明渐隐（FadeBottomRecyclerView 自绘 alpha 遮罩，不带背景色），

@@ -349,6 +349,8 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
         View cardSearchPanel = layoutView.findViewById(R.id.nav_view_list);
         mCardSearcher = new CardSearcher(cardSearchPanel, mCardLoader);
         mCardSearcher.setCallBack(this);
+        // 收藏星标位于搜索结果抽屉顶行（计数/宫格切换/排序同排），筛选面板里已没有该按钮，得交进来
+        mCardSearcher.bindFavoriteButton(layoutView.findViewById(R.id.btn_my_fav));
         // 筛选条件抽屉（右侧）的容器铺满整屏且背景透明：抽屉在显时落在筛选面板以外的触点若无人消费，
         // ViewGroup 会把同一次按下继续下发给下层兄弟（搜索结果列表抽屉）与内容层（功能菜单/搜索/
         // 搜索结果列表按钮），形成点击穿透（用户规格：抽屉在显时禁止穿透）。容器自身的消费只发生在

@@ -144,6 +144,8 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         mCardLoader.setCallBack(this);
         mCardSearcher = new CardSearcher(layoutView.findViewById(R.id.nav_view_list), mCardLoader);
         mCardSearcher.setCallBack(this);
+        // 收藏星标位于本页结果区顶行（计数/宫格切换/排序同排），筛选面板里已没有该按钮，得交进来
+        mCardSearcher.bindFavoriteButton(layoutView.findViewById(R.id.btn_my_fav));
         setListeners();
         isLoad = true;
         mCardLoader.loadData();
