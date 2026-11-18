@@ -38,6 +38,7 @@ import cn.garymb.ygomobile.utils.BitmapUtil;
 import cn.garymb.ygomobile.utils.CardUtils;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
+import ocgcore.PackManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
@@ -140,6 +141,11 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
     private boolean mGrid;
     /** 宫格单列最小宽（px），列数 = 列表可用宽 / 该值；取行模式的卡图宽 card_small_width 保证两处观感一致 */
     private int mGridMinCell;
+    /**
+     * 宫格固定列数；0 = 按可用宽自适应（卡查页）。
+     * 卡组管理页的搜索结果固定每行 4 个（用户规格），不随抽屉宽窄浮动
+     */
+    private int mGridSpanCount;
 
     /**
      * 切换搜索结果列的展现形式（宫格/行）。本方法只改标志并重建 holder：标志一变
@@ -158,12 +164,20 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
     }
 
     /**
-     * 按当前展现模式装配布局管理器：宫格 = GridLayoutManager（列数按可用宽 / 单列最小宽
-     * 自适应，宽度还没量出来时先给 1 列，下一轮填结果时再复核）；列表 = 原来的
-     * {@link FastScrollLinearLayoutManager}（带右侧快速滚动条）。已挂对类型的则只改列数，
-     * 不重建布局管理器（避免滚动位置被摸清）。列数变化会 requestLayout，所以下游
-     * 页面要在布局之外（post）调用；单格尺寸不在此计算：宫格条目宽高比由
-     * item_search_card_grid 的 dimensionRatio 派生，列宽变化自动跟随
+     * 设定宫格固定列数（传 0 恢复“按可用宽自适应”）。
+     * 已挂着的 GridLayoutManager 要等下一次 {@link #applyListLayout(RecyclerView)} 才换列数
+     */
+    public void setGridSpanCount(int spanCount) {
+        mGridSpanCount = Math.max(0, spanCount);
+    }
+
+    /**
+     * 按当前展现模式装配布局管理器：宫格 = GridLayoutManager（列数默认按可用宽 / 单列最小宽
+     * 自适应，页面可用 {@link #setGridSpanCount(int)} 改成固定列数；宽度还没量出来时先给
+     * 1 列，下一轮填结果时再复核）；列表 = 原来的 {@link FastScrollLinearLayoutManager}
+     * （带右侧快速滚动条）。已挂对类型的则只改列数，不重建布局管理器（避免滚动位置被摸清）。
+     * 列数变化会 requestLayout，所以下游页面要在布局之外（post）调用；单格尺寸不在此计算：
+     * 宫格条目宽高比由 item_search_card_grid 的 dimensionRatio 派生，列宽变化自动跟随
      */
     public void applyListLayout(RecyclerView list) {
         if (list == null) return;
@@ -176,11 +190,17 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
             }
             return;
         }
-        if (mGridMinCell <= 0) {
-            mGridMinCell = context.getResources().getDimensionPixelSize(R.dimen.card_small_width);
+        int span;
+        if (mGridSpanCount > 0) {
+            // 页面指定了固定列数（卡组管理页每行 4 个）：不踩宽度，免得抽屉一宽就多出一列
+            span = mGridSpanCount;
+        } else {
+            if (mGridMinCell <= 0) {
+                mGridMinCell = context.getResources().getDimensionPixelSize(R.dimen.card_small_width);
+            }
+            int avail = list.getWidth() - list.getPaddingLeft() - list.getPaddingRight();
+            span = avail > 0 ? Math.max(1, avail / mGridMinCell) : 1;
         }
-        int avail = list.getWidth() - list.getPaddingLeft() - list.getPaddingRight();
-        int span = avail > 0 ? Math.max(1, avail / mGridMinCell) : 1;
         if (lm instanceof GridLayoutManager) {
             if (((GridLayoutManager) lm).getSpanCount() != span) {
                 ((GridLayoutManager) lm).setSpanCount(span);
@@ -217,6 +237,13 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
      */
     private final List<Card> mRawCards = new ArrayList<>();
 
+    /**
+     * 发售日期过滤范围（yyyyMMdd，两端都含）；为 0 表示不启用过滤。
+     * 由卡查页与卡组管理页顶部的时间轴写入，只作用于本适配器当前展示的搜索结果
+     */
+    private int mFilterStartDate;
+    private int mFilterEndDate;
+
     /** 记住原始顺序；各页面在拿到搜索结果时先调本方法，再调 {@link #applySortRule(int)} */
     public void setRawCards(List<Card> cards) {
         mRawCards.clear();
@@ -226,14 +253,54 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
     }
 
     /**
+     * 设定按发售日期过滤的范围（yyyyMMdd，两端都含）。页面时间轴两端都拉到头尾时
+     * 应该改调 {@link #clearReleaseDateFilter()}：全范围等于“不按日期挑卡”，
+     * 未收录发售日期的卡（不在任何卡包 ydk 里）那时也一并保留
+     */
+    public void setReleaseDateFilter(int startDate, int endDate) {
+        mFilterStartDate = startDate;
+        mFilterEndDate = endDate;
+    }
+
+    /** 取消发售日期过滤，恢复完整结果 */
+    public void clearReleaseDateFilter() {
+        mFilterStartDate = 0;
+        mFilterEndDate = 0;
+    }
+
+    private boolean hasReleaseDateFilter() {
+        return mFilterStartDate > 0 && mFilterEndDate >= mFilterStartDate;
+    }
+
+    /**
+     * 只留发售日期落在过滤范围内的卡。发售日期取卡包管理器记录的最早一次发售，
+     * xxxx-misc 这类只知道年份的卡按“范围与该年份有交集”判定；
+     * 过滤启用时，没有任何卡包记录的卡同样不保留（它们没有日期可比）
+     */
+    private List<Card> filterByReleaseDate(List<Card> cards) {
+        if (!hasReleaseDateFilter() || cards == null || cards.isEmpty()) {
+            return cards;
+        }
+        PackManager packManager = DataManager.get().getPackManager();
+        List<Card> kept = new ArrayList<>(cards.size());
+        for (Card card : cards) {
+            if (packManager.isCardReleasedBetween(card.getCode(), mFilterStartDate, mFilterEndDate)) {
+                kept.add(card);
+            }
+        }
+        return kept;
+    }
+
+    /**
      * 按本页当前选中的规则档位把原始顺序填入适配器：第 0 档直接原样，其余档位走
      * {@link #sortByRule}；无论哪一档，卡名与检索词完全命中的卡都排到最前
      * （用户规格：置顶不随排序档位变）。
      * 本方法自己 notifyDataSetChanged，调用方不必再设数据
      */
     public void applySortRule(int sortSel) {
+        List<Card> filtered = filterByReleaseDate(mRawCards);
         List<Card> ordered = sortSel == SORT_RULE_ORIGINAL
-                ? mRawCards : sortByRule(mRawCards, sortSel);
+                ? filtered : sortByRule(filtered, sortSel);
         // 置顶靠稳定分区完成：命中组与非命中组各自保持上面排好的次序，不会打乱档位
         set(CardSearcherManagerBase.pinKeywordMatches(ordered, mSearchKeyword));
         notifyDataSetChanged();

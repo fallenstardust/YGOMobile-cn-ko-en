@@ -14,8 +14,12 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableSet;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
@@ -29,6 +33,18 @@ public class PackManager implements Closeable {
     private static final String TAG = PackManager.class.getSimpleName();
     private static final PackManager sPackManager = new PackManager();
     private final List<Map.Entry<String, List<Integer>>> packList = new ArrayList<>();
+    /**
+     * 卡号 → 最早发售日期。日期取自卡包 ydk 的文件名前缀（形如 “2024-04-01 1205.ydk”），
+     * 同一张卡在多个包复刻时只留最早的那次；
+     * “2024-misc.ydk”这类整年零散包只知道年份，按 {@code yyyy0001} 编码（月份位为 0）。
+     * 不在任何卡包里的卡没有记录（查询时不保留）。
+     */
+    private final Map<Integer, Integer> cardReleaseDates = new ConcurrentHashMap<>();
+    /**
+     * 全部卡包的发售日期节点（yyyyMMdd，升序去重）：搜索结果的时间轴就按这些节点吸附滑动，
+     * 首尾节点即时间轴跨度。只知年份的包按当年 1 月 1 日入节点。
+     */
+    private final NavigableSet<Integer> releaseDateNodes = new ConcurrentSkipListSet<>();
 
     public static PackManager get() {
         return sPackManager;
@@ -41,10 +57,14 @@ public class PackManager implements Closeable {
     public void close() {
         // 如果有需要清理的资源，在这里处理
         packList.clear();
+        cardReleaseDates.clear();
+        releaseDateNodes.clear();
     }
 
     public boolean load() {
         packList.clear();
+        cardReleaseDates.clear();
+        releaseDateNodes.clear();
         boolean rs1 = loadFile(AppsSettings.get().getResourcePath() + "/" + Constants.CORE_PACK_PATH);
         boolean rs2 = loadFile(AppsSettings.get().getExpansionsPath() + "/" + Constants.CORE_PACK_PATH);
         // 卡包 ydk 不再解压到 cacheDeck：就地读 expansions 下 zip/ypk 里的 pack/*.ydk
@@ -151,7 +171,117 @@ public class PackManager implements Closeable {
         // 将解析出的ID列表添加到packList中，如果ID列表不为空
         if (!ids.isEmpty()) {
             packList.add(new AbstractMap.SimpleEntry<>(packFileName, ids));
+            int releaseDate = parseReleaseDate(packFileName);
+            if (releaseDate > 0) {
+                // 这个包的发售日期就是时间轴上的一个滑动节点
+                releaseDateNodes.add(normalizeReleaseDate(releaseDate));
+                for (Integer id : ids) {
+                    recordReleaseDate(id, releaseDate);
+                }
+            }
         }
+    }
+
+    /**
+     * 记下卡号的最早发售日期（同卡多包复刻只留最早的一次）。
+     * 加载走的是后台线程（实体目录由 VUiKit.defer 异步读、压缩包同步读），
+     * 所以这里既用并发容器也用同步方法兜住两个加载线的同时写入
+     */
+    private synchronized void recordReleaseDate(int code, int date) {
+        Integer old = cardReleaseDates.get(code);
+        if (old == null || date < old) {
+            cardReleaseDates.put(code, date);
+        }
+    }
+
+    /**
+     * 从卡包 ydk 文件名解析发售日期（yyyyMMdd）。
+     * <p>
+     * 约定格式：{@code yyyy-MM-dd 包名.ydk}；只到月的 {@code yyyy-MM 包名.ydk} 取当月 1 日；
+     * 整年零散卡 {@code yyyy-misc.ydk} 只知道年份，按 {@link #encodeReleaseYear(int)} 编码，
+     * 过滤时按「整年任意一天在范围内」判定。前缀不是日期的文件返回 0（不参与过滤）。
+     */
+    private static int parseReleaseDate(String packFileName) {
+        if (packFileName == null || packFileName.length() < 7 || packFileName.charAt(4) != '-') {
+            return 0;
+        }
+        try {
+            int year = Integer.parseInt(packFileName.substring(0, 4));
+            if (year <= 0) {
+                return 0;
+            }
+            if (packFileName.length() >= 10 && packFileName.charAt(7) == '-') {
+                int month = Integer.parseInt(packFileName.substring(5, 7));
+                int day = Integer.parseInt(packFileName.substring(8, 10));
+                if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+                    return year * 10000 + month * 100 + day;
+                }
+                return 0;
+            }
+            if (packFileName.regionMatches(5, "misc", 0, 4)) {
+                // xxxx-misc：该文件里的卡都属于这一年，但具体日期未知
+                return encodeReleaseYear(year);
+            }
+            int month = Integer.parseInt(packFileName.substring(5, 7));
+            if (month >= 1 && month <= 12) {
+                return year * 10000 + month * 100 + 1;
+            }
+        } catch (NumberFormatException e) {
+            Log.w(TAG, "Skip pack date: " + packFileName);
+        }
+        return 0;
+    }
+
+    /** “只知道年份”的发售日期编码：{@code yyyy0001}（月份位为 0，与真实日期区分开） */
+    private static int encodeReleaseYear(int year) {
+        return year * 10000 + 1;
+    }
+
+    private static boolean isYearOnlyRelease(int date) {
+        return date > 0 && date % 10000 == 1;
+    }
+
+    /** 只知道年份的日期按当年 1 月 1 日归一，用于时间轴节点与跨度端点 */
+    private static int normalizeReleaseDate(int date) {
+        return isYearOnlyRelease(date) ? date / 10000 * 10000 + 101 : date;
+    }
+
+    /**
+     * 时间轴的滑动节点：全部卡包的发售日期（yyyyMMdd，升序去重）。
+     * <p>
+     * xxxx-misc 这类只知道年份的包按当年 1 月 1 日入节点，但过滤仍按整年判定（见
+     * {@link #isCardReleasedBetween}）；卡包还没读到时返回空数组。
+     */
+    public int[] getReleaseDateNodes() {
+        int[] nodes = new int[releaseDateNodes.size()];
+        int i = 0;
+        // 载入线程随时还在往节点集里补新节点，弱一致迭代器可能给出比 size() 更多的元素，
+        // 这里按数组容量截断，宁可少一个节点也不越界
+        for (Integer date : releaseDateNodes) {
+            if (i >= nodes.length) {
+                break;
+            }
+            nodes[i++] = date;
+        }
+        return i == nodes.length ? nodes : Arrays.copyOf(nodes, i);
+    }
+
+    /**
+     * 某张卡的发售日期是否落在 [startDate, endDate] 内（均为 yyyyMMdd，两端都含）。
+     * <p>
+     * xxxx-misc 里的卡只知道年份：只要范围与那一年有交集（滑块扫到该年份的任一天）就保留，
+     * 不把它钉死在 1 月 1 日。没有任何卡包记录的卡返回 false（无日期可比）。
+     */
+    public boolean isCardReleasedBetween(int code, int startDate, int endDate) {
+        Integer date = cardReleaseDates.get(code);
+        if (date == null) {
+            return false;
+        }
+        if (isYearOnlyRelease(date)) {
+            int year = date / 10000;
+            return startDate <= year * 10000 + 1231 && endDate >= year * 10000 + 101;
+        }
+        return date >= startDate && date <= endDate;
     }
 
     /**

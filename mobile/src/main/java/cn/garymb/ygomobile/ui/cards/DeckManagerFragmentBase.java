@@ -162,6 +162,11 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
      * （只卡图与禁限/起源点角标）；图标始终表示当前模式，见 {@link #refreshResultViewModeIcon()}
      */
     protected ImageButton btnResultViewMode;
+    /**
+     * 搜索结果抽屉顶部的发售日期时间轴接线：跨度取自卡包管理器里全部卡片的发售日期，
+     * 两端滑块决定结果只保留日期落在中间的卡
+     */
+    protected CardReleaseDateFilter mReleaseDateFilter;
     protected boolean isLoad = false;
     protected int screenWidth;
     long exitLasttime = 0;
@@ -314,6 +319,8 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
         // 两种展现都保留加卡键与行上的卡名/属性/攻守信息（宫格态则由卡详与长按拖动加卡）
         mCardListAdapter = new CardListAdapter(getContext(), activity.getImageLoader());
         mCardListAdapter.setShowAddButtons(true); // 显示添加按钮
+        // 宫格固定每行 4 个（用户规格）：本页结果抽屉宽度不固定，自适应会多出一列
+        mCardListAdapter.setGridSpanCount(Constants.DECK_MANAGE_RESULT_GRID_SPAN);
         mCardListAdapter.setGridLayout(isResultGridPreferred());
         mListView.setLayoutManager(new FastScrollLinearLayoutManager(getContext()));
         mListView.setAdapter(mCardListAdapter);
@@ -360,6 +367,14 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
         // 查找底部卡组名称展示区域的文本控件
         tv_deck = layoutView.findViewById(R.id.tv_deck);
         tv_result_count = layoutView.findViewById(R.id.result_count);
+        // 搜索结果抽屉顶部的发售日期时间轴（接线见 CardReleaseDateFilter）：
+        // 过滤后按同一排序档位重排，并复核一次列表布局
+        mReleaseDateFilter = new CardReleaseDateFilter(
+                layoutView.findViewById(R.id.release_date_bar),
+                mCardListAdapter, tv_result_count,
+                () -> resultSortSel,
+                this::applyResultLayout);
+        mReleaseDateFilter.refreshRange();
 
         // 初始化右侧抽屉的条件搜索禁卡表下拉框并设置背景颜色
         mCardSearchLimitSpinner = mCardSearcher.findViewById(R.id.sp_limit_list);
@@ -616,6 +631,12 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
         if (mCardListAdapter == null) return;
         mCardListAdapter.setRawCards(cards);
         mCardListAdapter.applySortRule(resultSortSel);
+        // 时间轴：卡包数据比页面晚读完是常态，每次填结果都复核一次跨度（已就绪则不动滑块）；
+        // 顶部计数按过滤后的条数刷新
+        if (mReleaseDateFilter != null) {
+            mReleaseDateFilter.refreshRange();
+            mReleaseDateFilter.updateResultCount();
+        }
         applyResultLayout();
     }
 
@@ -720,6 +741,11 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
         if (hidden && mCardSearcher != null) {
             mCardSearcher.dismissKeywordDropdown();
         }
+        // 切回本页（页签用 hide/show 切换，不走 onUserVisible）：复核一次时间轴跨度，
+        // 卡包数据可能在本页隐藏期间才读完
+        if (!hidden && mReleaseDateFilter != null) {
+            mReleaseDateFilter.refreshRange();
+        }
     }
 
     @Override
@@ -728,6 +754,10 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
 
     @Override
     public void onUserVisible() {
+        // 切回本页时复核时间轴跨度：卡包数据可能在页面隐藏期间才读完
+        if (mReleaseDateFilter != null) {
+            mReleaseDateFilter.refreshRange();
+        }
     }
 
     @Override
@@ -912,6 +942,10 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
     //region load deck
 
     protected void showResult(boolean autoClose) {
+        // 打开搜索结果抽屉前复核一次时间轴跨度（卡包数据可能刚读完）
+        if (mReleaseDateFilter != null) {
+            mReleaseDateFilter.refreshRange();
+        }
         if (mDrawerLayout.isDrawerOpen(Constants.CARD_SEARCH_GRAVITY)) {
             mDrawerLayout.closeDrawer(Constants.CARD_SEARCH_GRAVITY);
         }

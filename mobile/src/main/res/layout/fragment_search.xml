@@ -19,63 +19,82 @@
             android:layout_height="match_parent"
             android:orientation="vertical">
 
-            <com.tubb.smrv.SwipeMenuRecyclerView
-                android:id="@+id/list_cards"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_marginTop="36dp"
-                android:divider="@android:color/transparent"
-                android:dividerHeight="4dp"
-                android:padding="5dp"
-                android:scrollbars="vertical" />
-
-            <!-- 顶部一行：搜索结果计数 + 排序规则切换（用户规格：新建立一行，与卡组编辑页
-                 左抽屉的顶部计数行观感一致）。计数原先在右下角卡查按钮下方，现上移到本行。
-                 本行与 list_cards 的 marginTop 同为 36dp：两者都是 layout_main(FrameLayout)
-                 的子项，不依赖彼此位置，改高度要同时改两处 -->
+            <!-- 结果区自上而下三块：计数/排序行、结果列表、发售日期时间轴（贴底，方便手指拖动）。
+                 列表按剩余高度填充，不再用固定 marginTop 顶开（计数行高度随字号变化也不会盖住列表） -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="top"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingStart="5dp"
-                android:paddingEnd="5dp">
+                android:layout_height="match_parent"
+                android:orientation="vertical">
 
-                <TextView
-                    android:id="@+id/search_result_count"
-                    android:layout_width="wrap_content"
+                <!-- 顶部一行：搜索结果计数 + 排序规则切换（用户规格：新建立一行，与卡组编辑页
+                     左抽屉的顶部计数行观感一致）。计数原先在右下角卡查按钮下方，现上移到本行 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="10dp"
-                    android:background="@drawable/ic_radius_bg"
-                    android:clickable="false"
-                    android:gravity="center"
-                    android:text="0"
-                    android:textAlignment="center"
-                    android:textColor="@color/gold"
-                    android:textSize="10sp" />
+                    android:layout_gravity="top"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="5dp"
+                    android:paddingEnd="5dp">
 
-                <!-- 展现模式切换按钮（用户规格）：默认列表，点一下换宫格；图标始终显示当前模式
-                     （列表态 ic_view_list_24，宫格态 ic_view_grid_24），由页面点击后刷新；
-                     本页不读卡组，因此行模式仍不装配加卡键 -->
-                <ImageButton
-                    android:id="@+id/btn_result_view_mode"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
-                    android:layout_marginEnd="10dp"
-                    android:background="@drawable/ic_radius_bg"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/ic_view_list_24" />
+                    <TextView
+                        android:id="@+id/search_result_count"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="10dp"
+                        android:background="@drawable/ic_radius_bg"
+                        android:clickable="false"
+                        android:gravity="center"
+                        android:text="0"
+                        android:textAlignment="center"
+                        android:textColor="@color/gold"
+                        android:textSize="10sp" />
 
-                <!-- 排序规则切换：选项与比较器与决斗内卡组编辑器的搜索结果排序同源
-                     （星数↑/攻击↑/守备↑/名称↓），切换只对当前结果重排 -->
-                <androidx.appcompat.widget.AppCompatSpinner
-                    android:id="@+id/sp_result_sort"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/ygopro_spinner"
-                    android:layout_weight="1" />
+                    <!-- 展现模式切换按钮（用户规格）：默认列表，点一下换宫格；图标始终显示当前模式
+                         （列表态 ic_view_list_24，宫格态 ic_view_grid_24），由页面点击后刷新；
+                         本页不读卡组，因此行模式仍不装配加卡键 -->
+                    <ImageButton
+                        android:id="@+id/btn_result_view_mode"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginEnd="10dp"
+                        android:background="@drawable/ic_radius_bg"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/ic_view_list_24" />
+
+                    <!-- 排序规则切换：选项与比较器与决斗内卡组编辑器的搜索结果排序同源
+                         （星数↑/攻击↑/守备↑/名称↓），切换只对当前结果重排 -->
+                    <androidx.appcompat.widget.AppCompatSpinner
+                        android:id="@+id/sp_result_sort"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/ygopro_spinner"
+                        android:layout_weight="1" />
+                </LinearLayout>
+
+                <!-- 列表底部做半透明渐隐（FadeBottomRecyclerView 自绘 alpha 遮罩，不带背景色），
+                     下边缘自然融进下方时间轴的透明背景 -->
+                <cn.garymb.ygomobile.ui.widget.FadeBottomRecyclerView
+                    android:id="@+id/list_cards"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:divider="@android:color/transparent"
+                    android:dividerHeight="4dp"
+                    android:padding="5dp"
+                    android:scrollbars="vertical" />
+
+                <!-- 发售日期时间轴（用户规格）：摆在结果列表下方；控件自己不画背景（全透明），
+                     上方列表底部已是半透明渐隐，两者在交界处自然衔接。
+                     左右留白走控件 padding；卡包数据没读完时由页面置 GONE -->
+                <cn.garymb.ygomobile.ui.widget.DateRangeSlider
+                    android:id="@+id/release_date_bar"
+                    android:layout_width="match_parent"
+                    android:layout_height="42dp"
+                    android:paddingStart="5dp"
+                    android:paddingEnd="5dp"
+                    android:visibility="gone" />
             </LinearLayout>
 
             <LinearLayout

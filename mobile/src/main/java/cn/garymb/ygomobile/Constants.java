@@ -221,6 +221,8 @@ public interface Constants {
     int DECK_SIDE_MAX = 15;
     int DECK_EXTRA_COUNT = (DECK_SIDE_MAX / DECK_WIDTH_COUNT * DECK_WIDTH_COUNT < DECK_SIDE_MAX) ? DECK_WIDTH_COUNT * 2 : DECK_WIDTH_COUNT;
     int DECK_SIDE_COUNT = DECK_EXTRA_COUNT;
+    /** 卡组管理页搜索结果宫格的固定列数 */
+    int DECK_MANAGE_RESULT_GRID_SPAN = 5;
     String URL_HELP = "https://ygom.top/tutorial.html";
     String URL_DONATE = "https://ifdian.net/a/ygomobile";
     String URL_MASTER_RULE_CN = "https://ocg-rule.readthedocs.io/";

@@ -92,6 +92,8 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
 
     private View layoutView;
     private ImageButton btn_search;
+    /** 结果区顶部的发售日期时间轴接线（跨度取自卡包管理器，滑块一变动就过滤当前结果） */
+    private CardReleaseDateFilter mReleaseDateFilter;
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
@@ -130,6 +132,14 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         btn_search.setOnClickListener((v) -> showSearch(true));
         mPackManager = DataManager.get().getPackManager();
         mCardManager = DataManager.get().getCardManager();
+        // 搜索结果顶部的发售日期时间轴：跨度取自卡包管理器里全部卡片的发售日期，
+        // 两端滑块决定结果只保留日期落在中间的卡（接线见 CardReleaseDateFilter）
+        mReleaseDateFilter = new CardReleaseDateFilter(
+                layoutView.findViewById(R.id.release_date_bar),
+                mCardListAdapter, mResult_count,
+                () -> resultSortSel,
+                () -> mListView.post(() -> mCardListAdapter.applyListLayout(mListView)));
+        mReleaseDateFilter.refreshRange();
         mCardLoader = new CardLoader();
         mCardLoader.setCallBack(this);
         mCardSearcher = new CardSearcher(layoutView.findViewById(R.id.nav_view_list), mCardLoader);
@@ -173,6 +183,14 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
     private void fillSearchResultList(List<Card> cards) {
         mCardListAdapter.setRawCards(cards);
         mCardListAdapter.applySortRule(resultSortSel);
+        // 时间轴：卡包数据比页面晚读完是常态，每次填结果都复核一次跨度（已就绪则不动滑块）；
+        // 顶部计数按过滤后的条数刷新
+        if (mReleaseDateFilter != null) {
+            mReleaseDateFilter.refreshRange();
+            mReleaseDateFilter.updateResultCount();
+        } else {
+            mResult_count.setText(String.valueOf(mCardListAdapter.getItems().size()));
+        }
         // 布局管理器与列数变化会 requestLayout，填数据路径故 post 到本轮布局之外；
         // 尚未量出宽度时适配器先给 1 列兜底，等下一次填结果数据时再算
         mListView.post(() -> mCardListAdapter.applyListLayout(mListView));
@@ -218,7 +236,10 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
 
     @Override
     public void onUserVisible() {
-
+        // 切回本页时复核时间轴跨度：卡包数据可能在页面隐藏期间才读完
+        if (mReleaseDateFilter != null) {
+            mReleaseDateFilter.refreshRange();
+        }
     }
 
     @Override
@@ -238,6 +259,11 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         // 是独立窗体不会随之消失，会卡在切换后的页面上，故本页退场时主动收起自己那份下拉
         if (hidden && mCardSearcher != null) {
             mCardSearcher.dismissKeywordDropdown();
+        }
+        // 切回本页（页签用 hide/show 切换，不走 onUserVisible）：复核一次时间轴跨度，
+        // 卡包数据可能在本页隐藏期间才读完
+        if (!hidden && mReleaseDateFilter != null) {
+            mReleaseDateFilter.refreshRange();
         }
     }
 
@@ -322,7 +348,6 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         }
 
         mCardListAdapter.setSearchKeyword(currentCardSearchMessage);
-        mResult_count.setText(String.valueOf(cardInfos.size()));
         fillSearchResultList(cardInfos);
         if (!cardInfos.isEmpty()) {
             mListView.smoothScrollToPosition(0);

@@ -197,7 +197,6 @@ public abstract class DeckManagerFragmentSearch extends DeckManagerFragmentDeck 
      * 也不会在第 0 档被套上其它规则
      */
     private void showSearchResultCards(List<Card> cardInfos, boolean isHide) {
-        tv_result_count.setText(String.valueOf(cardInfos.size()));
         String keyword = mCardSearcher.getCurrentKeyword();
         if (keyword != null && !keyword.isEmpty()) {
             currentCardSearchMessage = keyword;
