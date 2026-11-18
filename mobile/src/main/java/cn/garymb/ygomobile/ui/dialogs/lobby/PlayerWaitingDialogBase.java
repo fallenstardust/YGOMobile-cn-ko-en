@@ -325,6 +325,8 @@ abstract class PlayerWaitingDialogBase {
         seat.setText(name);
         // 玩家加入(名字非空)时叠加半透明色提醒该席位已被占据，离开/清空时恢复透明
         seat.setBackground(TextUtils.isEmpty(name) ? context.getDrawable(R.drawable.ygopro_selected_background) : context.getDrawable(R.drawable.ygopro_base_background));
+        // 席位占用/释放即时重估“/ai”按钮：玩家进入/离开/换席都会经过这里
+        updateAiSummonButtonState();
     }
 
     public String getPlayerName(int pos) {
@@ -695,7 +697,30 @@ abstract class PlayerWaitingDialogBase {
         cb.setChecked(checked);
         updateSelfCheckboxInteractivity();
     }
+    /**
+     * “/ai”呼叫 Bot 按钮可用性：仅当本房间决斗席位仍有空缺时可用（判定口径与服务端
+     * {@code GameRoomMid#firstFreeSeat} 一致：TAG 4 席、其余 2 席，席位名非空即视为有人）；
+     * 所有席位都有人时置灰不可点。纯单人(solo)模式服务端不接受 /ai，同样保持置灰。
+     */
+    protected void updateAiSummonButtonState() {
+        if (btnAiSummon == null) return;
+        int duelistCount = isTagMode ? 4 : 2;
+        boolean hasFreeSeat = false;
+        for (int i = 0; i < duelistCount; i++) {
+            if (TextUtils.isEmpty(getPlayerName(i))) {
+                hasFreeSeat = true;
+                break;
+            }
+        }
+        boolean enabled = hasFreeSeat && !soloMode;
+        btnAiSummon.setEnabled(enabled);
+        btnAiSummon.setTextColor(enabled ? Color.WHITE : Color.GRAY);
+    }
+
     protected void updateStartButtonState() {
+        // “/ai”按钮与开始按钮同源刷新：房主变更、TAG 模式回显、solo 开关、席位出入
+        // （经 setPlayerReady/refreshPlayerDisplay）都会走到这里
+        updateAiSummonButtonState();
         if (btnPwStartGame == null) return;
         if (!isHost) {
             btnPwStartGame.setEnabled(false);

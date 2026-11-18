@@ -330,6 +330,8 @@ abstract class PlayerWaitingDialogMid extends PlayerWaitingDialogBase {
             btnAiSummon.setText(R.string.btn_ai_summon);
             // 用户规格：/ai 呼叫 Bot 仅房主可见；TYPE_CHANGE 可能早于本窗创建，先按当前房主态初始化
             btnAiSummon.setVisibility(isHost ? View.VISIBLE : View.GONE);
+            // 可用性：仅席位有空缺时可用，满员置灰（状态可能早于本窗到达，先按当前席位初始化）
+            updateAiSummonButtonState();
         }
         if (btnPwSpectatorMode != null)
             btnPwSpectatorMode.setText(mStringManager.getSystemString(1252, "→观战"));
@@ -346,6 +348,8 @@ abstract class PlayerWaitingDialogMid extends PlayerWaitingDialogBase {
     }
     /** 点击“/ai”：首项为“随机-不指定”，其余为符合房间禁卡表且在 bot.conf 有人机名的卡组；确定后由宿主发送 /ai [卡组名]。 */
     protected void showAiDeckSelect() {
+        // 席位已满（按钮已置灰）时不再展开：避免选择窗先展开、期间席位被填满后仍发出无效 /ai
+        if (btnAiSummon != null && !btnAiSummon.isEnabled()) return;
         if (deckSelectorDialog != null && deckSelectorDialog.isShowing()) deckSelectorDialog.dismiss();
         List<AiDeckUtil.AiDeckOption> decks = new ArrayList<>();
         decks.add(new AiDeckUtil.AiDeckOption(context.getString(R.string.ai_deck_random), ""));
