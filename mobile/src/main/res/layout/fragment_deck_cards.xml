@@ -515,15 +515,52 @@
                     android:scaleType="fitCenter"
                     android:src="@drawable/ic_view_list_24" />
 
-                <!-- 搜索结果排序规则切换（用户规格：与顶部计数同一行）：选项与比较器实现
-                     与决斗内卡组编辑器的搜索结果排序同源（星数↑/攻击↑/守备↑/名称↓），
-                     切换只对当前结果重排，不重新发起搜索 -->
-                <androidx.appcompat.widget.AppCompatSpinner
-                    android:id="@+id/sp_result_sort"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:background="@drawable/ygopro_spinner"
-                    android:layout_gravity="center_vertical" />
+                <!-- 排序规则按钮（固定写在布局上，位序即 sortSel：0=星数 / 1=攻击 / 2=守备 / 3=名称 / 4=时间）：
+                     按钮宽度按文字自适应，小屏放不下时整排可横向滑动；文字由代码按系统字符串本地化，
+                     选中项换 radius 底 + 金字，其余为 button_radius_black_transparents 底 + 白字 -->
+                <cn.garymb.ygomobile.ui.widget.HorizontalScrollViewPlus
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:padding="1dp"
+                    android:background="@drawable/selected_light"
+                    android:layout_weight="1"
+                    android:overScrollMode="never"
+                    android:scrollbars="none">
+
+                    <LinearLayout
+                        android:id="@+id/ll_result_sort"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/btn_sort_star"
+                            style="@style/ResultSortButton"
+                            android:text="星数↓" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/btn_sort_atk"
+                            style="@style/ResultSortButton"
+                            android:text="攻击↓" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/btn_sort_def"
+                            style="@style/ResultSortButton"
+                            android:text="守备↓" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/btn_sort_name"
+                            style="@style/ResultSortButton"
+                            android:text="名称↑" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/btn_sort_time"
+                            style="@style/ResultSortButton"
+                            android:text="时间↓" />
+                    </LinearLayout>
+                </cn.garymb.ygomobile.ui.widget.HorizontalScrollViewPlus>
             </LinearLayout>
 
             <!-- 列表底部做半透明渐隐（FadeBottomRecyclerView 自绘 alpha 遮罩，不带背景色），

@@ -220,4 +220,20 @@
         <item name="android:textStyle">bold</item>
     </style>
 
+    <!-- 搜索结果排序按钮（卡查页 / 卡组管理页共用）：宽度按文字自适应、
+         整排放不下时在 HorizontalScrollView 里横向滑动；选中项与其余项的底色、
+         字色由 CardListAdapter#setupSortButtons 按当前档位切换 -->
+    <style name="ResultSortButton">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_marginEnd">1dp</item>
+        <item name="android:background">#80000000</item>
+        <item name="android:gravity">center</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:minWidth">50dp</item>
+        <item name="android:padding">5dp</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textSize">10sp</item>
+    </style>
 </resources>

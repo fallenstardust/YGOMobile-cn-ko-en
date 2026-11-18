@@ -34,13 +34,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -152,11 +150,12 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
     protected PackManager mPackManager;
     protected CardListAdapter mCardListAdapter;
     /**
-     * 搜索结果排序规则切换下拉（与左抽屉顶部计数同一行）：位序即编辑器同款的
-     * 0=星数↑ / 1=攻击↑ / 2=守备↑ / 3=名称↓，只影响本页结果列的展现顺序
+     * 搜索结果排序规则按钮（与左抽屉顶部计数同一行）：位序与编辑器同款，
+     * 0=星数 / 1=攻击 / 2=守备 / 3=名称 / 4=时间（按卡包发售日期从早到晚），
+     * resultSortReversed 为真时按该规则反向排；只影响本页结果列的展现顺序
      */
-    protected AppCompatSpinner spResultSort;
     protected int resultSortSel;
+    protected boolean resultSortReversed;
     /**
      * 搜索结果展现模式切换按钮（与左抽屉顶部计数同一行）：默认列表，点一下换宫格
      * （只卡图与禁限/起源点角标）；图标始终表示当前模式，见 {@link #refreshResultViewModeIcon()}
@@ -324,9 +323,8 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
         mCardListAdapter.setGridLayout(isResultGridPreferred());
         mListView.setLayoutManager(new FastScrollLinearLayoutManager(getContext()));
         mListView.setAdapter(mCardListAdapter);
-        // 顶部计数同一行的排序规则切换与展现模式切换
-        spResultSort = layoutView.findViewById(R.id.sp_result_sort);
-        setupResultSortSpinner();
+        // 顶部计数同一行的排序规则按钮与展现模式切换
+        setupResultSortButtons();
         btnResultViewMode = layoutView.findViewById(R.id.btn_result_view_mode);
         btnResultViewMode.setOnClickListener(v -> toggleResultViewMode());
         refreshResultViewModeIcon();
@@ -604,34 +602,28 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
     }
 
     /**
-     * 搜索结果排序规则切换下拉：选项与样式由 {@link CardListAdapter#setupSortSpinner}
+     * 搜索结果排序规则按钮：装项与样式由 {@link CardListAdapter#setupSortButtons}
      * 统一装配（与卡查页同一份），比较器与决斗内卡组编辑器同源；
      * 切换只对当前结果重排，不重新发起搜索
      */
-    private void setupResultSortSpinner() {
-        if (spResultSort == null) return;
-        CardListAdapter.setupSortSpinner(getContext(), spResultSort);
-        spResultSort.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                resultSortSel = position;
-                resortSearchResults();
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-            }
-        });
+    private void setupResultSortButtons() {
+        CardListAdapter.setupSortButtons(layoutView.findViewById(R.id.ll_result_sort),
+                resultSortSel, resultSortReversed, (sortSel, reversed) -> {
+                    resultSortSel = sortSel;
+                    resultSortReversed = reversed;
+                    resortSearchResults();
+                });
     }
 
     /**
      * 结果列表填入数据与刷新：先记住搜索线程交来的原始顺序，再按本页当前档位填入，
-     * 最后复核一次展现布局。第 0 档（星数↑）就是改造前的原样顺序（含关键词完全命中置顶），
+     * 最后复核一次展现布局。第 0 档（星数）就是改造前的原样顺序（含关键词完全命中置顶），
      * 卡包展示的原始顺序就是卡包顺序本身，因此也不会被打乱
      */
     protected void fillSearchResultList(List<Card> cards) {
         if (mCardListAdapter == null) return;
         mCardListAdapter.setRawCards(cards);
+        mCardListAdapter.setSortReversed(resultSortReversed);
         mCardListAdapter.applySortRule(resultSortSel);
         // 时间轴：卡包数据比页面晚读完是常态，每次填结果都复核一次跨度（已就绪则不动滑块）；
         // 顶部计数按过滤后的条数刷新
@@ -645,6 +637,7 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
     /** 排序规则变更后只重排当前结果，不重新搜索：以适配器里记下的原始顺序为底 */
     protected void resortSearchResults() {
         if (mCardListAdapter == null) return;
+        mCardListAdapter.setSortReversed(resultSortReversed);
         mCardListAdapter.applySortRule(resultSortSel);
         applyResultLayout();
     }

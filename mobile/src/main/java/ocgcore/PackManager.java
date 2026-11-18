@@ -267,6 +267,15 @@ public class PackManager implements Closeable {
     }
 
     /**
+     * 排序用的发售日期：yyyyMMdd，只知年份的包按当年 1 月 1 日归一；
+     * 不在任何卡包里的卡返回 0（排序时这类卡放到最后）
+     */
+    public int getCardReleaseDate(int code) {
+        Integer date = cardReleaseDates.get(code);
+        return date == null ? 0 : normalizeReleaseDate(date);
+    }
+
+    /**
      * 某张卡的发售日期是否落在 [startDate, endDate] 内（均为 yyyyMMdd，两端都含）。
      * <p>
      * xxxx-misc 里的卡只知道年份：只要范围与那一年有交集（滑块扫到该年份的任一天）就保留，

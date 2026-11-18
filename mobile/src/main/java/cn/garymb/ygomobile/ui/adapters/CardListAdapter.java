@@ -8,7 +8,7 @@ import android.text.style.BackgroundColorSpan;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.Spinner;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.recyclerview.widget.FastScrollLinearLayoutManager;
@@ -244,6 +244,9 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
     private int mFilterStartDate;
     private int mFilterEndDate;
 
+    /** 当前排序是否按规则反向（重复点已选中的排序按钮切换），由页面写入，下次 applySortRule 生效 */
+    private boolean mSortReversed;
+
     /** 记住原始顺序；各页面在拿到搜索结果时先调本方法，再调 {@link #applySortRule(int)} */
     public void setRawCards(List<Card> cards) {
         mRawCards.clear();
@@ -299,48 +302,127 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
      */
     public void applySortRule(int sortSel) {
         List<Card> filtered = filterByReleaseDate(mRawCards);
-        List<Card> ordered = sortSel == SORT_RULE_ORIGINAL
-                ? filtered : sortByRule(filtered, sortSel);
+        // 第 0 档正向就是搜索线程交来的原样顺序（含完全命中置顶）；反向（星数↑）才走比较器
+        List<Card> ordered = (sortSel == SORT_RULE_ORIGINAL && !mSortReversed)
+                ? filtered : sortByRule(filtered, sortSel, mSortReversed);
         // 置顶靠稳定分区完成：命中组与非命中组各自保持上面排好的次序，不会打乱档位
         set(CardSearcherManagerBase.pinKeywordMatches(ordered, mSearchKeyword));
         notifyDataSetChanged();
     }
 
-    /**
-     * 按卡组编辑器的搜索结果排序规则重排（sortSel 与编辑器排序下拉位序同义：
-     * 0=星数↑ / 1=攻击↑ / 2=守备↑ / 3=名称↓）；比较器取自 {@link CardSearcherManagerBase}。
-     * 返回新列表，不改动传入列表（那是搜索线程的产物）。
-     * <p>
-     * 注：两个页面只在第 1~3 档走这里，第 0 档按 {@link #SORT_RULE_ORIGINAL} 保持原样
-     */
-    public static List<Card> sortByRule(List<Card> cards, int sortSel) {
-        List<Card> sorted = new ArrayList<>(cards == null ? 0 : cards.size());
-        if (cards != null) sorted.addAll(cards);
-        Collections.sort(sorted, CardSearcherManagerBase.searchComparator(sortSel));
-        return sorted;
+    /** 设定当前排序是否反向（再次点击已选中的排序按钮时切换）；下一次 applySortRule 生效 */
+    public void setSortReversed(boolean reversed) {
+        mSortReversed = reversed;
+    }
+
+    public boolean isSortReversed() {
+        return mSortReversed;
     }
 
     /**
-     * 结果排序下拉的公共装项（卡查页与卡组编辑页共用，装项与样式只在这里维护一份）：
-     * 四个选项与决斗内卡组编辑器的搜索结果排序同源（同一批系统字符串 1370-1373），
-     * 位序与 {@link #sortByRule} 的 sortSel 同义；白字单行 12sp，
-     * 弹层背景沿用两页禁卡表下拉的 colorNavy。选中监听由页面自己接（重排本页当前结果）
+     * 按卡组编辑器的搜索结果排序规则重排（sortSel 与排序按钮位序同义：
+     * 0=星数 / 1=攻击 / 2=守备 / 3=名称 / 4=时间；reverse=反向），
+     * 比较器取自 {@link CardSearcherManagerBase}。返回新列表，不改动传入列表
      */
-    public static void setupSortSpinner(Context context, Spinner spinner) {
-        if (spinner == null) return;
+    public static List<Card> sortByRule(List<Card> cards, int sortSel, boolean reverse) {
+        List<Card> sorted = new ArrayList<>(cards == null ? 0 : cards.size());
+        if (cards != null) sorted.addAll(cards);
+        Collections.sort(sorted, CardSearcherManagerBase.searchComparator(sortSel, reverse));
+        return sorted;
+    }
+
+    /** 排序规则按钮的点击回调：位序（0=星数 / 1=攻击 / 2=守备 / 3=名称 / 4=时间）+ 是否反向 */
+    public interface OnSortRuleChangedListener {
+        void onSortRuleChanged(int sortSel, boolean reversed);
+    }
+
+    /**
+     * 结果排序按钮的公共装项（卡查页与卡组管理页共用）：按钮固定写在布局里（按位序排好），
+     * 这里负责按系统字符串设文字（随数据语言本地化）、按当前档位与方向切底色、接点击。
+     * <p>
+     * 点未选中的按钮 = 切到该规则的正向；再次点已选中的按钮 = 正向↔反向切换
+     * （星数↓↔星数↑ …），按钮文字跟着换箭头，反向时底色用 radius_p 区分；
+     * 重排本页当前结果由页面自己接（不重新发起搜索）
+     */
+    public static void setupSortButtons(LinearLayout container, int selected, boolean reversed,
+                                        OnSortRuleChangedListener listener) {
+        if (container == null) return;
+        final List<String> labels = sortRuleLabels();
+        final List<String> reversedLabels = sortRuleReversedLabels(labels);
+        final List<TextView> buttons = new ArrayList<>(labels.size());
+        // 点击时要用“当前”状态判断是换规则还是切方向，用单元素数组持有可变状态
+        final int[] selectedRef = {selected};
+        final boolean[] reversedRef = {reversed};
+        for (int i = 0; i < container.getChildCount() && buttons.size() < labels.size(); i++) {
+            View child = container.getChildAt(i);
+            if (!(child instanceof TextView)) continue;
+            final int sortSel = buttons.size();
+            TextView button = (TextView) child;
+            button.setOnClickListener(v -> {
+                if (sortSel == selectedRef[0]) {
+                    // 重复点同一个按钮：在正向与反向之间切换
+                    reversedRef[0] = !reversedRef[0];
+                } else {
+                    // 换规则：回到该规则的正向
+                    selectedRef[0] = sortSel;
+                    reversedRef[0] = false;
+                }
+                applySortButtonState(buttons, labels, reversedLabels, selectedRef[0], reversedRef[0]);
+                if (listener != null) {
+                    listener.onSortRuleChanged(selectedRef[0], reversedRef[0]);
+                }
+            });
+            buttons.add(button);
+        }
+        applySortButtonState(buttons, labels, reversedLabels, selected, reversed);
+    }
+
+    /** 五档排序规则名称：前四档沿用系统字符串，末档“时间”暂无对应系统字符串，按需求直接给中文 */
+    private static List<String> sortRuleLabels() {
         StringManager sm = DataManager.get().getStringManager();
-        List<SimpleSpinnerItem> items = new ArrayList<>();
-        items.add(new SimpleSpinnerItem(0, sm.getSystemString(1370, "星数↑")));
-        items.add(new SimpleSpinnerItem(1, sm.getSystemString(1371, "攻击↑")));
-        items.add(new SimpleSpinnerItem(2, sm.getSystemString(1372, "守备↑")));
-        items.add(new SimpleSpinnerItem(3, sm.getSystemString(1373, "名称↓")));
-        SimpleSpinnerAdapter adapter = new SimpleSpinnerAdapter(context);
-        adapter.setColor(YGOUtil.c(R.color.white));
-        adapter.setSingleLine(true);
-        adapter.setTextSize(12f);
-        adapter.set(items);
-        spinner.setAdapter(adapter);
-        spinner.setPopupBackgroundResource(R.color.colorNavy);
+        List<String> labels = new ArrayList<>(5);
+        labels.add(sm.getSystemString(1370, "星数↓"));
+        labels.add(sm.getSystemString(1371, "攻击↓"));
+        labels.add(sm.getSystemString(1372, "守备↓"));
+        labels.add(sm.getSystemString(1373, "名称↑"));
+        labels.add("时间↓");
+        return labels;
+    }
+
+    /** 反向排序时按钮上的文字：把箭头翻转（↓↔↑）；文本里没有箭头时退回中文反向名称 */
+    private static List<String> sortRuleReversedLabels(List<String> labels) {
+        String[] fallback = {"星数↑", "攻击↑", "守备↑", "名称↓", "时间↑"};
+        List<String> reversed = new ArrayList<>(labels.size());
+        for (int i = 0; i < labels.size(); i++) {
+            String label = labels.get(i);
+            if (label != null && label.contains("↓")) {
+                reversed.add(label.replace("↓", "↑"));
+            } else if (label != null && label.contains("↑")) {
+                reversed.add(label.replace("↑", "↓"));
+            } else {
+                reversed.add(i < fallback.length ? fallback[i] : label);
+            }
+        }
+        return reversed;
+    }
+
+    /**
+     * 按钮状态：选中项按方向用 radius（正向）/ radius_p（反向）底 + 金字并换成对应方向的文字；
+     * 其余按钮恢复 button_radius_black_transparents 底 + 白字、正向文字
+     */
+    private static void applySortButtonState(List<TextView> buttons, List<String> labels,
+                                             List<String> reversedLabels, int selected,
+                                             boolean reversed) {
+        for (int i = 0; i < buttons.size(); i++) {
+            boolean on = i == selected;
+            boolean reversedNow = on && reversed;
+            TextView button = buttons.get(i);
+            button.setText(reversedNow ? reversedLabels.get(i) : labels.get(i));
+            button.setBackgroundResource(!on
+                    ? R.drawable.button_radius_black_transparents
+                    : (reversedNow ? R.drawable.radius_p : R.drawable.radius));
+            button.setTextColor(YGOUtil.c(on ? R.color.gold : R.color.white));
+        }
     }
 
     public void notifyItemChanged(Card card) {

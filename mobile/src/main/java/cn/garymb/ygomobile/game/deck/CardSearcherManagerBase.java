@@ -37,6 +37,7 @@ import cn.garymb.ygomobile.ui.dialogs.deck.EffectCategoryPopupWindow;
 import cn.garymb.ygomobile.ui.dialogs.deck.LinkMarkerPopupWindow;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
+import ocgcore.PackManager;
 import ocgcore.StringManager;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
@@ -281,24 +282,57 @@ public abstract class CardSearcherManagerBase {
     }
 
     /**
-     * 按排序位序取比较器：sortSel 与编辑器搜索结果排序下拉的选中位序同义
-     * （0=星数↑ / 1=攻击↑ / 2=守备↑ / 3=名称↓），公开给卡查页与卡组编辑页的
+     * 按排序位序取比较器：sortSel 与搜索结果排序按钮的位序同义
+     * （0=星数 / 1=攻击 / 2=守备 / 3=名称 / 4=时间），公开给卡查页与卡组管理页的
      * 搜索结果列表，使三处的规则切换共用同一套比较器而不各自实现。
      */
     public static Comparator<Card> searchComparator(int sortSel) {
-        return makeComparator(sortSel);
+        return makeComparator(sortSel, false);
     }
 
-    /** 排序比较器统一实现：类秩(怪兽→魔法→陷阱)优先，再按 sortSel 解算子类/攻守/名称，末尾以卡码兜底 */
+    /** 带方向的重载：reverse=true 时按该规则的反向排序（如 攻击↓ → 攻击↑） */
+    public static Comparator<Card> searchComparator(int sortSel, boolean reverse) {
+        return makeComparator(sortSel, reverse);
+    }
+
+    /** 排序位序：按卡包发售日期从早到晚（时间轴那几个包日期就是排序依据） */
+    public static final int SORT_RULE_RELEASE_DATE = 4;
+
+    /**
+     * 排序比较器统一实现：类秩(怪兽→魔法→陷阱)优先，再按 sortSel 解算子类/攻守/名称，
+     * 末尾以卡码兜底；时间档例外，不分卡种，直接按卡包发售日期排序。
+     * <p>
+     * reverse=true 时只把该规则的<b>主排序键</b>反向，分组（怪兽/魔法/陷阱、子类）
+     * 与其余兜底键不变：星数/攻击/守备变成升序，名称与时间变成降序
+     */
     protected static Comparator<Card> makeComparator(int sortSel) {
+        return makeComparator(sortSel, false);
+    }
+
+    protected static Comparator<Card> makeComparator(int sortSel, boolean reverse) {
+        if (sortSel == SORT_RULE_RELEASE_DATE) {
+            final PackManager packManager = DataManager.get().getPackManager();
+            return (a, b) -> {
+                int dateA = packManager.getCardReleaseDate(a.getCode());
+                int dateB = packManager.getCardReleaseDate(b.getCode());
+                if (dateA == dateB) {
+                    return Integer.compare(a.Code, b.Code);
+                }
+                // 没有卡包记录的卡（0）不论正反向都排在最后
+                if (dateA == 0) return 1;
+                if (dateB == 0) return -1;
+                int cmp = Integer.compare(dateA, dateB);
+                return reverse ? -cmp : cmp;
+            };
+        }
         return (a, b) -> {
             int classA = getCardClassRank(a), classB = getCardClassRank(b);
             if (classA != classB) return Integer.compare(classA, classB);
-            int cmp = (classA == 0) ? compareMonsterBySortType(a, b, sortSel)
+            int cmp = (classA == 0) ? compareMonsterBySortType(a, b, sortSel, reverse)
                     : Integer.compare(getCardSubTypeRank(a, classA), getCardSubTypeRank(b, classB));
             if (cmp == 0 && classA != 0 && sortSel == 3) {
                 String na = a.Name != null ? a.Name : "", nb = b.Name != null ? b.Name : "";
-                cmp = na.compareTo(nb);
+                cmp = reverse ? nb.compareTo(na) : na.compareTo(nb);
             }
             return cmp != 0 ? cmp : Integer.compare(a.Code, b.Code);
         };
@@ -487,18 +521,39 @@ public abstract class CardSearcherManagerBase {
         return 0;
     }
 
-    protected static int compareMonsterBySortType(Card a, Card b, int sortSel) {
+    protected static int compareMonsterBySortType(Card a, Card b, int sortSel, boolean reverse) {
         int subA = getCardSubTypeRank(a, 0), subB = getCardSubTypeRank(b, 0);
         if (sortSel == 3) {
             String na = a.Name != null ? a.Name : "", nb = b.Name != null ? b.Name : "";
-            return na.compareTo(nb);
+            int cmp = na.compareTo(nb);
+            return reverse ? -cmp : cmp;
         }
-        int priA = (sortSel == 1) ? b.Attack : (sortSel == 2) ? b.Defense : subA;
-        int priB = (sortSel == 1) ? a.Attack : (sortSel == 2) ? a.Defense : subB;
+        // 主键：攻击/守备档直接比数值（缺省降序），星数档子类在前、星数（等级）在次键
+        int priA, priB;
+        if (sortSel == 1) {
+            priA = reverse ? a.Attack : b.Attack;
+            priB = reverse ? b.Attack : a.Attack;
+        } else if (sortSel == 2) {
+            priA = reverse ? a.Defense : b.Defense;
+            priB = reverse ? b.Defense : a.Defense;
+        } else {
+            priA = subA;
+            priB = subB;
+        }
         int cmp = Integer.compare(priA, priB);
         if (cmp != 0) return cmp;
-        int secA = (sortSel == 1) ? b.Defense : (sortSel == 2) ? b.Attack : (b.Level & 0xff);
-        int secB = (sortSel == 1) ? a.Defense : (sortSel == 2) ? a.Attack : (a.Level & 0xff);
+        int secA, secB;
+        if (sortSel == 1) {
+            secA = b.Defense;
+            secB = a.Defense;
+        } else if (sortSel == 2) {
+            secA = b.Attack;
+            secB = a.Attack;
+        } else {
+            // 星数档的星数比较随反向翻转，其余兜底键不变
+            secA = reverse ? (a.Level & 0xff) : (b.Level & 0xff);
+            secB = reverse ? (b.Level & 0xff) : (a.Level & 0xff);
+        }
         cmp = Integer.compare(secA, secB);
         if (cmp != 0) return cmp;
         int terA = (sortSel <= 2) ? (b.Level & 0xff) : b.Attack;

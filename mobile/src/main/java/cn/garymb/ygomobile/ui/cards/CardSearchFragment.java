@@ -12,10 +12,8 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -79,11 +77,12 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
     private DialogPlus mDialog;
     private TextView mResult_count;
     /**
-     * 顶部计数行的排序规则切换下拉：选项与比较器与决斗内卡组编辑器同源，
-     * 位序即 0=星数↑ / 1=攻击↑ / 2=守备↑ / 3=名称↓
+     * 顶部计数行的排序规则按钮：位序与比较器与决斗内卡组编辑器同源，
+     * 0=星数 / 1=攻击 / 2=守备 / 3=名称 / 4=时间（按卡包发售日期从早到晚）；
+     * resultSortReversed 为真时按该规则反向排（星数↑ …）
      */
-    private Spinner mSortSpinner;
     private int resultSortSel;
+    private boolean resultSortReversed;
     /**
      * 顶部计数行的展现模式切换按钮：默认列表，点一下换宫格；
      * 图标始终表示当前模式，见 {@link #refreshResultViewModeIcon()}
@@ -119,9 +118,8 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         mCardListAdapter.setGridLayout(isResultGridPreferred());
         mListView.setLayoutManager(new FastScrollLinearLayoutManager(getContext()));
         mListView.setAdapter(mCardListAdapter);
-        // 顶部计数同一行的排序规则切换与展现模式切换
-        mSortSpinner = layoutView.findViewById(R.id.sp_result_sort);
-        setupResultSortSpinner();
+        // 顶部计数同一行的排序规则按钮与展现模式切换
+        setupResultSortButtons();
         mBtnViewMode = layoutView.findViewById(R.id.btn_result_view_mode);
         mBtnViewMode.setOnClickListener(v -> toggleResultViewMode());
         refreshResultViewModeIcon();
@@ -157,33 +155,27 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
     }
 
     /**
-     * 顶部计数行的排序规则切换：选项与样式由 {@link CardListAdapter#setupSortSpinner}
-     * 统一装配（与卡组编辑页同一份），比较器与决斗内卡组编辑器同源；
+     * 顶部计数行的排序规则按钮：装项与样式由 {@link CardListAdapter#setupSortButtons}
+     * 统一装配（与卡组管理页同一份），比较器与决斗内卡组编辑器同源；
      * 切换只对当前结果重排，不重新发起搜索
      */
-    private void setupResultSortSpinner() {
-        if (mSortSpinner == null) return;
-        CardListAdapter.setupSortSpinner(getContext(), mSortSpinner);
-        mSortSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                resultSortSel = position;
-                resortSearchResults();
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-            }
-        });
+    private void setupResultSortButtons() {
+        CardListAdapter.setupSortButtons(layoutView.findViewById(R.id.ll_result_sort),
+                resultSortSel, resultSortReversed, (sortSel, reversed) -> {
+                    resultSortSel = sortSel;
+                    resultSortReversed = reversed;
+                    resortSearchResults();
+                });
     }
 
     /**
      * 结果填入与刷新：先记住搜索线程交来的原始顺序，再按本页当前档位填入，
-     * 最后复核一次展现布局。第 0 档（星数↑）就是改造前的原样顺序（含关键词完全命中置顶），
-     * 只有攻击/守备/名称三档才去套与决斗内卡组编辑器同源的规则
+     * 最后复核一次展现布局。第 0 档（星数）就是改造前的原样顺序（含关键词完全命中置顶），
+     * 其余档位（攻守/名称/时间）才去套与决斗内卡组编辑器同源的规则
      */
     private void fillSearchResultList(List<Card> cards) {
         mCardListAdapter.setRawCards(cards);
+        mCardListAdapter.setSortReversed(resultSortReversed);
         mCardListAdapter.applySortRule(resultSortSel);
         // 时间轴：卡包数据比页面晚读完是常态，每次填结果都复核一次跨度（已就绪则不动滑块）；
         // 顶部计数按过滤后的条数刷新
@@ -227,6 +219,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
     /** 排序规则变更后只重排当前结果，不重新搜索：以适配器里记下的原始顺序为底 */
     private void resortSearchResults() {
         if (mCardListAdapter == null) return;
+        mCardListAdapter.setSortReversed(resultSortReversed);
         mCardListAdapter.applySortRule(resultSortSel);
         mListView.post(() -> mCardListAdapter.applyListLayout(mListView));
     }
