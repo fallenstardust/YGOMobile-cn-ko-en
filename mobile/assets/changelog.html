@@ -1,61 +1,297 @@
-                                                                                                                                                                                                                                                <html>
+<!DOCTYPE html>
+<html lang="zh-CN">
 <head>
-    <meta http-equiv=Content-Type content="text/html;charset=utf-8">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style type="text/css">
-         pre {color: #ffffff; padding: 0.2em; white-space: pre-wrap; }
+        /* 对话框里的 WebView 宽约屏宽 80% 且自身没有内边距，
+           这里统一给正文留出左右呼吸空间，行高按中文阅读习惯放宽 */
+        html, body {
+            margin: 0;
+            padding: 0;
+        }
 
+        body {
+            background-color: transparent;
+            color: #f0f2f5;
+            font-family: -apple-system, "Noto Sans CJK SC", "Noto Sans SC", "Source Han Sans",
+                         "PingFang SC", "Microsoft YaHei", "Droid Sans Fallback", sans-serif;
+            font-size: 14px;
+            line-height: 1.75;
+            padding: 4px 16px 14px;
+            -webkit-text-size-adjust: 100%;
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
+
+        h3 {
+            margin: 14px 0 8px;
+            font-size: 15px;
+            letter-spacing: 0.5px;
+        }
+
+        h3.warn {
+            color: #ffffff;
+        }
+
+        h3.notice {
+            color: #ff6b6b;
+            margin-top: 20px;
+        }
+
+        /* 小节标题：左侧金色竖条，比原文的一行纯文字更醒目 */
+        h4 {
+            margin: 16px 0 6px;
+            padding-left: 8px;
+            border-left: 3px solid #c8be35;
+            font-size: 14px;
+            font-weight: bold;
+            color: #c8be35;
+        }
+
+        p {
+            margin: 0 0 8px;
+        }
+
+        p.version {
+            margin: 2px 0 10px;
+            color: #ffd84d;
+            font-weight: bold;
+            letter-spacing: 0.3px;
+        }
+
+        /* 列表：数字与圆点自动换行对齐，长条目折行后不会顶到序号下面 */
+        ol, ul {
+            margin: 4px 0 8px;
+            padding-left: 1.45em;
+        }
+
+        li {
+            margin: 3px 0;
+        }
+
+        li > p {
+            margin: 2px 0 4px;
+        }
+
+        li > ul {
+            margin: 4px 0 6px;
+        }
+
+        /* 「（以下…）」这类说明行：比正文略淡，缩进与列表内容对齐 */
+        p.sub-note {
+            color: #c3cad3;
+            padding-left: 0.2em;
+        }
+
+        /* ①②③ 这类自带序号的条目：去掉列表符号，折行按悬挂缩进对齐 */
+        ul.notes {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        ul.notes li {
+            margin: 5px 0;
+            padding-left: 1.8em;
+            text-indent: -1.8em;
+        }
     </style>
 </head>
-<body style="font-family: Droid Sans;background-color:transparent;">
-<h3 style="color:#ffffff">敬告</h3>
-<pre>
-    本软件基于圆神开发组的电脑版源码，采用OpenGL适配安卓+安卓客户端ui开发而成。
-    注意：本软件使用图片音响素材仅供个人学习交流之用，本身不用于商业用途。
-    如果您是通过付费购买或者付费获得下载渠道而获得本软件的话，您已经上当受骗。本软件——免费！
-    特别感谢： 尸体233,废话多,大毛, zhuhongbo, JSY1728, 幻兽L, 今晚有宵夜吗等贡献者的支持与努力.
-</pre>
-<ul>
-    <li id="versionName" style="color:#ffff00"></li>
+<body>
+<h3 class="warn">敬告</h3>
+<p>本软件基于圆神开发组的电脑版源码，采用 OpenGL 适配安卓 + 安卓客户端 UI 开发而成。</p>
+<p>注意：本软件使用图片音响素材仅供个人学习交流之用，本身不用于商业用途。</p>
+<p>如果您是通过付费购买或者付费获得下载渠道而获得本软件的话，您已经上当受骗。本软件——免费！</p>
+<p>特别感谢：尸体233、废话多、大毛、zhuhongbo、JSY1728、幻兽L、今晚有宵夜吗 等贡献者的支持与努力。</p>
+
+<p class="version">版本 <span id="versionName"></span></p>
+
+<!-- 正文由下面那段纯文本自动排版生成，不需要在这里写任何标签 -->
+<div id="log"></div>
+
+<!--
+    ============================================================
+    更新日志正文：每个版本只需要改这一段纯文本，别动上面的样式和下面的脚本。
+    书写约定：
+      ## 标题            小节标题（更新 / 变更 ……）
+      1. 内容            编号条目（数字只是占位，页面会按顺序自动重排）
+      ● 内容 / - 内容    圆点条目；紧跟在编号条目后面会自动缩进成它的子项
+      （内容）           说明行，会比正文略淡
+      其余行             普通段落
+    空行只为了好读，不影响排版。
+    ============================================================
+-->
+<script type="text/plain" id="log-source">
+## 更新
+1. 更新 ygopro 内核；
+2. 2026.10 TCG 禁卡表；
+
+## 变更
+1. 新增原生 UI 游戏模式，可在我的设置中开启；
+（以下原生 UI 游戏模式增加的新功能）
+● 新增竖屏显示支持高刷屏幕（突破 60 帧）；
+● 人机模式支持 3 局、22 局游戏模式；修改基本分、起手和抽卡数；
+● 人机模式支持修改基本分、起手和抽卡数；
+● 人机列表增加收藏置顶功能；
+● 新增左右互博模式支持 3 局、22 局游戏模式；修改基本分、起手和抽卡数；
+● 人机模式、左右互博支持撤回上一步；
+● 房主可以直接点击 /ai 按钮并呼叫指定 ai 加房；
+● 录像机制改善，可脱离内核和脚本播放；
+● 录像支持保存聊天记录；
+● 录像支持自动替换先行卡为正式卡继续播放；
+● 新版录像依旧可在其他原版客户端上播放（包括自身旧版 ygopro）；
+● 新增持续适用中效果提示（包括自肃等誓约）；
+● 可操作卡片角上增加呼吸点动画（发动是绿色、其他蓝色）；
+● 卡片详情标记可发动与已发动效果段落；
+● 场上怪兽攻守根据表示形式放大对应数字；
+● 询问弹窗显示相关卡片图示和可连锁卡片图示；
+● 可开关召唤、盖放、灵摆发动前确认询问；
+● 可开关单独显示手卡灵摆刻度发动按钮；
+● 查看墓地、除外、额外等不会随着有操作自动关闭；
+● 决斗记录支持查看聊天记录和系统消息；
+● 实时更新查看墓地、除外、额外的卡片变动情况；
+● 卡组编辑支持长按批量与拖拽加卡、删除；
+● 观战可一键跳转当前；
+● 可左右互换「是/否」按钮；
+● 局内窗口全部支持最小化；
+● 决斗中停用聊天会同时开启关键词查卡功能；
+● 卡片详情增加关联卡片查看功能；
+● 卡组编辑支持批量选卡、拖拽和删除卡片，支持撤回、重做；
+● 3 局间更换副卡租支持多选批量拖拽更换；
+2. 卡片搜索、编辑卡组的搜索结果增加以下新功能：
+● 按卡片发售时间轴过滤搜索结果；
+● 搜索结果可切换宫格显示模式；
+● 可切换多种排序规则；
+● 可从搜索结果按住拖拽卡片到卡组；
+● 选中卡片后，可拖拽或者点击垃圾桶图标删除卡片；
+3. 优化开局卡顿与卡图加载速度；
+4. 我的设置布局改为宫格式；
+5. 恢复机型调试群入口；
+6. 修正用异画卡 id 规定起源点数造成原画卡点数错误的问题；
+7. 修正一些情况下关键词记录列表错误停留在首页的问题；
+</script>
+
+<h3 class="notice">注意</h3>
+<ul class="notes">
+    <li>①：请注意阅读用户隐私政策；</li>
+    <li>②：安装本软件时会根据系统语言来设置 ygopro 的语言，如果觉得不便可以在“我的”里修改资料语言；</li>
+    <li>③：卸载本软件将删除包含卡组在内的重要文件，卸载前请慎重；</li>
 </ul>
-<pre>
-    更新：
-    1.更新ygopro内核；
-    变更：
-    1.新增原生UI游戏模式，可在我的设置中开启；
-    （以下原生UI游戏模式增加的新功能）
-    2.人机模式、左右互博支持撤回上一步；
-    3.新增持续适用中效果提示（包括自肃等誓约）；
-    4.卡片详情标记可发动与已发动效果；
-    5.询问弹窗显示相关卡片图示；
-    6.可开关召唤、盖放、灵摆发动前确认询问；
-    7.新增左右互博模式；
-    8.卡组编辑支持长按批量与拖拽加卡、删除；
-    9.新增竖屏显示与弹窗最小化；
-    10.观战可一键跳转当前；
-    11.可左右互换「是/否」按钮；
-    12.优化开局卡顿与卡图加载速度；
-    13.我的设置布局改为宫格式；
-    14.恢复机型调试群入口；
-    15.修正用异画卡id规定起源点数造成原画卡点数错误的问题；
-    16.修正一些情况下关键词记录列表错误停留在首页的问题；
-    17.支持高刷屏幕（突破60帧）；
-    18.决斗中停用聊天会同时开启关键词查卡功能；
-</pre>
-<h3 style="color:#ff0000">注意</h3>
-<pre>
-    ①：请注意阅读用户隐私政策；
-    ②：安装本软件时会根据系统语言来设置ygopro的语言，
-       如果觉得不便可以在"我的"里修改资料语言；
-    ③：卸载本软件将删除包含卡组在内的重要文件，卸载前请慎重；
-</pre>
 
 <script type="text/javascript">
-    document.addEventListener("DOMContentLoaded", function() {
-        if (typeof AppInterface !== "undefined" && AppInterface.getVersionName) {
-            document.getElementById("versionName").innerText = AppInterface.getVersionName();
+    (function () {
+        function esc(text) {
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
-    });
+
+        /**
+         * 把上面的纯文本日志渲染成小段落：
+         *   ## 标题        → <h4>
+         *   1. 内容        → 自动编号的 <li>
+         *   ● / - / * 内容 → 圆点条目（紧跟在编号条目后面时缩进为其子项）
+         *   （内容）        → 说明行
+         *   其余           → 普通段落
+         */
+        function renderLog(source) {
+            var lines = source.replace(/\r\n?/g, "\n").split("\n");
+            var out = [];
+            var listTag = "";       // 当前打开的列表：ol / ul，空串表示没有
+            var itemOpen = false;   // 编号项是否还开着（好把接下来的圆点、说明挂进去）
+            var subListOpen = false;
+
+            function closeSubList() {
+                if (subListOpen) {
+                    out.push("</ul>");
+                    subListOpen = false;
+                }
+            }
+
+            function closeItem() {
+                closeSubList();
+                if (itemOpen) {
+                    out.push("</li>");
+                    itemOpen = false;
+                }
+            }
+
+            function closeList() {
+                closeItem();
+                if (listTag) {
+                    out.push("</" + listTag + ">");
+                    listTag = "";
+                }
+            }
+
+            for (var i = 0; i < lines.length; i++) {
+                var line = lines[i].replace(/^\s+|\s+$/g, "");
+                if (!line) {
+                    continue;
+                }
+
+                var heading = line.match(/^#{1,3}\s*(.+)$/);
+                if (heading) {
+                    closeList();
+                    out.push("<h4>" + esc(heading[1]) + "</h4>");
+                    continue;
+                }
+
+                if (/^[（(]/.test(line)) {
+                    var note = "<p class=\"sub-note\">" + esc(line) + "</p>";
+                    if (!itemOpen) {
+                        closeList();
+                    }
+                    out.push(note);
+                    continue;
+                }
+
+                if (/^[●•·\-*]\s*/.test(line)) {
+                    var bullet = "<li>" + esc(line.replace(/^[●•·\-*]\s*/, "")) + "</li>";
+                    if (itemOpen) {
+                        if (!subListOpen) {
+                            out.push("<ul>");
+                            subListOpen = true;
+                        }
+                    } else if (listTag !== "ul") {
+                        closeList();
+                        out.push("<ul>");
+                        listTag = "ul";
+                    }
+                    out.push(bullet);
+                    continue;
+                }
+
+                var numbered = line.match(/^(\d{1,2})\s*[.、．]\s*(.+)$/);
+                if (numbered) {
+                    if (listTag !== "ol") {
+                        closeList();
+                        out.push("<ol>");
+                        listTag = "ol";
+                    } else {
+                        closeItem();
+                    }
+                    out.push("<li>" + esc(numbered[2]));
+                    itemOpen = true;
+                    continue;
+                }
+
+                closeList();
+                out.push("<p>" + esc(line) + "</p>");
+            }
+            closeList();
+            return out.join("");
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            if (typeof AppInterface !== "undefined" && AppInterface.getVersionName) {
+                document.getElementById("versionName").innerText = AppInterface.getVersionName();
+            }
+            var source = document.getElementById("log-source");
+            var target = document.getElementById("log");
+            if (source && target) {
+                target.innerHTML = renderLog(source.textContent || source.innerText || "");
+            }
+        });
+    })();
 </script>
 </body>
 </html>

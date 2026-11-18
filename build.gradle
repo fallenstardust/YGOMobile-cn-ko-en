@@ -2,12 +2,13 @@
 
 buildscript {
     repositories {
-        maven { url'https://maven.aliyun.com/repository/public/' }
-        maven { url 'https://maven.aliyun.com/repository/gradle-plugin/' }
-        maven { url 'https://maven.aliyun.com/repository/google/' }
-        maven { url'https://maven.aliyun.com/repository/jcenter/' }
-        maven { url'https://maven.aliyun.com/repository/central/' }
-        maven { url 'https://repo1.maven.org/maven2/' }
+        // 显式命名仓库，否则 Gradle 只报 “Repository MavenRepo”，无法定位是哪个镜像出错
+        maven { name = 'aliyun-public'; url = 'https://maven.aliyun.com/repository/public/' }
+        maven { name = 'aliyun-gradle-plugin'; url = 'https://maven.aliyun.com/repository/gradle-plugin/' }
+        maven { name = 'aliyun-google'; url = 'https://maven.aliyun.com/repository/google/' }
+        maven { name = 'aliyun-jcenter'; url = 'https://maven.aliyun.com/repository/jcenter/' }
+        maven { name = 'aliyun-central'; url = 'https://maven.aliyun.com/repository/central/' }
+        maven { name = 'maven-central-direct'; url = 'https://repo1.maven.org/maven2/' }
         mavenCentral()
         google()
     }
@@ -26,16 +27,17 @@ ext {
 
 allprojects {
     repositories {
-        maven { url'https://maven.aliyun.com/repository/public/' }
-        maven { url 'https://maven.aliyun.com/repository/gradle-plugin/' }
-        maven { url'https://maven.aliyun.com/repository/google/' }
-        maven { url'https://maven.aliyun.com/repository/jcenter/' }
-        maven { url'https://maven.aliyun.com/repository/central/' }
-        maven { url 'https://repo1.maven.org/maven2/' }
+        maven { name = 'aliyun-public'; url = 'https://maven.aliyun.com/repository/public/' }
+        maven { name = 'aliyun-gradle-plugin'; url = 'https://maven.aliyun.com/repository/gradle-plugin/' }
+        maven { name = 'aliyun-google'; url = 'https://maven.aliyun.com/repository/google/' }
+        maven { name = 'aliyun-jcenter'; url = 'https://maven.aliyun.com/repository/jcenter/' }
+        maven { name = 'aliyun-central'; url = 'https://maven.aliyun.com/repository/central/' }
+        maven { name = 'maven-central-direct'; url = 'https://repo1.maven.org/maven2/' }
         mavenCentral()
         //smack
         maven {
-            url 'https://oss.sonatype.org/content/repositories/snapshots'
+            name = 'sonatype-snapshots'
+            url = 'https://oss.sonatype.org/content/repositories/snapshots'
         }
         google()
     }

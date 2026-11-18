@@ -34,7 +34,8 @@ import cn.garymb.ygomobile.lite.R;
  *
  * <p>时间线两端标出卡包数据覆盖的最早/最晚年份（左端最早、右端最晚），
  * 年份文字垫一层 {@code button_radius_black_transparents} 圆角黑板底；
- * 滑块是“倒锥五边形”（上宽下尖），尖端指向它所代表的时间点，便于手指按住拖动。</p>
+ * 点左侧年份牌会把开始滑块复位到最早期、点右侧年份牌会把结束滑块复位到最晚期，
+ * 滑块则是“倒锥五边形”（上宽下尖），尖端指向它所代表的时间点，便于手指按住拖动。</p>
  *
  * <p>日期一律用 {@code yyyyMMdd} 的整数表示：既能直接比较大小，也不受时区影响；
  * 滑块位置按“自 1970-01-01 起的天数”线性排布，与公历月份长短无关；
@@ -49,6 +50,10 @@ public class DateRangeSlider extends View {
 
     /** 松手后日期气泡的停留时间（用户规格：松开一秒后消失） */
     private static final long LABEL_HIDE_DELAY = 1000L;
+
+    /** 年份牌 drawable 的按下/普通状态（用于点击复位时的视觉反馈） */
+    private static final int[] YEAR_STATE_PRESSED = new int[]{android.R.attr.state_pressed};
+    private static final int[] YEAR_STATE_DEFAULT = new int[0];
 
     private static final int THUMB_START = 0;
     private static final int THUMB_END = 1;
@@ -66,8 +71,9 @@ public class DateRangeSlider extends View {
     private final RectF mRect = new RectF();
     /** 倒锥五边形滑块的路径（每帧按当前位置重建） */
     private final Path mThumbPath = new Path();
-    /** 两侧年份文字的圆角黑板底（缺资源时为 null，只画文字） */
-    private final Drawable mYearBackground;
+    /** 两侧年份文字的圆角黑板底（左右各一份，按下态互不影响，也不会在一帧里反复切状态） */
+    private final Drawable mMinYearBackground;
+    private final Drawable mMaxYearBackground;
 
     /** 滑块的上半宽与整体高度（尖端落在时间线上） */
     private final int mThumbHalfW;
@@ -82,6 +88,9 @@ public class DateRangeSlider extends View {
     /** 年份文字两侧/上下的留白（圆角黑板底比文字大一圈） */
     private final int mYearPillPadH;
     private final int mYearPillPadV;
+    /** 两边年份牌的点击容差：牌子本身不大，手指不必精确命中（横向收紧，不抢滑块抓取区） */
+    private final int mYearHitSlopH;
+    private final int mYearHitSlopV;
     /** 日期气泡的固定高度：无论气泡是否在显都占位，否则气泡一显一隐滑块会跟着跳 */
     private final int mLabelHeight;
     private final int mDesiredHeight;
@@ -128,6 +137,12 @@ public class DateRangeSlider extends View {
     private String mMaxYearText = "";
     private float mMinYearWidth;
     private float mMaxYearWidth;
+    /** 两端年份牌的绘制区（同时也是点击复位的热区，绘制与命中共用同一份几何） */
+    private final RectF mMinYearRect = new RectF();
+    private final RectF mMaxYearRect = new RectF();
+    private final RectF mHitRect = new RectF();
+    /** 当前被按住的年份牌对应哪一端；THUMB_NONE = 本次手势不是点年份牌 */
+    private int mYearPressedThumb = THUMB_NONE;
 
     private boolean mLabelVisible;
     private int mActiveThumb = THUMB_NONE;
@@ -157,6 +172,8 @@ public class DateRangeSlider extends View {
         mYearGap = dp(7);
         mYearPillPadH = dp(4);
         mYearPillPadV = dp(2);
+        mYearHitSlopH = dp(4);
+        mYearHitSlopV = dp(10);
         mGrabSlop = dp(22);
         mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
 
@@ -178,7 +195,8 @@ public class DateRangeSlider extends View {
         mLabelTextPaint.setColor(getColor(R.color.gold));
         mLabelTextPaint.setTextSize(sp(10));
         mLabelTextPaint.setTextAlign(Paint.Align.LEFT);
-        mYearBackground = ContextCompat.getDrawable(context, R.drawable.button_radius_black_transparents);
+        mMinYearBackground = ContextCompat.getDrawable(context, R.drawable.button_radius_black_transparents);
+        mMaxYearBackground = ContextCompat.getDrawable(context, R.drawable.button_radius_black_transparents);
 
         Paint.FontMetrics fm = mLabelTextPaint.getFontMetrics();
         mLabelHeight = Math.round(fm.descent - fm.ascent) + mLabelPadV * 2;
@@ -299,7 +317,8 @@ public class DateRangeSlider extends View {
 
     /**
      * 按当前宽度与两端年份文字牌子的宽度排布：年份牌子在两端外侧，时间线夹在它们中间；
-     * 上下固定为「气泡占位 → 间隙 → 五边形滑块（尖端落在线上）」的顺序
+     * 上下固定为「气泡占位 → 间隙 → 五边形滑块（尖端落在线上）」的顺序。
+     * 两端年份牌同时算出绘制区与点击热区（绘制与命中共用同一份几何）
      */
     private void updateTrackGeometry(int width) {
         mLabelTop = getPaddingTop();
@@ -307,6 +326,13 @@ public class DateRangeSlider extends View {
         mTrackLeft = getPaddingLeft() + mMinYearWidth + mYearGap + mThumbHalfW;
         mTrackRight = Math.max(mTrackLeft,
                 width - getPaddingRight() - mMaxYearWidth - mYearGap - mThumbHalfW);
+
+        Paint.FontMetrics fm = mYearPaint.getFontMetrics();
+        float yearHalf = (fm.descent - fm.ascent) / 2f + mYearPillPadV;
+        mMinYearRect.set(getPaddingLeft(), mTrackCenterY - yearHalf,
+                getPaddingLeft() + mMinYearWidth, mTrackCenterY + yearHalf);
+        mMaxYearRect.set(width - getPaddingRight() - mMaxYearWidth, mTrackCenterY - yearHalf,
+                width - getPaddingRight(), mTrackCenterY + yearHalf);
     }
 
     @Override
@@ -355,30 +381,30 @@ public class DateRangeSlider extends View {
         }
     }
 
-    /** 时间线两端标出卡包数据覆盖的最早 / 最晚年份，文字垫圆角黑板底 */
+    /** 时间线两端标出卡包数据覆盖的最早 / 最晚年份，文字垫圆角黑板底（点它可复位对应滑块） */
     private void drawYearLabels(Canvas canvas, float cy) {
         if (mMinYearText.isEmpty()) {
             return;
         }
         Paint.FontMetrics fm = mYearPaint.getFontMetrics();
         float baseline = cy - (fm.ascent + fm.descent) / 2f;
-        drawYearLabel(canvas, mMinYearText, getPaddingLeft(), baseline);
-        drawYearLabel(canvas, mMaxYearText,
-                getWidth() - getPaddingRight() - mMaxYearWidth, baseline);
+        drawYearLabel(canvas, mMinYearText, mMinYearRect, baseline, mMinYearBackground, THUMB_START);
+        drawYearLabel(canvas, mMaxYearText, mMaxYearRect, baseline, mMaxYearBackground, THUMB_END);
     }
 
-    /** 一端年份：先垫 button_radius_black_transparents 圆角黑板底，再写字（宽度已含左右留白） */
-    private void drawYearLabel(Canvas canvas, String text, float left, float baseline) {
-        float width = mYearPaint.measureText(text) + mYearPillPadH * 2f;
-        if (mYearBackground != null) {
-            Paint.FontMetrics fm = mYearPaint.getFontMetrics();
-            float top = baseline + fm.ascent - mYearPillPadV;
-            float bottom = baseline + fm.descent + mYearPillPadV;
-            mYearBackground.setBounds(Math.round(left), Math.round(top),
-                    Math.round(left + width), Math.round(bottom));
-            mYearBackground.draw(canvas);
+    /**
+     * 一端年份：先垫 button_radius_black_transparents 圆角黑板底，再写字；
+     * 那一端正被按住时切到 drawable 的 pressed 状态，点下去有视觉反馈
+     */
+    private void drawYearLabel(Canvas canvas, String text, RectF pill, float baseline,
+                               Drawable background, int thumb) {
+        if (background != null) {
+            background.setState(mYearPressedThumb == thumb ? YEAR_STATE_PRESSED : YEAR_STATE_DEFAULT);
+            background.setBounds(Math.round(pill.left), Math.round(pill.top),
+                    Math.round(pill.right), Math.round(pill.bottom));
+            background.draw(canvas);
         }
-        canvas.drawText(text, left + mYearPillPadH, baseline, mYearPaint);
+        canvas.drawText(text, pill.left + mYearPillPadH, baseline, mYearPaint);
     }
 
     /**
@@ -424,6 +450,18 @@ public class DateRangeSlider extends View {
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN: {
                 cancelHideLabel();
+                // 清掉上一次可能残留的年份牌按下态（正常情况在 UP 已清）
+                mYearPressedThumb = THUMB_NONE;
+                // 点在最左 / 最右年份牌上：对应滑块直接复位到那一端，本次手势不再拖滑块
+                int yearThumb = findYearLabelAt(event.getX(), event.getY());
+                if (yearThumb != THUMB_NONE) {
+                    mYearPressedThumb = yearThumb;
+                    resetThumbToEdge(yearThumb);
+                    if (getParent() != null) {
+                        getParent().requestDisallowInterceptTouchEvent(true);
+                    }
+                    return true;
+                }
                 mDownX = event.getX();
                 float startX = xForDay(mStartDay);
                 float endX = xForDay(mEndDay);
@@ -444,6 +482,10 @@ public class DateRangeSlider extends View {
                 return true;
             }
             case MotionEvent.ACTION_MOVE: {
+                if (mYearPressedThumb != THUMB_NONE) {
+                    // 点年份牌的那次手势只做复位，不跟着拖动
+                    return true;
+                }
                 if (mThumbPending) {
                     float dx = event.getX() - mDownX;
                     if (Math.abs(dx) <= mTouchSlop) {
@@ -458,6 +500,10 @@ public class DateRangeSlider extends View {
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL: {
                 mThumbPending = false;
+                if (mYearPressedThumb != THUMB_NONE) {
+                    mYearPressedThumb = THUMB_NONE;
+                    invalidate();
+                }
                 // 松手后日期气泡再停留一秒（用户规格）
                 scheduleHideLabel();
                 return true;
@@ -472,6 +518,33 @@ public class DateRangeSlider extends View {
     protected void onDetachedFromWindow() {
         cancelHideLabel();
         super.onDetachedFromWindow();
+    }
+
+    /**
+     * 命中的是哪一端年份牌：左右两侧各自向外留出点击容差。
+     * 横向只放宽 4dp（牌子右侧到滑块抓取区还有间隙，不会抢掉按住滑块的手势），纵向放宽 10dp
+     */
+    private int findYearLabelAt(float x, float y) {
+        mHitRect.set(mMinYearRect);
+        mHitRect.inset(-mYearHitSlopH, -mYearHitSlopV);
+        if (mHitRect.contains(x, y)) {
+            return THUMB_START;
+        }
+        mHitRect.set(mMaxYearRect);
+        mHitRect.inset(-mYearHitSlopH, -mYearHitSlopV);
+        if (mHitRect.contains(x, y)) {
+            return THUMB_END;
+        }
+        return THUMB_NONE;
+    }
+
+    /** 点两端年份牌：对应滑块复位到时间轴那一端，并把该端的日期气泡亮起来作为反馈 */
+    private void resetThumbToEdge(int thumb) {
+        mActiveThumb = thumb;
+        mLabelVisible = true;
+        moveThumbToDay(thumb, thumb == THUMB_START ? mMinDay : mMaxDay);
+        // 本来就在那一端时 moveThumbToDay 不会重绘，这里补一次，保证气泡和按下高亮能出来
+        invalidate();
     }
 
     private void moveThumbToDay(int thumb, long day) {
