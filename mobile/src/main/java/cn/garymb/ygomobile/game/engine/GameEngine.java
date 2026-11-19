@@ -635,9 +635,12 @@ public class GameEngine {
         setState(newState);
     }
 
-    /** 强制重派状态回调（不去重）：solo 连续换 side 等「状态未变但需重建界面」场景 */
+    /** 强制重派状态回调（不去重）：solo 连续换 side 等「状态未变但需重建界面」场景。
+     *  与 setState 一致 post 到主线程：回调链会直接重开卡组编辑器等 UI，不得在通讯读取线程执行 */
     public void redispatchState(GameState state) {
-        if (listener != null) listener.onStateChanged(state);
+        mainHandler.post(() -> {
+            if (listener != null) listener.onStateChanged(state);
+        });
     }
 
     // === 游戏消息串行闸门（原 DuelClient.ClientListener.onGameMsg 投递口，实现见 StocHandler） ===
