@@ -9,16 +9,19 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.format.DateFormat;
 import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.widget.FrameLayout;
 
 import java.text.DateFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -37,18 +40,23 @@ import cn.garymb.ygomobile.lite.R;
  * <p>手势：轻点选日期；<b>横划</b>按月翻页；<b>长按高亮条</b>后拖动可直接拉出一个区间
  * （拖动端随手走，拖到左右边缘还会连续翻月，方便跨月选范围），松手后区间提交、日历不关。</p>
  *
+ * <p>每个日期格子的高度固定为能放下三行卡包名小字，整月固定 6 行，
+ * 翻页时日历与弹窗高度都不变；某天包名多于三行时，
+ * 前两行照常绘制，第三行用现有的 {@link AlwaysMarqueeTextView} 横向滚动展示剩下的包名，
+ * 不再截断成“+N”。</p>
+ *
  * <p>标题行左右各两对按钮：最外侧「» «」按年跳、内侧「› ‹」按月跳，
  * 翻到卡包数据覆盖的最早/最晚月份就停住。月份标题与星期名随系统语言，
  * 一周从周几开始按系统区域。</p>
  */
-public class ReleaseDateCalendarView extends View {
+public class ReleaseDateCalendarView extends FrameLayout {
 
     /** 区间变化：finished = 两端都已点选（第二次点选），调用方据此关闭日历 */
     public interface OnDateRangeChangedListener {
         void onDateRangeChanged(int startDate, int endDate, boolean finished);
     }
 
-    /** 一个月最多 6 行（实际按月份占 4~6 行） */
+    /** 一个月最多 6 行；行数固定为 6 行，翻月时日历高度不变 */
     private static final int ROWS = 6;
     private static final int COLS = 7;
     /** 每个日期下方最多列几个卡包名，多出来的用“+N”表示 */
@@ -107,6 +115,8 @@ public class ReleaseDateCalendarView extends View {
     private final Set<Integer> mAvailableDates = new HashSet<>();
     /** 日期 → 当天发售的卡包名 */
     private final Map<Integer, List<String>> mPackNames = new HashMap<>();
+    /** 卡包名超过三行时，第三行用这个滚动文本循环展示剩余包名（按日期缓存） */
+    private final Map<Integer, AlwaysMarqueeTextView> mOverflowViews = new HashMap<>();
     private OnDateRangeChangedListener mListener;
 
     /** 已选的区间（yyyyMMdd）；打开时就是时间轴当前的区间 */
@@ -129,9 +139,8 @@ public class ReleaseDateCalendarView extends View {
     /** 标题下方“起 → 止”那行的高度 */
     private final int mRangeHeight;
     private final int mWeekHeight;
-    /** 当前月份占几行、每格多高（随月份与卡包名行数重算） */
+    /** 当前占几行（固定 6 行）与每格高度；格子高度固定三行小字，不随月份变 */
     private int mRows = ROWS;
-    private int mPackLines;
     private int mCellHeight;
     private final int mNumberHeight;
     private final int mPackLineHeight;
@@ -198,6 +207,8 @@ public class ReleaseDateCalendarView extends View {
 
     public ReleaseDateCalendarView(Context context) {
         super(context);
+        // 日历网格画在 onDraw 里，下面的滚动文本子控件叠在上面，所以必须允许 ViewGroup 自绘
+        setWillNotDraw(false);
         mTitleHeight = dp(34);
         mRangeHeight = dp(18);
         mWeekHeight = dp(18);
@@ -282,34 +293,87 @@ public class ReleaseDateCalendarView extends View {
     }
 
     /**
-     * 按当前月份重算版式：该月实际占几行（4~6 行），每格需为卡包名留几行小字（0~3 行）。
-     * 于是没有卡包名可显示的月份不会在格子底部盲目留白，行数少的月份底部也不会多出一整行
+     * 重算日历版式：行数固定 6 行、格子高度固定能放下三行卡包名小字，
+     * 翻月时整体高度不变，弹窗不会忽高忽低；包名超长的日期另外挂滚动文本子控件
      */
     private void updateMetrics() {
-        int year = mMonth.get(Calendar.YEAR);
-        int month = mMonth.get(Calendar.MONTH);
-        int days = daysInMonth(year, month);
-        int offset = monthOffset(year, month);
-        int rows = Math.max(1, Math.min(ROWS, (offset + days + COLS - 1) / COLS));
-        int lines = 0;
-        for (int day = 1; day <= days; day++) {
-            List<String> names = mPackNames.get(year * 10000 + (month + 1) * 100 + day);
-            if (names != null && !names.isEmpty()) {
-                lines = Math.max(lines, Math.min(MAX_PACK_LINES, names.size()));
-            }
-        }
-        int cell = dp(3) + mNumberHeight + dp(3);
-        if (lines > 0) {
-            cell += dp(2) + mPackLineHeight * lines;
-        }
-        boolean changed = rows != mRows || cell != mCellHeight;
-        mRows = rows;
-        mPackLines = lines;
+        int cell = dp(3) + mNumberHeight + dp(2) + mPackLineHeight * MAX_PACK_LINES + dp(3);
+        boolean changed = mRows != ROWS || cell != mCellHeight;
+        mRows = ROWS;
         mCellHeight = cell;
         if (changed) {
             requestLayout();
         }
+        syncOverflowViews();
         invalidate();
+    }
+
+    /**
+     * 把包名超过三行的日期挂上滚动文本：前两行仍由 onDraw 静态绘制，
+     * 第三行交给 {@link AlwaysMarqueeTextView} 循环滚动剩下的包名
+     */
+    private void syncOverflowViews() {
+        int year = mMonth.get(Calendar.YEAR);
+        int month = mMonth.get(Calendar.MONTH);
+        int days = daysInMonth(year, month);
+        Set<Integer> needed = new HashSet<>();
+        for (int day = 1; day <= days; day++) {
+            int date = year * 10000 + (month + 1) * 100 + day;
+            List<String> names = mPackNames.get(date);
+            if (names != null && names.size() > MAX_PACK_LINES) {
+                needed.add(date);
+            }
+        }
+        Iterator<Map.Entry<Integer, AlwaysMarqueeTextView>> iterator = mOverflowViews.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<Integer, AlwaysMarqueeTextView> entry = iterator.next();
+            if (!needed.contains(entry.getKey())) {
+                removeView(entry.getValue());
+                iterator.remove();
+            }
+        }
+        for (Integer date : needed) {
+            String text = overflowPackText(mPackNames.get(date));
+            AlwaysMarqueeTextView view = mOverflowViews.get(date);
+            if (view == null) {
+                view = createOverflowView();
+                view.setTag(date);
+                mOverflowViews.put(date, view);
+                addView(view);
+            }
+            if (!text.contentEquals(view.getText())) {
+                view.setText(text);
+            }
+        }
+    }
+
+    /** 超出静态三行的那部分包名，用顿号连成一条给滚动文本来回显示 */
+    private static String overflowPackText(List<String> names) {
+        if (names == null || names.size() <= MAX_PACK_LINES) {
+            return "";
+        }
+        StringBuilder builder = new StringBuilder();
+        for (int i = MAX_PACK_LINES - 1; i < names.size(); i++) {
+            if (builder.length() > 0) {
+                builder.append("、");
+            }
+            builder.append(names.get(i));
+        }
+        return builder.toString();
+    }
+
+    private AlwaysMarqueeTextView createOverflowView() {
+        AlwaysMarqueeTextView view = new AlwaysMarqueeTextView(getContext());
+        view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 7);
+        view.setTextColor(0x8CFFFFFF);
+        view.setGravity(Gravity.CENTER);
+        view.setIncludeFontPadding(false);
+        // 不抢日历的手势，也不参与焦点
+        view.setFocusable(false);
+        view.setFocusableInTouchMode(false);
+        view.setClickable(false);
+        view.setPadding(0, 0, 0, 0);
+        return view;
     }
 
     /** 可选日期（yyyyMMdd）：决定能翻到的最早/最晚月份，也用于日期下方的小字与亮度 */
@@ -382,6 +446,45 @@ public class ReleaseDateCalendarView extends View {
         int width = getDefaultSize(dp(300), widthMeasureSpec);
         int height = mTitleHeight + mRangeHeight + mWeekHeight + mCellHeight * mRows;
         setMeasuredDimension(width, resolveSize(height, heightMeasureSpec));
+        // 子控件只有超长包名的滚动文本：按格子宽度、一行小字的高度量
+        int childWidth = Math.max(0, width / COLS - dp(2));
+        int childWidthSpec = MeasureSpec.makeMeasureSpec(childWidth, MeasureSpec.EXACTLY);
+        int childHeightSpec = MeasureSpec.makeMeasureSpec(mPackLineHeight, MeasureSpec.EXACTLY);
+        for (int i = 0; i < getChildCount(); i++) {
+            getChildAt(i).measure(childWidthSpec, childHeightSpec);
+        }
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        int width = right - left;
+        float cellWidth = width / (float) COLS;
+        float gridTop = mTitleHeight + mRangeHeight + mWeekHeight;
+        int year = mMonth.get(Calendar.YEAR);
+        int month = mMonth.get(Calendar.MONTH);
+        int offset = monthOffset(year, month);
+        // 滚动文本固定坐在格子的第三行小字位置
+        float lineTop = gridTop + dp(3) + mNumberHeight + dp(2)
+                + mPackLineHeight * (MAX_PACK_LINES - 1);
+        for (int i = 0; i < getChildCount(); i++) {
+            View child = getChildAt(i);
+            if (!(child.getTag() instanceof Integer)) {
+                continue;
+            }
+            int date = (Integer) child.getTag();
+            int index = offset + date % 100 - 1;
+            int row = index / COLS;
+            int column = index % COLS;
+            if (row < 0 || row >= mRows) {
+                // 不在本月可见范围（切月后还没同步）：先收到 0 尺寸
+                child.layout(0, 0, 0, 0);
+                continue;
+            }
+            int cellLeft = Math.round(column * cellWidth);
+            int lineY = Math.round(lineTop + row * mCellHeight);
+            child.layout(cellLeft + dp(1), lineY,
+                    Math.round(column * cellWidth + cellWidth) - dp(1), lineY + mPackLineHeight);
+        }
     }
 
     @Override
@@ -606,14 +709,13 @@ public class ReleaseDateCalendarView extends View {
                 continue;
             }
             int shown = Math.min(MAX_PACK_LINES, names.size());
+            if (names.size() > MAX_PACK_LINES) {
+                // 放不下的日期：最后一行的位置留给滚动文本子控件
+                shown = MAX_PACK_LINES - 1;
+            }
             float maxTextWidth = cellWidth - dp(2);
             for (int i = 0; i < shown; i++) {
-                String text;
-                if (i == shown - 1 && names.size() > shown) {
-                    text = "+" + (names.size() - shown);
-                } else {
-                    text = fitText(names.get(i), maxTextWidth);
-                }
+                String text = fitText(names.get(i), maxTextWidth);
                 float lineBaseline = numberBottom + dp(2) + mPackLineHeight * (i + 1) - dp(2);
                 canvas.drawText(text, left + cellWidth / 2f, lineBaseline, packPaint);
             }

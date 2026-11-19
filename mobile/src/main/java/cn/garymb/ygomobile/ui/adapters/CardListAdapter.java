@@ -590,18 +590,17 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
 
     /**
      * 五档排序规则名称：前四档沿用系统字符串（随数据语言本地化）；
-     * 末档“时间”是新增规则，新数据包里是系统串 1375，旧数据包没有时落到本地化资源
-     * （随界面语言，即 res 下各个 values 目录里 strings.xml 的 sort_rule_time）
+     * 末档“时间”是新增规则，用本地化资源（随界面语言，即 res 下各个 values
+     * 目录里 strings.xml 的 sort_rule_time），不再往卡包数据包的 strings.conf 里加串
      */
     private static List<String> sortRuleLabels(Context context) {
         StringManager sm = DataManager.get().getStringManager();
-        String timeLabel = context != null ? context.getString(R.string.sort_rule_time) : "时间↓";
         List<String> labels = new ArrayList<>(5);
         labels.add(sm.getSystemString(1370, "星数↓"));
         labels.add(sm.getSystemString(1371, "攻击↓"));
         labels.add(sm.getSystemString(1372, "守备↓"));
         labels.add(sm.getSystemString(1373, "名称↑"));
-        labels.add(sm.getSystemString(1375, timeLabel));
+        labels.add(context != null ? context.getString(R.string.sort_rule_time) : "时间↓");
         return labels;
     }
 

@@ -74,9 +74,9 @@ public class ReleaseDateCalendarDialog extends Dialog {
         int padding = dp(context, 12);
         FrameLayout panel = new FrameLayout(context);
         panel.setPadding(padding, padding, padding, padding);
-        panel.setBackgroundResource(R.drawable.window2s);
-        // 外壳用 ScrollView：高度跟着日历实际内容走（不同月份行数不同），
-        // 但不超过屏幕的 86%，真放不下时日历自己滚，不把弹窗顶出屏幕
+        panel.setBackgroundResource(R.drawable.radius_p);
+        // 日历行数与格子高度都固定，翻页时弹窗高度不变；
+        // 外壳仍用 ScrollView：屏幕够高时紧贴内容，放不下时日历自己滚
         int widthPx = dp(context, 300);
         ScrollView scroller = new ScrollView(context);
         scroller.addView(calendar, new FrameLayout.LayoutParams(widthPx,
