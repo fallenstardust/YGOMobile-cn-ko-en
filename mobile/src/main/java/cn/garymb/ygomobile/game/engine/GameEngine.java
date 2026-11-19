@@ -734,6 +734,16 @@ public class GameEngine {
     public final String[] soloSeatDeckPaths = new String[]{"", "", "", ""};
     /** Solo match 换 side 会话内已弹出的换 side 界面计数：每次进入 SIDING 载入 soloSeatDeckPaths 的下一席位卡组并自增，新局开局（onDuelStart）复位为 0 */
     public int soloSideSession = 0;
+    /** 本场 match 各席位“当前对局卡组”快照（主/额外/副卡码，0..3）：大厅提交卡组时登记、
+     *  换 side 提交后按席位回写；换 side 编辑器据此载入，而不是从磁盘 ydk 重读（见 MatchDeckSnapshot） */
+    public final MatchDeckSnapshot[] matchDecks = new MatchDeckSnapshot[]{
+            new MatchDeckSnapshot(), new MatchDeckSnapshot(), new MatchDeckSnapshot(), new MatchDeckSnapshot()};
+
+    /** 登记某席位当前对局卡组（solo：0..required-1 按席位；非 solo：恒为我方 0） */
+    public void updateMatchDeck(int seat, List<Integer> main, List<Integer> extra, List<Integer> side) {
+        if (seat < 0 || seat >= matchDecks.length) return;
+        matchDecks[seat].update(main, extra, side);
+    }
     /** 回放快进重排中（undo/restart/跳回合）：drawspec 覆盖层与长动画派发丢弃，配合 GameField.instantPlace 即时落位与音效静默，令闸门不阻塞、队列单帧排空；置位/复位在投喂线程而判读在主线程派发链，volatile 保证跨线程立即可见、防 JIT 提升旧值使抑制形同虚设 */
     public volatile boolean replaySkip = false;
 
