@@ -51,6 +51,7 @@ import cn.garymb.ygomobile.AppsSettings.languageEnum;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.WindBotService;
 import cn.garymb.ygomobile.engine.NativeScriptBootstrap;
+import cn.garymb.ygomobile.engine.ScriptLoadStatus;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.utils.FileUtils;
@@ -115,6 +116,10 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     private ProgressBar mBannerBar;
     /** 并行单元表：{@link #buildUnits} 构造，顺序即提交顺序（重的先提交，避免长尾） */
     private final List<Unit> mUnits = new ArrayList<>();
+    /** 脚本档案单元与卡片数据库单元在 {@link #mUnits} 里的下标（-1 = 尚未构造）：
+     *  两段进度会同步到 {@link ScriptLoadStatus}，供玩家等待界面显示加载进度 */
+    private int mScriptUnit = -1;
+    private int mCdbUnit = -1;
     /** 进度锁：各并行单元在自己的池线程里上报，汇总与取最大值都在这把锁内 */
     private final Object mProgressLock = new Object();
     /** 串行阶段（前置/收尾）结算掉的固定百分比，只在进度锁内改 */
@@ -228,6 +233,8 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
     protected void onPreExecute() {
         super.onPreExecute();
         sRunningChecks.incrementAndGet();
+        // 等待界面（PlayerWaitingDialog）与开局闸门据此显示脚本加载进度
+        ScriptLoadStatus.resourceCheckStarted();
         showProgress();
         int vercode = SystemUtils.getVersion(mContext);
         if (mSettings.getAppVersion() < vercode) {//刚安装app时，mSettings.getAppVersion()返回值为0
@@ -246,6 +253,8 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
         super.onPostExecute(result);
         //先解除“检查进行中”闸门，本方法尾部的检查回调（可能立即拉起对局）才不会被拦下
         sRunningChecks.decrementAndGet();
+        // 脚本档案/卡数据库单元已结束（跳过也算就绪）：放行等待界面的加载进度
+        ScriptLoadStatus.resourceCheckFinished();
         if (taskException != null) {
             Toast.makeText(mContext, "ERROR COPY: " + taskException.getMessage(), Toast.LENGTH_LONG).show();
         }
@@ -303,6 +312,11 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                 u.fraction = f;
                 mProgressPct = computePctLocked();
             }
+        }
+        if (unit == mScriptUnit) {
+            ScriptLoadStatus.updateScriptArchiveProgress(fraction);
+        } else if (unit == mCdbUnit) {
+            ScriptLoadStatus.updateCardDatabaseProgress(fraction);
         }
         if (changed) {
             postProgress();
@@ -607,6 +621,8 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
      */
     private void buildUnits(final String resPath, final boolean needsUpdate) {
         mUnits.clear();
+        mScriptUnit = -1;
+        mCdbUnit = -1;
         addUnit(R.string.images, W_PICS, (unit) -> {
             //复制卡图压缩包：只在内容真变化时重写，避免升级白拷数百 MB 并扰动卡图时间戳
             if (IOUtils.hasAssets(mContext, getDatapath(Constants.CORE_PICS_ZIP))) {
@@ -614,7 +630,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
                         new File(resPath), needsUpdate, progressRange(unit, 0, 1));
             }
         });
-        addUnit(R.string.scripts, W_SCRIPT, (unit) -> {
+        mScriptUnit = addUnit(R.string.scripts, W_SCRIPT, (unit) -> {
             //上一版散文件方案的完成标记，与本方案无关，顺手清掉
             deleteStaleScriptsCopyMark(resPath);
             //包内 scripts.zip 落到资源根目录（CRC 未变不碰盘）：native 直接读这个档案，
@@ -628,7 +644,7 @@ public class ResCheckTask extends AsyncTask<Void, Integer, Integer> {
             //老安装里解压落地的 script/ 目录：让位给档案直读，顺便回占的 31.5MB
             pruneLegacyScriptsDir(resPath, unit);
         });
-        addUnit(R.string.cards_cdb, W_LANGUAGE, (unit) -> copyLanguageData(true, unit));
+        mCdbUnit = addUnit(R.string.cards_cdb, W_LANGUAGE, (unit) -> copyLanguageData(true, unit));
         addUnit(R.string.tip_new_deck, W_CARDS, (unit) -> {
             if (!needsUpdate) {
                 return;

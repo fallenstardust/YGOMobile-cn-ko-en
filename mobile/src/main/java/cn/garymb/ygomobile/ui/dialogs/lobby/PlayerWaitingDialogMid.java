@@ -285,6 +285,9 @@ abstract class PlayerWaitingDialogMid extends PlayerWaitingDialogBase {
         resetPlayerWaitingState();
         setupKickButtons();
         setupStartButton();
+        // 脚本/卡数据加载进度（用户规格）：建主进入等待界面即拉起引擎预热并在界面内
+        // 显示加载百分比；就绪前“开始”按钮保持置灰
+        startScriptLoadMonitor();
 
         draggableHelper.showPopup(popupWindow, anchorView);
         // 不再向 ImePopupAdjuster 登记（用户新规格：本弹窗不参与输入法抬升联动）。它是铺满窗口
@@ -321,6 +324,7 @@ abstract class PlayerWaitingDialogMid extends PlayerWaitingDialogBase {
         tvWatchCount = root.findViewById(R.id.tv_watch_count);
         tvDeckSelectLabel = root.findViewById(R.id.tv_deck_select_label);
         layoutTagPlayers = root.findViewById(R.id.layout_tag_players);
+        bindScriptLoadingViews(root);
 
         // 界面文字统一复用 gframe 既有系统字符串（1251 →决斗者、1252 →观战、
         // 1215 开始、1210 退出、1254 卡组选择），XML 中的中文仅作兜底
@@ -589,7 +593,7 @@ abstract class PlayerWaitingDialogMid extends PlayerWaitingDialogBase {
         }
         for (int seat = 0; seat < required; seat++) {
             List<List<Integer>> sec = parsed.get(seat);
-            if (listener != null) listener.onPlayerWaitingDeckUpdate(sec.get(0), sec.get(1), sec.get(2));
+            if (listener != null) listener.onPlayerWaitingDeckUpdate(seat, sec.get(0), sec.get(1), sec.get(2));
         }
         return true;
     }
@@ -718,6 +722,7 @@ abstract class PlayerWaitingDialogMid extends PlayerWaitingDialogBase {
     /** 内部跳转（决斗开始/返回主界面）：抑制外部 dismiss 回调后关闭；
      * 弹窗退场动画会延迟触发 onDismiss，抑制标志由回调内消费复位 */
     public void hideForNavigation() {
+        stopScriptLoadMonitor();
         dismissDeckErrorDialog();
         if (aiDeckSelectDialog != null) aiDeckSelectDialog.dismiss();
         if (popupWindow == null) return;
@@ -733,6 +738,7 @@ abstract class PlayerWaitingDialogMid extends PlayerWaitingDialogBase {
     // 拖拽位仅在本次等待会话内回放，退出界面由 releaseOnExit 清除，下次进入回默认居中。
 
     public void dismiss() {
+        stopScriptLoadMonitor();
         hideAllSeatEmotes();
         dismissDeckErrorDialog();
         if (aiDeckSelectDialog != null) aiDeckSelectDialog.dismiss();
@@ -762,6 +768,7 @@ abstract class PlayerWaitingDialogMid extends PlayerWaitingDialogBase {
      * 抑制 dismiss→restoreMainMenu 兜底回调，返回导航由调用方（onExitWaiting）独占。
      */
     public void releaseOnExit() {
+        stopScriptLoadMonitor();
         hideAllSeatEmotes();
         dismissDeckErrorDialog();
         if (aiDeckSelectDialog != null) {

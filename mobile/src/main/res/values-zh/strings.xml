@@ -164,6 +164,11 @@
     <string name="deck_list">卡组列表</string>
     <string name="loading">加载中...</string>
     <string name="loading_failed">加载失败</string>
+    <string name="script_loading_progress">正在加载卡片脚本（%1$s） %2$d%%</string>
+    <string name="script_loading_stage_script">脚本档案</string>
+    <string name="script_loading_stage_cdb">卡片数据库</string>
+    <string name="script_loading_stage_engine">卡片数据与脚本</string>
+    <string name="script_loading_failed">卡片脚本加载失败，请退出后重试</string>
     <string name="tip">提示</string>
     <string name="question">询问</string>
     <string name="question_delete_deck">删除卡组?</string>

@@ -331,6 +331,35 @@
         </LinearLayout>
     </LinearLayout>
 
+    <!-- 脚本加载进度（用户规格）：建主进入等待界面即显示卡片脚本/卡数据加载百分比，
+         就绪前“开始”按钮保持置灰，避免带半套脚本开局（缺脚本的卡会被 ocgcore 永久缓存为空表，
+         之后补齐也不再加载，表现为只能盖放） -->
+    <LinearLayout
+        android:id="@+id/layout_script_loading"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/tv_script_loading"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="正在加载卡片脚本…"
+            android:textColor="@color/white"
+            android:textSize="10sp" />
+
+        <ProgressBar
+            android:id="@+id/pb_script_loading"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="6dp"
+            android:layout_marginTop="2dp"
+            android:max="100"
+            android:progress="0" />
+    </LinearLayout>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"

@@ -20,6 +20,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.PopupWindow;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,6 +35,8 @@ import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.YGOProActivity;
 import cn.garymb.ygomobile.bean.events.DeckFile;
+import cn.garymb.ygomobile.engine.NativeScriptBootstrap;
+import cn.garymb.ygomobile.engine.ScriptLoadStatus;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.network.YGOProtocol;
 import cn.garymb.ygomobile.render.field.TextureLoader;
@@ -103,6 +106,14 @@ abstract class PlayerWaitingDialogBase {
     protected TextView tvWatchCount;
     protected TextView tvDeckSelectLabel;
     protected View layoutTagPlayers;
+    /** 脚本/卡数据加载进度区（建主进入等待界面时显示，就绪后隐藏） */
+    protected View layoutScriptLoading;
+    protected TextView tvScriptLoading;
+    protected ProgressBar pbScriptLoading;
+    /** 脚本/卡数据是否已就绪：false 时“开始”按钮保持置灰（见 updateStartButtonState） */
+    protected boolean scriptLoadReady = true;
+    /** 加载进度轮询（250ms 一次，就绪或关窗即停）：复用表情气泡的 Handler */
+    private final Runnable scriptLoadPoll = () -> refreshScriptLoadProgress();
     protected int selfPos = 0;
     protected boolean isSelfReady = false;
     protected boolean isHost = false;
@@ -124,7 +135,9 @@ abstract class PlayerWaitingDialogBase {
         /** 点击“退出”等待界面：外部执行断线并返回局域网主界面 */
         void onExitWaiting();
 
-        void onPlayerWaitingDeckUpdate(List<Integer> main, List<Integer> extra, List<Integer> side);
+        /** 上传一份卡组（CTOS_UPDATE_DECK）。seat 为席位下标：solo 按 0..required-1 依次提交，
+         *  非 solo 恒为 0（本客户端自己的席位）；宿主据 seat 登记“当前对局卡组”快照，供换 side 载入 */
+        void onPlayerWaitingDeckUpdate(int seat, List<Integer> main, List<Integer> extra, List<Integer> side);
 
         void onStartGameRequested();
 
@@ -263,6 +276,7 @@ abstract class PlayerWaitingDialogBase {
 
     public void resetPlayerWaitingState() {
         hideAllSeatEmotes();
+        stopScriptLoadMonitor();
         if (etPwPlayer1Name != null) etPwPlayer1Name.setText("");
         if (etPwPlayer2Name != null) etPwPlayer2Name.setText("");
         if (etPwPlayer3Name != null) etPwPlayer3Name.setText("");
@@ -623,7 +637,7 @@ abstract class PlayerWaitingDialogBase {
             Toast.makeText(context, mStringManager.getSystemString(1406, "无效卡组"), Toast.LENGTH_SHORT).show();
             return false;
         }
-        if (listener != null) listener.onPlayerWaitingDeckUpdate(sec.get(0), sec.get(1), sec.get(2));
+        if (listener != null) listener.onPlayerWaitingDeckUpdate(0, sec.get(0), sec.get(1), sec.get(2));
         return true;
     }
 
@@ -727,6 +741,13 @@ abstract class PlayerWaitingDialogBase {
             btnPwStartGame.setTextColor(Color.GRAY);
             return;
         }
+        // 脚本/卡数据未加载完时不允许开局：半套脚本/卡数据会被 ocgcore 以空表永久缓存，
+        // 缺脚本的卡之后也不会再加载（表现为只能盖放）。等待界面进度条就绪后解锁
+        if (!scriptLoadReady) {
+            btnPwStartGame.setEnabled(false);
+            btnPwStartGame.setTextColor(Color.GRAY);
+            return;
+        }
         int duelistCount = isTagMode ? 4 : 2;
         // Solo 模式：房主一人代控全部席位，开始按钮以“开局所需的全部席位都已选定卡组”为准，
         // 与房主自身的“准备”解耦（solo 准备不再上传卡组，卡组在开始时按席位顺序统一上传），
@@ -758,6 +779,72 @@ abstract class PlayerWaitingDialogBase {
 
     public void setCardNameResolver(CardNameResolver resolver) {
         this.cardNameResolver = resolver;
+    }
+
+    // ==================================================================
+    // 脚本 / 卡数据加载进度（进等待界面即开始，就绪前“开始”置灰）
+    // ==================================================================
+
+    protected void bindScriptLoadingViews(View root) {
+        layoutScriptLoading = root.findViewById(R.id.layout_script_loading);
+        tvScriptLoading = root.findViewById(R.id.tv_script_loading);
+        pbScriptLoading = root.findViewById(R.id.pb_script_loading);
+    }
+
+    /**
+     * 开始监控脚本/卡数据加载进度（show() 内调用）：立即刷新一次，随后 250ms 轮询到就绪。
+     * 同时拉起引擎预热（幂等）——等待界面一出现就开始引导，进度才有内容可显示；
+     * 就绪前“开始”保持置灰，避免带半套脚本/卡数据开局（缺脚本的卡会被 ocgcore
+     * 永久缓存为空表，之后补齐也不再加载，表现为只能盖放）。
+     */
+    protected void startScriptLoadMonitor() {
+        NativeScriptBootstrap.warmUpAsync("WaitingScriptLoad", "等待界面-脚本加载");
+        refreshScriptLoadProgress();
+    }
+
+    protected void stopScriptLoadMonitor() {
+        pwEmoteHandler.removeCallbacks(scriptLoadPoll);
+    }
+
+    /** 刷新一次进度并安排下一轮轮询；就绪时隐藏进度区、解锁开始按钮 */
+    private void refreshScriptLoadProgress() {
+        pwEmoteHandler.removeCallbacks(scriptLoadPoll);
+        ScriptLoadStatus.Snapshot s = ScriptLoadStatus.snapshot();
+        boolean wasReady = scriptLoadReady;
+        scriptLoadReady = s.ready;
+        if (layoutScriptLoading != null) {
+            layoutScriptLoading.setVisibility(s.ready ? View.GONE : View.VISIBLE);
+        }
+        if (wasReady != s.ready) {
+            // 就绪态翻转：重评开始按钮（未就绪→置灰；就绪→按席位/准备态恢复）
+            updateStartButtonState();
+        }
+        if (!s.ready) {
+            if (tvScriptLoading != null) {
+                tvScriptLoading.setText(s.failed
+                        ? context.getString(R.string.script_loading_failed)
+                        : context.getString(R.string.script_loading_progress,
+                                context.getString(stageLabelRes(s.stage)), s.percent));
+            }
+            if (pbScriptLoading != null) {
+                pbScriptLoading.setProgress(s.percent);
+            }
+        }
+        // 持续轮询：期间若又起了新的资源检查（如 ACTION_RELOAD）也能重新显示进度并锁开始；
+        // 就绪后降为 500ms 一次，开销只是一次静态字段读取
+        pwEmoteHandler.postDelayed(scriptLoadPoll, s.ready ? 500L : 250L);
+    }
+
+    /** 当前最拖后腿的加载阶段对应的文案资源 */
+    private static int stageLabelRes(int stage) {
+        switch (stage) {
+            case ScriptLoadStatus.STAGE_SCRIPT:
+                return R.string.script_loading_stage_script;
+            case ScriptLoadStatus.STAGE_CDB:
+                return R.string.script_loading_stage_cdb;
+            default:
+                return R.string.script_loading_stage_engine;
+        }
     }
 
     protected PlayerWaitingDialogBase(Context context, OnPlayerWaitingListener listener) {
