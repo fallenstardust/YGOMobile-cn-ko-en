@@ -16,8 +16,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import cn.garymb.ygomobile.Constants;
-import cn.garymb.ygomobile.engine.NativeScriptBootstrap;
 import cn.garymb.ygomobile.engine.OcgDuelEngine;
+import cn.garymb.ygomobile.engine.ScriptLoadStatus;
 import cn.garymb.ygomobile.network.YGOProtocol;
 
 
@@ -33,6 +33,9 @@ import cn.garymb.ygomobile.network.YGOProtocol;
 abstract class ServerDuelBase implements YGOProtocol {
 
     protected static final String TAG = "ServerDuel";
+
+    /** 开局时等待脚本/卡数据加载完成的上限（与等待界面进度同源，只兼底） */
+    protected static final long ENGINE_GATE_TIMEOUT_MS = 180_000L;
 
     GameRoom room;
     DuelAnalyzer analyzer;
@@ -94,16 +97,20 @@ abstract class ServerDuelBase implements YGOProtocol {
         // 改到了监听就绪后的后台线程；开局是引擎真正的首个使用时点，在此同步幂等引导
         // 兜底——已就绪立即返回，预热/后台引导仍在进行时阻塞至完成，失败则重试一次，
         // 仍失败终止开局（本方法在单线程房间执行器上串行，短暂阻塞不影响已建立连接）
+        //
+        // 同时等待资源检查（scripts.zip / cards.cdb 拷贝）完成：带着半套脚本/卡数据开局时，
+        // ocgcore 会把缺脚本的卡以空表永久缓存，之后补齐也不会再加载（“有的卡只能盖放”的
+        // 病灶）。玩家等待界面（PlayerWaitingDialog）会同步显示这段加载进度，本闸门只兼底。
         long gateStart = SystemClock.uptimeMillis();
-        boolean engineReady = NativeScriptBootstrap.ensureEngineReady();
+        boolean engineReady = ScriptLoadStatus.awaitDuelReady(ENGINE_GATE_TIMEOUT_MS);
         long gateWait = SystemClock.uptimeMillis() - gateStart;
         if (gateWait > 300) {
             // 预热未完成：猜拳后同步跑了完整引导（扫档案建索引/加载），分段耗时见
             // NativeScriptBootstrap 的「engine bootstrap 耗时」/「引擎 init 完成」日志
-            Log.w(TAG, "startDuel：等待引擎引导 " + gateWait + "ms（预热未完成，开局发牌延迟）");
+            Log.w(TAG, "startDuel：等待脚本/卡数据加载 " + gateWait + "ms（等待界面进度未集满，已阻塞至就绪）");
         }
         if (!engineReady) {
-            Log.e(TAG, "startDuel：引擎引导失败（档案直读或卡数据库加载未完成），终止开局");
+            Log.e(TAG, "startDuel：脚本/卡数据加载失败或超时，终止开局");
             room.duelStage = DUEL_STAGE_END;
             return;
         }
