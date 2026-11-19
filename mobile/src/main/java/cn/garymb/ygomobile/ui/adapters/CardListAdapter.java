@@ -11,6 +11,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.FastScrollLinearLayoutManager;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -34,6 +35,7 @@ import cn.garymb.ygomobile.ui.activities.BaseActivity;
 import cn.garymb.ygomobile.ui.cards.CardListProvider;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
 import cn.garymb.ygomobile.ui.widget.CardGridInfoView;
+import cn.garymb.ygomobile.ui.widget.SectionDividerDecoration;
 import cn.garymb.ygomobile.utils.BitmapUtil;
 import cn.garymb.ygomobile.utils.CardUtils;
 import cn.garymb.ygomobile.utils.YGOUtil;
@@ -47,7 +49,8 @@ import ocgcore.enums.CardRace;
 import ocgcore.enums.CardType;
 import ocgcore.enums.LimitType;
 
-public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolder> implements CardListProvider {
+public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolder> implements CardListProvider,
+        SectionDividerDecoration.SectionTitleProvider {
     private final StringManager mStringManager;
     private ImageTop mImageTop;
     private TextView tv_limit_num;
@@ -146,6 +149,8 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
      * 卡组管理页的搜索结果固定每行 4 个（用户规格），不随抽屉宽窄浮动
      */
     private int mGridSpanCount;
+    /** 当前宫格列数（applyListLayout 写入）；分段断行与分段末行收宽度都要用 */
+    private int mGridSpan = 1;
 
     /**
      * 切换搜索结果列的展现形式（宫格/行）。本方法只改标志并重建 holder：标志一变
@@ -201,13 +206,71 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
             int avail = list.getWidth() - list.getPaddingLeft() - list.getPaddingRight();
             span = avail > 0 ? Math.max(1, avail / mGridMinCell) : 1;
         }
-        if (lm instanceof GridLayoutManager) {
-            if (((GridLayoutManager) lm).getSpanCount() != span) {
-                ((GridLayoutManager) lm).setSpanCount(span);
-            }
-        } else {
-            list.setLayoutManager(new GridLayoutManager(list.getContext(), span));
+        if (mGridSpan != span) {
+            mGridSpan = span;
+            // 分段断行与末行收宽都靠列数算，列数变了要让已绑定的格子按新跨度重画
+            notifyDataSetChanged();
         }
+        if (lm instanceof GridLayoutManager) {
+            GridLayoutManager grid = (GridLayoutManager) lm;
+            if (grid.getSpanCount() != span) {
+                grid.setSpanCount(span);
+            }
+            ensureSectionSpanLookup(grid);
+        } else {
+            GridLayoutManager grid = new GridLayoutManager(list.getContext(), span);
+            ensureSectionSpanLookup(grid);
+            list.setLayoutManager(grid);
+        }
+    }
+
+    /** 宫格必备：每段最后一张占满本行剩余列，下一段必定从新的一行开始 */
+    private void ensureSectionSpanLookup(GridLayoutManager grid) {
+        if (!(grid.getSpanSizeLookup() instanceof SectionSpanSizeLookup)) {
+            grid.setSpanSizeLookup(new SectionSpanSizeLookup(this));
+        }
+    }
+
+    /** 宫格分段断行的跨度计算器（列表模式不用） */
+    private static final class SectionSpanSizeLookup extends GridLayoutManager.SpanSizeLookup {
+        private final CardListAdapter mAdapter;
+
+        SectionSpanSizeLookup(CardListAdapter adapter) {
+            mAdapter = adapter;
+        }
+
+        @Override
+        public int getSpanSize(int position) {
+            return mAdapter.spanSizeAt(position);
+        }
+    }
+
+    /**
+     * 宫格里这张卡占几列：本段最后一张占满本行剩余列（宽格子里只画一张正常宽度的卡），
+     * 其余每张 1 列。非宫格、没有分段、或列数为 1 时都当 1 列
+     */
+    private int spanSizeAt(int position) {
+        if (!mGrid || mGridSpan <= 1 || position < 0 || position >= mSectionTitles.size()) {
+            return 1;
+        }
+        String title = mSectionTitles.get(position);
+        if (title == null) {
+            return 1;
+        }
+        // 下一张还属于同一段 → 不是本段最后一张
+        if (position + 1 < mSectionTitles.size() && title.equals(mSectionTitles.get(position + 1))) {
+            return 1;
+        }
+        int column = (position - getSectionStart(position)) % mGridSpan;
+        return mGridSpan - column;
+    }
+
+    /** 该位置所属分段的起点位置（无分段时就是它自己） */
+    private int getSectionStart(int position) {
+        if (position < 0 || position >= mSectionStarts.size()) {
+            return position;
+        }
+        return mSectionStarts.get(position);
     }
 
     /**
@@ -246,6 +309,14 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
 
     /** 当前排序是否按规则反向（重复点已选中的排序按钮切换），由页面写入，下次 applySortRule 生效 */
     private boolean mSortReversed;
+
+    /**
+     * 分段说明：与数据等长的标题表，每一项都是该卡所属分段的说明（该排序档不分段时为 null）。
+     * 跟随当前排序规则与方向重算，供 {@link SectionDividerDecoration} 画分割线
+     */
+    private final List<String> mSectionTitles = new ArrayList<>();
+    /** 每个位置所属分段的起点位置（宫格断行算列号用），与 mSectionTitles 等长 */
+    private final List<Integer> mSectionStarts = new ArrayList<>();
 
     /** 记住原始顺序；各页面在拿到搜索结果时先调本方法，再调 {@link #applySortRule(int)} */
     public void setRawCards(List<Card> cards) {
@@ -307,7 +378,130 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
                 ? filtered : sortByRule(filtered, sortSel, mSortReversed);
         // 置顶靠稳定分区完成：命中组与非命中组各自保持上面排好的次序，不会打乱档位
         set(CardSearcherManagerBase.pinKeywordMatches(ordered, mSearchKeyword));
+        rebuildSectionTitles(sortSel);
         notifyDataSetChanged();
+    }
+
+    /** 该位置所属分段的说明；null 表示该排序档不分段（非法的位置也返回 null） */
+    @Override
+    public String getSectionTitle(int position) {
+        if (position < 0 || position >= mSectionTitles.size()) {
+            return null;
+        }
+        return mSectionTitles.get(position);
+    }
+
+    /**
+     * 按当前排序规则给结果分段：相邻两卡的段说明不同即新一段，与排序方向无关。
+     * 段说明末尾带上本段卡片张数（单位随语言的量词，见 section_title_with_count）
+     */
+    private void rebuildSectionTitles(int sortSel) {
+        mSectionTitles.clear();
+        mSectionStarts.clear();
+        List<Card> data = getData();
+        int size = data.size();
+        // 第一遍：每张卡所属分段的基础说明（不含张数）与段首位置
+        List<String> baseTitles = new ArrayList<>(size);
+        String previous = null;
+        int sectionStart = 0;
+        for (int i = 0; i < size; i++) {
+            String base = sectionTitleOf(data.get(i), sortSel);
+            if (base == null || !base.equals(previous)) {
+                sectionStart = i;
+            }
+            baseTitles.add(base);
+            mSectionStarts.add(sectionStart);
+            previous = base;
+        }
+        // 第二遍：数出一段有多少张，拼上张数后整段共用同一个字符串
+        // （宫格断行与装饰器都靠相邻位置是否同串判断分段边界）
+        int i = 0;
+        while (i < size) {
+            int end = i + 1;
+            while (end < size && sameTitle(baseTitles.get(end), baseTitles.get(i))) {
+                end++;
+            }
+            String display = sectionDisplayTitle(baseTitles.get(i), end - i);
+            for (int k = i; k < end; k++) {
+                mSectionTitles.add(display);
+            }
+            i = end;
+        }
+    }
+
+    private static boolean sameTitle(String a, String b) {
+        return a == null ? b == null : a.equals(b);
+    }
+
+    /** 段首说明 + 张数；该档不分段时返回 null */
+    private String sectionDisplayTitle(String base, int count) {
+        if (base == null) {
+            return null;
+        }
+        return context.getString(R.string.section_title_with_count, base, count);
+    }
+
+    /**
+     * 当前排序档位下这张卡属于哪一段（返回值直接当段落说明，null = 该档不分段）：
+     * 星数档→星数（魔陷按种类）、攻守档→数值区间、名称档→首字符、时间档→年份。
+     * 文字取本地化资源，随界面语言；只根据卡片自身属性判断，所以反向排序时分段自然跟着反向。
+     */
+    private String sectionTitleOf(Card card, int sortSel) {
+        if (card == null) {
+            return null;
+        }
+        switch (sortSel) {
+            case SORT_RULE_ORIGINAL:
+                if (!Card.isType(card.Type, CardType.Monster)) {
+                    if (Card.isType(card.Type, CardType.Spell)) return context.getString(R.string.section_title_spell);
+                    if (Card.isType(card.Type, CardType.Trap)) return context.getString(R.string.section_title_trap);
+                    return context.getString(R.string.section_title_other);
+                }
+                return context.getString(R.string.section_title_star, card.getStar());
+            case 1:
+                return statBucketTitle(card.Attack);
+            case 2:
+                return statBucketTitle(card.Defense);
+            case 3:
+                return nameSectionTitle(card.Name);
+            case CardSearcherManagerBase.SORT_RULE_RELEASE_DATE:
+                int date = DataManager.get().getPackManager().getCardReleaseDate(card.getCode());
+                return date == 0 ? context.getString(R.string.section_title_unknown)
+                        : context.getString(R.string.section_title_year, date / 10000);
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * 攻守分段的说明：500 一档写成区间（5000~4501、4500~4001 … 500~1），
+     * 0 单独一段，攻守为「?」（负数）的卡也单独成段；大于 5000 的自然向上延伸（如 6000~5501）
+     */
+    private static String statBucketTitle(int value) {
+        if (value < 0) {
+            return "?";
+        }
+        if (value == 0) {
+            return "0";
+        }
+        int top = (value + 499) / 500 * 500;
+        return top + "~" + (top - 499);
+    }
+
+    /**
+     * 名称分段：数字归「数字」，英文字母按首字母（小写归到同一大写段），
+     * 其余 ASCII 符号归「#」，中文/日文等非 ASCII 字符按该字符单独成段
+     */
+    private String nameSectionTitle(String name) {
+        if (name == null || name.isEmpty()) {
+            return "#";
+        }
+        char c = name.charAt(0);
+        if (c >= '0' && c <= '9') return context.getString(R.string.section_title_digits);
+        if (c >= 'A' && c <= 'Z') return String.valueOf(c);
+        if (c >= 'a' && c <= 'z') return String.valueOf((char) (c - 'a' + 'A'));
+        if (c < 128) return "#";
+        return String.valueOf(c);
     }
 
     /** 设定当前排序是否反向（再次点击已选中的排序按钮时切换）；下一次 applySortRule 生效 */
@@ -347,16 +541,19 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
     public static void setupSortButtons(LinearLayout container, int selected, boolean reversed,
                                         OnSortRuleChangedListener listener) {
         if (container == null) return;
-        final List<String> labels = sortRuleLabels();
+        final List<String> labels = sortRuleLabels(container.getContext());
         final List<String> reversedLabels = sortRuleReversedLabels(labels);
         final List<TextView> buttons = new ArrayList<>(labels.size());
+        // 与 buttons 一一对应的排序档位（按按钮 id 认，布局里怎么调顺序都不会错位）
+        final List<Integer> rules = new ArrayList<>(labels.size());
         // 点击时要用“当前”状态判断是换规则还是切方向，用单元素数组持有可变状态
         final int[] selectedRef = {selected};
         final boolean[] reversedRef = {reversed};
-        for (int i = 0; i < container.getChildCount() && buttons.size() < labels.size(); i++) {
+        for (int i = 0; i < container.getChildCount(); i++) {
             View child = container.getChildAt(i);
             if (!(child instanceof TextView)) continue;
-            final int sortSel = buttons.size();
+            final int sortSel = sortRuleOfButton(child.getId());
+            if (sortSel < 0) continue; // 不是排序按钮
             TextView button = (TextView) child;
             button.setOnClickListener(v -> {
                 if (sortSel == selectedRef[0]) {
@@ -367,25 +564,44 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
                     selectedRef[0] = sortSel;
                     reversedRef[0] = false;
                 }
-                applySortButtonState(buttons, labels, reversedLabels, selectedRef[0], reversedRef[0]);
+                applySortButtonState(buttons, rules, labels, reversedLabels, selectedRef[0], reversedRef[0]);
                 if (listener != null) {
                     listener.onSortRuleChanged(selectedRef[0], reversedRef[0]);
                 }
             });
             buttons.add(button);
+            rules.add(sortSel);
         }
-        applySortButtonState(buttons, labels, reversedLabels, selected, reversed);
+        applySortButtonState(buttons, rules, labels, reversedLabels, selected, reversed);
     }
 
-    /** 五档排序规则名称：前四档沿用系统字符串，末档“时间”暂无对应系统字符串，按需求直接给中文 */
-    private static List<String> sortRuleLabels() {
+    /**
+     * 排序按钮 id → 排序档位（与 CardSearcherManagerBase 的规则编号一致）：
+     * 0=星数 / 1=攻击 / 2=守备 / 3=名称 / 4=时间；不是排序按钮返回 -1
+     */
+    private static int sortRuleOfButton(int id) {
+        if (id == R.id.btn_sort_star) return SORT_RULE_ORIGINAL;
+        if (id == R.id.btn_sort_atk) return 1;
+        if (id == R.id.btn_sort_def) return 2;
+        if (id == R.id.btn_sort_name) return 3;
+        if (id == R.id.btn_sort_time) return CardSearcherManagerBase.SORT_RULE_RELEASE_DATE;
+        return -1;
+    }
+
+    /**
+     * 五档排序规则名称：前四档沿用系统字符串（随数据语言本地化）；
+     * 末档“时间”是新增规则，新数据包里是系统串 1375，旧数据包没有时落到本地化资源
+     * （随界面语言，即 res 下各个 values 目录里 strings.xml 的 sort_rule_time）
+     */
+    private static List<String> sortRuleLabels(Context context) {
         StringManager sm = DataManager.get().getStringManager();
+        String timeLabel = context != null ? context.getString(R.string.sort_rule_time) : "时间↓";
         List<String> labels = new ArrayList<>(5);
         labels.add(sm.getSystemString(1370, "星数↓"));
         labels.add(sm.getSystemString(1371, "攻击↓"));
         labels.add(sm.getSystemString(1372, "守备↓"));
         labels.add(sm.getSystemString(1373, "名称↑"));
-        labels.add("时间↓");
+        labels.add(sm.getSystemString(1375, timeLabel));
         return labels;
     }
 
@@ -408,16 +624,18 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
 
     /**
      * 按钮状态：选中项按方向用 radius（正向）/ radius_p（反向）底 + 金字并换成对应方向的文字；
-     * 其余按钮恢复 button_radius_black_transparents 底 + 白字、正向文字
+     * 其余按钮恢复 button_radius_black_transparents 底 + 白字、正向文字。
+     * 文案与底色都按 rules 里的排序档位取，不看按钮在布局里的先后
      */
-    private static void applySortButtonState(List<TextView> buttons, List<String> labels,
-                                             List<String> reversedLabels, int selected,
-                                             boolean reversed) {
+    private static void applySortButtonState(List<TextView> buttons, List<Integer> rules,
+                                             List<String> labels, List<String> reversedLabels,
+                                             int selected, boolean reversed) {
         for (int i = 0; i < buttons.size(); i++) {
-            boolean on = i == selected;
+            int rule = rules.get(i);
+            boolean on = rule == selected;
             boolean reversedNow = on && reversed;
             TextView button = buttons.get(i);
-            button.setText(reversedNow ? reversedLabels.get(i) : labels.get(i));
+            button.setText(reversedNow ? reversedLabels.get(rule) : labels.get(rule));
             button.setBackgroundResource(!on
                     ? R.drawable.button_radius_black_transparents
                     : (reversedNow ? R.drawable.radius_p : R.drawable.radius));
@@ -486,6 +704,9 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
         // 判据取条目自己的 viewType 而非 mGrid，避免旧布局的 holder 走到新模式的绑定分支
         final boolean grid = holder.getItemViewType() == VIEW_TYPE_GRID;
         if (grid) {
+            int gridPosition = holder.getBindingAdapterPosition() - getHeaderLayoutCount();
+            // 分段末行的那张卡跨了多列，这里把卡图收回到一列的宽度
+            bindGridItemWidth(holder, gridPosition);
             imageLoader.bindImage(holder.getView(R.id.card_image), item, ImageLoader.Type.small);
             bindLimitBadge(holder, item);
             CardGridInfoView info = holder.getView(R.id.card_grid_info);
@@ -671,6 +892,41 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
         bindMenu(holder, position);
         if (mItemBg) {
             holder.setBackgroundResource(R.id.swipe_layout, R.drawable.list_item_bg);
+        }
+    }
+
+    /**
+     * 宫格分段末行的那张卡跨了多列（为了把本行填满、让下一段从新行开始），
+     * 这里把卡图宽度收回到“一列”的比例，避免整张卡被拉宽；普通格子恢复默认比例。
+     * <p>
+     * 卡图左右都约束到父布局，宽度一收小，默认的水平偏移（bias 0.5）会把卡摆到格子正中，
+     * 于是它和前面那张卡之间空出一截、也不在列线上；所以要同时把 bias 改 0（贴左），
+     * 收回普通格子时再复位成 0.5。卡图宽高比仍由 item_search_card_grid 的 dimensionRatio 派生
+     */
+    private void bindGridItemWidth(com.chad.library.adapter.base.viewholder.BaseViewHolder holder,
+                                   int position) {
+        View image = holder.getView(R.id.card_image);
+        if (image == null || !(image.getLayoutParams() instanceof ConstraintLayout.LayoutParams)) {
+            return;
+        }
+        ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) image.getLayoutParams();
+        int span = spanSizeAt(position);
+        if (span > 1) {
+            float percent = 1f / span;
+            if (params.matchConstraintDefaultWidth == ConstraintLayout.LayoutParams.MATCH_CONSTRAINT_PERCENT
+                    && Math.abs(params.matchConstraintPercentWidth - percent) < 0.001f
+                    && params.horizontalBias == 0f) {
+                return;
+            }
+            params.matchConstraintDefaultWidth = ConstraintLayout.LayoutParams.MATCH_CONSTRAINT_PERCENT;
+            params.matchConstraintPercentWidth = percent;
+            params.horizontalBias = 0f;
+            image.setLayoutParams(params);
+        } else if (params.matchConstraintDefaultWidth == ConstraintLayout.LayoutParams.MATCH_CONSTRAINT_PERCENT) {
+            params.matchConstraintDefaultWidth = ConstraintLayout.LayoutParams.MATCH_CONSTRAINT_SPREAD;
+            params.matchConstraintPercentWidth = 1f;
+            params.horizontalBias = 0.5f;
+            image.setLayoutParams(params);
         }
     }
 

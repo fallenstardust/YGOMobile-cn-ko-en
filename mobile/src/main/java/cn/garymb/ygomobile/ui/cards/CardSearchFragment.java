@@ -47,6 +47,7 @@ import cn.garymb.ygomobile.ui.home.HomeActivity;
 import cn.garymb.ygomobile.ui.plus.AOnGestureListener;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
+import cn.garymb.ygomobile.ui.widget.SectionDividerDecoration;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import cn.garymb.ygomobile.utils.glide.GlideCompat;
 import ocgcore.CardManager;
@@ -118,6 +119,8 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         mCardListAdapter.setGridLayout(isResultGridPreferred());
         mListView.setLayoutManager(new FastScrollLinearLayoutManager(getContext()));
         mListView.setAdapter(mCardListAdapter);
+        // 结果列表/宫格的分段说明：列表按每张卡、宫格按整行分段（切换布局后不用重挂）
+        mListView.addItemDecoration(new SectionDividerDecoration(getContext(), mCardListAdapter));
         // 顶部计数同一行的排序规则按钮与展现模式切换
         setupResultSortButtons();
         mBtnViewMode = layoutView.findViewById(R.id.btn_result_view_mode);
@@ -337,10 +340,10 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
      * 结果填入 + 顶部计数。卡包展示需要保留卡包原来的顺序，不能拿它当关键词结果重排
      */
     private void showSearchResultCards(List<Card> cardInfos) {
+        // 关键词以搜索面板当前输入为准：重置后为空就要把上一次的关键词清掉，
+        // 否则重排时仍会按旧关键词把完全同名的卡置顶（用户报的残留问题）
         String keyword = mCardSearcher.getCurrentKeyword();
-        if (keyword != null && !keyword.isEmpty()) {
-            currentCardSearchMessage = keyword;
-        }
+        currentCardSearchMessage = keyword == null ? "" : keyword;
 
         mCardListAdapter.setSearchKeyword(currentCardSearchMessage);
         fillSearchResultList(cardInfos);

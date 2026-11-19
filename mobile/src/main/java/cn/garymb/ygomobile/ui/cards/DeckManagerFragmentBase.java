@@ -111,6 +111,7 @@ import cn.garymb.ygomobile.ui.plus.AOnGestureListener;
 import cn.garymb.ygomobile.ui.plus.DefaultOnBoomListener;
 import cn.garymb.ygomobile.ui.plus.DialogPlus;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
+import cn.garymb.ygomobile.ui.widget.SectionDividerDecoration;
 import cn.garymb.ygomobile.utils.BitmapUtil;
 import cn.garymb.ygomobile.utils.DeckUtil;
 import cn.garymb.ygomobile.utils.FileUtils;
@@ -323,6 +324,8 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
         mCardListAdapter.setGridLayout(isResultGridPreferred());
         mListView.setLayoutManager(new FastScrollLinearLayoutManager(getContext()));
         mListView.setAdapter(mCardListAdapter);
+        // 结果列表/宫格的分段说明：列表按每张卡、宫格按整行分段（切换布局后不用重挂）
+        mListView.addItemDecoration(new SectionDividerDecoration(getContext(), mCardListAdapter));
         // 顶部计数同一行的排序规则按钮与展现模式切换
         setupResultSortButtons();
         btnResultViewMode = layoutView.findViewById(R.id.btn_result_view_mode);

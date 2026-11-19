@@ -81,7 +81,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_vertical"
-                        android:padding="1dp"
+                        android:padding="2dp"
                         android:background="@drawable/selected_light"
                         android:layout_weight="1"
                         android:overScrollMode="never"
@@ -93,6 +93,11 @@
                             android:layout_height="wrap_content"
                             android:gravity="center_vertical"
                             android:orientation="horizontal">
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:id="@+id/btn_sort_time"
+                                style="@style/ResultSortButton"
+                                android:text="时间↓" />
 
                             <androidx.appcompat.widget.AppCompatTextView
                                 android:id="@+id/btn_sort_star"
@@ -113,11 +118,6 @@
                                 android:id="@+id/btn_sort_name"
                                 style="@style/ResultSortButton"
                                 android:text="名称↑" />
-
-                            <androidx.appcompat.widget.AppCompatTextView
-                                android:id="@+id/btn_sort_time"
-                                style="@style/ResultSortButton"
-                                android:text="时间↓" />
                         </LinearLayout>
                     </cn.garymb.ygomobile.ui.widget.HorizontalScrollViewPlus>
                 </LinearLayout>

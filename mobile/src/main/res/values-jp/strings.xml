@@ -557,4 +557,14 @@
     <string name="ai_deck_random">ランダム-指定なし</string>
     <string name="ai_deck_empty">現在のリミットレギュレーションに適合するAIデッキがありません</string>
     <string name="cancel">キャンセル</string>
+    <string name="sort_rule_time">時間↓</string>
+    <!-- 検索結果の見出し -->
+    <string name="section_title_star">%1$d星</string>
+    <string name="section_title_spell">魔法</string>
+    <string name="section_title_trap">罠</string>
+    <string name="section_title_other">その他</string>
+    <string name="section_title_digits">数字</string>
+    <string name="section_title_year">%1$d年</string>
+    <string name="section_title_unknown">不明</string>
+    <string name="section_title_with_count">%1$s · %2$d枚</string>
 </resources>

@@ -197,10 +197,10 @@ public abstract class DeckManagerFragmentSearch extends DeckManagerFragmentDeck 
      * 也不会在第 0 档被套上其它规则
      */
     private void showSearchResultCards(List<Card> cardInfos, boolean isHide) {
+        // 关键词以搜索面板当前输入为准：重置后为空就要把上一次的关键词清掉，
+        // 否则重排时仍会按旧关键词把完全同名的卡置顶（用户报的残留问题）
         String keyword = mCardSearcher.getCurrentKeyword();
-        if (keyword != null && !keyword.isEmpty()) {
-            currentCardSearchMessage = keyword;
-        }
+        currentCardSearchMessage = keyword == null ? "" : keyword;
 
         mCardListAdapter.setSearchKeyword(currentCardSearchMessage);
         fillSearchResultList(cardInfos);

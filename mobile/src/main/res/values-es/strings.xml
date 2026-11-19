@@ -554,6 +554,16 @@
     <string name="ai_deck_random">Aleatorio - Sin especificar</string>
     <string name="ai_deck_empty">No hay decks de IA compatibles con la lista de prohibidas actual</string>
     <string name="cancel">Cancelar</string>
+    <string name="sort_rule_time">Tiempo↓</string>
+    <!-- Títulos de sección de resultados -->
+    <string name="section_title_star">Nv%1$d</string>
+    <string name="section_title_spell">Mágica</string>
+    <string name="section_title_trap">Trampa</string>
+    <string name="section_title_other">Otro</string>
+    <string name="section_title_digits">Números</string>
+    <string name="section_title_year">%1$d</string>
+    <string name="section_title_unknown">Desconocido</string>
+    <string name="section_title_with_count">%1$s · %2$d cartas</string>
 </resources>
 
 

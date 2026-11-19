@@ -573,4 +573,14 @@
     <string name="ai_deck_random">랜덤-지정 안 함</string>
     <string name="ai_deck_empty">현재 금제에 맞는 AI 덱이 없습니다</string>
     <string name="cancel">취소</string>
+    <string name="sort_rule_time">시간↓</string>
+    <!-- 검색 결과 구간 표시 -->
+    <string name="section_title_star">%1$d성</string>
+    <string name="section_title_spell">마법</string>
+    <string name="section_title_trap">함정</string>
+    <string name="section_title_other">기타</string>
+    <string name="section_title_digits">숫자</string>
+    <string name="section_title_year">%1$d년</string>
+    <string name="section_title_unknown">알 수 없음</string>
+    <string name="section_title_with_count">%1$s · %2$d장</string>
 </resources>

@@ -650,4 +650,14 @@
     <string name="ai_deck_random">Random - Unspecified</string>
     <string name="ai_deck_empty">No AI decks match the current banlist</string>
     <string name="cancel">Cancel</string>
+    <string name="sort_rule_time">Time↓</string>
+    <!-- 搜索结果分段说明 -->
+    <string name="section_title_star">Lv%1$d</string>
+    <string name="section_title_spell">Spell</string>
+    <string name="section_title_trap">Trap</string>
+    <string name="section_title_other">Other</string>
+    <string name="section_title_digits">0-9</string>
+    <string name="section_title_year">%1$d</string>
+    <string name="section_title_unknown">Unknown</string>
+    <string name="section_title_with_count">%1$s · %2$d cards</string>
 </resources>

@@ -554,5 +554,15 @@
     <string name="ai_deck_random">Aleatório - Não especificado</string>
     <string name="ai_deck_empty">Nenhum deck de IA compatível com a lista de banidas atual</string>
     <string name="cancel">Cancelar</string>
+    <string name="sort_rule_time">Tempo↓</string>
+    <!-- Títulos de seção dos resultados -->
+    <string name="section_title_star">Nv%1$d</string>
+    <string name="section_title_spell">Mágica</string>
+    <string name="section_title_trap">Armadilha</string>
+    <string name="section_title_other">Outro</string>
+    <string name="section_title_digits">Números</string>
+    <string name="section_title_year">%1$d</string>
+    <string name="section_title_unknown">Desconhecido</string>
+    <string name="section_title_with_count">%1$s · %2$d cartas</string>
 </resources>
 

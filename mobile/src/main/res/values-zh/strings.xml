@@ -557,4 +557,14 @@
     <string name="ai_deck_random">随机-不指定</string>
     <string name="ai_deck_empty">没有符合当前禁卡表的人机卡组</string>
     <string name="cancel">取消</string>
+    <string name="sort_rule_time">时间↓</string>
+    <!-- 搜索结果分段说明 -->
+    <string name="section_title_star">%1$d星</string>
+    <string name="section_title_spell">魔法</string>
+    <string name="section_title_trap">陷阱</string>
+    <string name="section_title_other">其他</string>
+    <string name="section_title_digits">数字</string>
+    <string name="section_title_year">%1$d年</string>
+    <string name="section_title_unknown">未知</string>
+    <string name="section_title_with_count">%1$s · %2$d张</string>
 </resources>
