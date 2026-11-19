@@ -30,17 +30,19 @@ import ocgcore.enums.CardLocation;
 import ocgcore.enums.CardType;
 
 /**
- * 卡片列表弹窗（CardSelectDialog / CardDisplayDialog）的「按下查看详情、按住看通讯状态」辅助器。
+ * 卡片列表弹窗（CardSelectDialog / CardDisplayDialog）的「点击即显示详情与通讯状态标签、标签常显」辅助器。
  * <p>
- * 交互（对齐 event_handler.cpp L1110-1158 的 EGET_ELEMENT_HOVERED / LEFT 语义：
- * 悬停即显示卡片详情，同时按需显示状态标签，离开隐藏标签）：
- * - ACTION_DOWN：立即回调 onCardPressed（宿主据此在 CardDetailPanel 显示该卡详情），并启动 300ms 计时；
- * - 按住满 {@link #HOLD_THRESHOLD_MS}：在该卡下边缘下方悬浮显示通讯状态标签；
- * - ACTION_UP：清定时器并隐藏本次手势显示中的标签（抬手即「离开」，同 EGET_ELEMENT_LEFT），
- *   标签只随按住出现、抬手消失，不保留到下一次按下；仅当计时未触发（未超过 0.3 秒）才回调
- *   onSlotClick 视为选中，「是否已触发」而非「标签是否显示」作为判据 —— 无状态文字的卡
- *   （如卡组卡）长按同样不视为点击；
- * - ACTION_CANCEL（含拖动弹窗时包装层补发的 CANCEL）：清定时器、隐藏标签、不触发选中。
+ * 交互（点击即常显，用户规格：不再需要长按）：
+ * - ACTION_DOWN：立即回调 onCardPressed（宿主据此在 CardDetailPanel 显示该卡详情），同时把气泡
+ *   锚点换成本卡并<b>立刻</b>显示其通讯状态标签 —— 换锚的这一拍先收起上一张卡片的气泡，
+ *   因此「点击其他卡片」就是上一张 cardtip 唯一的自动隐藏时机；另起 {@link #HOLD_THRESHOLD_MS}
+ *   计时，只用于抬手时判定「按满阈值不视为点击」，与气泡显隐无关；
+ * - ACTION_UP：清定时器，未超过阈值才回调 onSlotClick 视为选中；<b>不收起气泡</b> —— 点击列表中
+ *   某张卡后其标签一直显示、不自动消失（旧语义的「抬手即 EGET_ELEMENT_LEFT 隐藏」已废弃）；
+ * - ACTION_CANCEL（含拖动弹窗时包装层补发的 CANCEL）：清定时器、不触发选中，气泡按其锚定卡片
+ *   继续保留；
+ * - 宿主翻页 / 刷新槽位 / 关闭弹窗（{@link #hide()}）解除锚点并收起 —— 槽位与卡片的对应关系
+ *   已变，旧标签成为残影。
  * <p>
  * 标签容器：不额外包裹内容层（FrameLayout 以 WRAP_CONTENT 测量时会把标签高度并入弹窗高度），
  * 而是把标签挂到 DraggablePopupHelper 的包装层（DragFrameLayout，铺满窗口且 clipChildren=false）
@@ -50,9 +52,9 @@ import ocgcore.enums.CardType;
  * clearDragOffset，由 centerPopupInRegion、onSizeChanged、收缩、旋转重排触发），translation 里
  * 承载的位置会被这些路径清零，标签随即贴到包装层原点，即屏幕左上角（用户反馈的「飞到左上角」）。
  * margin 与平移正交后仍会残留一类错位：重锚只改内容子视图的 margin，气泡的 margin 不在其列，
- * 按住满 0.3s 期间恰好重锚（输入法升降、区域重新居中、旋转后重解宽度）就会让气泡停在旧位置，
- * 故 {@link #requestReposition()} 在包装层/内容子视图 bounds 变化时补一次落位（仅限气泡正在
- * 显示中，抬手即 hide 后 holdFired=false，不会被布局回调再变出来）。
+ * 气泡常显期间恰好重锚（输入法升降、区域重新居中、旋转后重解宽度）就会让气泡停在旧位置，
+ * 故 {@link #requestReposition()} 在包装层/内容子视图 bounds 变化时补一次落位（仅限气泡仍
+ * 有锚点且可见；锚卡随收缩/翻页变为不可见时 {@link #showTip()} 就地收起，不会被布局回调再变出来）。
  * <p>
  * 标签文字 = 列表提示 ClientField::ShowCardInfoInList（event_handler.cpp L2919-2964）叠加
  * 场上悬停 stTip 的通讯当前值段（event_handler.cpp L1676-1737）：卡名/别名之外，即时显示
@@ -61,7 +63,7 @@ import ocgcore.enums.CardType;
 public class CardStatusTipHelper {
 
     /**
-     * 按下超过该时长即视为「查看状态」，抬手不再触发选中
+     * 按下超过该时长不再触发选中（纯「看」的手势）；气泡显隐与本时长无关，按下即显示
      */
     public static final long HOLD_THRESHOLD_MS = 300L;
 
@@ -123,14 +125,18 @@ public class CardStatusTipHelper {
     private OnSlotClick clickListener;
     private TipProvider tipProvider;
 
-    private int holdingSlot = -1;
+    /** 气泡当前锚定的槽位：点击即换锚，抬手/取消都不改，直到下一次点击其他卡片或宿主 {@link #hide()} */
+    private int pinnedSlot = -1;
+    /**
+     * 本次手势是否已按满 {@link #HOLD_THRESHOLD_MS}：仅作为「长按不视为点击」的判据，
+     * 与气泡是否显示无关（气泡在按下当拍就已显示）
+     */
     private boolean holdFired;
 
     private final Runnable holdTask = new Runnable() {
         @Override
         public void run() {
             holdFired = true;
-            showTip();
         }
     };
 
@@ -138,7 +144,8 @@ public class CardStatusTipHelper {
     private boolean repositionPending;
 
     /**
-     * 补落位任务：到执行时再查一次「气泡是否仍在显示」，抬手/翻页/取消都已 hide，不重新显示
+     * 补落位任务：到执行时再查一次「气泡是否仍在显示」，翻页/刷新/关闭已由 {@link #hide()}
+     * 解除锚点，不重新显示；抬手与取消都不解除锚点，气泡跟着卡片重落位
      */
     private final Runnable repositionTask = new Runnable() {
         @Override
@@ -262,46 +269,60 @@ public class CardStatusTipHelper {
         }
     }
 
+    /**
+     * 按下即换锚：先收起上一张卡片的气泡，再立刻显示本卡片的通讯状态标签（不再等长按），
+     * 详情面板同样在本拍显示
+     */
     private void onDown(int slot) {
-        hide();
-        holdingSlot = slot;
+        handler.removeCallbacks(holdTask);
         holdFired = false;
+        pinnedSlot = slot;
+        hideBubble();
         if (pressedListener != null) pressedListener.onCardPressed(slot);
+        showTip();
         handler.postDelayed(holdTask, HOLD_THRESHOLD_MS);
     }
 
+    /**
+     * 抬手只判定「是否视为点击」，不收起气泡：本次点击卡片的标签一直显示，
+     * 到下一次点击其他卡片（{@link #onDown} 换锚）或宿主刷新/翻页/关闭（{@link #hide()}）为止。
+     * 位置由 margin 承载 + {@link #requestReposition()} 跟锚，常显不会再触发旧版
+     * 「抬手后标签被包装层重锚清零平移而停在屏幕左上角」的问题。
+     */
     private void onUp(int slot) {
         handler.removeCallbacks(holdTask);
         boolean held = holdFired;
         holdFired = false;
-        // 抬手即「离开」：隐藏之前显示中的标签，不再重新落位保留（对齐 event_handler.cpp
-        // EGET_ELEMENT_LEFT 隐藏 stCardListTip）。按下/点击/长按其他卡片时的旧标签同样由
-        // {@link #onDown} 开头的 hide() 收起，两条路径合起来保证「不按着就没有标签」，
-        // 也就不会再出现抬手后标签被包装层重锚清零平移而停在屏幕左上角的情形。
-        holdingSlot = -1;
-        hide();
         if (!held && clickListener != null) clickListener.onSlotClick(slot);
     }
 
+    /** 手势被打断（拖拽弹窗、手指移出）：不触发选中，已显示的气泡仍随其锚定卡片保留 */
     private void onCancel() {
+        handler.removeCallbacks(holdTask);
         holdFired = false;
-        holdingSlot = -1;
-        hide();
     }
 
     /**
-     * 翻页 / 刷新槽位 / 关闭弹窗时调用
+     * 翻页 / 刷新槽位 / 关闭弹窗时调用：收起气泡并<b>解除锚点</b>。
+     * 与 {@link #hideBubble()} 的区别是不再参与后续重锚 —— 槽位对应的卡片已换，旧锚点无意义
      */
     public void hide() {
         handler.removeCallbacks(holdTask);
         if (overlay != null) overlay.removeCallbacks(repositionTask);
         repositionPending = false;
+        holdFired = false;
+        pinnedSlot = -1;
+        hideBubble();
+    }
+
+    /** 仅收起气泡视图、保留锚点（换锚前清场，及锚卡不可见时的收起） */
+    private void hideBubble() {
         if (tipView != null) tipView.setVisibility(View.GONE);
     }
 
-    /** 气泡当前是否处于显示中（计时已触发且槽位有效且视图可见）——补落位的唯一前提 */
+    /** 气泡当前是否有有效锚点且视图可见 —— 补落位的唯一前提 */
     private boolean isTipShowing() {
-        return holdFired && holdingSlot >= 0 && tipView != null
+        return pinnedSlot >= 0 && tipView != null
                 && tipView.getVisibility() == View.VISIBLE;
     }
 
@@ -309,8 +330,8 @@ public class CardStatusTipHelper {
      * 包装层/内容 bounds 变化后延后补一次落位。绝不能在 onLayout 回调里直接改
      * {@link #layoutTip}：那是 layout 过程中 setLayoutParams/requestLayout，Android 会记
      * 「layout 中请求布局」并再走一遍 traversal，极端情况下反复；post 出本次 traversal 后执行，
-     * 且执行时重新判定「仍按着且气泡仍可见」（抬手/取消已把 holdFired 置 false、holdingSlot 置 -1），
-     * 所以不会把已隐藏的气泡再变出来，也不影响抬手即隐藏与 margin 定位的既有结论。
+     * 且执行时重新判定「气泡仍有锚点且仍可见」（宿主 hide 已解除锚点，锚卡不可见已在
+     * {@link #showTip()} 内收起），所以不会把已隐藏的气泡再变出来，也不影响 margin 定位的既有结论。
      */
     private void requestReposition() {
         if (repositionPending || overlay == null) return;
@@ -320,13 +341,13 @@ public class CardStatusTipHelper {
     }
 
     private void showTip() {
-        int slot = holdingSlot;
+        int slot = pinnedSlot;
         if (overlay == null || tipProvider == null || slot < 0 || slot >= MAX_SLOTS) return;
         View anchor = anchors[slot];
         if (anchor == null || !anchor.isShown()) {
             // 锚卡已不可见（翻页、收缩、槽位 GONE）：就地收起，不让旧气泡成为没有锚点的残影
             // （补落位路径依赖此判定：重锚后卡片已经不在原处时宁可没有气泡）
-            if (tipView != null) tipView.setVisibility(View.GONE);
+            hideBubble();
             return;
         }
         // 包装层已脱离窗口或尚未完成布局时几何不可解：本次不显示，以免按退化度量把标签贴到
@@ -335,7 +356,8 @@ public class CardStatusTipHelper {
             return;
         }
         String text = tipProvider.getTipText(slot);
-        // 对应 C++ if(str.length() > 0)：无内容时不显示标签，但按住仍不视为点击
+        // 对应 C++ if(str.length() > 0)：无内容时不显示标签（上一张的气泡已在换锚时收起，
+        // 此处直接返回即保持空白），但锚点保留，下次点击/重锚再解
         if (text == null || text.isEmpty()) return;
 
         TextView tv = ensureTipView();
@@ -375,7 +397,8 @@ public class CardStatusTipHelper {
      * DragFrameLayout 施加拖拽/区域重锚平移的字段（applyDragOffsetToChildren 会把每个子
      * 视图的 translation 覆写为拖拽量，clearDragOffset 则覆写为 0），一旦本次重锚发生在标签
      * 显示期间，标签就会被推到包装层原点而显示到屏幕左上角。margin 与之正交，落位时再把标签
-     * 自身 translation 归零，免历史拖拽量叠加到 margin 位置上（拖拽起手即发 CANCEL 隐藏标签）。
+     * 自身 translation 归零，免历史拖拽量叠加到 margin 位置上（拖拽起手即发 CANCEL，但气泡
+     * 常显不因此收起，靠包装层对全部子视图统一施加的拖拽平移跟着弹窗一起移动）。
      */
     private void layoutTip(TextView tv, int left, int top) {
         tv.setTranslationX(0f);

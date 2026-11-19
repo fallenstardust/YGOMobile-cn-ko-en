@@ -150,7 +150,7 @@ abstract class CardSelectDialogBase {
 
     protected PopupWindow popupWindow;
     protected DraggablePopupHelper draggableHelper;
-    /** 按下查看详情 / 按住悬浮通讯状态标签（每次 build 随包装层重建） */
+    /** 点击查看详情 + 常显通讯状态标签（每次 build 随包装层重建） */
     protected CardStatusTipHelper tipHelper;
 
     protected int mode = MODE_SELECT;
@@ -350,7 +350,7 @@ abstract class CardSelectDialogBase {
         ((YGOProActivity) context).showCardInfoPanel(card);
     }
 
-    /** 按住悬浮标签文字：通讯状态（ShowCardInfoInList 等价物） */
+    /** 常显标签文字：通讯状态（ShowCardInfoInList 等价物），点击即取、换卡即换文字 */
     protected String statusTextAtSlot(int slot) {
         CardItem item = itemAtSlot(slot);
         if (item == null) return null;

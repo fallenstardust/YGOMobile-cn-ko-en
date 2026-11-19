@@ -250,7 +250,8 @@ abstract class CardDisplayDialogBase {
         // 收缩模式：点内容左上角「▼」把手缩为与聊天输入框同高的底部横条，确认场地后点横条恢复
         DraggablePopupHelper.enableCollapse(popupWindow, tvTitle, titlePrefix);
 
-        // 按下即在 CardDetailPanel 显示详情；按住超过 0.3 秒悬浮显示通讯状态标签且抬手不视为点击
+        // 点击即在 CardDetailPanel 显示详情，并同时常显该卡的通讯状态标签（抬手不收起，
+        // 直到点击列表中其他卡片或翻页/刷新；按满 0.3 秒仍不视为点击）
         tipHelper = new CardStatusTipHelper(context, root);
         tipHelper.setOnCardPressedListener(this::showDetailAtSlot);
         tipHelper.setOnSlotClickListener(this::onSlotClicked);
@@ -640,7 +641,7 @@ abstract class CardDisplayDialogBase {
         ((YGOProActivity) context).showCardInfoPanel(card);
     }
 
-    /** 按住悬浮标签文字：通讯状态（ShowCardInfoInList 等价物） */
+    /** 常显标签文字：通讯状态（ShowCardInfoInList 等价物），点击即取、换卡即换文字 */
     protected String statusTextAtSlot(int slot) {
         CardItem item = itemAtSlot(slot);
         if (item == null) return null;
