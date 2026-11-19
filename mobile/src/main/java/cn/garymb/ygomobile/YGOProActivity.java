@@ -260,6 +260,15 @@ public class YGOProActivity extends YGOProActivityEngine {
     }
 
     /**
+     * match 局间换 side 专用：与 {@link #showDeckEditorView()} 同一套显隐编排，但不重载上次卡组——
+     * 换侧编辑的是当前对局卡组，由 {@code applySidingScreen} 按席位快照紧接着载入
+     * （实现见 {@link DeckEditorViewHost#showForSiding()}）。
+     */
+    public void showDeckEditorViewForSiding() {
+        deckEditorHost.showForSiding();
+    }
+
+    /**
      * match 局间换 side 结束的场地收口（用户规格：隐藏卡组编辑器的同时把决斗场区与聊天输入行
      * 一并恢复显示，不留中间帧）。
      * <p>

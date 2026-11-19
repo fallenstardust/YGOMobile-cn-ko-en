@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 
+import cn.garymb.ygomobile.game.deck.DeckEditorManager;
 import cn.garymb.ygomobile.game.engine.GameEngine;
 import cn.garymb.ygomobile.game.gamefield.GameField;
 import cn.garymb.ygomobile.game.replay.ReplayMsgMerger;
@@ -133,22 +134,47 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
         }
     }
 
-    /** 进入/重入换 side 界面：打开卡组编辑器，solo 下按席位顺序 soloSideSession 载入对应席位卡组再进副卡组替换模式；调用点含首次 SIDING（服务端 CHANGE_SIDE）与 solo 后续席位（DeckEditorViewHost.onSideDeckFinished 本地逐席位投递） */
+    /** 进入/重入换 side 界面：打开卡组编辑器，按席位载入“当前对局卡组”再进副卡组替换模式；调用点含首次 SIDING（服务端 CHANGE_SIDE）与 solo 后续席位（DeckEditorViewHost.onSideDeckFinished 本地逐席位投递） */
     void applySidingScreen() {
-        activity.showDeckEditorView();              // 打开卡组编辑器
-        if (activity.deckEditorManager == null) return;
-        boolean solo = activity.engine != null && activity.engine.soloMode;
+        GameEngine eng = activity.engine;
+        boolean solo = eng != null && eng.soloMode;
+        int seat = solo ? eng.soloSideSession : 0;
+        // 同一席位的换侧界面已打开且尚未提交（重复的 SIDING 派发）：不重复推进席位，
+        // 否则会跳过当前席位、载入下一席位卡组（表现为“卡组不是当前使用的卡组”）
+        DeckEditorManager cur = activity.deckEditorManager;
+        if (cur != null && cur.isSidingMode() && !cur.isSideSubmitting()) return;
         if (solo) {
-            // Solo match 换 side：客户端本地逐席位驱动，按席位顺序 soloSideSession 载入对应席位卡组，再进入 side 编辑。
-            int seat = activity.engine.soloSideSession;
-            String[] paths = activity.engine.soloSeatDeckPaths;
-            if (seat >= 0 && seat < paths.length && paths[seat] != null && !paths[seat].isEmpty()) {
-                activity.deckEditorManager.loadDeckForSideSwap(paths[seat]);
-            }
+            int required = eng.gameMode == 2 ? 4 : 2;
+            // 会话计数越界（重复驱动的错位）时不再打开编辑器：否则会在已提交换完的席位上
+            // 再次换 side，服务端无空槽位可归位而回 ERRMSG_SIDEERROR
+            if (seat < 0 || seat >= required) return;
         }
-        activity.deckEditorManager.enterSideMode();  // 记录替换前张数并允许编辑
+        activity.showDeckEditorViewForSiding();        // 打开卡组编辑器（换侧入口：不重载上次卡组）
+        DeckEditorManager mgr = activity.deckEditorManager;
+        if (mgr == null || eng == null) return;
+        String path = "";
+        if (solo && seat < eng.soloSeatDeckPaths.length && eng.soloSeatDeckPaths[seat] != null) {
+            path = eng.soloSeatDeckPaths[seat];
+        } else if (!solo) {
+            // 非 solo：本局提交的卡组即大厅当前选卡（换卡组会同步写回该设置），仅用于标题/重置元信息
+            String lobbyPath = AppsSettings.get().getLastDeckPath();
+            if (lobbyPath != null) path = lobbyPath;
+        }
+        // 以“本场对局卡组快照”为编辑起点：磁盘 ydk 在第 2/3 局之间已不是当前使用的卡组
+        //（换侧结果只提交给本局、不落盘），从磁盘重读会让玩家在错误的卡组上换备卡
+        boolean loaded = false;
+        if (seat >= 0 && seat < eng.matchDecks.length && !eng.matchDecks[seat].isEmpty()) {
+            loaded = mgr.loadDeckForSideSwap(eng.matchDecks[seat].main,
+                    eng.matchDecks[seat].extra, eng.matchDecks[seat].side, path);
+        }
+        if (!loaded && solo && !path.isEmpty()) {
+            // 兜底：快照缺失或本地卡库解析不全时退回按席位路径读盘（第 1 局开局前两者等价）
+            mgr.loadDeckForSideSwap(path);
+        }
+        mgr.ensureSidingDeckLoaded();                  // 前两者都不可用时退回上次卡组，避免空网格
+        mgr.enterSideMode();                           // 记录替换前张数并允许编辑
         if (solo) {
-            activity.engine.soloSideSession++;
+            eng.soloSideSession++;
         }
     }
 

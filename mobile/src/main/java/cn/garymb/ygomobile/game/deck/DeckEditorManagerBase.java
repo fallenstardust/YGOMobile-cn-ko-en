@@ -114,6 +114,14 @@ abstract class DeckEditorManagerBase {
     boolean isPackMode = false;
     protected boolean isSiding = false;
     protected int preMainCount = 0, preExtraCount = 0, preSideCount = 0;
+    /** 换侧起点（enterSideMode 时的当前对局卡组三区卡码）：“重置”键恢复到这份内容，
+     *  而不是从磁盘 ydk 重读——第 2/3 局之间磁盘上那份已不是当前对局使用的卡组 */
+    protected final List<Integer> sidingBaseMain = new ArrayList<>();
+    protected final List<Integer> sidingBaseExtra = new ArrayList<>();
+    protected final List<Integer> sidingBaseSide = new ArrayList<>();
+    /** 换侧提交闸门：点“完成”后置真，防双击把同一席位卡组重复提交——solo 下服务端会把
+     *  第二份按内容归位到另一席位槽位，两席位卡组张数不同即回 ERRMSG_SIDEERROR（副卡组错误） */
+    protected boolean sideSubmitting = false;
     int savedNormalCardWidth = 0;
     int savedNormalCardHeight = 0;
     View rootView;
@@ -295,22 +303,6 @@ abstract class DeckEditorManagerBase {
         }
     }
 
-    /** Solo match 换 side：按席位卡组文件路径载入该副卡组到编辑器，
-     *  供 {@code EngineCallbackDelegate} 在 SIDING 时先载入再 enterSideMode。路径为空则不动。
-     *  <p>
-     *  载入全程标为换 side 会话（本方法先于 enterSideMode，那之后由 isSiding 接棒）：这次载入
-     *  既不 bindDeck 换户、也不把读盘内容写成快照，否则换 side 一起手就把卡组编辑页那份卡组的
-     *  修改历史清零，或把页上的未保存修改采纳成换侧起点（换侧结果只提交给本局，不入卡组修改历史）。*/
-    public void loadDeckForSideSwap(String deckPath) {
-        if (deckPath == null || deckPath.isEmpty()) return;
-        if (historyPanel != null) historyPanel.setSideSwapLoading(true);
-        try {
-            loadDeckFromPath(deckPath);
-        } finally {
-            if (historyPanel != null) historyPanel.setSideSwapLoading(false);
-        }
-    }
-
     // === 对应 deck_con.cpp: push_main ===
     // 副卡组替换（isSiding）期间按 +DECK_SIDE_SWAP_EXTRA 临时放宽上限，其余场景用常规上限。
     // 包级私有：同包协作类 DeckDropHandler 跨网格移动校验亦复用此口径。
@@ -415,7 +407,7 @@ abstract class DeckEditorManagerBase {
     }
     // === 对应 deck_con.cpp: BUTTON_SIDE_OK ===
     public void sideFinish() {
-        if (!isSiding) return;
+        if (!isSiding || sideSubmitting) return;
         if (currentDeck.mainCards.size() != preMainCount
                 || currentDeck.extraCards.size() != preExtraCount
                 || currentDeck.sideCards.size() != preSideCount) {
@@ -428,15 +420,14 @@ abstract class DeckEditorManagerBase {
         for (Card c : currentDeck.mainCards) main.add(c.Code);
         for (Card c : currentDeck.extraCards) extra.add(c.Code);
         for (Card c : currentDeck.sideCards) side.add(c.Code);
+        // 提交闸门：防双击/连点把同一席位卡组重复提交（见字段注释）；下一席位 enterSideMode 复位
+        sideSubmitting = true;
         if (listener != null) listener.onSideDeckFinished(main, extra, side);
     }
 
     // === 对应 deck_con.cpp: BUTTON_SIDE_RELOAD ===
-    public void sideReset() {
-        if (currentDeckFilePath != null && !currentDeckFilePath.isEmpty()) {
-            loadDeckFromPath(currentDeckFilePath);
-        }
-    }
+    // 换侧重置见 DeckEditorManagerMid#sideReset（恢复到换侧起点，不读磁盘原始 ydk）
+
     // === 对应 deck_con.cpp: BUTTON_CLEAR_DECK ===
     public void clearDeck() {
         if (isReadonly) return;

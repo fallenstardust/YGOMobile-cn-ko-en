@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.SparseArray;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -31,6 +32,7 @@ import cn.garymb.ygomobile.render.card.CardDetailPanel;
 import cn.garymb.ygomobile.render.field.TextureLoader;
 import cn.garymb.ygomobile.audio.SoundManager;
 import cn.garymb.ygomobile.ui.cards.deck.CardTypeImage;
+import cn.garymb.ygomobile.ui.cards.deck.DeckHistory;
 import cn.garymb.ygomobile.ui.cards.deck.DeckUtils;
 import cn.garymb.ygomobile.ui.cards.deck.ImageTop;
 import cn.garymb.ygomobile.ui.cards.deck.MyDeckItem;
@@ -334,16 +336,159 @@ abstract class DeckEditorManagerMid extends DeckEditorManagerBase {
         }
     }
     // === 对应 duelclient.cpp: STOC_CHANGE_SIDE 进入副卡组替换模式 ===
+    /** Solo match 换 side：按席位卡组文件路径载入该副卡组到编辑器，
+     *  供 {@code EngineCallbackDelegate} 在 SIDING 时先载入再 enterSideMode。路径为空则不动。
+     *  <p>
+     *  载入全程标为换 side 会话（本方法先于 enterSideMode，那之后由 isSiding 接棒）：这次载入
+     *  既不 bindDeck 换户、也不把读盘内容写成快照，否则换 side 一起手就把卡组编辑页那份卡组的
+     *  修改历史清零，或把页上的未保存修改采纳成换侧起点（换侧结果只提交给本局，不入卡组修改历史）。*/
+    public void loadDeckForSideSwap(String deckPath) {
+        if (deckPath == null || deckPath.isEmpty()) return;
+        if (historyPanel != null) historyPanel.setSideSwapLoading(true);
+        try {
+            // 同步路径元信息：换侧界面的“重置”键与标题按当前席位卡组显示，不能停留在上一份卡组
+            currentDeckFilePath = deckPath;
+            currentDeckName = DeckUtil.ydkDisplayName(deckPath);
+            currentDeckCategoryName = DeckUtil.getDeckTypeName(deckPath);
+            loadDeckFromPath(deckPath);
+            updateDeckManagerButtonText();
+        } finally {
+            if (historyPanel != null) historyPanel.setSideSwapLoading(false);
+        }
+    }
+
+    /**
+     * 换 side：按“本场对局卡组快照”（主/额外/副卡码）重建编辑器内容，不读盘。
+     * <p>
+     * 第 2/3 局之间磁盘 ydk 仍是原始卡组，而当前对局卡组是上一局换侧提交的结果（换侧只提交
+     * 给本局、不落盘），从磁盘重读会让玩家在错误的卡组上换备卡，提交后服务端按各区张数与
+     * 开局卡组比对而回 ERRMSG_SIDEERROR。{@code deckPath} 仅用于同步路径元信息（可为空）。
+     *
+     * @return 卡码全部能解析并载入时为 true；任一卡缺失（本地卡库与提交时不一致）返回 false，
+     *         由调用方回退到磁盘路径载入
+     */
+    public boolean loadDeckForSideSwap(List<Integer> mainCodes, List<Integer> extraCodes, List<Integer> sideCodes, String deckPath) {
+        DeckInfo loaded = buildDeckInfoFromCodes(mainCodes, extraCodes, sideCodes);
+        if (loaded == null) return false;
+        if (historyPanel != null) historyPanel.setSideSwapLoading(true);
+        try {
+            currentDeck.update(loaded);
+            currentDeck.source = (deckPath == null || deckPath.isEmpty()) ? null : new File(deckPath);
+            isModified = false;
+            if (deckPath != null && !deckPath.isEmpty()) {
+                currentDeckFilePath = deckPath;
+                currentDeckName = DeckUtil.ydkDisplayName(deckPath);
+                currentDeckCategoryName = DeckUtil.getDeckTypeName(deckPath);
+                updateDeckManagerButtonText();
+            }
+            boolean packMode = deckPath != null && !deckPath.isEmpty() && DeckHistory.isPackDeck(deckPath);
+            if (isPackMode != packMode) {
+                gridLayout.applyPackMode(packMode);
+            } else {
+                notifyDeckChanged();
+            }
+            refreshReadonly();
+            return true;
+        } finally {
+            if (historyPanel != null) historyPanel.setSideSwapLoading(false);
+        }
+    }
+
+    /** 把三区卡码解析为 DeckInfo（卡库缺卡或超出各区上限时返回 null） */
+    private DeckInfo buildDeckInfoFromCodes(List<Integer> mainCodes, List<Integer> extraCodes, List<Integer> sideCodes) {
+        if (mainCodes == null || mainCodes.isEmpty()) return null;
+        List<Integer> all = new ArrayList<>();
+        all.addAll(mainCodes);
+        if (extraCodes != null) all.addAll(extraCodes);
+        if (sideCodes != null) all.addAll(sideCodes);
+        SparseArray<Card> cards = cardLoader.readCards(all, true);
+        if (cards == null) return null;
+        DeckInfo loaded = new DeckInfo();
+        for (Integer code : mainCodes) {
+            Card c = code == null ? null : cards.get(code);
+            if (c == null || !loaded.addMainCards(c)) return null;
+        }
+        if (extraCodes != null) {
+            for (Integer code : extraCodes) {
+                Card c = code == null ? null : cards.get(code);
+                if (c == null || !loaded.addExtraCards(c)) return null;
+            }
+        }
+        if (sideCodes != null) {
+            for (Integer code : sideCodes) {
+                Card c = code == null ? null : cards.get(code);
+                if (c == null || !loaded.addSideCards(c)) return null;
+            }
+        }
+        return loaded;
+    }
+
+    /** 换 side 编辑器重新显示前调用：括号内不采纳共享历史内容（卡组编辑页的未保存修改），
+     *  否则换侧一起手编辑器就被刷成另一份内容；enterSideMode 置上 isSiding 后由其接棒 */
+    public void beginSideSwapSession() {
+        if (historyPanel != null) historyPanel.setSideSwapLoading(true);
+    }
+
+    /** 换 side 兜底：快照/席位路径都不可用且编辑器尚无卡组时退回“上次卡组”，避免空网格无法编辑 */
+    public void ensureSidingDeckLoaded() {
+        if (currentDeck != null && (currentDeck.getMainCount() > 0
+                || currentDeck.getExtraCount() > 0 || currentDeck.getSideCount() > 0)) {
+            return;
+        }
+        loadLastDeck();
+    }
+
+    /** 换侧重置：恢复到本次换 side 的起点（当前对局卡组），而不是磁盘上的原始 ydk
+     * （第 2/3 局之间磁盘版本已不是当前对局使用的卡组） */
+    public void sideReset() {
+        if (isSiding && !sidingBaseMain.isEmpty()) {
+            DeckInfo base = buildDeckInfoFromCodes(sidingBaseMain, sidingBaseExtra, sidingBaseSide);
+            if (base != null) {
+                currentDeck.update(base);
+                isModified = false;
+                notifyDeckChanged();
+                return;
+            }
+        }
+        if (currentDeckFilePath != null && !currentDeckFilePath.isEmpty()) {
+            loadDeckFromPath(currentDeckFilePath);
+        }
+    }
+
+    /** 当前是否处于换 side 编辑态（供 applySidingScreen 识别重复的 SIDING 派发） */
+    public boolean isSidingMode() {
+        return isSiding;
+    }
+
+    /** 当前席位是否已点过“完成”（提交闸门状态：区分“换侧界面已打开待编辑”与“已提交待下一席位”） */
+    public boolean isSideSubmitting() {
+        return sideSubmitting;
+    }
+
     // 换侧期间的每次增删拖拽都不写卡组修改历史（见 DeckEditorHistoryPanel#isSidingSession），
     // 换侧结果只经 onSideDeckFinished 提交给本局，故 refreshReadonly 里两键也随会话态熄灭。
     public void enterSideMode() {
         isSiding = true;
         isReadonly = false;
+        sideSubmitting = false;
         preMainCount = currentDeck.mainCards.size();
         preExtraCount = currentDeck.extraCards.size();
         preSideCount = currentDeck.sideCards.size();
+        // 换侧起点快照：“重置”键恢复到这份内容（第 2/3 局之间即上一局换侧结果），
+        // 不从磁盘重读（磁盘上那份 ydk 只在第 1 局等于当前对局卡组）
+        sidingBaseMain.clear();
+        sidingBaseExtra.clear();
+        sidingBaseSide.clear();
+        for (Card c : currentDeck.mainCards) sidingBaseMain.add(c.Code);
+        for (Card c : currentDeck.extraCards) sidingBaseExtra.add(c.Code);
+        for (Card c : currentDeck.sideCards) sidingBaseSide.add(c.Code);
+        // 换侧会话由 isSiding 接棒：结束“席位卡组载入期”免采纳共享历史内容的括号
+        if (historyPanel != null) historyPanel.setSideSwapLoading(false);
         refreshReadonly();
         applySidingScreenState();
+        // 换侧必须可编辑：载入时可能带着只读态（如人机卡组目录）把网格触摸监听置成只读，
+        // 此处按 isReadonly=false 重建一次网格（isSiding 已置位，不会写卡组历史）
+        notifyDeckChanged();
     }
 
     /**
@@ -371,10 +516,14 @@ abstract class DeckEditorManagerMid extends DeckEditorManagerBase {
 
     //副卡组替换完成/取消后退出副卡组模式
     public void exitSideMode() {
+        // 无论是否在换侧态，都结束“席位卡组载入期”括号（幂等）：载入中途异常/提前退出时
+        // 不得让下次编辑一直误以为还在换侧而不落卡组修改历史
+        if (historyPanel != null) historyPanel.setSideSwapLoading(false);
         // 幂等：除了换侧提交完成，编辑器关闭（DeckEditorViewHost.hide）也会调本方法收口换侧会话，
         // 未处于换侧态时（普通卡组编辑退出）无事可做，不得去改动布局显隐
         if (!isSiding) return;
         isSiding = false;
+        sideSubmitting = false;
         // 换侧会话结束：会话期间被压住的 undo/redo 两键按现态重新点亮（编辑器仍可见时生效）
         if (historyPanel != null) historyPanel.refresh();
         if (layoutDeckInfoPanel != null) layoutDeckInfoPanel.setVisibility(View.VISIBLE);
