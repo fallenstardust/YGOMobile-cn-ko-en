@@ -32,7 +32,6 @@ public final class FieldHudRenderer {
     private static final int STAT_CYAN_LIGHT = YGOUtil.c(R.color.stat_cyan_light);
     private static final int XYZ_PINK = YGOUtil.c(R.color.xyz_level_pink);
     private static final int STAT_DOWN_PINK = YGOUtil.c(R.color.stat_decrease_pink);
-    private static final int SHADOW_C0 = YGOUtil.c(R.color.black_c0);
     private static final int SHADOW_BLACK = YGOUtil.c(R.color.black);
 
     private final GameFieldView view;
@@ -61,7 +60,8 @@ public final class FieldHudRenderer {
     private static final float SMALL_STAT_SCALE = 0.8f;
     /** HUD 数字的纯黑描边宽度（64 高、{@link #STAT_TEXT_SIZE} 字号的位图空间像素）；
      *  用户规格：攻守数字阴影改为黑色——旧的 3px 模糊黑阴影在浅色卡图上晕成一圈灰光，
-     *  白色数字反而发虚，故改为纯黑实描边垫底，边缘干净不晕灰。 */
+     *  白色数字反而发虚，故改为纯黑实描边垫底，边缘干净不晕灰。
+     *  堆叠区数量数字（{@link #makeNumberBitmap}）复用同一描边规格。 */
     private static final float STAT_OUTLINE_W = 5f;
     /**
      * 灵摆刻度数字下沉系数（×字高 hpx）：正交屏 y 向下，把刻度数字中心从灵摆卡「屏幕顶角顶点」
@@ -380,6 +380,12 @@ public final class FieldHudRenderer {
         return id != null ? id : -1;
     }
 
+    /**
+     * 单色数字位图（堆叠区数量 / 总攻击力数字共用）：与 {@link #makeColoredTextBitmap} 的攻守数字
+     * 同款纯黑描边。旧实现用 3px 模糊黑阴影，浅色卡背/浅色场地上会晕成一圈灰光、黄色数字发虚；
+     * 用户规格：卡组/额外/墓地/除外数量统计也需要与攻守数字一致的黑色描边，故改为整圈纯黑实描边
+     * 垫底、再填色，任意底色上都清晰。
+     */
     private static Bitmap makeNumberBitmap(String text, int color) {
         int w = 128, h = 64;
         Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
@@ -389,10 +395,17 @@ public final class FieldHudRenderer {
         p.setFakeBoldText(true);
         float tw = p.measureText(text);
         if (tw > w * 0.92f) p.setTextSize(44f * (w * 0.92f) / tw);
-        p.setColor(color | 0xFF000000);
         p.setTextAlign(Paint.Align.CENTER);
-        p.setShadowLayer(3f, 1f, 1f, SHADOW_C0);
-        cv.drawText(text, w / 2f, h / 2f - (p.ascent() + p.descent()) / 2f, p);
+        float baseline = h / 2f - (p.ascent() + p.descent()) / 2f;
+        // 先整圈纯黑描边垫底（与攻守数字同款纯黑硬边，不再发灰），再填数字颜色
+        p.setStyle(Paint.Style.STROKE);
+        p.setStrokeJoin(Paint.Join.ROUND);
+        p.setStrokeWidth(STAT_OUTLINE_W);
+        p.setColor(SHADOW_BLACK);
+        cv.drawText(text, w / 2f, baseline, p);
+        p.setStyle(Paint.Style.FILL);
+        p.setColor(color | 0xFF000000);
+        cv.drawText(text, w / 2f, baseline, p);
         return bmp;
     }
 
