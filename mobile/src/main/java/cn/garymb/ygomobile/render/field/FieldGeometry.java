@@ -94,12 +94,20 @@ public final class FieldGeometry {
     // rule>3（MR4）：贴各自场地区(szone seq5)靠场地中心一侧的上沿之上，留 0.1 间隙，
     //   既不压场地区格子(0.05~1.15 × 1.4~2.6 / 6.75~7.85 × -2.6~-1.4)，
     //   也不压最左怪兽格(x≥1.2 / x≤6.7)；方向对齐 drawing.cpp vTotalAtkop 的中心朝向。
-    // rule<=3（MR3）：无额外怪兽区，落在额外怪兽区位置（materials.cpp vTotalAtkmeT/opT）。
+    // rule<=3（MR3）：不再沿用 materials.cpp 的 vTotalAtkmeT/opT——那两个矩形落在本方怪兽行
+    //   (y ±0.8~±2.0) 之内，面板与数字会压住怪兽格。MR3 没有额外怪兽区，双方怪兽行之间
+    //   y −0.8~0.8 是唯一不被任何格子占用的空档带，故把双方 bar（1.0×0.66）分置该带上下两端、
+    //   各自贴住本方怪兽行朝向场地中心的那条边：
+    //   我方 bar y 0.14~0.8（底边压在 y=0.8 上），对方 bar y −0.8~−0.14（上沿压在 y=−0.8 上），
+    //   两面板在屏幕上一下一上、紧贴各自怪兽区，一眼可辨归属，不再与阶段按钮排成一行。
+    //   x 仍对齐 MR4 两个额外怪兽区所在列（我方 raw 2.35~3.35 / 对方 4.55~5.55，经 fx+mirror
+    //   后我方面板在屏幕右、对方在屏幕左，与各自侧列同侧），并水平让开 y=0 行的阶段按钮列，
+    //   与怪兽/魔陷格零重叠。
     // 供 FieldBoardRenderer（绘制 bar 底图）与 FieldHudRenderer（在 bar 上叠数字）共用同一布局。
     private static final float[] TOTAL_ATK_ME_MR4 = {0.15f, 0.6f, 1.05f, 1.3f};
     private static final float[] TOTAL_ATK_OP_MR4 = {6.85f, -1.3f, 7.75f, -0.6f};
-    private static final float[] TOTAL_ATK_ME_MR3 = {2.5f, 0.95f, 3.5f, 1.65f};
-    private static final float[] TOTAL_ATK_OP_MR3 = {4.45f, 0.4f, 5.45f, 1.1f};
+    private static final float[] TOTAL_ATK_ME_MR3 = {2.35f, 0.14f, 3.35f, 0.8f};
+    private static final float[] TOTAL_ATK_OP_MR3 = {4.55f, -0.8f, 5.55f, -0.14f};
 
     static float[] totalAtkRect(int p, boolean mr4) {
         if (p == 0) return mr4 ? TOTAL_ATK_ME_MR4 : TOTAL_ATK_ME_MR3;

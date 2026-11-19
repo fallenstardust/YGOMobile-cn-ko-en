@@ -264,7 +264,8 @@ public final class FieldBoardRenderer {
     }
 
     /**
-     * 总攻击力 bar：duel_rule>=4 用 vTotalAtkme/op，否则 vTotalAtkmeT/opT；
+     * 总攻击力 bar：duel_rule>=4 用 vTotalAtkme/op 原版矩形；rule<4 用 MR3 中央空档带上/下两端的
+     * 重定位矩形（见 {@link FieldGeometry#totalAtkRect}，各自贴住本方怪兽行、不压怪兽格）；
      * raw x 经 fx 映射、y 直用，绘制空间再做 X 镜像，贴 totalAtk.png，仅 total_attack>0 时绘制。
      */
     public void drawTotalAttackBars(GameField f) {
