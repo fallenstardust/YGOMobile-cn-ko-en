@@ -365,6 +365,9 @@ public class ShowDialogUtil {
                 return;
             }
 
+            // 登记我方当前对局卡组（本入口为非大厅流程的卡组选择，如 STOC_SELECT_HAND）；
+            // match 局间换 side 时编辑器据此载入，而不是从磁盘 ydk 重读
+            engine().updateMatchDeck(0, main, extra, side);
             engine().sendDeckUpdate(main, extra, side);
         }, "DeckLoad").start();
     }

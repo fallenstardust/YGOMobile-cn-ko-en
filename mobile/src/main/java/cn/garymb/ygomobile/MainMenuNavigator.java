@@ -173,8 +173,11 @@ class MainMenuNavigator implements
     }
 
     @Override
-    public void onPlayerWaitingDeckUpdate(List<Integer> main, List<Integer> extra, List<Integer> side) {
+    public void onPlayerWaitingDeckUpdate(int seat, List<Integer> main, List<Integer> extra, List<Integer> side) {
         if (activity.engine != null) {
+            // 登记该席位“当前对局卡组”：solo 按 0..required-1 席位顺序，非 solo 恒为我方 0。
+            // match 换 side 时编辑器据此载入，避免第 2/3 局之间从磁盘 ydk 读到原始卡组
+            activity.engine.updateMatchDeck(seat, main, extra, side);
             activity.engine.sendDeckUpdate(main, extra, side);
         }
     }
