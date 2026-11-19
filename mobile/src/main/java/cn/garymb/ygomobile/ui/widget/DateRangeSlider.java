@@ -6,8 +6,6 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.MotionEvent;
@@ -28,8 +26,9 @@ import cn.garymb.ygomobile.lite.R;
  * <p>时间轴摆在结果列表下方：控件自己不画背景（全透明），列表底部由
  * {@code FadeBottomRecyclerView} 做半透明渐隐，二者在交界处自然衔接。</p>
  *
- * <p>按住/点击滑块时，日期气泡画在滑块上方，既不会被手指遮住，也不会超出屏幕；
- * 松手一秒后自动消失。按在两个滑块之外则最近的一端直接跳到按下处（时间轴整体可点）。
+ * <p>两个滑块上方的日期气泡常显（左端 = 开始日、右端 = 结束日），两气泡互相避让、不超出控件边界；
+ * 气泡里的日期可点击，点开日历后只能选卡包里真实存在的发售日，选完该端滑块就移到那一天。
+ * 按在两个滑块之外则最近的一端直接跳到按下处（时间轴整体可点）。
  * 未设置日期跨度时本控件不参与手势，由页面决定是否隐藏。</p>
  *
  * <p>时间线两端标出卡包数据覆盖的最早/最晚年份（左端最早、右端最晚），
@@ -48,16 +47,20 @@ public class DateRangeSlider extends View {
         void onRangeChanged(int startDate, int endDate);
     }
 
-    /** 松手后日期气泡的停留时间（用户规格：松开一秒后消失） */
-    private static final long LABEL_HIDE_DELAY = 1000L;
+    /** 点日期气泡的回调：thumb 为 THUMB_START/THUMB_END，date 为该端当前日期 yyyyMMdd */
+    public interface OnDateLabelClickListener {
+        void onDateLabelClick(int thumb, int date);
+    }
 
     /** 年份牌 drawable 的按下/普通状态（用于点击复位时的视觉反馈） */
     private static final int[] YEAR_STATE_PRESSED = new int[]{android.R.attr.state_pressed};
     private static final int[] YEAR_STATE_DEFAULT = new int[0];
 
-    private static final int THUMB_START = 0;
-    private static final int THUMB_END = 1;
+    public static final int THUMB_START = 0;
+    public static final int THUMB_END = 1;
     private static final int THUMB_NONE = -1;
+    /** 两个日期气泡相距太近时的最小间隙（dp） */
+    private static final int LABEL_GAP_DP = 2;
 
     private final Paint mTrackPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint mActiveTrackPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -100,16 +103,8 @@ public class DateRangeSlider extends View {
     private final int mGrabSlop;
     private final int mTouchSlop;
 
-    private final Handler mHandler = new Handler(Looper.getMainLooper());
-    private final Runnable mHideLabel = new Runnable() {
-        @Override
-        public void run() {
-            mLabelVisible = false;
-            invalidate();
-        }
-    };
-
     private OnRangeChangedListener mListener;
+    private OnDateLabelClickListener mLabelClickListener;
 
     /** 日期跨度（yyyyMMdd）与它对应的天数刻度；滑块位置按天数在两者之间线性插值 */
     private int mMinDate;
@@ -144,7 +139,11 @@ public class DateRangeSlider extends View {
     /** 当前被按住的年份牌对应哪一端；THUMB_NONE = 本次手势不是点年份牌 */
     private int mYearPressedThumb = THUMB_NONE;
 
-    private boolean mLabelVisible;
+    /** 两个日期气泡的绘制区（同时也是点开日历的热区，绘制与命中共用同一份几何） */
+    private final RectF mStartLabelRect = new RectF();
+    private final RectF mEndLabelRect = new RectF();
+    /** 本次手势按在日期气泡上：抬手前不再拖滑块 */
+    private boolean mLabelPressed;
     private int mActiveThumb = THUMB_NONE;
     /** 两端重合时先不认领滑块，等第一次移动按方向决定（否则往右拉永远动不了终点） */
     private boolean mThumbPending;
@@ -268,6 +267,11 @@ public class DateRangeSlider extends View {
         mListener = listener;
     }
 
+    /** 点日期气泡的回调：页面接到后弹日历，选完再调 {@link #setDateRange(int, int)} */
+    public void setOnDateLabelClickListener(OnDateLabelClickListener listener) {
+        mLabelClickListener = listener;
+    }
+
     public boolean hasRange() {
         return mHasRange;
     }
@@ -359,12 +363,8 @@ public class DateRangeSlider extends View {
         drawYearLabels(canvas, cy);
         drawThumb(canvas, startX, cy);
         drawThumb(canvas, endX, cy);
-
-        // 日期气泡只跟正在操作的那一端走（用户规格：显示对应滑块的开始或结束日期）
-        if (mLabelVisible && mActiveThumb != THUMB_NONE) {
-            boolean start = mActiveThumb == THUMB_START;
-            drawLabel(canvas, start ? startX : endX, start ? mStartDay : mEndDay);
-        }
+        // 日期气泡常显（用户规格）：左右滑块各一个，点气泡可打开日历选日期
+        drawDateLabels(canvas, startX, endX);
     }
 
     /** 年度刻度：跨年处各画一条短竖线，让人一眼看出时间轴按年份铺开 */
@@ -425,21 +425,43 @@ public class DateRangeSlider extends View {
         canvas.drawPath(mThumbPath, mThumbRingPaint);
     }
 
-    private void drawLabel(Canvas canvas, float thumbX, long day) {
-        String text = formatDate(toDate(day));
+    /**
+     * 两个日期气泡：各自画在自己滑块上方，先居中，挤到一起时左气泡让到右气泡左侧，
+     * 同时夹在控件左右边界内，保证不重叠也不超界
+     */
+    private void drawDateLabels(Canvas canvas, float startX, float endX) {
+        String startText = formatDate(toDate(mStartDay));
+        String endText = formatDate(toDate(mEndDay));
         Paint.FontMetrics fm = mLabelTextPaint.getFontMetrics();
-        float textWidth = mLabelTextPaint.measureText(text);
-        float width = textWidth + mLabelPadH * 2f;
-        float height = (fm.descent - fm.ascent) + mLabelPadV * 2f;
-        float left = thumbX - width / 2f;
-        float maxLeft = getWidth() - getPaddingRight() - width;
-        left = Math.max(getPaddingLeft(), Math.min(left, maxLeft));
-        float top = mLabelTop;
+        float startWidth = mLabelTextPaint.measureText(startText) + mLabelPadH * 2f;
+        float endWidth = mLabelTextPaint.measureText(endText) + mLabelPadH * 2f;
+        float minLeft = getPaddingLeft();
+        float maxLeft = getWidth() - getPaddingRight();
 
-        mRect.set(left, top, left + width, top + height);
-        canvas.drawRoundRect(mRect, mLabelCorner, mLabelCorner, mLabelBgPaint);
-        canvas.drawRoundRect(mRect, mLabelCorner, mLabelCorner, mLabelBorderPaint);
-        canvas.drawText(text, left + mLabelPadH, top + mLabelPadV - fm.ascent, mLabelTextPaint);
+        float startLeft = clamp(startX - startWidth / 2f, minLeft, maxLeft - startWidth);
+        float endLeft = clamp(endX - endWidth / 2f, minLeft, maxLeft - endWidth);
+        int gap = dp(LABEL_GAP_DP);
+        if (startLeft + startWidth + gap > endLeft) {
+            // 两滑块靠得很近：左气泡退到右气泡左侧，实在放不下就贴最左
+            startLeft = Math.max(minLeft, endLeft - startWidth - gap);
+        }
+        mStartLabelRect.set(startLeft, mLabelTop, startLeft + startWidth, mLabelTop + mLabelHeight);
+        mEndLabelRect.set(endLeft, mLabelTop, endLeft + endWidth, mLabelTop + mLabelHeight);
+        drawLabelRect(canvas, startText, mStartLabelRect, fm);
+        drawLabelRect(canvas, endText, mEndLabelRect, fm);
+    }
+
+    private void drawLabelRect(Canvas canvas, String text, RectF rect, Paint.FontMetrics fm) {
+        canvas.drawRoundRect(rect, mLabelCorner, mLabelCorner, mLabelBgPaint);
+        canvas.drawRoundRect(rect, mLabelCorner, mLabelCorner, mLabelBorderPaint);
+        canvas.drawText(text, rect.left + mLabelPadH, rect.top + mLabelPadV - fm.ascent, mLabelTextPaint);
+    }
+
+    private static float clamp(float value, float min, float max) {
+        if (max < min) {
+            return min;
+        }
+        return Math.max(min, Math.min(value, max));
     }
 
     @Override
@@ -449,9 +471,22 @@ public class DateRangeSlider extends View {
         }
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN: {
-                cancelHideLabel();
-                // 清掉上一次可能残留的年份牌按下态（正常情况在 UP 已清）
+                // 清掉上一次可能残留的按下态（正常情况在 UP 已清）
                 mYearPressedThumb = THUMB_NONE;
+                mLabelPressed = false;
+                // 点在日期气泡上：交给页面弹日历选日期，本次手势不再拖滑块
+                int labelThumb = findDateLabelAt(event.getX(), event.getY());
+                if (labelThumb != THUMB_NONE) {
+                    mLabelPressed = true;
+                    if (getParent() != null) {
+                        getParent().requestDisallowInterceptTouchEvent(true);
+                    }
+                    if (mLabelClickListener != null) {
+                        mLabelClickListener.onDateLabelClick(labelThumb,
+                                labelThumb == THUMB_START ? getStartDate() : getEndDate());
+                    }
+                    return true;
+                }
                 // 点在最左 / 最右年份牌上：对应滑块直接复位到那一端，本次手势不再拖滑块
                 int yearThumb = findYearLabelAt(event.getX(), event.getY());
                 if (yearThumb != THUMB_NONE) {
@@ -474,7 +509,6 @@ public class DateRangeSlider extends View {
                     // 按在两个滑块之外：最近的一端直接跳到按下处
                     moveThumbToDay(mActiveThumb, dayForX(mDownX));
                 }
-                mLabelVisible = true;
                 if (getParent() != null) {
                     getParent().requestDisallowInterceptTouchEvent(true);
                 }
@@ -482,6 +516,10 @@ public class DateRangeSlider extends View {
                 return true;
             }
             case MotionEvent.ACTION_MOVE: {
+                if (mLabelPressed) {
+                    // 点气泡弹日历的那次手势不拖滑块
+                    return true;
+                }
                 if (mYearPressedThumb != THUMB_NONE) {
                     // 点年份牌的那次手势只做复位，不跟着拖动
                     return true;
@@ -500,12 +538,11 @@ public class DateRangeSlider extends View {
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL: {
                 mThumbPending = false;
+                mLabelPressed = false;
                 if (mYearPressedThumb != THUMB_NONE) {
                     mYearPressedThumb = THUMB_NONE;
                     invalidate();
                 }
-                // 松手后日期气泡再停留一秒（用户规格）
-                scheduleHideLabel();
                 return true;
             }
             default:
@@ -516,7 +553,7 @@ public class DateRangeSlider extends View {
 
     @Override
     protected void onDetachedFromWindow() {
-        cancelHideLabel();
+        mLabelPressed = false;
         super.onDetachedFromWindow();
     }
 
@@ -538,12 +575,11 @@ public class DateRangeSlider extends View {
         return THUMB_NONE;
     }
 
-    /** 点两端年份牌：对应滑块复位到时间轴那一端，并把该端的日期气泡亮起来作为反馈 */
+    /** 点两端年份牌：对应滑块复位到时间轴那一端 */
     private void resetThumbToEdge(int thumb) {
         mActiveThumb = thumb;
-        mLabelVisible = true;
         moveThumbToDay(thumb, thumb == THUMB_START ? mMinDay : mMaxDay);
-        // 本来就在那一端时 moveThumbToDay 不会重绘，这里补一次，保证气泡和按下高亮能出来
+        // 本来就在那一端时 moveThumbToDay 不会重绘，这里补一次，保证按下高亮能出来
         invalidate();
     }
 
@@ -567,13 +603,48 @@ public class DateRangeSlider extends View {
         }
     }
 
-    private void scheduleHideLabel() {
-        mHandler.removeCallbacks(mHideLabel);
-        mHandler.postDelayed(mHideLabel, LABEL_HIDE_DELAY);
+    /** 命中的是哪一端的日期气泡（气泡在滑块上方，点它弹日历） */
+    private int findDateLabelAt(float x, float y) {
+        if (mStartLabelRect.contains(x, y)) {
+            return THUMB_START;
+        }
+        if (mEndLabelRect.contains(x, y)) {
+            return THUMB_END;
+        }
+        return THUMB_NONE;
     }
 
-    private void cancelHideLabel() {
-        mHandler.removeCallbacks(mHideLabel);
+    /**
+     * 一次设定一个区间（日历里先后点选的开始/结束日）：
+     * 日历可以选任意日期，所以这里不吸附卡包节点，只把两端夹在时间轴跨度内；
+     * 传入的日序颠倒时自动摆正，只回调一次
+     */
+    public void setDateRange(int startDate, int endDate) {
+        if (!mHasRange) {
+            return;
+        }
+        long start = isValidDate(startDate) ? clampDay(startDate) : mStartDay;
+        long end = isValidDate(endDate) ? clampDay(endDate) : mEndDay;
+        if (start > end) {
+            long temp = start;
+            start = end;
+            end = temp;
+        }
+        if (start == mStartDay && end == mEndDay) {
+            return;
+        }
+        mStartDay = start;
+        mEndDay = end;
+        invalidate();
+        if (mListener != null) {
+            mListener.onRangeChanged(getStartDate(), getEndDate());
+        }
+    }
+
+    /** yyyyMMdd → 天数并夹在时间轴跨度内（不吸附节点） */
+    private long clampDay(int date) {
+        long day = toEpochDay(date / 10000, date / 100 % 100, date % 100);
+        return Math.max(mMinDay, Math.min(day, mMaxDay));
     }
 
     private float xForDay(long day) {

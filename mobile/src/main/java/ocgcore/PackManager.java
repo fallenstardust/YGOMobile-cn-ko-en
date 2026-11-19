@@ -45,6 +45,11 @@ public class PackManager implements Closeable {
      * 首尾节点即时间轴跨度。只知年份的包按当年 1 月 1 日入节点。
      */
     private final NavigableSet<Integer> releaseDateNodes = new ConcurrentSkipListSet<>();
+    /**
+     * 发售日期（yyyyMMdd，已归一）→ 当天发售的卡包名（ydk 文件名去掉日期前缀）。
+     * 日历里可选日期下方的小字用；同一天有多个包就按顺序存多个
+     */
+    private final Map<Integer, List<String>> packNamesByDate = new ConcurrentHashMap<>();
 
     public static PackManager get() {
         return sPackManager;
@@ -59,12 +64,14 @@ public class PackManager implements Closeable {
         packList.clear();
         cardReleaseDates.clear();
         releaseDateNodes.clear();
+        packNamesByDate.clear();
     }
 
     public boolean load() {
         packList.clear();
         cardReleaseDates.clear();
         releaseDateNodes.clear();
+        packNamesByDate.clear();
         boolean rs1 = loadFile(AppsSettings.get().getResourcePath() + "/" + Constants.CORE_PACK_PATH);
         boolean rs2 = loadFile(AppsSettings.get().getExpansionsPath() + "/" + Constants.CORE_PACK_PATH);
         // 卡包 ydk 不再解压到 cacheDeck：就地读 expansions 下 zip/ypk 里的 pack/*.ydk
@@ -174,7 +181,9 @@ public class PackManager implements Closeable {
             int releaseDate = parseReleaseDate(packFileName);
             if (releaseDate > 0) {
                 // 这个包的发售日期就是时间轴上的一个滑动节点
-                releaseDateNodes.add(normalizeReleaseDate(releaseDate));
+                int node = normalizeReleaseDate(releaseDate);
+                releaseDateNodes.add(node);
+                recordPackName(node, packFileName);
                 for (Integer id : ids) {
                     recordReleaseDate(id, releaseDate);
                 }
@@ -192,6 +201,55 @@ public class PackManager implements Closeable {
         if (old == null || date < old) {
             cardReleaseDates.put(code, date);
         }
+    }
+
+    /** 记下某一天发售的卡包名（同一天多个包按加载顺序排列，重名只留一个） */
+    private synchronized void recordPackName(int date, String packFileName) {
+        List<String> names = packNamesByDate.get(date);
+        if (names == null) {
+            names = new ArrayList<>();
+            packNamesByDate.put(date, names);
+        }
+        String name = packDisplayName(packFileName);
+        if (!name.isEmpty() && !names.contains(name)) {
+            names.add(name);
+        }
+    }
+
+    /**
+     * 卡包显示名：ydk 文件名去掉扩展名与日期前缀（“2024-04-01 1205.ydk” → “1205”），
+     * 没有空格分隔的（如 “2024-misc”）原样保留
+     */
+    private static String packDisplayName(String packFileName) {
+        if (packFileName == null) {
+            return "";
+        }
+        String name = packFileName;
+        int dot = name.lastIndexOf(Constants.YDK_FILE_EX);
+        if (dot > 0) {
+            name = name.substring(0, dot);
+        }
+        if (name.length() > 5 && name.charAt(4) == '-') {
+            int space = name.indexOf(' ', 5);
+            if (space > 0 && space + 1 < name.length()) {
+                return name.substring(space + 1).trim();
+            }
+        }
+        return name;
+    }
+
+    /**
+     * 某一天发售的卡包名（日历里的日期小字用），同一天多个包返回多个；
+     * 没有包的一天返回空表
+     */
+    public synchronized Map<Integer, List<String>> getPackNamesByDate() {
+        Map<Integer, List<String>> copy = new ConcurrentHashMap<>(packNamesByDate.size() * 2);
+        for (Map.Entry<Integer, List<String>> entry : packNamesByDate.entrySet()) {
+            List<String> names = new ArrayList<>(entry.getValue());
+            java.util.Collections.sort(names);
+            copy.put(entry.getKey(), names);
+        }
+        return copy;
     }
 
     /**

@@ -3,10 +3,13 @@ package cn.garymb.ygomobile.ui.cards;
 import android.view.View;
 import android.widget.TextView;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.IntSupplier;
 
 import cn.garymb.ygomobile.ui.adapters.CardListAdapter;
 import cn.garymb.ygomobile.ui.widget.DateRangeSlider;
+import cn.garymb.ygomobile.ui.widget.ReleaseDateCalendarDialog;
 import ocgcore.DataManager;
 import ocgcore.PackManager;
 
@@ -19,6 +22,9 @@ import ocgcore.PackManager;
  *
  * <p>两端都拉到首尾节点时视为“不做日期过滤”（{@link CardListAdapter#clearReleaseDateFilter()}），
  * 这样不在任何卡包 ydk 里的卡（没有发售日期可比）在未收紧范围时仍然照常显示。</p>
+ *
+ * <p>点时间轴滑块上的日期气泡还会弹出售卖日期日历：可选日就是同一条节点表（卡包里真实存在的
+ * 发售日），选完把那一端滑块直接移过去。</p>
  */
 public class CardReleaseDateFilter implements DateRangeSlider.OnRangeChangedListener {
 
@@ -47,7 +53,33 @@ public class CardReleaseDateFilter implements DateRangeSlider.OnRangeChangedList
         mPackManager = DataManager.get().getPackManager();
         if (mSlider != null) {
             mSlider.setOnRangeChangedListener(this);
+            mSlider.setOnDateLabelClickListener(this::openReleaseDateCalendar);
         }
+    }
+
+    /**
+     * 点时间轴气泡：弹出售卖日期日历。可选日就是时间轴的滑动节点（卡包里真实存在的发售日），
+     * 不可选的日期在日历里置灰；日历带上当前区间，点一下先改这一端、再点一下定下另一端，
+     * 每次变化都把区间写回滑块（只点一次也能只改一端）
+     */
+    private void openReleaseDateCalendar(int thumb, int date) {
+        if (mSlider == null) {
+            return;
+        }
+        int[] nodes = mPackManager.getReleaseDateNodes();
+        if (nodes.length == 0) {
+            return;
+        }
+        Set<Integer> available = new HashSet<>(nodes.length * 2);
+        for (int node : nodes) {
+            available.add(node);
+        }
+        // 日期下方的卡包名小字（同一天多个包会分多行列）
+        ReleaseDateCalendarDialog.show(mSlider.getContext(), available,
+                mPackManager.getPackNamesByDate(),
+                mSlider.getStartDate(), mSlider.getEndDate(),
+                thumb == DateRangeSlider.THUMB_START,
+                (start, end, finished) -> mSlider.setDateRange(start, end));
     }
 
     /**
