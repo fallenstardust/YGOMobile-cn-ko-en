@@ -457,11 +457,16 @@ public class CardSearcher extends CardSearcherExtraFilters implements View.OnCli
         if (genesysMode != genesys_Switch.isChecked()) {
             genesys_Switch.setChecked(genesysMode);
         }
-        // 禁限类型与禁卡表
+        // 禁限类型与禁卡表：历史条目若没带禁卡表（如卡片详情里点高亮词/关联卡片记下的纯关键词条目），
+        // 保留当前的禁卡表选择；否则会被选回“选择禁卡表”空档，卡上的禁限/起源点角标随之消失
         setSpinnerSelectByValue(limitSpinner, info.getLimitType());
-        setSpinnerSelectByText(limitListSpinner, info.getLimitName());
+        if (!TextUtils.isEmpty(info.getLimitName())) {
+            setSpinnerSelectByText(limitListSpinner, info.getLimitName());
+        }
         setSpinnerSelectByValue(genesys_limitSpinner, info.getLimitType());
-        setSpinnerSelectByText(genesys_limitListSpinner, info.getLimitName());
+        if (!TextUtils.isEmpty(info.getLimitName())) {
+            setSpinnerSelectByText(genesys_limitListSpinner, info.getLimitName());
+        }
         // OT
         if (info.getOt() != null) {
             for (int i = 0; i < otButtons.length; i++) {
