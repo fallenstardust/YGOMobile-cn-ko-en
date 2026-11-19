@@ -65,6 +65,9 @@ public final class NativeScriptBootstrap {
     private static volatile String[] sInitedCdbPaths = new String[0];
     /** 上次 init/reloadCards 实际使用的卡包档案指纹，用于检测卡包增删/覆写。 */
     private static volatile String sInitedPacksFp = "";
+    /** 上次 init/reloadCards 实际使用的主 cdb / scripts.zip 资源指纹（大小+mtime）：
+     *  资源检查“删旧→拷新”完成后据此热重载，避免半套卡数据被永久缓存。 */
+    private static volatile String sInitedResFp = "";
     /** 旧版物化残留清理只做一次（进程内首次引导时）。 */
     private static volatile boolean sLegacyPruned;
 
@@ -82,20 +85,29 @@ public final class NativeScriptBootstrap {
     public static synchronized boolean ensureEngineReady() {
         if (!OcgDuelEngine.isAvailable()) {
             Log.e(TAG, "libygoengine.so 不可用");
+            ScriptLoadStatus.engineLoadFailed();
             return false;
         }
+        // 进度上报：等待界面（PlayerWaitingDialog）据此显示加载进度，开局闸门据
+        // ScriptLoadStatus 等到就绪；未就绪就开局会把缺脚本/卡数据的卡永久缓存
+        ScriptLoadStatus.engineLoadStarted();
         try {
             long t0 = SystemClock.uptimeMillis();
             // 旧版把卡包 script/*.lua 与包内 cdb 解压落地到 expansions/script、expansions/cdb。
             // 现在两套 C++ 都能就地读档案，落地不仅白占空间，残留旧副本还会以最高优先级盖住
             // 档案里的新内容，因此首轮一次性回收
+            ScriptLoadStatus.engineProgress(0.02d, 0.05d);
             pruneLegacyMaterialized(AppsSettings.get().getResourcePath());
             long t1 = SystemClock.uptimeMillis();
+            ScriptLoadStatus.engineProgress(0.08d, 0.12d);
             NativeInitOptions options = AppsSettings.get().getNativeInitOptions();
             final String rootPath = options.mWorkPath;
             String[] cdbPaths = options.mDbList.toArray(new String[0]);
             // 卡包列表变化不会改变 mDbList，单独算指纹才能触发热重载
             final String packs = packsFingerprint(rootPath);
+            // 资源指纹（主 cdb/scripts.zip 的大小+mtime）：资源检查删除旧库再拷新的窗口内
+            // 初始化只能读到半套数据，指纹变化后热重载自愈，不必重启应用
+            final String resFp = resourcesFingerprint(rootPath, cdbPaths);
             final boolean readExpansions = AppsSettings.get().isReadExpansions();
             long t2 = SystemClock.uptimeMillis();
             // 诊断：档案直读三段来源的当前态
@@ -109,18 +121,30 @@ public final class NativeScriptBootstrap {
             Log.i(TAG, "engine bootstrap 耗时(ms) 旧物化清理=" + (t1 - t0)
                     + " 选项解算=" + (t2 - t1));
             if (rootPath.equals(sInitedRootPath)) {
-                // 已初始化：主 cdb 列表变化或卡包增删/覆写时热重载引擎卡数据
-                // （native reloadCards 会重扫档案，故包内容变了也不必重启应用）
-                if (!Arrays.equals(sInitedCdbPaths, cdbPaths) || !packs.equals(sInitedPacksFp)) {
+                // 已初始化：主 cdb 内容变化、卡包增删/覆写或资源检查重写过 scripts.zip 时
+                // 热重载引擎卡数据（native reloadCards 会重扫档案，故包内容变了也不必重启应用）
+                if (!Arrays.equals(sInitedCdbPaths, cdbPaths) || !packs.equals(sInitedPacksFp)
+                        || !resFp.equals(sInitedResFp)) {
                     long r0 = SystemClock.uptimeMillis();
+                    ScriptLoadStatus.engineProgress(0.20d, 0.90d);
                     OcgDuelEngine.reloadCards(cdbPaths, readExpansions);
                     sInitedCdbPaths = cdbPaths;
                     sInitedPacksFp = packs;
+                    sInitedResFp = resFp;
                     Log.i(TAG, "卡片数据库/卡包档案变化，热重载引擎卡数据，耗时="
                             + (SystemClock.uptimeMillis() - r0) + "ms");
                 }
+                ScriptLoadStatus.engineLoadSucceeded();
                 return true;
             }
+            // 主 cdb 尚不齐全（资源检查“删旧→拷新”的窗口）：不得以半套数据初始化，
+            // 否则 sInitedRootPath 会把半套卡数据缓存到进程结束，后续补齐也拿不到脚本
+            if (!cdbPathsPresent(cdbPaths)) {
+                Log.w(TAG, "主卡片数据库尚未就绪（资源检查拷贝中），稍后重试");
+                ScriptLoadStatus.engineLoadFailed();
+                return false;
+            }
+            ScriptLoadStatus.engineProgress(0.20d, 0.90d);
             long i0 = SystemClock.uptimeMillis();
             if (OcgDuelEngine.init(rootPath, cdbPaths, readExpansions)) {
                 Log.i(TAG, "引擎 init 完成，耗时=" + (SystemClock.uptimeMillis() - i0)
@@ -128,14 +152,42 @@ public final class NativeScriptBootstrap {
                 sInitedRootPath = rootPath;
                 sInitedCdbPaths = cdbPaths;
                 sInitedPacksFp = packs;
+                sInitedResFp = resFp;
+                ScriptLoadStatus.engineLoadSucceeded();
                 return true;
             }
             Log.e(TAG, "OcgDuelEngine.init 失败: " + rootPath);
+            ScriptLoadStatus.engineLoadFailed();
             return false;
         } catch (Throwable t) {
             Log.e(TAG, "引擎引导异常", t);
+            ScriptLoadStatus.engineLoadFailed();
             return false;
         }
+    }
+
+    /** 主资源 cdb 是否都已存在：资源检查“删旧→拷新”的窗口内不得以其初始化。 */
+    private static boolean cdbPathsPresent(String[] cdbPaths) {
+        for (String path : cdbPaths) {
+            if (path == null || !new File(path).isFile()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** 资源指纹：主 cdb 列表与 scripts.zip 的大小+mtime；变化即需热重载引擎卡数据。 */
+    private static String resourcesFingerprint(String rootPath, String[] cdbPaths) {
+        StringBuilder sb = new StringBuilder(128);
+        for (String path : cdbPaths) {
+            File f = new File(path);
+            sb.append(path).append(':').append(f.isFile() ? f.length() : -1)
+                    .append(':').append(f.isFile() ? f.lastModified() : 0).append(';');
+        }
+        File zip = new File(rootPath, Constants.CORE_SCRIPTS_ZIP);
+        sb.append("scripts:").append(zip.isFile() ? zip.length() : -1)
+                .append(':').append(zip.isFile() ? zip.lastModified() : 0);
+        return sb.toString();
     }
 
     /**
