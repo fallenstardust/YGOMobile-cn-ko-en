@@ -182,7 +182,7 @@ public abstract class YGOProActivityBase extends AppCompatActivity {
     /**
      * 息屏→亮屏周期内冻结显示方向：息屏即锁定当前方向，重新亮屏时保持息屏前布局，
      * 不切换横竖屏（用户规格）；冻结经 wakeRotationWatcher 在亮屏后物理姿态跨轴变化时
-     * 解除，才按“游戏横屏锁定”设置决定是否允许旋转
+     * 解除，才按“游戏横屏锁定/竖屏锁定”设置决定是否允许旋转
      */
     protected boolean wakeRotationFrozen = false;
     /** 息屏时刻的显示方向（ORIENTATION_LANDSCAPE/PORTRAIT），供亮屏后姿态比对 */

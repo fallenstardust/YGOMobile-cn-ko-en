@@ -51,6 +51,7 @@
     <string name="settings_about_sub_about">關於</string>
     <string name="settings_game_enable_sound_effect">啟用遊戲音效</string>
     <string name="settings_game_screen_orientation">遊戲橫屏鎖定</string>
+    <string name="settings_game_portrait_orientation">遊戲豎屏鎖定</string>
     <string name="settings_game_font_antialias">字型抗鋸齒</string>
     <string name="settings_game_lab_pendulum_scale">靈擺數字圖片</string>
     <string name="settings_game_font_antialias_summary">停用字型抗鋸齒可以提升幀數</string>
@@ -536,7 +537,7 @@
     <string name="quality_high">高</string>
     <string name="settings_opengl_version">OpenGL版本</string>
     <string name="settings_screen_padding_summary">瀑布螢幕邊距</string>
-    <string name="settings_native_game_mode">原生 UI 遊戲模式</string>
+    <string name="settings_native_game_mode">實驗室：新遊戲UI</string>
     <string name="settings_native_game_mode_summary">比原版有更多新功能</string>
     <string name="solo_mode">純單人模式</string>
     <string name="bot_p2_deck_label">P2卡組：</string>

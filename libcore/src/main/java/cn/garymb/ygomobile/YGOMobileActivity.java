@@ -110,6 +110,8 @@ public class YGOMobileActivity extends GameActivity implements
 //        }
         if (app().isLockSreenOrientation()) {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        } else if (app().isLockPortraitOrientation()) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         }
         initExtraView();
         mPM = (PowerManager) getSystemService(Context.POWER_SERVICE);

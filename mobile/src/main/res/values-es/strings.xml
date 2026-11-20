@@ -48,6 +48,7 @@
     <string name="settings_about_sub_about">Acerca de</string>
     <string name="settings_game_enable_sound_effect">Habilitar efectos de sonido</string>
     <string name="settings_game_screen_orientation">Bloquear pantalla horizontal</string>
+    <string name="settings_game_portrait_orientation">Bloquear pantalla vertical</string>
     <string name="settings_game_font_antialias">Suavizado de fuentes</string>
     <string name="settings_game_lab_pendulum_scale">Imágenes de escala de péndulo</string>
     <string name="settings_game_font_antialias_summary">Desactivar el suavizado puede mejorar el rendimiento</string>
@@ -536,7 +537,7 @@
     <string name="quality_high">Alta</string>
     <string name="settings_opengl_version">Versión de OpenGL</string>
     <string name="settings_screen_padding_summary">Margen de pantalla</string>
-    <string name="settings_native_game_mode">Modo de juego UI nativa</string>
+    <string name="settings_native_game_mode">Laboratorio: Nueva UI de juego</string>
     <string name="settings_native_game_mode_summary">Más funciones que la versión original</string>
 
     <!-- System Strings for UI Localization (index 1740+) -->

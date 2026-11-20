@@ -54,6 +54,7 @@
     <string name="settings_about_sub_about">정보</string>
     <string name="settings_game_enable_sound_effect">게임 사운드 활성화</string>
     <string name="settings_game_screen_orientation">듀얼에서 화면 잠금</string>
+    <string name="settings_game_portrait_orientation">세로 화면 잠금</string>
     <string name="settings_game_font_antialias">폰트 안티 앨리어싱</string>
     <string name="settings_game_lab_pendulum_scale">펜듈럼 스캐일 이미지</string>
     <string name="settings_game_font_antialias_summary">폰트 안트 앨리어싱을 비활성화하면 FPS가 증가할 수 있습니다</string>
@@ -555,7 +556,7 @@
     <string name="quality_high">높음</string>
     <string name="settings_opengl_version">OpenGL 버전</string>
     <string name="settings_screen_padding_summary">화면 여백</string>
-    <string name="settings_native_game_mode">네이티브 UI 게임 모드</string>
+    <string name="settings_native_game_mode">실험실: 새로운 게임 UI</string>
     <string name="settings_native_game_mode_summary">원본보다 더 많은 새로운 기능</string>
 
     <!-- System Strings for UI Localization (index 1740+) -->

@@ -153,6 +153,11 @@ public class App extends GameApplication {
     }
 
     @Override
+    public boolean isLockPortraitOrientation() {
+        return AppsSettings.get().isLockPortraitOrientation();
+    }
+
+    @Override
     public boolean canNdkCash() {
         return false;
     }

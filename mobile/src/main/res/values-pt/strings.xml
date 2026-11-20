@@ -47,6 +47,7 @@
     <string name="settings_about_sub_about">Sobre</string>
     <string name="settings_game_enable_sound_effect">Habilitar efeito sonoro</string>
     <string name="settings_game_screen_orientation">Bloquear tela durante um duelo</string>
+    <string name="settings_game_portrait_orientation">Bloquear tela na vertical</string>
     <string name="settings_game_font_antialias">Anti-aliasing de fonte</string>
     <string name="settings_game_lab_pendulum_scale">Imagem da Escala Pêndulo</string>
     <string name="settings_game_font_antialias_summary">Desativar esta opção pode aumentar a taxa de quadros</string>
@@ -536,7 +537,7 @@
     <string name="quality_high">Alta</string>
     <string name="settings_opengl_version">Versão do OpenGL</string>
     <string name="settings_screen_padding_summary">Margem da tela</string>
-    <string name="settings_native_game_mode">Modo de jogo UI nativa</string>
+    <string name="settings_native_game_mode">Laboratório: Nova UI de jogo</string>
     <string name="settings_native_game_mode_summary">Mais recursos do que a versão original</string>
 
     <!-- System Strings for UI Localization (index 1740+) -->

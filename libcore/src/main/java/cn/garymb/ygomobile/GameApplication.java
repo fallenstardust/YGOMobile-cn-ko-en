@@ -58,6 +58,9 @@ public abstract class GameApplication extends Application implements IrrlichtBri
 
     public abstract boolean isLockSreenOrientation();
 
+    /** 游戏竖屏锁定（与横屏锁定互斥，由设置界面保证） */
+    public abstract boolean isLockPortraitOrientation();
+
     public abstract boolean isSensorRefresh();
 
     /**

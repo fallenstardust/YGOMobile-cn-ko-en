@@ -48,6 +48,7 @@
     <string name="settings_about_sub_about">ソフトについて</string>
     <string name="settings_game_enable_sound_effect">ゲーム起動用サウンド</string>
     <string name="settings_game_screen_orientation">横画面ロック</string>
+    <string name="settings_game_portrait_orientation">縦画面ロック</string>
     <string name="settings_game_font_antialias">アンチエリアシング</string>
     <string name="settings_game_lab_pendulum_scale">ペンデュラムスケール画像</string>
     <string name="settings_game_font_antialias_summary">アンチエリアシングを禁止してFPSを上げる</string>
@@ -539,7 +540,7 @@
     <string name="quality_high">高</string>
     <string name="settings_opengl_version">OpenGL バージョン</string>
     <string name="settings_screen_padding_summary">画面の余白</string>
-    <string name="settings_native_game_mode">ネイティブUIゲームモード</string>
+    <string name="settings_native_game_mode">実験室：新ゲームUI</string>
     <string name="settings_native_game_mode_summary">原版より多くの新機能</string>
 
     <!-- System Strings for UI Localization (index 1740+) -->
