@@ -26,6 +26,7 @@ import static cn.garymb.ygomobile.Constants.PREF_DEF_SENSOR_REFRESH;
 import static cn.garymb.ygomobile.Constants.PREF_FONT_SIZE;
 import static cn.garymb.ygomobile.Constants.PREF_IMMERSIVE_MODE;
 import static cn.garymb.ygomobile.Constants.PREF_KEEP_SCALE;
+import static cn.garymb.ygomobile.Constants.PREF_LOCK_PORTRAIT;
 import static cn.garymb.ygomobile.Constants.PREF_LOCK_SCREEN;
 import static cn.garymb.ygomobile.Constants.PREF_NOTCH_HEIGHT;
 import static cn.garymb.ygomobile.Constants.PREF_ONLY_GAME;
@@ -532,6 +533,15 @@ abstract class AppsSettingsBase {
 
     public void setLockSreenOrientation(boolean lockSreenOrientation) {
         mSharedPreferences.putBoolean(PREF_LOCK_SCREEN, lockSreenOrientation);
+    }
+
+    /** 游戏竖屏锁定是否开启（与横屏锁定互斥，同时开启时以橫屏优先，见各方向应用入口） */
+    public boolean isLockPortraitOrientation() {
+        return mSharedPreferences.getBoolean(PREF_LOCK_PORTRAIT, Constants.PREF_DEF_LOCK_PORTRAIT);
+    }
+
+    public void setLockPortraitOrientation(boolean lockPortraitOrientation) {
+        mSharedPreferences.putBoolean(PREF_LOCK_PORTRAIT, lockPortraitOrientation);
     }
 
     /***

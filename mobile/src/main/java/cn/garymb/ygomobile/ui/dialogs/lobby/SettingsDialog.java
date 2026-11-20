@@ -1,9 +1,11 @@
 package cn.garymb.ygomobile.ui.dialogs.lobby;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.util.DisplayMetrics;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -14,6 +16,9 @@ import android.widget.ImageButton;
 import android.widget.PopupWindow;
 import android.widget.SeekBar;
 import android.widget.Spinner;
+import android.widget.TextView;
+
+import com.google.android.material.tabs.TabLayout;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -88,16 +93,48 @@ public class SettingsDialog {
         });
     }
 
+    /**
+     * 保存游戏横/竖屏锁定（互斥、即时生效）：两个开关同读同写，避免互相关闭时
+     * 回调顺序造成某一侧旧值残留；任一开关变化后按最终状态重新应用显示方向。
+     * 方向入口与启动时一致（YGOProActivity.applyOrientationLock），无需重启。
+     */
+    private void saveOrientationLocks(AppsSettings appsSettings,
+                                      CheckBox landscape, CheckBox portrait) {
+        appsSettings.setLockSreenOrientation(landscape.isChecked());
+        appsSettings.setLockPortraitOrientation(portrait.isChecked());
+        if (context instanceof YGOProActivity) {
+            ((YGOProActivity) context).applyOrientationLock();
+        }
+        notifySettingsChanged();
+    }
+
+    /** 设置页签专用页签视图：Material 1.12 的 TabView 会在测量时重套文本外观，
+     *  tabTextAppearance 在自定义视图上不起作用，故显式应用 bot_duel_tab_layout，
+     *  颜色仍随选中态切换白/grayDark2 */
+    private TextView makeSettingsTabView(CharSequence label) {
+        TextView tv = new TextView(context);
+        tv.setText(label);
+        tv.setTextAppearance(context, R.style.bot_duel_tab_layout);
+        // 设置弹窗明显宽于人机页，复用 8sp 会偏小，统一提到 10sp（仍加粗、非全大写）
+        tv.setTextSize(10f);
+        tv.setGravity(Gravity.CENTER);
+        int[][] states = new int[][]{{android.R.attr.state_selected}, new int[]{}};
+        int[] colors = new int[]{YGOUtil.c(R.color.white), YGOUtil.c(R.color.grayDark2)};
+        tv.setTextColor(new ColorStateList(states, colors));
+        return tv;
+    }
+
     public void show(View anchorView) {
         AppsSettings appsSettings = AppsSettings.get();
         float density = context.getResources().getDisplayMetrics().density;
         View rootLayout = LayoutInflater.from(context).inflate(R.layout.popup_window_settings, null);
 
-        // 先定义基础尺寸（高度取设置弹窗专用值，比通用弹窗高一档，容纳两列各 11 行及 2dp 行边距）
+        // 基础尺寸与 SingleModeDialog 等同类弹窗一致（420dp × 280dp）；
+        // 选项拆成两页后每页最多 6 行，不再需要专用加高
         int popupWidth = (int) (Constants.DIALOG_POPUP_WIDTH_DP * density);
-        int popupHeight = (int) (Constants.SETTINGS_POPUP_HEIGHT_DP * density);
-        
-        // 横屏时，根据 Activity 的实际宽度的 2/3 来限制弹窗宽度；竖屏则先把超屏的设计宽度收到屏宽
+        int popupHeight = (int) (Constants.DIALOG_POPUP_HEIGHT_DP * density);
+
+        // 横屏时，根据 Activity 的实际宽度的 2/3 来限制弹窗宽度；竖屏保持正方形样式
         final android.app.Activity act = context instanceof android.app.Activity
                 ? (android.app.Activity) context : null;
         if (act != null && act.getWindow() != null && act.getWindow().getAttributes() != null) {
@@ -117,16 +154,39 @@ public class SettingsDialog {
                 }
                 popupWidth = fitted[0];
                 popupHeight = fitted[1];
-            } else if (screen.widthPixels > 0 && popupWidth > screen.widthPixels) {
-                // 竖屏：设计宽 420dp 普遍超过手机屏宽，必须自主先限到屏宽再下传。若直接把超宽设计值
-                // 交下去，setupDraggablePopup 内的 fitSizeToScreen 会按同一比例压缩高度（360dp 屏宽时
-                // 只剩约 274dp），两列各 11 行、每行还要让出 2dp 纵向边距，打勾会被上下挤压（真机竖屏反馈）。
-                // 这里只收宽度、高度保持 SETTINGS_POPUP_HEIGHT_DP，竖屏单行可用高度即与横屏一致
-                popupWidth = screen.widthPixels;
             }
+            // 竖屏：保持原有设计尺寸不变（已适配正方形，由 setupDraggablePopup 按屏宽重排）
         }
 
         StringManager stringManager = DataManager.get().getStringManager();
+
+        // 顶部两页签：辅助功能（系统串 1298）/ 系统设定（系统串 1273），
+        // 下方 FrameLayout 在两套双列内容间整页切换
+        TabLayout tabLayout = rootLayout.findViewById(R.id.tab_layout_settings);
+        View pageAux = rootLayout.findViewById(R.id.page_settings_aux);
+        View pageSystem = rootLayout.findViewById(R.id.page_settings_system);
+        String auxTitle = stringManager.getSystemString(1298, "辅助功能");
+        String systemTitle = stringManager.getSystemString(1273, "系统设定");
+        tabLayout.addTab(tabLayout.newTab().setText(auxTitle)
+                .setCustomView(makeSettingsTabView(auxTitle)));
+        tabLayout.addTab(tabLayout.newTab().setText(systemTitle)
+                .setCustomView(makeSettingsTabView(systemTitle)));
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                boolean system = tab.getPosition() == 1;
+                pageAux.setVisibility(system ? View.GONE : View.VISIBLE);
+                pageSystem.setVisibility(system ? View.VISIBLE : View.GONE);
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+            }
+        });
 
         CheckBox chkMAutoPos = rootLayout.findViewById(R.id.chkMAutoPos);
         chkMAutoPos.setText(stringManager.getSystemString(1274, ""));
@@ -177,6 +237,11 @@ public class SettingsDialog {
         CheckBox chkEnableMusic = rootLayout.findViewById(R.id.chkEnableMusic);
         chkEnableMusic.setText(stringManager.getSystemString(1280, ""));
         SeekBar seekbarMusic = rootLayout.findViewById(R.id.seekbar_music);
+        // 游戏方向锁定（第二页）：横/竖屏互斥开关，文案走 app 多语言资源
+        CheckBox chkLockLandscape = rootLayout.findViewById(R.id.chkLockLandscape);
+        chkLockLandscape.setText(R.string.settings_game_screen_orientation);
+        CheckBox chkLockPortrait = rootLayout.findViewById(R.id.chkLockPortrait);
+        chkLockPortrait.setText(R.string.settings_game_portrait_orientation);
         ImageButton btnCancel = rootLayout.findViewById(R.id.btn_cancel);
 
         // 交换正负按钮位置：Yes/No Dialog 左边显示"否"右边显示"是"
@@ -207,6 +272,8 @@ public class SettingsDialog {
         seekbarSound.setProgress(appsSettings.getIntSettings("soundVolume", 50));
         chkEnableMusic.setChecked(appsSettings.getIntSettings("chkEnableMusic", 1) == 1);
         seekbarMusic.setProgress(appsSettings.getIntSettings("musicVolume", 50));
+        chkLockLandscape.setChecked(appsSettings.isLockSreenOrientation());
+        chkLockPortrait.setChecked(appsSettings.isLockPortraitOrientation());
         // 禁卡表开关按当前模式读取 use_lflist/use_genesys_lflist，默认值为 1
         chkBanList.setChecked(appsSettings.getIntSettings(
                 appsSettings.getGenesysMode() == 1 ? "use_genesys_lflist" : "use_lflist", 1) == 1);
@@ -260,6 +327,22 @@ public class SettingsDialog {
                 appsSettings.saveIntSettings("musicVolume", seekBar.getProgress());
                 notifySettingsChanged();
             }
+        });
+
+        // 游戏横屏/竖屏锁定互斥：开启一个即自动关闭另一个（另一个复选框的监听回调
+        // 会在 setChecked(false) 时同拍触发，saveOrientationLocks 按两个控件最终状态
+        // 一次写入，互相关闭的顺序不会遗留旧值），并立即按新状态应用显示方向
+        chkLockLandscape.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked && chkLockPortrait.isChecked()) {
+                chkLockPortrait.setChecked(false);
+            }
+            saveOrientationLocks(appsSettings, chkLockLandscape, chkLockPortrait);
+        });
+        chkLockPortrait.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked && chkLockLandscape.isChecked()) {
+                chkLockLandscape.setChecked(false);
+            }
+            saveOrientationLocks(appsSettings, chkLockLandscape, chkLockPortrait);
         });
         
         // 监听器注册完毕后再添加到布局容器中：swapButtonPositions 默认值 0（不互换）
@@ -439,7 +522,8 @@ public class SettingsDialog {
         popupWindow.setOnDismissListener(this::notifyDismissed);
 
         draggableHelper = new DraggablePopupHelper(context, "settings_dialog");
-        draggableHelper.setupDraggablePopup(popupWindow, rootLayout, popupWidth, popupHeight);
+        // 竖屏交换宽高比为高大于宽（与横屏宽大于高对称），旋转自动恢复（与 SingleModeDialog 相同规格）
+        draggableHelper.setupDraggablePopup(popupWindow, rootLayout, popupWidth, popupHeight, true);
 
         btnCancel.setOnClickListener(v -> {
             popupWindow.dismiss();

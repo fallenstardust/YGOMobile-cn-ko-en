@@ -44,6 +44,12 @@ public interface Constants {
     boolean PREF_DEF_START_SERVICEDUELASSISTANT = false;
     String PREF_LOCK_SCREEN = "pref_key_game_screen_orientation";
     boolean PREF_DEF_LOCK_SCREEN = false;
+    /**
+     * 游戏竖屏锁定：开启时游戏锁定竖屏（SENSOR_PORTRAIT）。与 {@link #PREF_LOCK_SCREEN}
+     * 互斥，由设置弹窗保证两者不会同时开启
+     */
+    String PREF_LOCK_PORTRAIT = "pref_key_game_portrait_orientation";
+    boolean PREF_DEF_LOCK_PORTRAIT = false;
     String PREF_IMMERSIVE_MODE = "pref_key_immersive_mode";
     boolean PREF_DEF_IMMERSIVE_MODE = false;
     String PREF_SENSOR_REFRESH = "pref_key_sensor_refresh";
@@ -192,12 +198,6 @@ public interface Constants {
 
     int DIALOG_POPUP_WIDTH_DP = 420;
     int DIALOG_POPUP_HEIGHT_DP = 280;
-    /**
-     * 决斗设置弹窗（popup_window_settings）单独加高：两列各 11 个条目且每行带 2dp 纵向边距，
-     * 沿用通用弹窗高度时单行可用高度不足，系统字体放大后会被行高裁切。
-     * 仍经 fitSizeToScreen / orientedFitSize 随屏高限幅，短屏设备不会超屏。
-     */
-    int SETTINGS_POPUP_HEIGHT_DP = 320;
 
     /**
      * 弹窗尺寸竖屏自适应：宽度超出屏幕宽度时限制为屏幕宽度，高度按原宽高比等比缩小；

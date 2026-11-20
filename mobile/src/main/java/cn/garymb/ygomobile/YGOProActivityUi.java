@@ -85,12 +85,13 @@ abstract class YGOProActivityUi extends YGOProActivityBase {
         // 子线程与界面初始化并行进行，用主菜单/建房/猜拳/选先后攻的全部自然耗时
         // 覆盖首次引导开销，使 ServerDuel#startDuel 开局闸门即时通过、选完直接发牌
         warmUpDuelEngine();
-        // 启动方向按“游戏横屏锁定”设置决定（见 applyOrientationLock）：
-        // 锁定启用→始终横屏（SENSOR_LANDSCAPE 仍可左右横屏对调旋转，不自动转竖屏）；
-        // 未启用→SCREEN_ORIENTATION_FULL_SENSOR，无视系统自动旋转开关也随设备方向自动旋转
+        // 启动方向按“游戏横屏锁定/竖屏锁定”设置决定（见 applyOrientationLock）：
+        // 横屏锁定→SENSOR_LANDSCAPE（仍可左右 180° 对调旋转，不自动转竖屏）；
+        // 竖屏锁定→SENSOR_PORTRAIT；均未开启→SCREEN_ORIENTATION_FULL_SENSOR，
+        // 无视系统自动旋转开关也随设备方向自动旋转
         applyOrientationLock();
         // 息屏/亮屏旋转守卫（用户规格）：游戏显示中息屏后重新亮屏保持原布局，亮屏瞬间不切换
-        // 横竖屏；之后仅当未开启“游戏横屏锁定”设置时才随物理姿态变化旋转切换
+        // 横竖屏；之后仅当未开启“游戏横屏锁定/竖屏锁定”设置时才随物理姿态变化旋转切换
         wakeRotationWatcher = new OrientationEventListener(this) {
             @Override
             public void onOrientationChanged(int orientation) {
@@ -102,7 +103,8 @@ abstract class YGOProActivityUi extends YGOProActivityBase {
                         : Configuration.ORIENTATION_LANDSCAPE;
                 if (physical != frozenOrientation) {
                     // 亮屏后用户实际改变了持机姿态：解除冻结并按设置恢复旋转——
-                    // 横屏锁定开启→SENSOR_LANDSCAPE（仍不转竖屏）；未开启→FULL_SENSOR（可横竖切换）
+                    // 横屏锁定→SENSOR_LANDSCAPE（仍不转竖屏）；竖屏锁定→SENSOR_PORTRAIT；
+                    // 两者均未开启→FULL_SENSOR（可横竖切换）
                     wakeRotationFrozen = false;
                     disable();
                     applyOrientationLock();
@@ -132,16 +134,20 @@ abstract class YGOProActivityUi extends YGOProActivityBase {
     }
 
     /**
-     * 按“游戏横屏锁定”设置应用启动显示方向：
-     * 启用时锁定为横屏但保留左右横屏 180° 对调旋转（SENSOR_LANDSCAPE，不会自动转竖屏）；
-     * 未启用时取 SCREEN_ORIENTATION_FULL_SENSOR（用户规格）：即使系统自动旋转未开启，
+     * 按“游戏横屏锁定/竖屏锁定”设置应用显示方向：
+     * 横屏锁定→SENSOR_LANDSCAPE（锁定横屏，保留左右 180° 对调旋转，不会自动转竖屏）；
+     * 竖屏锁定→SENSOR_PORTRAIT（锁定竖屏，同理保留上下 180° 对调）；两者均未开启时
+     * 取 SCREEN_ORIENTATION_FULL_SENSOR（用户规格）：即使系统自动旋转未开启，
      * 也跟随设备物理方向在横/竖屏间自动旋转（FULL_SENSOR 无视系统自动旋转开关，
-     * 区别于 USER——后者仍受系统开关阻断）；锁定开启时的 SENSOR_LANDSCAPE 保持原有语义。
+     * 区别于 USER——后者仍受系统开关阻断）。
      * configChanges 已声明 orientation|screenSize，旋转不重建 Activity。
+     * 游戏内设置弹窗修改两个锁定开关后会直接调用本方法令设置立即生效。
      */
-    protected void applyOrientationLock() {
+    public void applyOrientationLock() {
         if (AppsSettings.get().isLockSreenOrientation()) {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+        } else if (AppsSettings.get().isLockPortraitOrientation()) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
         } else {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR);
         }
