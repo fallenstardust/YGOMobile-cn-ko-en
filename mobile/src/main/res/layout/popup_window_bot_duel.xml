@@ -633,12 +633,15 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- 行5：不检查卡组 + 不洗切卡组（去掉纯单人模式复选框） -->
+            <!-- 行5：不检查卡组 + 不洗切卡组（去掉纯单人模式复选框）
+                 weight 取 1.76：计入行1~4 的底部边距（5/5/5/4dp）与行5 顶部边距10dp 后，
+                 行5 顶部与高度约等于人机/残局行4（按钮区，约页高 72% 起、28% 高），
+                 三种模式按钮位置与高度一致（此前 1.57 偏低且按钮区略矮） -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_marginTop="10dp"
-                android:layout_weight="1.5"
+                android:layout_weight="1.76"
                 android:gravity="center"
                 android:orientation="horizontal">
 
@@ -678,7 +681,7 @@
                     <Button
                         android:id="@+id/solo_btn_confirm"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="0dp"
                         android:layout_gravity="center"
                         android:layout_marginBottom="5dp"
                         android:layout_weight="1"
@@ -690,7 +693,7 @@
                     <Button
                         android:id="@+id/solo_btn_cancel"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="0dp"
                         android:layout_gravity="center"
                         android:layout_weight="1"
                         android:background="@drawable/button3_bg"

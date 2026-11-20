@@ -490,9 +490,11 @@ public class SingleModeDialog {
                     chkAiOnlyScissors.setVisibility(View.GONE);
                     chkNoCheckDeck.setVisibility(View.GONE);
                     chkNoShuffleDeck.setVisibility(View.GONE);
-                    // 残局不经局域网建房，开局参数（基本分/卡组、手卡/抽卡）均隐藏
+                    // 残局不经局域网建房，开局参数（基本分/卡组）隐藏；
+                    // 行2（手卡/抽卡）用 INVISIBLE 而非 GONE：保留该行权重占位，
+                    // 使行4 的确定/退出按钮与人机模式同高同位（三种模式按钮位置一致）
                     layoutBotStartLp.setVisibility(View.GONE);
-                    layoutBotHandDraw.setVisibility(View.GONE);
+                    layoutBotHandDraw.setVisibility(View.INVISIBLE);
                     layoutBotP2Deck.setVisibility(View.GONE);
                     chkReturnToTop.setVisibility(View.VISIBLE);
                 }
