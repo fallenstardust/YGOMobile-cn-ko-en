@@ -42,6 +42,13 @@ public class MyOnlineDeckListAdapter extends BaseMultiItemQuickAdapter<DeckListI
     private String currentKeyword = "";
     private SwipeRefreshLayout swipeRefreshLayout;
     private final LinkedHashMap<String, Boolean> sectionExpandedMap = new LinkedHashMap<>();
+    /**
+     * 列表请求代际：每次发起服务器请求自增，done/fail 只有最新一代才允许写缓存
+     * 与刷新。防止登录成功时发出的旧请求晚于「同步完成后的强制刷新」返回，用较旧
+     * 响应覆盖同步后的最新缓存（同步→loadData(true) 的最终一致性依赖本条）。
+     * loadData 与 done/fail 均在主线程，无需原子变量。
+     */
+    private int loadSeq;
 
     public MyOnlineDeckListAdapter(YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener, YGODeckDialogUtil.OnDeckDialogListener mDialogListener) {
         super(null);
@@ -68,15 +75,26 @@ public class MyOnlineDeckListAdapter extends BaseMultiItemQuickAdapter<DeckListI
         }
         if (forceRefresh || DeckManagerFragment.getOriginalData().isEmpty()) {
             setRefreshing(true);
+            final int seq = ++loadSeq;
             VUiKit.defer().when(() -> {
                 MyDeckResponse result = DeckSquareApiUtil.getUserDecks(loginToken);
                 if (result == null) return null;
                 else return result.getData();
             }).fail((e) -> {
                 Log.e(TAG, e + "");
+                if (seq != loadSeq) {
+                    // 已被更新的一次请求取代：不动刷新态，避免误关最新请求的刷新动画
+                    return;
+                }
                 setRefreshing(false);
                 LogUtil.i(TAG, "load mycard from server failed:" + e);
             }).done((serverDecks) -> {
+                if (seq != loadSeq) {
+                    // 过期响应：期间已有更新的请求（如同步完成后的强制刷新），
+                    // 丢弃本次结果，避免旧数据覆盖同步后的最新缓存
+                    LogUtil.i(TAG, "stale deck list response ignored, seq=" + seq + ", latest=" + loadSeq);
+                    return;
+                }
                 if (serverDecks != null) {
                     DeckManagerFragment.getOriginalData().clear();
                     DeckManagerFragment.getOriginalData().addAll(serverDecks);
