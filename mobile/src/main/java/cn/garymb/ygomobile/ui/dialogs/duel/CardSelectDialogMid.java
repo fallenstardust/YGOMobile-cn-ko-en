@@ -14,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.PopupWindow;
 import android.widget.SeekBar;
@@ -77,7 +78,10 @@ abstract class CardSelectDialogMid extends CardSelectDialogBase {
         ivCards[4] = root.findViewById(R.id.iv_card_4);
 
         tvTitle.setText(buildTitleText());
-        popupWindow = new PopupWindow(root,
+        // cardtip 宿主：标签落在对话框内容层内部（见 CardStatusTipHelper.createTipHost），
+        // 拖动弹窗时标签与卡片同层平移，移动过程中始终精准贴住卡片，不再停旧位等抬手重算
+        FrameLayout tipHost = CardStatusTipHelper.createTipHost(context, root);
+        popupWindow = new PopupWindow(tipHost,
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, false);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setOutsideTouchable(false);
@@ -98,7 +102,7 @@ abstract class CardSelectDialogMid extends CardSelectDialogBase {
         draggableHelper = new DraggablePopupHelper(context, "card_select");
         int dialogWidth = resolveDialogWidth();
         applyCardImageSize(dialogWidth);
-        draggableHelper.setupDraggablePopup(popupWindow, root,
+        draggableHelper.setupDraggablePopup(popupWindow, tipHost,
                 dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
         // 宽度按 layout_game_right 区域实时解算且据此烘焙每张卡图，通用重排无法同步子视图尺寸：
         // 注册自定义旋转重排，切换方向时重解区域宽、重烘焙卡图、重设弹窗宽并重新居中
@@ -106,8 +110,8 @@ abstract class CardSelectDialogMid extends CardSelectDialogBase {
         // 收缩模式：点内容左上角「▼」把手缩为与聊天输入框同高的底部横条，确认场地后点横条恢复
         DraggablePopupHelper.enableCollapse(popupWindow, tvTitle, buildTitleText());
 
-        // 直接以内容根构建，包装层由 findTipOverlay 向上解析
-        tipHelper = new CardStatusTipHelper(context, root);
+        // 直接以内容层宿主构建（标签与卡片同为宿主的子视图，随弹窗拖拽一起平移）
+        tipHelper = new CardStatusTipHelper(context, tipHost, tipHost);
         tipHelper.setOnCardPressedListener(this::showDetailAtSlot);
         tipHelper.setOnSlotClickListener(this::onSlotClicked);
         tipHelper.setTipProvider(this::statusTextAtSlot);

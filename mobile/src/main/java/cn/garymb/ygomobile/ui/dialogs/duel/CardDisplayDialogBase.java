@@ -22,6 +22,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.PopupWindow;
 import android.widget.SeekBar;
@@ -218,7 +219,10 @@ abstract class CardDisplayDialogBase {
         ivCards[4] = root.findViewById(R.id.iv_display_4);
 
         updateTitle();
-        popupWindow = new PopupWindow(root,
+        // cardtip 宿主：标签落在对话框内容层内部（见 CardStatusTipHelper.createTipHost），
+        // 拖动弹窗时标签与卡片同层平移，移动过程中始终精准贴住卡片，不再停旧位等抬手重算
+        FrameLayout tipHost = CardStatusTipHelper.createTipHost(context, root);
+        popupWindow = new PopupWindow(tipHost,
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, false);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setOutsideTouchable(false);
@@ -242,7 +246,7 @@ abstract class CardDisplayDialogBase {
         draggableHelper = new DraggablePopupHelper(context, "card_display");
         int dialogWidth = resolveDialogWidth();
         applyCardImageSize(dialogWidth);
-        draggableHelper.setupDraggablePopup(popupWindow, root,
+        draggableHelper.setupDraggablePopup(popupWindow, tipHost,
                 dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
         // 宽度按 layout_game_right 区域实时解算且据此烘焙每张卡图，通用重排无法同步子视图尺寸：
         // 注册自定义旋转重排，切换方向时重解区域宽、重烘焙卡图、重设弹窗宽并重新居中
@@ -251,8 +255,9 @@ abstract class CardDisplayDialogBase {
         DraggablePopupHelper.enableCollapse(popupWindow, tvTitle, titlePrefix);
 
         // 点击即在 CardDetailPanel 显示详情，并同时常显该卡的通讯状态标签（抬手不收起，
-        // 直到点击列表中其他卡片或翻页/刷新；按满 0.3 秒仍不视为点击）
-        tipHelper = new CardStatusTipHelper(context, root);
+        // 直到点击列表中其他卡片或翻页/刷新；按满 0.3 秒仍不视为点击）。标签作为内容层
+        // 宿主的子视图，与卡片同层平移，拖动弹窗时始终精准贴住卡片
+        tipHelper = new CardStatusTipHelper(context, tipHost, tipHost);
         tipHelper.setOnCardPressedListener(this::showDetailAtSlot);
         tipHelper.setOnSlotClickListener(this::onSlotClicked);
         tipHelper.setTipProvider(this::statusTextAtSlot);

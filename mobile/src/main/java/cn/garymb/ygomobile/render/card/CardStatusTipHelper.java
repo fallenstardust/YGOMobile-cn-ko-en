@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.TypedValue;
@@ -44,16 +45,20 @@ import ocgcore.enums.CardType;
  * - 宿主翻页 / 刷新槽位 / 关闭弹窗（{@link #hide()}）解除锚点并收起 —— 槽位与卡片的对应关系
  *   已变，旧标签成为残影。
  * <p>
- * 标签容器：不额外包裹内容层（FrameLayout 以 WRAP_CONTENT 测量时会把标签高度并入弹窗高度），
- * 而是把标签挂到 DraggablePopupHelper 的包装层（DragFrameLayout，铺满窗口且 clipChildren=false）
- * 作为第 2 个子 View —— 该层所有命中/居中判定只看 getChildAt(0)，故不影响弹窗行为与尺寸。
- * 位置一律由 LayoutParams margin 承载，绝不用 setX/setY（见 {@link #layoutTip}）：该层会把拖拽
- * 与区域重锚的平移量写进「全部子视图」的 translation（applyDragOffsetToChildren /
+ * 标签容器（列表弹窗）：标签不再挂到 DraggablePopupHelper 的包装层，而是由 {@link #createTipHost}
+ * 建一个包裹对话框内容根的宿主（FrameLayout，尺寸取内容、clipChildren=false），标签作为宿主内
+ * 第 2 个子 View 与卡片同处「内容层」坐标系 —— 拖动弹窗时包装层只把平移量施加在宿主上
+ * （applyDragOffsetToChildren），标签与卡片相对位置不变、随宿主整体平移，因此移动过程中时刻
+ * 精准贴住卡片，不再依赖布局回调补落位（旧外挂方式拖动期间标签停在原位、抬手才被重算）。
+ * 宿主的测量忽略标签（见 TipHostLayout），标签不会把自身高度并入弹窗高度。
+ * <p>
+ * 位置一律由 LayoutParams margin 承载，绝不用 setX/setY（见 {@link #layoutTip}）：宿主/包装层
+ * 会把拖拽与区域重锚的平移量写进子视图的 translation（applyDragOffsetToChildren /
  * clearDragOffset，由 centerPopupInRegion、onSizeChanged、收缩、旋转重排触发），translation 里
- * 承载的位置会被这些路径清零，标签随即贴到包装层原点，即屏幕左上角（用户反馈的「飞到左上角」）。
- * margin 与平移正交后仍会残留一类错位：重锚只改内容子视图的 margin，气泡的 margin 不在其列，
- * 气泡常显期间恰好重锚（输入法升降、区域重新居中、旋转后重解宽度）就会让气泡停在旧位置，
- * 故 {@link #requestReposition()} 在包装层/内容子视图 bounds 变化时补一次落位（仅限气泡仍
+ * 承载的位置会被这些路径清零，标签随即贴到父层原点，即屏幕左上角（用户反馈的「飞到左上角」）。
+ * margin 与平移正交后仍会残留一类错位：重锚只改内容子视图的 margin，标签的 margin 不在其列，
+ * 标签常显期间恰好重锚（输入法升降、区域重新居中、旋转后重解宽度）就会让标签停在旧位置，
+ * 故 {@link #requestReposition()} 在宿主/内容子视图 bounds 变化时补一次落位（仅限标签仍
  * 有锚点且可见；锚卡随收缩/翻页变为不可见时 {@link #showTip()} 就地收起，不会被布局回调再变出来）。
  * <p>
  * 标签文字 = 列表提示 ClientField::ShowCardInfoInList（event_handler.cpp L2919-2964）叠加
@@ -157,9 +162,18 @@ public class CardStatusTipHelper {
     };
 
     public CardStatusTipHelper(Context context, View contentRoot) {
+        this(context, contentRoot, null);
+    }
+
+    /**
+     * @param tipHost 标签宿主（见 {@link #createTipHost}）：非空时标签直接作为它的子视图，
+     *                与卡片同在对话框内容层，拖动弹窗时随内容一起平移；为空时沿用旧行为
+     *                （自 contentRoot 向上找 DraggablePopupHelper 的全窗口包装层）。
+     */
+    public CardStatusTipHelper(Context context, View contentRoot, ViewGroup tipHost) {
         this.context = context;
         this.density = context.getResources().getDisplayMetrics().density;
-        this.overlay = findTipOverlay(contentRoot);
+        this.overlay = tipHost != null ? tipHost : findTipOverlay(contentRoot);
         // 区域重锚/窗口尺寸变化都是改内容子视图的 margin（或重解其宽/弹窗高），只会引发对应
         // bounds 变化回调：监听包装层本身（窗口 resize、旋转）与其第 0 个子视图（区域重新居中、
         // 自定义旋转重解宽度），变化后在气泡仍显示时重算一次 margin，使气泡跟回它的卡片
@@ -287,7 +301,7 @@ public class CardStatusTipHelper {
      * 抬手只判定「是否视为点击」，不收起气泡：本次点击卡片的标签一直显示，
      * 到下一次点击其他卡片（{@link #onDown} 换锚）或宿主刷新/翻页/关闭（{@link #hide()}）为止。
      * 位置由 margin 承载 + {@link #requestReposition()} 跟锚，常显不会再触发旧版
-     * 「抬手后标签被包装层重锚清零平移而停在屏幕左上角」的问题。
+     * 「抬手后标签被父层重锚清零平移而停在屏幕左上角」的问题。
      */
     private void onUp(int slot) {
         handler.removeCallbacks(holdTask);
@@ -327,11 +341,12 @@ public class CardStatusTipHelper {
     }
 
     /**
-     * 包装层/内容 bounds 变化后延后补一次落位。绝不能在 onLayout 回调里直接改
+     * 标签宿主/内容 bounds 变化后延后补一次落位。绝不能在 onLayout 回调里直接改
      * {@link #layoutTip}：那是 layout 过程中 setLayoutParams/requestLayout，Android 会记
      * 「layout 中请求布局」并再走一遍 traversal，极端情况下反复；post 出本次 traversal 后执行，
      * 且执行时重新判定「气泡仍有锚点且仍可见」（宿主 hide 已解除锚点，锚卡不可见已在
      * {@link #showTip()} 内收起），所以不会把已隐藏的气泡再变出来，也不影响 margin 定位的既有结论。
+     * 拖动弹窗不改 bounds、不触发本方法 —— 标签随宿主平移，无需逐帧重排（用户规格）。
      */
     private void requestReposition() {
         if (repositionPending || overlay == null) return;
@@ -373,32 +388,42 @@ public class CardStatusTipHelper {
         anchor.getLocationOnScreen(aLoc);
         int[] oLoc = new int[2];
         overlay.getLocationOnScreen(oLoc);
+        // 限幅基准取弹窗窗口而非标签宿主：宿主只有对话框那么大，按宿主限幅会把卡片下方的
+        // 标签顶上卡片、也会把比对话框宽的标签压窄；窗口范围才是标签的实际可见边界。
+        // 旧的外挂方式宿主即全窗口包装层，窗口基准与其原行为一致（偏移为 0）。
+        View rootView = overlay.getRootView();
+        int[] rLoc = new int[2];
+        rootView.getLocationOnScreen(rLoc);
+        float hostOffX = oLoc[0] - rLoc[0];
+        float hostOffY = oLoc[1] - rLoc[1];
+        int winW = rootView.getWidth() > 0 ? rootView.getWidth() : overlay.getWidth();
+        int winH = rootView.getHeight() > 0 ? rootView.getHeight() : overlay.getHeight();
         float margin = TIP_EDGE_MARGIN_DP * density;
-        // x = 锚点水平中心、y = 锚点下边缘（gframe L2952-2953）
+        // x = 锚点水平中心、y = 锚点下边缘（gframe L2952-2953），坐标相对标签宿主
         float cx = aLoc[0] + anchor.getWidth() / 2f - oLoc[0];
         float left = cx - w / 2f;
-        float minLeft = margin;
-        float maxLeft = overlay.getWidth() - w - margin;
+        float minLeft = margin - hostOffX;
+        float maxLeft = winW - w - margin - hostOffX;
         if (maxLeft < minLeft) maxLeft = minLeft;
         if (left < minLeft) left = minLeft;
         if (left > maxLeft) left = maxLeft;
         float top = aLoc[1] + anchor.getHeight() - oLoc[1] + TIP_ANCHOR_GAP_DP * density;
-        // 纵向同样限幅：位置改由 margin 承载后，父层复核测量的高度上限成为 overlayHeight-topMargin，
-        // 靠底行卡片不限住就会把多行状态文字直接截掉（旧 setY 写法下 mTop 始终为 0，可用高度是整屏）。
-        // 只做往上钉回而不做翻到卡片上方：列表语义贴 gframe，那里也只在左右按 10*xScale 钳制。
-        float maxTop = overlay.getHeight() - h - margin;
+        // 纵向同样限幅到窗口：宿主 clipChildren=false，标签可以越出宿主绘制到窗口内（旧写法
+        // 按宿主高限幅，靠底行卡片不限住就会把多行状态文字直接截掉或顶到卡片上）
+        float maxTop = winH - h - margin - hostOffY;
         if (maxTop < margin) maxTop = margin;
         if (top > maxTop) top = maxTop;
         layoutTip(tv, Math.round(left), Math.round(top));
     }
 
     /**
-     * 以 LayoutParams margin 落位标签：不用 setX/setY —— 那对 translation 正是包装层
-     * DragFrameLayout 施加拖拽/区域重锚平移的字段（applyDragOffsetToChildren 会把每个子
-     * 视图的 translation 覆写为拖拽量，clearDragOffset 则覆写为 0），一旦本次重锚发生在标签
-     * 显示期间，标签就会被推到包装层原点而显示到屏幕左上角。margin 与之正交，落位时再把标签
-     * 自身 translation 归零，免历史拖拽量叠加到 margin 位置上（拖拽起手即发 CANCEL，但气泡
-     * 常显不因此收起，靠包装层对全部子视图统一施加的拖拽平移跟着弹窗一起移动）。
+     * 以 LayoutParams margin 落位标签：不用 setX/setY —— translation 正是 DragFrameLayout 施加拖拽/
+     * 区域重锚平移的字段（applyDragOffsetToChildren 会把「直接子视图」的 translation 覆写为拖拽量，
+     * clearDragOffset 则覆写为 0）：内部宿主模式下被平移的是宿主（标签的父层），标签自身 translation
+     * 必须保持 0；旧包装层模式下标签自身就是被覆写的子视图，位置放在 translation 里会在重锚时
+     * 被清零而飞回屏幕左上角。margin 与平移正交，落位时再把标签自身 translation 归零，免历史
+     * 拖拽量叠加到 margin 位置上（拖拽起手即发 CANCEL，但标签常显不因此收起，靠父层统一施加的
+     * 平移跟着弹窗一起移动）。
      */
     private void layoutTip(TextView tv, int left, int top) {
         tv.setTranslationX(0f);
@@ -425,6 +450,83 @@ public class CardStatusTipHelper {
         tv.setLayoutParams(lp);
     }
 
+    /**
+     * 为列表弹窗创建「卡片状态标签宿主」：宿主包裹对话框内容根，并以内容尺寸作为自身尺寸
+     * （标签不参与测量，见 {@link TipHostLayout}），标签作为宿主最后添加的子视图绘制在内容
+     * 之上、可越出宿主边界（clipChildren=false，位置仍限幅在弹窗窗口内）。
+     * <p>
+     * 关键收益：拖动弹窗时 DraggablePopupHelper 只把平移量施加在包装层第 0 个子视图（即本宿主）
+     * 上，标签与卡片同在宿主坐标系内、相对位置不变，移动过程中标签始终精准贴着卡片，不再依赖
+     * 布局回调补落位（旧的外挂方式拖动期间标签停在旧位置，抬手才被重算）。
+     * <p>
+     * 内容根背景上移到宿主：收缩横条等位置通过「包装层第 0 个子视图」读取对话框背景贴图
+     * （styleBarWithDialogContent），直接包一层会让那里读不到原背景。
+     */
+    public static FrameLayout createTipHost(Context context, View content) {
+        TipHostLayout host = new TipHostLayout(context);
+        host.setClipChildren(false);
+        host.setClipToPadding(false);
+        Drawable bg = content.getBackground();
+        if (bg != null) {
+            content.setBackground(null);
+            host.setBackground(bg);
+        }
+        host.addView(content, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        return host;
+    }
+
+    /**
+     * 标签宿主容器：测量时只按内容子视图（第 0 个子视图）决定宿主尺寸，标签（后加子视图）
+     * 不参与 —— FrameLayout 以 WRAP_CONTENT 测量时会把标签高度/底部 margin 并入弹窗高度，
+     * 标签随卡片位置变化时弹窗尺寸就会跟着变。内容尺寸以 EXACT 规格交给常规测量，标签仍是
+     * 真实宽高可供落位；标签自身的测量不受宿主（对话框）宽度钳制，保持既有 maxWidth 语义。
+     */
+    static final class TipHostLayout extends FrameLayout {
+        TipHostLayout(Context context) {
+            super(context);
+        }
+
+        @Override
+        protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+            if (getChildCount() == 0) {
+                super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+                return;
+            }
+            View content = getChildAt(0);
+            measureChildWithMargins(content, widthMeasureSpec, 0, heightMeasureSpec, 0);
+            int w = content.getMeasuredWidth();
+            int h = content.getMeasuredHeight();
+            ViewGroup.LayoutParams lp = content.getLayoutParams();
+            if (lp instanceof MarginLayoutParams) {
+                w += ((MarginLayoutParams) lp).leftMargin + ((MarginLayoutParams) lp).rightMargin;
+                h += ((MarginLayoutParams) lp).topMargin + ((MarginLayoutParams) lp).bottomMargin;
+            }
+            int cw = resolveSize(Math.max(w, getSuggestedMinimumWidth()), widthMeasureSpec);
+            int ch = resolveSize(Math.max(h, getSuggestedMinimumHeight()), heightMeasureSpec);
+            super.onMeasure(MeasureSpec.makeMeasureSpec(cw, MeasureSpec.EXACTLY),
+                    MeasureSpec.makeMeasureSpec(ch, MeasureSpec.EXACTLY));
+        }
+
+        @Override
+        protected void measureChildWithMargins(View child, int parentWidthMeasureSpec,
+                                               int widthUsed, int parentHeightMeasureSpec,
+                                               int heightUsed) {
+            if (getChildCount() > 0 && child != getChildAt(0)) {
+                // 标签：按自身 maxWidth 测量，不被宿主宽度钳制（位置由 margin 承载，可越出宿主绘制）
+                MarginLayoutParams lp = (MarginLayoutParams) child.getLayoutParams();
+                child.measure(
+                        getChildMeasureSpec(
+                                MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED), 0, lp.width),
+                        getChildMeasureSpec(
+                                MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED), 0, lp.height));
+                return;
+            }
+            super.measureChildWithMargins(child, parentWidthMeasureSpec, widthUsed,
+                    parentHeightMeasureSpec, heightUsed);
+        }
+    }
+
     private TextView ensureTipView() {
         if (tipView != null) return tipView;
         int maxW = (int) (TIP_MAX_WIDTH_DP * density + 0.5f);
@@ -435,7 +537,7 @@ public class CardStatusTipHelper {
         tv.setBackgroundColor(TIP_BACKGROUND);
         int p = (int) (TIP_PADDING_DP * density + 0.5f);
         tv.setPadding(p, p, p, p);
-        // maxWidth 保证包装层以 AT_MOST(窗口宽) 复核测量时也不会超过 320dp，位置保持
+        // maxWidth 保证父层复核测量时也不会超过 320dp（宿主宽度较小时由 TipHostLayout 放宽约束），位置保持
         tv.setMaxWidth(maxW);
         tv.setVisibility(View.GONE);
         tv.setClickable(false);
