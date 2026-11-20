@@ -245,6 +245,11 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
     protected View layoutView;
 
     public static List<MyOnlineDeckDetail> getOriginalData() {
+        // 在线备份页可能在主卡组管理页尚未创建时打开（登录后同步同样会写该缓存）：
+        // 懒初始化避免 synchronizeDecks / 列表刷新在字段未初始化时空指针
+        if (originalData == null) {
+            originalData = new ArrayList<>();
+        }
         return originalData;
     }
 

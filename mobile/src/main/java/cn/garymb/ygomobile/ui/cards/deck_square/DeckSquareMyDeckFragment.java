@@ -194,11 +194,19 @@ public class DeckSquareMyDeckFragment extends Fragment {
             return result;
 
         }).fail((e) -> {
+            // 登录期间对话框/宿主可能已销毁（旋转、关闭）：binding 已置空，不能再碰视图
+            if (binding == null) {
+                return;
+            }
             YGOUtil.showTextToast(R.string.logining_failed);
             binding.llMainUi.setVisibility(View.GONE);
             binding.progressBar.setVisibility(View.GONE);
             binding.btnLogin.setEnabled(true);
         }).done((result) -> {
+            // 同上：回调可能晚于 onDestroyView，先判空避免空指针
+            if (binding == null) {
+                return;
+            }
             if (result != null) {
                 binding.llMainUi.setVisibility(View.VISIBLE);
                 binding.llDialogLogin.setVisibility(View.GONE);
@@ -213,8 +221,12 @@ public class DeckSquareMyDeckFragment extends Fragment {
                 mcUser.setAvatar_url(ChatMessage.getAvatarUrl(userName));
                 mcUser.setToken(result.token);
 
-                GlideCompat.with(getActivity()).load(mcUser.getAvatar_url()).into(binding.myDeckAvatar);//刷新头像图片
+                if (getActivity() != null) {
+                    GlideCompat.with(getActivity()).load(mcUser.getAvatar_url()).into(binding.myDeckAvatar);//刷新头像图片
+                }
                 UserManagement.getDx().setMcUser(mcUser);
+                // 先用服务器现有数据展示在线列表：同步需要网络往返，不能让列表在同步完成前空白
+                deckListAdapter.loadData();
                 YGOUtil.showTextToast(R.string.login_succeed);
                 // 登录成功、token 已写入后再做双向同步：同步内部读取已保存 token，
                 // 必须等登录请求返回后才启动（旧写法在登录请求发出后即并行同步，

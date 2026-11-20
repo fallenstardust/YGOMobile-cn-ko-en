@@ -1,7 +1,5 @@
 package cn.garymb.ygomobile.ui.cards.deck_square;
 
-import android.widget.Toast;
-
 import com.google.gson.Gson;
 
 import java.io.File;
@@ -69,7 +67,9 @@ public class DeckSquareApiUtil {
         Integer serverUserId = SharedPreferenceUtil.getServerUserId();
 
         if (serverToken == null || serverUserId == -1) {
-            YGOUtil.showTextToast(R.string.login_mycard);
+            // 本方法会在后台线程执行（卡组同步），提示一律走 YGOUtil.show
+            // 主线程投递，避免非 Looper 线程直接 Toast 抛异常
+            YGOUtil.show(R.string.login_mycard);
             return null;
         }
         return new LoginToken(serverUserId, serverToken);
@@ -118,7 +118,7 @@ public class DeckSquareApiUtil {
     public static MyDeckResponse getUserDecks(LoginToken loginToken) throws IOException {
 
         if (loginToken == null) {
-            YGOUtil.showTextToast("Login first", Toast.LENGTH_LONG);
+            YGOUtil.show("Login first");
 
             return null;
         }
@@ -138,7 +138,7 @@ public class DeckSquareApiUtil {
 
 
         if (result.code == 20) {//用户身份验证失败
-            YGOUtil.showTextToast("Login first", Toast.LENGTH_LONG);
+            YGOUtil.show("Login first");
         }
         return result;
     }
@@ -428,7 +428,18 @@ public class DeckSquareApiUtil {
         String url = "http://rarnu.xyz:38383/api/mdpro3/deck/" + deckId;
     }
 
+    /** 卡组双向同步互斥锁：打开卡组管理页与在线备份页登录后都会触发同步，
+     *  并发执行会对共享缓存 getOriginalData() 同时写入、并可能为同一本地卡组
+     *  重复申请 deckId，故统一串行化 */
+    private static final Object SYNC_LOCK = new Object();
+
     public static void synchronizeDecks() throws IOException {
+        synchronized (SYNC_LOCK) {
+            doSynchronizeDecks();
+        }
+    }
+
+    private static void doSynchronizeDecks() throws IOException {
         // 检查用户是否登录
         LoginToken loginToken = DeckSquareApiUtil.getLoginData();
         if (loginToken == null) {
