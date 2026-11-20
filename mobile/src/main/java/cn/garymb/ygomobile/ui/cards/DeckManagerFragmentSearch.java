@@ -1,7 +1,6 @@
 package cn.garymb.ygomobile.ui.cards;
 
 import static android.content.Context.CLIPBOARD_SERVICE;
-import static cn.garymb.ygomobile.Constants.ORI_DECK;
 import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
 import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
 
@@ -81,6 +80,7 @@ import cn.garymb.ygomobile.base.BaseFragemnt;
 import cn.garymb.ygomobile.bean.Deck;
 import cn.garymb.ygomobile.bean.DeckInfo;
 import cn.garymb.ygomobile.bean.DeckType;
+import cn.garymb.ygomobile.bean.events.CardFavoriteChangedEvent;
 import cn.garymb.ygomobile.bean.events.CardInfoEvent;
 import cn.garymb.ygomobile.bean.events.DeckDeleteEvent;
 import cn.garymb.ygomobile.bean.events.DeckFile;
@@ -182,6 +182,14 @@ public abstract class DeckManagerFragmentSearch extends DeckManagerFragmentDeck 
             if (!addSideCard(cardInfo)) {
 
             }
+        }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onCardFavoriteChanged(CardFavoriteChangedEvent event) {
+        // 收藏夹增删后（任何入口）：收藏列表显示中则重新拉取并按当前排序规则重排、重建分段
+        if (mCardSearcher != null && mCardSearcher.isShowFavorite()) {
+            mCardSearcher.showFavorites(false);
         }
     }
 
@@ -317,13 +325,7 @@ public abstract class DeckManagerFragmentSearch extends DeckManagerFragmentDeck 
                         addMainCard(cardInfo);
                     }
                 });
-
-                // 设置回调函数，当卡片收藏状态改变时触发
-                mCardDetail.setCallBack((card, favorite) -> {
-                    if (mCardSearcher.isShowFavorite()) {
-                        mCardSearcher.showFavorites(false);
-                    }
-                });
+                // 收藏变化统一由 CardFavoriteChangedEvent 通知收藏列表重排
             }
 
             // 添加按钮：只读分类（人机卡组/卡包展示）收起“加入主/副卡组”两键，

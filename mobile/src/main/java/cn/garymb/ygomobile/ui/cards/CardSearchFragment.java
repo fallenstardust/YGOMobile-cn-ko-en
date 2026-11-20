@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.base.BaseFragemnt;
+import cn.garymb.ygomobile.bean.events.CardFavoriteChangedEvent;
 import cn.garymb.ygomobile.core.IrrlichtBridge;
 import cn.garymb.ygomobile.lite.R;
 import cn.garymb.ygomobile.loader.CardLoader;
@@ -55,6 +56,10 @@ import ocgcore.DataManager;
 import ocgcore.PackManager;
 import ocgcore.data.Card;
 import ocgcore.data.LimitList;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallBack, CardSearcher.CallBack {
     private static final String TAG = "CardSearchFragment";
@@ -100,6 +105,10 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         activity = (HomeActivity) getActivity();
         layoutView = inflater.inflate(R.layout.fragment_search, container, false);
         initView(layoutView);
+        // 收藏变化事件：收藏页显示中收到后按当前排序规则重排收藏列表
+        if (!EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().register(this);
+        }
         showNewbieGuide();
         return layoutView;
     }
@@ -325,8 +334,23 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
 
     @Override
     public void onDestroy() {
+        if (EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().unregister(this);
+        }
         //mImageLoader.close();
         super.onDestroy();
+    }
+
+    /**
+     * 收藏夹增删后（任何入口，含卡片详情、其他页面的收藏操作）：收藏列表显示中则
+     * 重新拉取收藏并按当前排序规则重排、重建分段，避免新加入的卡停留在列表末尾
+     * 而单独形成一个同类型的新分段
+     */
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onCardFavoriteChanged(CardFavoriteChangedEvent event) {
+        if (mCardSearcher != null && mCardSearcher.isShowFavorite()) {
+            mCardSearcher.showFavorites(false);
+        }
     }
 
     @Override
@@ -428,11 +452,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         if (cardInfo != null) {
             if (mCardDetail == null) {
                 mCardDetail = new CardDetail((BaseActivity) getActivity(), activity.getImageLoader(), activity.getStringManager());
-                mCardDetail.setCallBack((card, favorite) -> {
-                    if (mCardSearcher.isShowFavorite()) {
-                        mCardSearcher.showFavorites(false);
-                    }
-                });
+                // 收藏变化统一由 CardFavoriteChangedEvent 通知收藏列表重排
                 mCardDetail.setOnCardClickListener(new CardDetail.OnCardSearcherCardClickListener() {
                     @Override
                     public void onOpenUrl(Card cardInfo) {

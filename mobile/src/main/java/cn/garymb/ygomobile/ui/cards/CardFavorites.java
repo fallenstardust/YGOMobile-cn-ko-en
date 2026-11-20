@@ -15,10 +15,13 @@ import java.util.List;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.bean.events.CardFavoriteChangedEvent;
 import cn.garymb.ygomobile.loader.ICardSearcher;
 import cn.garymb.ygomobile.utils.FileUtils;
 import cn.hutool.core.util.ArrayUtil;
 import ocgcore.data.Card;
+
+import org.greenrobot.eventbus.EventBus;
 
 /**
  * 静态类，
@@ -37,20 +40,24 @@ public class CardFavorites {
     }
 
     public boolean toggle(Integer id) {
+        boolean added;
         if (!mList.contains(id)) {
             //添加
             mList.add(id);
-            return true;
+            added = true;
         } else {
             //移除
             mList.remove(id);
-            return false;
+            added = false;
         }
+        notifyFavoriteChanged();
+        return added;
     }
 
     public boolean add(Integer id) {
         if (!mList.contains(id)) {
             mList.add(id);
+            notifyFavoriteChanged();
             return true;
         }
         return false;
@@ -82,7 +89,17 @@ public class CardFavorites {
     }
 
     public void remove(Integer id) {
-        mList.remove(id);
+        if (mList.remove(id)) {
+            notifyFavoriteChanged();
+        }
+    }
+
+    /**
+     * 收藏增删后广播变化事件：各页收藏列表据此按当前排序规则重新加载并重建分段
+     * （新加入的卡不会因为停留在旧位置而单独形成一个同类型的新分段）
+     */
+    private static void notifyFavoriteChanged() {
+        EventBus.getDefault().post(new CardFavoriteChangedEvent());
     }
 
     public void load() {
