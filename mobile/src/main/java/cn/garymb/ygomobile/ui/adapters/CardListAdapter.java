@@ -151,6 +151,12 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
     private int mGridSpanCount;
     /** 当前宫格列数（applyListLayout 写入）；分段断行与分段末行收宽度都要用 */
     private int mGridSpan = 1;
+    /**
+     * 宫格单格内卡图的固定宽度（px，applyListLayout 写入 = 单列宽 - 条目左右 padding）：
+     * 段末那张卡为了断行会跨多列，卡图必须按这个固定宽度绘制才能与其他卡完全同尺寸
+     *（百分比 1/span 相对跨列格子的内宽计算，会多出几个 dp，用户反馈仍偏大）
+     */
+    private int mGridCellImageWidth;
 
     /**
      * 切换搜索结果列的展现形式（宫格/行）。本方法只改标志并重建 holder：标志一变
@@ -206,9 +212,22 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
             int avail = list.getWidth() - list.getPaddingLeft() - list.getPaddingRight();
             span = avail > 0 ? Math.max(1, avail / mGridMinCell) : 1;
         }
+        boolean gridMetricsChanged = false;
         if (mGridSpan != span) {
             mGridSpan = span;
             // 分段断行与末行收宽都靠列数算，列数变了要让已绑定的格子按新跨度重画
+            gridMetricsChanged = true;
+        }
+        // 段末卡的卡图固定为单列宽（条目左右各 2dp padding）：只按宽度比例收会在跨列格子的
+        // 内宽上算百分比，结果比普通格子的卡图大几个像素，用户仍能看到最后一张卡偏大
+        int avail = list.getWidth() - list.getPaddingLeft() - list.getPaddingRight();
+        int cellPad = (int) (2 * context.getResources().getDisplayMetrics().density + 0.5f);
+        int cellImageWidth = avail > 0 ? Math.max(0, avail / span - cellPad * 2) : 0;
+        if (mGridCellImageWidth != cellImageWidth) {
+            mGridCellImageWidth = cellImageWidth;
+            gridMetricsChanged = true;
+        }
+        if (gridMetricsChanged) {
             notifyDataSetChanged();
         }
         if (lm instanceof GridLayoutManager) {
@@ -896,11 +915,13 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
 
     /**
      * 宫格分段末行的那张卡跨了多列（为了把本行填满、让下一段从新行开始），
-     * 这里把卡图宽度收回到“一列”的比例，避免整张卡被拉宽；普通格子恢复默认比例。
+     * 这里把卡图宽度收回到「一列」的固定尺寸，避免整张卡被拉宽；普通格子恢复占满单列。
      * <p>
-     * 卡图左右都约束到父布局，宽度一收小，默认的水平偏移（bias 0.5）会把卡摆到格子正中，
-     * 于是它和前面那张卡之间空出一截、也不在列线上；所以要同时把 bias 改 0（贴左），
-     * 收回普通格子时再复位成 0.5。卡图宽高比仍由 item_search_card_grid 的 dimensionRatio 派生
+     * 宽度用 applyListLayout 算好的固定像素值（单列宽 - 条目左右 padding），不用百分比：
+     * 百分比相对「跨列格子的内宽」计算，结果比普通格子的卡图大 4dp×(1-1/span)，
+     * 仍会看出最后一张卡偏大。卡图左右都约束到父布局，宽度固定后默认水平偏移（bias 0.5）
+     * 会把它摆到格子居中；改为 0 贴左，与普通格子的列线对齐。卡图宽高比仍由
+     * item_search_card_grid 的 dimensionRatio 派生
      */
     private void bindGridItemWidth(com.chad.library.adapter.base.viewholder.BaseViewHolder holder,
                                    int position) {
@@ -910,20 +931,25 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
         }
         ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) image.getLayoutParams();
         int span = spanSizeAt(position);
-        if (span > 1) {
-            float percent = 1f / span;
-            if (params.matchConstraintDefaultWidth == ConstraintLayout.LayoutParams.MATCH_CONSTRAINT_PERCENT
-                    && Math.abs(params.matchConstraintPercentWidth - percent) < 0.001f
-                    && params.horizontalBias == 0f) {
+        if (span > 1 && mGridCellImageWidth > 0) {
+            if (params.width == mGridCellImageWidth
+                    && params.horizontalBias == 0f
+                    && params.matchConstraintDefaultWidth != ConstraintLayout.LayoutParams.MATCH_CONSTRAINT_PERCENT) {
                 return;
             }
-            params.matchConstraintDefaultWidth = ConstraintLayout.LayoutParams.MATCH_CONSTRAINT_PERCENT;
-            params.matchConstraintPercentWidth = percent;
-            params.horizontalBias = 0f;
-            image.setLayoutParams(params);
-        } else if (params.matchConstraintDefaultWidth == ConstraintLayout.LayoutParams.MATCH_CONSTRAINT_PERCENT) {
+            // 恢复普通约束形态后改固定宽（防止残留百分比模式影响子视图度量）
             params.matchConstraintDefaultWidth = ConstraintLayout.LayoutParams.MATCH_CONSTRAINT_SPREAD;
             params.matchConstraintPercentWidth = 1f;
+            params.width = mGridCellImageWidth;
+            params.horizontalBias = 0f;
+            image.setLayoutParams(params);
+        } else if (params.width != 0
+                || params.matchConstraintDefaultWidth == ConstraintLayout.LayoutParams.MATCH_CONSTRAINT_PERCENT
+                || params.horizontalBias != 0.5f) {
+            // 普通格子：宽度 0dp + start/end 撑满单列，bias 居中
+            params.matchConstraintDefaultWidth = ConstraintLayout.LayoutParams.MATCH_CONSTRAINT_SPREAD;
+            params.matchConstraintPercentWidth = 1f;
+            params.width = 0;
             params.horizontalBias = 0.5f;
             image.setLayoutParams(params);
         }
