@@ -262,9 +262,9 @@ public class DeckSquareMyDeckFragment extends Fragment {
             if (binding == null) {
                 return;
             }
-            // synchronizeDecks 已重建 DeckManagerFragment.getOriginalData()，
-            // 此处直接重建在线备份列表；同步可能把云卡组写入本地目录
-            deckListAdapter.loadData();
+            // 同步完成后强制重新拉取一次：登录成功时发出的列表请求可能晚于同步返回，
+            // 用较旧响应覆盖缓存；此处以服务器最新数据重建列表
+            deckListAdapter.loadData(true);
             refreshHostLocalDeckList();
         });
     }

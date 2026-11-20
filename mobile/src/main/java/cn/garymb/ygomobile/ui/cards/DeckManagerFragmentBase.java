@@ -140,7 +140,12 @@ import ocgcore.enums.LimitType;
  */
 public abstract class DeckManagerFragmentBase extends BaseFragemnt implements RecyclerViewItemListener.OnItemListener, OnItemDragListener, YGODeckDialogUtil.OnDeckMenuListener, CardLoader.CallBack, CardSearcher.CallBack {
     protected static final String TAG = "DeckManagerFragment";
-    public static List<MyOnlineDeckDetail> originalData; // 保存原始数据
+    /**
+     * 在线卡组缓存：声明处即初始化（类加载阶段完成，线程间可见性可靠）。
+     * 所有写入均在主线程执行：synchronizeDecks 的缓存更新经 updateOriginalDataCache
+     * 切主线程，避免与列表 UI 的遍历读取并发（ArrayList 非线程安全）。
+     */
+    public static List<MyOnlineDeckDetail> originalData = new ArrayList<>(); // 保存原始数据
     protected final AppsSettings mSettings = AppsSettings.get();
     public DeckAdapater mDeckAdapater;
     protected DrawerLayout mDrawerLayout;

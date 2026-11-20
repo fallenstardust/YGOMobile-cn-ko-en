@@ -1,5 +1,7 @@
 package cn.garymb.ygomobile.ui.cards.deck_square;
 
+import android.os.Looper;
+
 import com.google.gson.Gson;
 
 import java.io.File;
@@ -11,6 +13,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import cn.garymb.ygomobile.AppsSettings;
@@ -456,9 +460,9 @@ public class DeckSquareApiUtil {
         }
         List<MyOnlineDeckDetail> onlineDecks = onlineDecksResponse.getData();
 
-        // 缓存原始在线卡组（使用副本避免后续修改影响缓存）
-        DeckManagerFragment.getOriginalData().clear();
-        DeckManagerFragment.getOriginalData().addAll(onlineDecks);
+        // 缓存原始在线卡组：写操作切主线程执行（见 updateOriginalDataCache），
+        // 避免与列表 UI 的遍历读取并发；传入时即复制快照，后续移除不影响缓存
+        updateOriginalDataCache(onlineDecks);
 
         // 遍历本地卡组与云备份卡组，过滤差异项（使用迭代器避免ConcurrentModificationException）
         List<MyDeckItem> syncUploadDecks = new ArrayList<>();
@@ -547,6 +551,44 @@ public class DeckSquareApiUtil {
                 LogUtil.d(TAG, "synchronizeDecks 保存成功√的 云备份卡组: " + fileFullPath);
             }
         }
+    }
+
+    /**
+     * 把在线卡组列表写入共享缓存：写操作必须切到主线程执行，避免与列表 UI 的
+     * 遍历读取并发（ArrayList 非线程安全）。后台线程调用时等待主线程写入完成
+     * 后再返回，保证同步结束后调用方在主线程刷新列表能读到最新缓存。
+     *
+     * @param onlineDecks 在线卡组列表：方法内先复制快照，调用方随后对原列表的
+     *                    移除操作不会影响缓存内容
+     */
+    private static void updateOriginalDataCache(List<MyOnlineDeckDetail> onlineDecks) {
+        final List<MyOnlineDeckDetail> snapshot = new ArrayList<>(onlineDecks);
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            applyOriginalDataCache(snapshot);
+            return;
+        }
+        final CountDownLatch latch = new CountDownLatch(1);
+        VUiKit.post(() -> {
+            try {
+                applyOriginalDataCache(snapshot);
+            } finally {
+                latch.countDown();
+            }
+        });
+        try {
+            if (!latch.await(3, TimeUnit.SECONDS)) {
+                LogUtil.w(TAG, "updateOriginalDataCache timeout: 主线程繁忙，缓存将在下次刷新时重建");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    /** 主线程内替换缓存内容（仅由 {@link #updateOriginalDataCache} 调用） */
+    private static void applyOriginalDataCache(List<MyOnlineDeckDetail> decks) {
+        List<MyOnlineDeckDetail> cache = DeckManagerFragment.getOriginalData();
+        cache.clear();
+        cache.addAll(decks);
     }
 
     public static void deleteDecks(List<DeckFile> deckFileList) {
