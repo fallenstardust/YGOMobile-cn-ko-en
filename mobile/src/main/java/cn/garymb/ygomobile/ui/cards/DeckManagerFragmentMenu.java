@@ -154,8 +154,7 @@ public abstract class DeckManagerFragmentMenu extends DeckManagerFragmentSearch 
         DialogPlus builder = new DialogPlus(getContext());
         switch (menuId) {
             case R.id.action_deck_backup_n_restore:
-                // 启动权限请求页面
-                mContext.startPermissionsActivity();
+                // 存储权限不再在打开菜单时提前申请：真正点备份/还原、访问外部存储目录时才申请
                 // 显示备份与恢复卡组的选择对话框
                 builder.setTitle(R.string.question);
                 builder.setMessage(R.string.deck_explain);
@@ -164,11 +163,11 @@ public abstract class DeckManagerFragmentMenu extends DeckManagerFragmentSearch 
                 builder.setRightButtonText(R.string.deck_back_up);
                 builder.setRightButtonListener((dialog, which) -> {
                     dialog.dismiss();
-                    doBackUpDeck(); // 执行卡组备份
+                    mContext.runWithPermissions(this::doBackUpDeck); // 权限就绪后执行卡组备份
                 });
                 builder.setLeftButtonListener((dialog, which) -> {
                     dialog.dismiss();
-                    doRestoreDeck(); // 执行卡组恢复
+                    mContext.runWithPermissions(this::doRestoreDeck); // 权限就绪后执行卡组恢复
                 });
                 builder.show();
                 break;

@@ -393,6 +393,13 @@ abstract class SettingFragmentBase extends BaseFragemnt {
     }
 
     protected void openImagePicker(int kind) {
+        // 「请选择一张图片」对话框只列应用私有目录（avatars/covers/bgs）里已存的图片，
+        // 打开它本身不需要存储权限；权限改到对话框左上角第一个「打开本地文件/相册」
+        // 按钮点击时再申请（见 DialogloadImages 的相册入口）
+        doOpenImagePicker(kind);
+    }
+
+    private void doOpenImagePicker(int kind) {
         String imagePath;
         int[] size;
         switch (kind) {
@@ -426,8 +433,15 @@ abstract class SettingFragmentBase extends BaseFragemnt {
 
         // 设置适配器
         DialogImageAdapter dialogImageAdapter = new DialogImageAdapter(dlg, getContext(), imageView, items, itemWidth_itemHeight, outFile, (outFilePath, title, width, height) -> {
-            // 相册入口：跳系统图片选择+裁剪，回调后刷新对应预览
-            showImageCropChooser(title, outFilePath, true, itemWidth_itemHeight[0], itemWidth_itemHeight[1], kind);
+            // 左上角第一个「打开本地文件/相册」按钮：真正访问外部存储（系统相册）时才申请
+            // 存储权限，授权后自动继续打开系统图片选择器
+            Runnable action = () -> showImageCropChooser(title, outFilePath, true,
+                    itemWidth_itemHeight[0], itemWidth_itemHeight[1], kind);
+            if (activity != null) {
+                activity.runWithPermissions(action);
+            } else {
+                action.run();
+            }
         });
         vImgSel.setAdapter(dialogImageAdapter);
 
@@ -452,12 +466,31 @@ abstract class SettingFragmentBase extends BaseFragemnt {
     // ==================== 文件/图片选择（原PreferenceFragmentPlus逻辑） ====================
 
     protected void showFileChooser(int purpose, String type, String defPath, String title) {
+        // 打开本地文件浏览器需要读外部存储：只在真正选文件时申请权限
+        Runnable action = () -> doShowFileChooser(purpose, type, defPath, title);
+        if (activity != null) {
+            activity.runWithPermissions(action);
+        } else {
+            action.run();
+        }
+    }
+
+    private void doShowFileChooser(int purpose, String type, String defPath, String title) {
         mFileChoosePurpose = purpose;
         Intent intent = FileActivity.getIntent(getActivity(), title, type, defPath, false, FileOpenType.SelectFile);
         startActivityForResult(intent, REQUEST_CHOOSE_FILE);
     }
 
     protected void showFolderChooser(String defPath, String title) {
+        Runnable action = () -> doShowFolderChooser(defPath, title);
+        if (activity != null) {
+            activity.runWithPermissions(action);
+        } else {
+            action.run();
+        }
+    }
+
+    private void doShowFolderChooser(String defPath, String title) {
         mFileChoosePurpose = -1;
         Intent intent = FileActivity.getIntent(getActivity(), title, null, defPath, false, FileOpenType.SelectFolder);
         startActivityForResult(intent, REQUEST_CHOOSE_FOLDER);

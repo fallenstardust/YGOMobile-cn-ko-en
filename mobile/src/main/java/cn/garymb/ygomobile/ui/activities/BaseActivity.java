@@ -239,6 +239,30 @@ public class BaseActivity extends AppCompatActivity {
         return startPermissionsActivity(getPermissions());
     }
 
+    /** 授权后待执行的动作（权限申请是独立 Activity，结果经 onActivityResult → onPermission 回来） */
+    private Runnable pendingPermissionAction;
+
+    /**
+     * 按需申请权限并在授权后执行动作：只在真正需要访问本地外部文件/图片时调用
+     *（如备份/还原卡组、选择头像/卡背/背景、选择字体文件）。
+     * 权限已满足则立即执行；缺失则先跳权限申请页，授权通过后由 {@link #onPermission(boolean)}
+     * 补执行，不再在页面初始化阶段提前申请。
+     *
+     * @return 是否已受理（已执行或已挂起等待授权）
+     */
+    public boolean runWithPermissions(Runnable action) {
+        if (action == null) {
+            return false;
+        }
+        if (!startPermissionsActivity()) {
+            // 权限已满足（或系统低于 M 无需申请）：直接执行
+            action.run();
+            return true;
+        }
+        pendingPermissionAction = action;
+        return true;
+    }
+
     /**
      * 权限申请
      *
@@ -284,13 +308,16 @@ public class BaseActivity extends AppCompatActivity {
      * @param isOk 权限申请是否成功
      */
     protected void onPermission(boolean isOk) {
+        Runnable pending = pendingPermissionAction;
+        pendingPermissionAction = null;
         if (isOk) {
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !getContext().getPackageManager().canRequestPackageInstalls()) {
-//                getContext().startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + getContext().getPackageName())).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-//            }
+            // 按需申请成功：补执行发起申请时挂起的动作（备份/还原、选头像/卡背/背景等）
+            if (pending != null) {
+                pending.run();
+            }
         } else {
+            // 按需申请被拒：只放弃本次动作，不关闭当前页面（用户可稍后在系统设置里授权）
             YGOUtil.showTextToast("喵不给我权限让我怎么运行？！");
-            finish();
         }
     }
 }

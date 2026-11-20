@@ -2,7 +2,6 @@ package cn.garymb.ygomobile.ui.home;
 
 import static cn.garymb.ygomobile.Constants.ACTION_RELOAD;
 import static cn.garymb.ygomobile.Constants.NETWORK_IMAGE;
-import static cn.garymb.ygomobile.Constants.ORI_DECK;
 import static cn.garymb.ygomobile.Constants.officialExCardPackageName;
 import static cn.garymb.ygomobile.ui.home.ResCheckTask.ResCheckListener;
 
@@ -112,21 +111,6 @@ public class MainActivity extends HomeActivity implements BottomNavigationBar.On
             }
 
         });
-    }
-
-    @Override
-    protected void onPermission(boolean isOk) {
-        super.onPermission(isOk);
-        if (isOk) {
-            /*
-            try {
-                FileUtils.copyDir(ORI_DECK, AppsSettings.get().getDeckDir(), false);
-            } catch (Throwable e) {
-                YGOUtil.showTextToast(e + "", Toast.LENGTH_LONG);
-            }
-            YGOUtil.showTextToast(R.string.done);
-             */
-        }
     }
 
     @Override

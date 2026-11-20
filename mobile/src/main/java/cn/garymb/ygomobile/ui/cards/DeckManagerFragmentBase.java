@@ -1,7 +1,6 @@
 package cn.garymb.ygomobile.ui.cards;
 
 import static android.content.Context.CLIPBOARD_SERVICE;
-import static cn.garymb.ygomobile.Constants.ORI_DECK;
 import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
 import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
 
@@ -604,12 +603,8 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
                 _file = new File(path);
             }
         }
-        // 检查原始卡组目录是否存在且当前卡组目录文件数量较少时，启动权限获取活动
-        File oriDeckFiles = new File(ORI_DECK);
-        File deckFiles = new File(AppsSettings.get().getDeckDir());
-        if (oriDeckFiles.exists() && deckFiles.list().length <= 1) {
-            mContext.startPermissionsActivity();
-        }
+        // 存储权限改为按需申请（备份/还原卡组、选头像/卡背/背景等真正访问外部文件时），
+        // 不再在进入卡组管理页时提前弹出权限页
         // 初始化卡组数据
         init(_file);
     }

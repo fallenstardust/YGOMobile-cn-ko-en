@@ -1,7 +1,6 @@
 package cn.garymb.ygomobile.ui.cards;
 
 import static android.content.Context.CLIPBOARD_SERVICE;
-import static cn.garymb.ygomobile.Constants.ORI_DECK;
 import static cn.garymb.ygomobile.Constants.YDK_FILE_EX;
 import static cn.garymb.ygomobile.core.IrrlichtBridge.ACTION_SHARE_FILE;
 
