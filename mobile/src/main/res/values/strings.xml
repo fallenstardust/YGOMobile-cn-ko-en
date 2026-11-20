@@ -203,6 +203,8 @@
     <string name="solo_mode">Solo Mode</string>
     <string name="bot_p2_deck_label">P2 Deck:</string>
     <string name="bot_tag_max_select">TAG mode allows up to 3 AI opponents. Tap a selected item to cancel it before swapping.</string>
+    <string name="bot_favorite_added">Favorited %1$s, moved to the top of the list</string>
+    <string name="bot_favorite_removed">Removed %1$s from favorites, returned to its original position</string>
     <string name="quit_deck_tip">Deck has not been saved yet, quit App?</string>
     <string name="deck_discard_switch_tip">This will discard the changes to the current deck, continue?</string>
     <string name="deck_delete_text">Drag here to delete</string>

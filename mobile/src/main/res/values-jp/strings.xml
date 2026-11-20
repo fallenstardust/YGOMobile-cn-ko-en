@@ -190,6 +190,8 @@
     <string name="solo_mode">ソロモード</string>
     <string name="bot_p2_deck_label">P2デッキ：</string>
     <string name="bot_tag_max_select">TAGモードではAIを最大3体まで選択できます。差し替えるには選択済みの項目をタップして解除してください。</string>
+    <string name="bot_favorite_added">%1$s をお気に入りに追加しました。リストの先頭に移動しました</string>
+    <string name="bot_favorite_removed">%1$s をお気に入りから解除しました。元の位置に戻りました</string>
     <string name="quit_deck_tip">変更を破棄しますか？</string>
     <string name="deck_discard_switch_tip">現在のデッキの変更を破棄します。続行しますか？</string>
     <string name="deck_delete_text">デッキ削除</string>

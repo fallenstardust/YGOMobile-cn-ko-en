@@ -244,10 +244,16 @@ public class SingleModeDialog {
         // 需在首次布局前启用，避免列表复用池里混用两种条目布局
         botAdapter.setFavoriteNames(SharedPreferenceUtil.getFavoriteBotNames());
         botAdapter.setOnFavoriteClickListener((name, displayPosition) -> {
-            SharedPreferenceUtil.setBotFavorite(name, !SharedPreferenceUtil.getFavoriteBotNames().contains(name));
+            boolean favorite = !SharedPreferenceUtil.getFavoriteBotNames().contains(name);
+            SharedPreferenceUtil.setBotFavorite(name, favorite);
             botAdapter.setFavoriteNames(SharedPreferenceUtil.getFavoriteBotNames());
             // 重排后按原始下标把单选/复选高亮映射回新位置
             refreshBotListDisplay(selectedPosition[0]);
+            // 收藏重排会把条目移出当前视口（收藏置顶 / 取消后回原位），而列表视口不跟随：
+            // 不提示时用户会以为刚操作的人机“不见了”，故明确告知它去往了哪里
+            Toast.makeText(context, context.getString(
+                            favorite ? R.string.bot_favorite_added : R.string.bot_favorite_removed, name),
+                    Toast.LENGTH_SHORT).show();
         });
         final SimpleListAdapter puzzleAdapter = new SimpleListAdapter(context);
         puzzleAdapter.set(puzzleNames);
