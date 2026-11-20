@@ -13,7 +13,6 @@ import static cn.garymb.ygomobile.Constants.PREF_FONT_ANTIALIAS;
 import static cn.garymb.ygomobile.Constants.PREF_GAME_FONT;
 import static cn.garymb.ygomobile.Constants.PREF_IMMERSIVE_MODE;
 import static cn.garymb.ygomobile.Constants.PREF_KEEP_SCALE;
-import static cn.garymb.ygomobile.Constants.PREF_LOCK_SCREEN;
 import static cn.garymb.ygomobile.Constants.PREF_NATIVE_GAME_MODE;
 import static cn.garymb.ygomobile.Constants.PREF_OPENGL_VERSION;
 import static cn.garymb.ygomobile.Constants.PREF_PENDULUM_SCALE;
@@ -138,7 +137,7 @@ abstract class SettingFragmentBase extends BaseFragemnt {
 
     protected View rootView;
     protected View llYgoproJniSettings;
-    protected Switch swReadEx, swDuelAssistant, swImmersive, swLockScreen, swAntiAlias, swPendulum, swNativeGame;
+    protected Switch swReadEx, swDuelAssistant, swImmersive, swAntiAlias, swPendulum, swNativeGame;
     protected TextView tvVersionInfo, tvOpenGLValue, tvPaddingValue;
     protected TextView btnQualityLow, btnQualityHigh;
     protected final TextView[] langViews = new TextView[6];
@@ -162,7 +161,6 @@ abstract class SettingFragmentBase extends BaseFragemnt {
         updateScaleSelection(mSettings.isKeepScale());
         setSwitch(swImmersive, mSettings.isImmerSiveMode());
         updateQualitySelection(mSettings.getCardQuality() != 0);
-        setSwitch(swLockScreen, mSettings.isLockSreenOrientation());
         setSwitch(swAntiAlias, mSettings.isFontAntiAlias());
         setSwitch(swPendulum, mSettings.isPendulumScale());
         setSwitch(swNativeGame, mSettings.isNativeGameMode());

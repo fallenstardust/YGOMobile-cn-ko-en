@@ -658,31 +658,6 @@
                         app:tint="@color/holo_blue_bright" />
                 </LinearLayout>
 
-                <!-- 沉浸式 -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="3dp"
-                    android:background="@drawable/dialogshort"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="6dp">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/settings_game_immersive_mode"
-                        android:textColor="@color/item_title"
-                        android:textSize="12sp" />
-
-                    <Switch
-                        android:id="@+id/switch_immersive"
-                        style="@style/SettingsSwitch"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" />
-                </LinearLayout>
-
                 <!-- 游戏图片质量：独立一行，高/低两按钮 -->
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -735,39 +710,13 @@
                         android:textSize="12sp" />
                 </LinearLayout>
 
-                <!-- 三个开关宫格 -->
+                <!-- 两个开关宫格 -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="3dp"
                     android:baselineAligned="false"
                     android:orientation="horizontal">
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="3dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/dialogshort"
-                        android:gravity="center"
-                        android:orientation="vertical"
-                        android:padding="6dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:gravity="center"
-                            android:text="@string/settings_game_screen_orientation"
-                            android:textColor="@color/item_title"
-                            android:textSize="10sp" />
-
-                        <Switch
-                            android:id="@+id/switch_lock_screen"
-                            style="@style/SettingsSwitch"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp" />
-                    </LinearLayout>
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -822,7 +771,7 @@
                     </LinearLayout>
                 </LinearLayout>
 
-                <!-- 原生UI游戏模式开关 -->
+                <!-- 沉浸式 + 原生UI游戏模式：同一行各占一半（游戏横屏锁定已移至游戏内设置弹窗） -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -830,9 +779,46 @@
                     android:baselineAligned="false"
                     android:orientation="horizontal">
 
+                    <!-- 沉浸式 -->
                     <LinearLayout
                         android:layout_width="0dp"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_margin="3dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/dialogshort"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="6dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="@string/settings_game_immersive_mode"
+                            android:textColor="@color/item_title"
+                            android:textSize="10sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:gravity="center"
+                            android:text="@string/about_immersive_mode"
+                            android:textColor="@color/gray"
+                            android:textSize="8sp" />
+
+                        <Switch
+                            android:id="@+id/switch_immersive"
+                            style="@style/SettingsSwitch"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp" />
+                    </LinearLayout>
+
+                    <!-- 原生UI游戏模式开关 -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
                         android:layout_margin="3dp"
                         android:layout_weight="1"
                         android:background="@drawable/dialogshort"
