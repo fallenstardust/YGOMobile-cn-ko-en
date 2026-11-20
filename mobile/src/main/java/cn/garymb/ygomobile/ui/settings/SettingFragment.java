@@ -13,6 +13,8 @@ import static cn.garymb.ygomobile.Constants.PREF_FONT_ANTIALIAS;
 import static cn.garymb.ygomobile.Constants.PREF_GAME_FONT;
 import static cn.garymb.ygomobile.Constants.PREF_IMMERSIVE_MODE;
 import static cn.garymb.ygomobile.Constants.PREF_KEEP_SCALE;
+import static cn.garymb.ygomobile.Constants.PREF_LOCK_PORTRAIT;
+import static cn.garymb.ygomobile.Constants.PREF_LOCK_SCREEN;
 import static cn.garymb.ygomobile.Constants.PREF_NATIVE_GAME_MODE;
 import static cn.garymb.ygomobile.Constants.PREF_OPENGL_VERSION;
 import static cn.garymb.ygomobile.Constants.PREF_PENDULUM_SCALE;
@@ -186,6 +188,7 @@ public class SettingFragment extends SettingFragmentBase implements View.OnClick
         swReadEx = view.findViewById(R.id.switch_read_ex);
         swDuelAssistant = view.findViewById(R.id.switch_duel_assistant);
         swImmersive = view.findViewById(R.id.switch_immersive);
+        swLockScreen = view.findViewById(R.id.switch_lock_screen);
         swAntiAlias = view.findViewById(R.id.switch_font_antialias);
         swPendulum = view.findViewById(R.id.switch_pendulum);
         swNativeGame = view.findViewById(R.id.switch_native_game);
@@ -193,6 +196,7 @@ public class SettingFragment extends SettingFragmentBase implements View.OnClick
         swReadEx.setOnCheckedChangeListener(this::onSwitchChanged);
         swDuelAssistant.setOnCheckedChangeListener(this::onSwitchChanged);
         swImmersive.setOnCheckedChangeListener(this::onSwitchChanged);
+        swLockScreen.setOnCheckedChangeListener(this::onSwitchChanged);
         swAntiAlias.setOnCheckedChangeListener(this::onSwitchChanged);
         swPendulum.setOnCheckedChangeListener(this::onSwitchChanged);
         swNativeGame.setOnCheckedChangeListener(this::onSwitchChanged);
@@ -322,6 +326,13 @@ public class SettingFragment extends SettingFragmentBase implements View.OnClick
             }
         } else if (id == R.id.switch_immersive) {
             mSettings.setImmerSiveMode(checked);
+        } else if (id == R.id.switch_lock_screen) {
+            // 游戏横屏锁定：与图片质量同行、随原生UI游戏模式隐藏；
+            // 与游戏内设置弹窗的竖屏锁定互斥，开启横屏锁定时关闭竖屏锁定
+            putPrefBool(PREF_LOCK_SCREEN, checked);
+            if (checked) {
+                putPrefBool(PREF_LOCK_PORTRAIT, false);
+            }
         } else if (id == R.id.switch_font_antialias) {
             putPrefBool(PREF_FONT_ANTIALIAS, checked);
         } else if (id == R.id.switch_pendulum) {

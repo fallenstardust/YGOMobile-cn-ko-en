@@ -604,6 +604,13 @@
                         android:layout_height="wrap_content" />
                 </LinearLayout>
 
+                <!-- JNI 设置组：与竖屏布局同名，开启实验室新游戏UI 时由 updateJniSettingsVisibility 整组隐藏 -->
+                <LinearLayout
+                    android:id="@+id/ll_ygopro_jni_settings"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
                 <!-- 原始比例 -->
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -708,6 +715,23 @@
                         android:text="@string/quality_high"
                         android:textColor="@color/white"
                         android:textSize="12sp" />
+
+                    <!-- 游戏横屏锁定：与图片质量同行，随原生UI游戏模式（实验室新游戏UI）一起隐藏；
+                         与游戏内设置弹窗的竖屏锁定互斥 -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="@string/settings_game_screen_orientation"
+                        android:textColor="@color/item_title"
+                        android:textSize="9sp" />
+
+                    <Switch
+                        style="@style/SettingsSwitch"
+                        android:id="@+id/switch_lock_screen"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp" />
                 </LinearLayout>
 
                 <!-- 两个开关宫格 -->
@@ -770,8 +794,9 @@
                             android:layout_marginTop="4dp" />
                     </LinearLayout>
                 </LinearLayout>
+                </LinearLayout>
 
-                <!-- 沉浸式 + 原生UI游戏模式：同一行各占一半（游戏横屏锁定已移至游戏内设置弹窗） -->
+                <!-- 沉浸式 + 原生UI游戏模式：同一行各占一半（横屏锁定已加回图片质量行） -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

@@ -701,6 +701,23 @@
                     android:text="@string/quality_high"
                     android:textColor="@color/white"
                     android:textSize="13sp" />
+
+                <!-- 游戏横屏锁定：与图片质量同行，随原生UI游戏模式（实验室新游戏UI）一起隐藏；
+                     与游戏内设置弹窗的竖屏锁定互斥（开启此项会关闭竖屏锁定） -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:text="@string/settings_game_screen_orientation"
+                    android:textColor="@color/item_title"
+                    android:textSize="9sp" />
+
+                <Switch
+                    style="@style/SettingsSwitch"
+                    android:id="@+id/switch_lock_screen"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp" />
             </LinearLayout>
 
             <!-- 2个开关宫格：字体抗锯齿 / 灵摆数字 -->
