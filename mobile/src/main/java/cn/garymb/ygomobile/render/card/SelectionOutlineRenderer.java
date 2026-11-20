@@ -74,22 +74,38 @@ public final class SelectionOutlineRenderer {
     }
 
     public void drawHighlights() {
-        int mask = view.highlightFieldMask;
-        if (mask == 0) return;
         float phase = marchPhase();
-        for (int p = 0; p < 2; p++) {
-            float r = p == 0 ? 0f : 1f;
-            float g = p == 0 ? 1f : 0f;
-            float b = p == 0 ? 1f : 0f;
-            for (int i = 0; i < 7; i++) {
-                if ((mask & (1 << FieldGeometry.zoneBitPos(p, 0x04, i))) != 0)
-                    drawZoneMarching(p, 0x04, i, phase, r, g, b);
+        int mask = view.highlightFieldMask;
+        if (mask != 0) {
+            for (int p = 0; p < 2; p++) {
+                float r = p == 0 ? 0f : 1f;
+                float g = p == 0 ? 1f : 0f;
+                float b = p == 0 ? 1f : 0f;
+                drawZoneMaskBits(mask, p, phase, r, g, b);
             }
-            for (int i = 0; i < 8; i++) {
-                int bit = FieldGeometry.zoneBitPos(p, 0x08, i);
-                if (bit >= 0 && (mask & (1 << bit)) != 0)
-                    drawZoneMarching(p, 0x08, i, phase, r, g, b);
+        }
+        // HINT_OPPO_SELECT_PLACE 位置回报：40 帧橙色行进框标出对手代选的格子（桌面端
+        // selectable_field 高亮 40 帧，duelclient.cpp 与 HINT_ZONE 同块），到期即不再绘制。
+        // 独立于 highlightFieldMask 通道：不参与 FieldTouchPicker 的选格命中优先级，
+        // 也不会被选格会话的 clearHighlight 误清
+        GameField f = view.field;
+        if (f != null && f.flashZoneMask != 0 && System.currentTimeMillis() < f.flashZoneUntilMs) {
+            for (int p = 0; p < 2; p++) {
+                drawZoneMaskBits(f.flashZoneMask, p, phase, 1f, 0.6f, 0f);
             }
+        }
+    }
+
+    /** 单座位掩码的格子行进框，位布局同 FieldGeometry.zoneBitPos（p=本地视角座位） */
+    private void drawZoneMaskBits(int mask, int p, float phase, float r, float g, float b) {
+        for (int i = 0; i < 7; i++) {
+            if ((mask & (1 << FieldGeometry.zoneBitPos(p, 0x04, i))) != 0)
+                drawZoneMarching(p, 0x04, i, phase, r, g, b);
+        }
+        for (int i = 0; i < 8; i++) {
+            int bit = FieldGeometry.zoneBitPos(p, 0x08, i);
+            if (bit >= 0 && (mask & (1 << bit)) != 0)
+                drawZoneMarching(p, 0x08, i, phase, r, g, b);
         }
     }
 

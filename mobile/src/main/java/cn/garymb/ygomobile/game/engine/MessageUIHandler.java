@@ -77,7 +77,7 @@ public class MessageUIHandler {
                 showActionMessage(acText);
                 return;
             }
-            // HINT_ZONE（duelclient.cpp L1529-1572）：Duel.Hint(HINT_ZONE,tp,mask) 宣告区域，掩码按 LocalPlayer 交换两半后仅展开 SZONE 位为同纵列魔陷格玫红呼吸标注至下个 NEW_TURN，MZ 位封锁类在 applyHintZone 内跳过（白X同纵列魔陷格不得误显泡影提示）；case 0 为旧版 constant.lua 无 HINT_ZONE 时 lua_tointeger 降级 type=0 的兼容分支
+            // HINT_ZONE（duelclient.cpp L1529-1572）：Duel.Hint(HINT_ZONE,tp,mask) 宣告区域，掩码按 LocalPlayer 交换两半后仅展开 SZONE 位为同纵列魔陷格玫红呼吸标注至下个 NEW_TURN，MZ 位封锁类在 applyHintZone 内跳过（白X同纵列魔陷格不得误显泡影提示）；case 0 为旧版 constant.lua 无 HINT_ZONE 时 lua_tointeger 降级 type=0 的兼容分支（引擎的位置回报已分流到新 HINT 12，不再经过本分支）
             case 0:
             case 11: {
                 int zones = data;
@@ -86,6 +86,21 @@ public class MessageUIHandler {
                 if (engine.localPlayer(player) == 1)
                     zones = (zones >>> 16) | (zones << 16);
                 engine.field.applyHintZone(zones);
+                engine.mainHandler.post(() -> {
+                    if (engine.listener != null) engine.listener.onFieldChanged();
+                });
+                return;
+            }
+            // HINT_OPPO_SELECT_PLACE（ocgcore common.h 12，operations.cpp move_to_field step1）：
+            // 对手以 EFFECT_OPPO_SELECT_SPSUMMON_ZONE 代选特召位置后的选中格回报，恰为单一位。
+            // 桌面端按「区域宣告」高亮 40 帧（duelclient.cpp 与 HINT_ZONE 同块）且不持久；
+            // 本端只走瞬时高亮——不可落 applyHintZone：回报的 SZ 位与无限泡影类标注同形，
+            // 并入会把单格位置误展开为整回合的玫红呼吸标注
+            case 12: {
+                int zones = data;
+                if (engine.localPlayer(player) == 1)
+                    zones = (zones >>> 16) | (zones << 16);
+                engine.field.flashZones(zones, 40L * 17L); // 40 帧，与 duelclient.cpp WaitFrameSignal(40) 同长
                 engine.mainHandler.post(() -> {
                     if (engine.listener != null) engine.listener.onFieldChanged();
                 });

@@ -176,6 +176,13 @@ public class GameField {
     public long disabledField;
     /** HINT_ZONE 通讯（duelclient.cpp L1529-1572）展开出的被标注魔陷格集，位布局与 disabledField 同构（本地视角：seat0 MZ bits0-6 / SZ bits8-15，seat1 高 16 位）；仅接受无效类效果的 SZ 位来位——无限泡影类脚本效果处理成功时 Duel.Hint(HINT_ZONE, tp, 0x1<<(seq+8)) 宣告自身所在列的 SZONE 位，本端把它标到同列两张魔陷格——同侧 SZONE 格（同 seq）与对侧镜像 SZONE 格（4-seq，aux.GetColumn 同式）；仅主列 seq 0-4（额外怪兽列无魔陷对应格）。MZ 位（bit0-6/16-22）为封锁格子类卡片（封锁龙/黄金国亡灵 等，效果伴随 MSG_FIELD_DISABLED 白 X）的怪兽纵列宣告，桌面端只对掩码位瞬时高亮 40 帧、从不扩张魔陷格；本端若同样展开会出现「白 X 同纵列魔陷格错误显示泡影标注」的误报，故不产生持久标注。效果携 RESET_PHASE+PHASE_END，故下一个 MSG_NEW_TURN 清除。 */
     public int hintZoneMask;
+    /** HINT_OPPO_SELECT_PLACE(12) 位置回报的瞬时高亮（本地视角，位布局同 hintZoneMask）与到期时刻：
+     *  对手以 EFFECT_OPPO_SELECT_SPSUMMON_ZONE 代选特召位置后，引擎用独立 HINT 类型回报选中格
+     *  （ocgcore operations.cpp move_to_field step1，恰为单一位）。桌面端按 selectable_field 高亮
+     *  40 帧（duelclient.cpp），本端同样只做瞬时高亮——绝不并入 hintZoneMask：回报的 SZ 位与
+     *  无限泡影类的单 SZ 位标注同形，并入会整回合误标玫红。引擎/Ui 线程写、GL 线程读，volatile 可见性 */
+    public volatile int flashZoneMask;
+    public volatile long flashZoneUntilMs;
     /** 两个标注掩码逐位的「写入时已登记的发动条数」（{@link EffectActivationLedger#eventCount()} 快照，
      *  位序与各自掩码一致）：撤回把发动账本回退到 kept 条后，条数大于 kept 的标注位即由本次被抹掉的
      *  发动适用，随之取消格子变色/无效徽记与白 X，直到该卡下次适用效果重新标注；0 = 无对应发动 */
@@ -368,6 +375,8 @@ public class GameField {
         contiAct = false;
         disabledField = 0;
         hintZoneMask = 0;
+        flashZoneMask = 0;
+        flashZoneUntilMs = 0;
         resolvingChainOrdinal = 0;
         Arrays.fill(hintZoneStamp, 0);
         Arrays.fill(disabledStamp, 0);
@@ -402,7 +411,7 @@ public class GameField {
         return resolvingChainOrdinal > 0 ? resolvingChainOrdinal : EffectActivationLedger.eventCount();
     }
 
-    /** 接收 HINT_ZONE 掩码（本地视角）展开为魔陷格标注集存 hintZoneMask：仅 SZONE 位标注同纵列两格（同侧 seq 与对侧镜像 4-seq），MZ 位为封区类宣告不做持久标注，来位已被 disabledField 封锁时跳过，仅主列 seq 0-4 */
+    /** 接收 HINT_ZONE 掩码（本地视角）展开为魔陷格标注集存 hintZoneMask：仅 SZONE 位标注同纵列两格（同侧 seq 与对侧镜像 4-seq），MZ 位为封区类宣告不做持久标注，来位已被 disabledField 封锁时跳过，仅主列 seq 0-4。不含 HINT_OPPO_SELECT_PLACE(12)：位置回报只走 {@link #flashZones} 瞬时高亮（单 SZ 位与泡影标注同形，不可并入本标注集） */
     public void applyHintZone(int zones) {
         final int stamp = currentStamp();
         for (int bit = 0; bit < ZONE_BIT_COUNT; bit++) {
@@ -411,6 +420,13 @@ public class GameField {
             if ((disabledField & (1L << bit)) != 0) continue;   // 该格已带白 X：不叠加标注
             markSpellColumn(bit >= 16 ? 1 : 0, (bit & 7), stamp);
         }
+    }
+
+    /** 记录一条位置回报的瞬时高亮（本地视角）：只影响渲染帧，不写 hintZoneMask/条数戳，
+     *  到期自然失效（SelectionOutlineRenderer 按 flashZoneUntilMs 门控），不跨回合残留 */
+    public void flashZones(int zones, long durationMs) {
+        flashZoneUntilMs = System.currentTimeMillis() + Math.max(0L, durationMs);
+        flashZoneMask = zones;
     }
 
     private void markSpellColumn(int seat, int seq, int stamp) {

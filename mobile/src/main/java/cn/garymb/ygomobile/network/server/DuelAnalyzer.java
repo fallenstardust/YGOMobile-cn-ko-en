@@ -123,8 +123,11 @@ final class DuelAnalyzer extends DuelAnalyzerBase {
                         // 服务端 constant.lua 缺 HINT_ZONE 常量时 lua_tointeger(nil) 降级
                         // 以 type=0 下发（旧规则落 default 被整体丢弃）。broadcastMsg 对
                         // solo 同连接按身份去重，并经 sendToPlayer(players[0]) 录入录像帧
+                        // HINT_OPPO_SELECT_PLACE(12)：对手代选特召位置的选中格回报，与 HINT_ZONE
+                        // 同为区域宣告，须双方与观战同见（不丢则选中格高亮对发起方/观战完全缺失）
                         case 0:
                         case 11:
+                        case 12:
                         case 10:
                             broadcastMsg(slice);
                             break;

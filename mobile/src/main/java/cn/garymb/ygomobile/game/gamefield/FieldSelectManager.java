@@ -63,7 +63,13 @@ class FieldSelectManager extends FieldSelectManagerBase {
         // 问题②门控：仅在上游 onSelectUnselectCard 检测到灵摆召唤流程（手卡候选+两侧刻度存在）
         // 置起 pendulumSelectPending 后才允许闪动，非灵摆召唤的 MSG_SELECT_PLACE 不播放
         if (!field.pendulumSelectPending) return false;
-        int summonLocal = engine.localPlayer(engine.selectFieldPlayer & 1);
+        // 召唤方推断：引擎引入 EFFECT_OPPO_SELECT_SPSUMMON_ZONE 后，MSG_SELECT_PLACE 的 player
+        // 是「选择方」而非「召唤方」（ocgcore operations.cpp move_to_field step1：
+        // select_player = 1 - move_player），再按 selectFieldPlayer 取半场会读到选择方那侧的刻度。
+        // 灵摆召唤只能由当回合方进行，故取 field.currentPlayer（本地视角的当回合方），同时覆盖
+        // 「自己选位」「对手替我选」「solo 下我替对手选」三条路径；越界时退回旧口径
+        int summonLocal = field.currentPlayer;
+        if (summonLocal < 0 || summonLocal > 1) summonLocal = engine.localPlayer(engine.selectFieldPlayer & 1);
         if (summonLocal < 0 || summonLocal > 1) return false;
         GameField.PlayerField pf = field.players[summonLocal];
         if (pf == null) return false;
