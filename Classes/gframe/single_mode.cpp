@@ -216,7 +216,8 @@ bool SingleMode::SinglePlayAnalyze(unsigned char* msg, unsigned int len) {
 				break;
 			}
 			case HINT_CARD:
-			case HINT_ZONE: {
+			case HINT_ZONE:
+			case HINT_OPPO_SELECT_PLACE: {
 				DuelClient::ClientAnalyze(offset, pbuf - offset);
 				break;
 			}

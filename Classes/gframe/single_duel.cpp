@@ -413,7 +413,7 @@ void SingleDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 		swapped = true;
 	}
 	dp->state = CTOS_RESPONSE;
-	std::random_device rd;
+	thread_local std::random_device rd;
 	ExtendedReplayHeader rh;
 	rh.base.id = REPLAY_ID_YRP2;
 	rh.base.version = PRO_VERSION;
@@ -616,7 +616,8 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 				break;
 			}
 			case HINT_CARD:
-			case HINT_ZONE: {
+			case HINT_ZONE:
+			case HINT_OPPO_SELECT_PLACE: {
 				NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
 				NetServer::SendBufferToPlayer(players[1], STOC_GAME_MSG, offset, pbuf - offset);
 				for(auto oit = observers.begin(); oit != observers.end(); ++oit)

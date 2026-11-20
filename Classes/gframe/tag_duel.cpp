@@ -381,7 +381,7 @@ void TagDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	cur_player[0] = players[0];
 	cur_player[1] = players[3];
 	dp->state = CTOS_RESPONSE;
-	std::random_device rd;
+	thread_local std::random_device rd;
 	ExtendedReplayHeader rh;
 	rh.base.id = REPLAY_ID_YRP2;
 	rh.base.version = PRO_VERSION;
@@ -575,7 +575,8 @@ int TagDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 				break;
 			}
 			case HINT_CARD:
-			case HINT_ZONE: {
+			case HINT_ZONE:
+			case HINT_OPPO_SELECT_PLACE: {
 				for(int i = 0; i < 4; ++i)
 					NetServer::SendBufferToPlayer(players[i], STOC_GAME_MSG, offset, pbuf - offset);
 				for(auto oit = observers.begin(); oit != observers.end(); ++oit)
