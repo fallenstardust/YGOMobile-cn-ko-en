@@ -34,6 +34,9 @@ import ocgcore.data.Card;
  * 触摸序列，且closeDrawer会让DrawerLayout接管手势并向子view发送ACTION_CANCEL。
  * 因此采用窗口级触摸捕获（包装Window.Callback直接观察原始触摸流），
  * 浮动卡片挂在DecorView上仅负责显示，不参与触摸分发。
+ * <p>
+ * 抽屉侧：起拖必须把两扇抽屉「锁死 + 立即归位」而不是普通带动画收起，否则本次手势会被
+ * DrawerLayout 判成拉抽屉、抽屉跟着手指左右漂移（见 {@link #lockDrawersForDrag()}）。
  */
 public class DeckDragDropHelper {
 
@@ -79,6 +82,8 @@ public class DeckDragDropHelper {
     private ViewGroup decorView;
     private ImageView floatCard;
     private Card draggingCard;
+    /** 本次拖拽是否已把两扇抽屉锁死（见 {@link #lockDrawersForDrag()}）；解锁一律回 UNLOCKED，本页从未其它锁定时机 */
+    private boolean drawersLocked;
 
     public DeckDragDropHelper(Context context, DrawerLayout drawerLayout, RecyclerView deckGrid,
                               DeckAdapater deckAdapater, ImageLoader imageLoader,
@@ -131,8 +136,41 @@ public class DeckDragDropHelper {
         if (listener != null) {
             listener.onDragBegin();
         }
-        // 立即收起搜索结果抽屉，露出卡组网格
-        drawerLayout.closeDrawer(Constants.CARD_RESULT_GRAVITY);
+        // 起拖当场把结果抽屉完全收起并锁死，露出卡组网格
+        lockDrawersForDrag();
+    }
+
+    /**
+     * 拖拽期间锁死两扇抽屉并当场立即归位（不走动画）。
+     * <p>
+     * 根因：搜索结果列表是 DrawerLayout 的抽屉子View，长按卡片后手指横向移动时，
+     * DrawerLayout 的 onInterceptTouchEvent 会把这次位移判成「拉抽屉」（captureOpenAsDrag/canDragView）
+     * 并接管剩余事件流，于是抽屉跟着被拖动的卡片左右漂移；带动画的 closeDrawer 处于 SETTLING
+     * 时同样会被后续 MOVE 抢占成 DRAGGING，所以「先收起再拖」并不保险。
+     * <p>
+     * 两条一起做：先置 LOCK_MODE_LOCKED_CLOSED 切断拦截链（canDragView 对非 UNLOCKED 抽屉直接判假），
+     * 再 animate=false 立即归位，终止在途的 settle/drag 与残留位移；本项目的抽屉从不长期锁定，
+     * 因此解锁统一回 UNLOCKED。
+     */
+    private void lockDrawersForDrag() {
+        if (drawersLocked) {
+            return;
+        }
+        drawersLocked = true;
+        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, Constants.CARD_RESULT_GRAVITY);
+        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, Constants.CARD_SEARCH_GRAVITY);
+        drawerLayout.closeDrawer(Constants.CARD_RESULT_GRAVITY, false);
+        drawerLayout.closeDrawer(Constants.CARD_SEARCH_GRAVITY, false);
+    }
+
+    /** 拖拽收尾恢复抽屉可正常拉出（幂等，未锁过时静默跳过） */
+    private void unlockDrawersAfterDrag() {
+        if (!drawersLocked) {
+            return;
+        }
+        drawersLocked = false;
+        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, Constants.CARD_RESULT_GRAVITY);
+        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, Constants.CARD_SEARCH_GRAVITY);
     }
 
     /**
@@ -161,6 +199,7 @@ public class DeckDragDropHelper {
         }
         floatCard = null;
         decorView = null;
+        unlockDrawersAfterDrag();
         if (callback != null && context instanceof AppCompatActivity) {
             Window window = ((AppCompatActivity) context).getWindow();
             if (window != null && window.getCallback() instanceof DragWindowCallback) {
