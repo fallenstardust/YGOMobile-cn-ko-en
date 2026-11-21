@@ -339,6 +339,7 @@
     <string name="searchresult">搜索结果</string>
     <string name="Pre_share">准备分享，请稍候……</string>
     <string name="category_pack">卡包展示</string>
+    <string name="label_release_date">发售日期</string>
     <string name="category_windbot_deck">人机卡组</string>
     <string name="category_Uncategorized">未分类卡组</string>
     <string name="please_input_category_name">请输入新卡组分类名</string>

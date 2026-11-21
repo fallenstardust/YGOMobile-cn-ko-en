@@ -309,6 +309,7 @@
     <string name="searchresult">Resultado</string>
     <string name="Pre_share">Pronto para compartilhar, por favor aguarde...</string>
     <string name="category_pack">Pacotes</string>
+    <string name="label_release_date">Data de lançamento</string>
     <string name="category_windbot_deck">Decks I.A.</string>
     <string name="category_Uncategorized">Sem categoria</string>
     <string name="please_input_category_name">Por favor, insira o nome da categoria</string>

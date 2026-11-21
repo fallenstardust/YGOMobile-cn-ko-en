@@ -377,7 +377,7 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
         PackManager packManager = DataManager.get().getPackManager();
         List<Card> kept = new ArrayList<>(cards.size());
         for (Card card : cards) {
-            if (packManager.isCardReleasedBetween(card.getCode(), mFilterStartDate, mFilterEndDate)) {
+            if (packManager.isCardReleasedBetween(card, mFilterStartDate, mFilterEndDate)) {
                 kept.add(card);
             }
         }
@@ -489,7 +489,7 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
             case 3:
                 return nameSectionTitle(card.Name);
             case CardSearcherManagerBase.SORT_RULE_RELEASE_DATE:
-                int date = DataManager.get().getPackManager().getCardReleaseDate(card.getCode());
+                int date = DataManager.get().getPackManager().getCardReleaseDate(card);
                 return date == 0 ? context.getString(R.string.section_title_unknown)
                         : context.getString(R.string.section_title_year, date / 10000);
             default:

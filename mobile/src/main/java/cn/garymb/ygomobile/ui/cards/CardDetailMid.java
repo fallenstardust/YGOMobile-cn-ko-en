@@ -83,7 +83,7 @@ abstract class CardDetailMid extends CardDetailBase {
         cardImage.setOnClickListener((v) -> {
             showCardImageDetail(cardInfo.Code);
         });
-        packName.setText(packManager.findPackNameById((cardInfo.getCode())));
+        packName.setText(packManager.getCardPackDisplayText(cardInfo));
 
         if (mCurrentSearchKeyword != null && !mCurrentSearchKeyword.isEmpty()) {
             name.setText(highlightKeywordBackground(cardInfo.Name, mCurrentSearchKeyword));
