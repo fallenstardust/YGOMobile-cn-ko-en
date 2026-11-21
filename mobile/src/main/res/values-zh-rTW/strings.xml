@@ -565,6 +565,7 @@
     <string name="sort_rule_time">時間↓</string>
     <!-- 搜尋結果分段說明 -->
     <string name="section_title_star">%1$d星</string>
+    <string name="section_title_link">LINK-%1$d</string>
     <string name="section_title_spell">魔法</string>
     <string name="section_title_trap">陷阱</string>
     <string name="section_title_other">其他</string>

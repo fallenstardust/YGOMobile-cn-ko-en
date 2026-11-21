@@ -579,6 +579,7 @@
     <string name="sort_rule_time">시간↓</string>
     <!-- 검색 결과 구간 표시 -->
     <string name="section_title_star">%1$d성</string>
+    <string name="section_title_link">LINK-%1$d</string>
     <string name="section_title_spell">마법</string>
     <string name="section_title_trap">함정</string>
     <string name="section_title_other">기타</string>
