@@ -151,16 +151,27 @@ public class DeckDragDropHelper {
      * 两条一起做：先置 LOCK_MODE_LOCKED_CLOSED 切断拦截链（canDragView 对非 UNLOCKED 抽屉直接判假），
      * 再 animate=false 立即归位，终止在途的 settle/drag 与残留位移；本项目的抽屉从不长期锁定，
      * 因此解锁统一回 UNLOCKED。
+     * <p>
+     * 立即归位前必须先问 isDrawerVisible：本布局缺某一扇抽屉时，DrawerLayout 的
+     * {@code closeDrawer(int, boolean)} 找不到该 gravity 的抽屉会直抛
+     * {@code IllegalArgumentException}（而 setDrawerLockMode 是静默返回），等于给只带一扇
+     * 抽屉的复用方埋一颗「长按起拖那一帧崩溃」的坑；isDrawerVisible 同 gravity 不抛异常。
      */
     private void lockDrawersForDrag() {
         if (drawersLocked) {
             return;
         }
         drawersLocked = true;
-        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, Constants.CARD_RESULT_GRAVITY);
-        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, Constants.CARD_SEARCH_GRAVITY);
-        drawerLayout.closeDrawer(Constants.CARD_RESULT_GRAVITY, false);
-        drawerLayout.closeDrawer(Constants.CARD_SEARCH_GRAVITY, false);
+        forceCloseDrawerIfPresent(Constants.CARD_RESULT_GRAVITY);
+        forceCloseDrawerIfPresent(Constants.CARD_SEARCH_GRAVITY);
+    }
+
+    /** 锁死该 gravity 的抽屉并立即归位（该 gravity 无抽屉时静默跳过，不抛） */
+    private void forceCloseDrawerIfPresent(int gravity) {
+        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, gravity);
+        if (drawerLayout.isDrawerVisible(gravity)) {
+            drawerLayout.closeDrawer(gravity, false);
+        }
     }
 
     /** 拖拽收尾恢复抽屉可正常拉出（幂等，未锁过时静默跳过） */

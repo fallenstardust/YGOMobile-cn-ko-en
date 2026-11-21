@@ -146,8 +146,9 @@ public class MessageUIHandler {
             engine.duelIsFirst = (playerType & 1) == 0;
             // 视角在这里被重新推断，昵称必须同步重绑：观战手动「切换视角」只翻 duelIsFirst 与
             // playerInfos 的左右名字（performSpectatorSwap），而 match 局间的本帧会把视角还原到
-            // 默认边——观战席位收不到 STOC_DUEL_START（那份包只随换备卡发给提交方），所以旧实现
-            // 里只有场面跟着还原、名字仍停在上一局的交换态，表现为「名字与卡组/场面反了」，
+            // 默认边——整场第一局的 STOC_DUEL_START 确实会发给观战（在那里绑一次），但 side 局进
+            // 下一局时它不重发（那份包只随换备卡发给提交方，观战只收 WAITING_SIDE），于是旧实现里
+            // 只有场面跟着还原、名字仍停在上一局的交换态，表现为「名字与卡组/场面反了」，
             // 投降与胜负结算读到的也是错位名字（用户反馈）。
             // bindViewNames 按座位重算是幂等的：对战席位收到过 STOC_DUEL_START 再算一次同值；
             // 残局/回放在方法内自行短路，不干扰各自 runner 按视角直写的名字。

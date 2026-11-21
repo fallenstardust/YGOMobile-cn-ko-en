@@ -248,14 +248,16 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
         // 决斗中的聊天/观战发言以 0xF1 伪帧录入当前 MSG 段（回放模式与决斗外场景自动丢弃，见 GameEngine::recordChatFrame），保存录像时随 V2 尾段并入 yrp，无引擎回放按时间线重现；libygo 不读尾段，兼容性不受影响
         GameEngine eng = activity.engine;
         if (eng != null) eng.recordChatFrame(playerType, message);
-        // 决斗语境不能只看 inDuel：它要到 MSG_START 真正「派发」时才置真（STOC_DUEL_START 反而先把它写假），
-        // 而观战端整条消息链常被动画闸门持住、开局与局间的队列里常存积压——这段窗口内到达的聊天
+        // 串行化判据不能只看 inDuel：它要到 MSG_START 真正「派发」时才置真（STOC_DUEL_START 反而先把它写假），
+        // 而观战端整条消息链常被动画闸门一段段持住、开局与局间的队列里常存积压——这段窗口内到达的聊天
         //（含服务端下发的召唤/特召系统弹幕）会绕过串行链在主线程即时上屏，抢在尚未派发的召唤动画
         // 前面出现，看上去就是「还没上场的怪兽的召唤词提前弹了」（用户反馈）。
-        // 判据改成「只要还在决斗语境或队列里还有存量，就必须排到链尾」：队列空时即时与排队等价，行为不变。
-        boolean duelContext = eng != null && !eng.replayMode
-                && (eng.inDuel || eng.duelStarted || eng.siding || eng.hasPendingMsgs());
-        if (duelContext) {
+        // 补的条件只取「队列里还有存量」这一条：队列空时即时与排队等价，而积压中的窗口靠 hasPendingMsgs
+        // 兜住（开局那一串消息里 duelStarted 已为真、inDuel 未真的那一拍队列也必然非空）。刻意不把
+        // duelStarted/siding 也纳进来：局间队列已排空时本就该即时显示，而新一局的 STOC_DUEL_START 会经
+        // prepareNewDuel 把 pendingMsgs 整段丢掉——把一条局间聊天压进那条会被硬清的队列，
+        // 会让它从此永不显示（聊天没有重放机会，不同于可重建的场面消息）。
+        if (eng != null && !eng.replayMode && (eng.inDuel || eng.hasPendingMsgs())) {
             // 对齐 C++：StocChat 与引擎消息在同一条“被动画阻塞”的串行链上（duelclient.cpp ClientAnalyze
             // 在 WaitFrameSignal 期间阻塞整条消息线程，STOC_CHAT 自然排在当前动画之后上屏）。
             // 原先在主线程即时 append，没有积压时（如人机先攻首回合）台词会抢在对应操作动画前面
