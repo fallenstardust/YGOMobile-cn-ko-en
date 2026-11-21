@@ -6,11 +6,14 @@
  */
 
 #include "scriptlib.h"
+#include "interpreter.h"
 #include "duel.h"
 #include "field.h"
 #include "card.h"
 #include "effect.h"
 #include "group.h"
+#include <lauxlib.h>
+#include <lua.h>
 
 /**
  * @brief 获取效果对象的属性值

@@ -11,6 +11,7 @@
 #include "group.h"
 #include "interpreter.h"
 #include <algorithm>
+#include <lauxlib.h>
 
 int32_t field::negate_chain(uint8_t chaincount) {
 	if(core.current_chain.size() == 0)
@@ -4730,7 +4731,7 @@ int32_t field::move_to_field(uint16_t step, card* target, uint32_t enable, uint3
 			if(playerid != move_player)
 				flag <<= 16;
 			pduel->write_buffer8(MSG_HINT);
-			pduel->write_buffer8(HINT_OPPO_SELECT_PLACE);
+			pduel->write_buffer8(HINT_ZONE);
 			pduel->write_buffer8(move_player);
 			pduel->write_buffer32(flag);
 		}
