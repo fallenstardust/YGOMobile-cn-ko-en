@@ -404,6 +404,25 @@ public class GameTopInfoManager extends GameTopInfoManagerBase {
         applyTurnHighlight(isMyTurn ? TURN_PLAYER_ME : TURN_PLAYER_OPP);
     }
 
+    /**
+     * 回合数随场面变更直接重取（观战防漏刷）：原先只有 MSG_NEW_TURN / MSG_NEW_PHASE 两条回调会写
+     * {@code tv_turn_counter}，观战端整条消息链被动画闸门一段段持住时，这两条链路只要有一次没走到
+     * UI（或到位时读的是已追前的实时值），数字就会长时间停在 reset() 写下的默认“1”，看上去像
+     * “好几个回合都是第一回合”（用户反馈）。本方法在任何一次场面变更后按 {@code field.turnCount}
+     * 重取一次，使显示恒与屏幕上真正呈现的局面同源；文本未变时不写，避免每帧重绘。
+     * <p>turnCount 为 0（新一局尚未进入首个回合：猜拳、开牌、堆叠建立阶段）时不写，保留默认“1”</p>
+     * 而不出现“第0回合”，高亮与回合方颜色仍由 {@link #updateTurn} 负责。
+     */
+    public void syncTurnCounter(GameField field) {
+        if (tvTurnCounter == null || field == null || field.turnCount <= 0) {
+            return;
+        }
+        final String text = String.valueOf(field.turnCount);
+        if (!text.contentEquals(tvTurnCounter.getText())) {
+            tvTurnCounter.setText(text);
+        }
+    }
+
     // === LP 血条与 LPBarFrame（drawing.cpp L936-973、L996-1003） ===
 
     /**
