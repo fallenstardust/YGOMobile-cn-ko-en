@@ -63,15 +63,23 @@ abstract class CardDisplayDialogBase {
 
     // 卡图宽高比 177:254：ImageView 高度 = 宽度 × CARD_ASPECT
     protected static final float CARD_ASPECT = 254f / 177f;
-    // 对话框宽度取 layout_game_right 实际宽度的四分之三
+    // 对话框宽度取 layout_game_right 实际宽度的四分之三（横屏沿用）
     protected static final float DIALOG_WIDTH_RATIO = 0.75f;
     /**
-     * 竖屏整体放大系数（宽与文本同比）：与 CardSelectDialog 一致。竖屏时 layout_game_right 即整屏宽，按
-     * {@link #DIALOG_WIDTH_RATIO} (0.75) 解算后弹窗与每张卡图明显小于横屏（横屏 layout_game_right 为长边、绝对宽更大）。
-     * 按需求把竖屏弹窗再放大——宽度以整屏两侧收进为准（0.75×1.25≈0.94，两侧各收进约 3%），卡图随宽度变大，
-     * 标题/卡位文本/确定按钮文本按同系数增大，消除旋转后「卡片图和它上面的文本被缩得更小」的观感。
+     * 竖屏弹窗宽度比例（用户规格：宽度与文本系数解耦，落在屏宽内、两侧保留少量留白）：
+     * 竖屏下 {@code layout_game_right} 即整屏宽，本比例直接就是屏宽占比，0.96 即两侧各留约 2%。
+     * 旧写法宽度 = 0.75 × {@link #PORTRAIT_SCALE}（文本系数同时拉宽），提到 0.82×1.25≈1.03
+     * 已被屏宽限幅到满屏（两侧无留白）；现宽度只看本比例、文本只看 {@link #PORTRAIT_SCALE}，
+     * 两者互不拉扯。横屏仍用 {@link #DIALOG_WIDTH_RATIO} × {@link #LANDSCAPE_SCALE}，行为不变；
+     * 与 {@link CardSelectDialogBase} 同一口径。
      */
-    protected static final float PORTRAIT_SCALE = 1.25f;
+    protected static final float PORTRAIT_WIDTH_RATIO = 0.96f;
+    /**
+     * 竖屏文本放大系数（用户规格：由 1.25 调小，与 CardSelectDialog 一致）：现只作用于
+     * 标题/卡位文本/确定按钮字号，不再参与宽度解算（见 {@link #PORTRAIT_WIDTH_RATIO}）。
+     * 调小后卡位标签更容易装进卡宽（少缩字/少省略），标签行与标题行也更矮、整组更紧凑。
+     */
+    protected static final float PORTRAIT_SCALE = 1.1f;
     /**
      * 横屏整体缩小系数（与 CardSelectDialog 一致）：按需求把横屏弹窗再等比例小一号，
      * 弹窗宽、卡图、标题/卡位文本/确定按钮字号同乘本系数，列表观感更紧凑。
@@ -157,6 +165,24 @@ abstract class CardDisplayDialogBase {
     /** 单卡槽步进（px，卡宽 + 左右外边距 {@link #SLOT_MARGIN_DP}dp×2）：滚动条翻页动画的位移基准，随卡图在 {@link #applyCardImageSize(int)} 烘培 */
     protected int slotStepPx = 0;
     /**
+     * 卡位标签可用宽（px）= 烘培后的固定槽宽，随 {@link #applyCardImageSize(int)} 更新：
+     * 标签只能在此宽度内缩字，不得反向撑宽槽位（否则五槽总宽溢出弹窗，最右第 5 张卡与其
+     * 上方标签被裁掉一半，用户反馈的竖屏只显示一半的根因）。
+     */
+    protected int slotLabelMaxPx = 0;
+    /**
+     * 皮肤宿主（TipHostLayout）：对话框背景贴图（sdialogl 九宫格）已由 {@code createTipHost}
+     * 从内容根上移到宿主，因此内容被内缩的量就是宿主的左右内边距，卡宽反推必须以它为准
+     *（见 {@link #containerWidthFor(int)}），不能硬编 16dp。
+     */
+    protected View contentHost;
+    /**
+     * 上一次已应用到卡图/槽位的内容可用宽（px）：插槽行是 match_parent，布局后的实测宽即真实可用宽；
+     * 除宿主内边距外仍可能有行/根的 margin 等隐藏内缩，故实测值与已应用值不符时按实测重烘一次
+     *（见 {@link #bindContainerWidthCorrection()}），确保五槽总宽恒等于可用宽。
+     */
+    protected int appliedContainerW = 0;
+    /**
      * 标题/卡位文本/确定按钮的基准字号（px，取自 XML，横竖屏 density 相同故一致）：首次 {@link #applyContentScale()}
      * 时捕获，此后按当前方向系数以绝对字号回写，避免横竖屏来回旋转时系数叠乘使文本越放越大。
      */
@@ -222,6 +248,8 @@ abstract class CardDisplayDialogBase {
         // cardtip 宿主：标签落在对话框内容层内部（见 CardStatusTipHelper.createTipHost），
         // 拖动弹窗时标签与卡片同层平移，移动过程中始终精准贴住卡片，不再停旧位等抬手重算
         FrameLayout tipHost = CardStatusTipHelper.createTipHost(context, root);
+        // 背景贴图已移到宿主，内容内缩量以宿主内边距为准（卡宽反推用）
+        contentHost = tipHost;
         popupWindow = new PopupWindow(tipHost,
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, false);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
@@ -285,13 +313,20 @@ abstract class CardDisplayDialogBase {
             }
         });
         btnOk.setOnClickListener(v -> dismiss());
+        // 行布局完成后按实测可用宽纠正卡宽/槽宽（推算宿主内边距之外仍可能有隐藏内缩）
+        bindContainerWidthCorrection();
         // 竖屏按系数放大标题/卡位文本/确定按钮字号（横屏 1.0 不变），与已放大的弹窗宽度、卡图同步
         applyContentScale();
     }
 
     /**
-     * 对话框宽度 = layout_game_right 实际宽度 × 3/4；
-     * 取不到时依次降级为窗口 decorView 宽度、屏幕宽度
+     * 对话框宽度 = layout_game_right 实际宽度 × 比例：横屏 {@link #DIALOG_WIDTH_RATIO} ×
+     * {@link #LANDSCAPE_SCALE}（0.75×0.9，行为不变），竖屏直接用 {@link #PORTRAIT_WIDTH_RATIO}
+     *（用户规格：宽度与文本系数解耦，落在屏宽内、两侧保留约 2% 留白，不再叠 {@link #PORTRAIT_SCALE}）；
+     * 取不到时依次降级为窗口 decorView 宽度、屏幕宽度。
+     * <p>结果一律按当前屏宽限幅（与 {@code DraggablePopupHelper.fitSizeToScreen} 同口径）：本宽既作弹窗
+     * 设计宽又用于反推每张卡宽与槽宽，包装层实际显示宽会被限到屏宽，此处不限则短屏/分屏下按未限幅宽
+     * 烘培的五槽总宽超出真实内容宽，卡片与标签被裁。
      */
     protected int resolveDialogWidth() {
         int w = 0;
@@ -310,7 +345,12 @@ abstract class CardDisplayDialogBase {
         if (w <= 0) {
             w = context.getResources().getDisplayMetrics().widthPixels;
         }
-        return Math.round(w * DIALOG_WIDTH_RATIO * contentScale());
+        int dialogW = DialogScale.isLandscape(context)
+                ? Math.round(w * DIALOG_WIDTH_RATIO * LANDSCAPE_SCALE)
+                : Math.round(w * PORTRAIT_WIDTH_RATIO);
+        int screenW = DialogScale.screenMetrics(context).widthPixels;
+        if (screenW > 0 && dialogW > screenW) dialogW = screenW;
+        return dialogW;
     }
 
     /** 当前方向的内容缩放系数：横屏 {@link #LANDSCAPE_SCALE}（等比例小一号），竖屏 {@link #PORTRAIT_SCALE} */
@@ -341,12 +381,43 @@ abstract class CardDisplayDialogBase {
     }
 
     /**
-     * 按对话框宽度反推每张卡宽（扣除根内边距 16dp×2 与每槽水平外边距 {@link #SLOT_MARGIN_DP}dp×2），
-     * 高度按 177:254 卡图比例计算，保证 ImageView 宽高与卡片比例一致；
-     * 槽位为 wrap_content，固定宽度后空槽位 GONE 时其余槽位尺寸不变并整体居中
+     * 按对话框宽度反推每张卡宽：可用宽 = 弹窗宽 − 皮肤宿主左右内边距（见
+     * {@link #containerWidthFor(int)}，旧写法硬编 16dp×2 会把卡烘得过大导致两端被裁），
+     * 再扣除每槽水平外边距 {@link #SLOT_MARGIN_DP}dp×2 后五等分；高度按 177:254 卡图比例计算，
+     * 保证 ImageView 宽高与卡片比例一致；槽位宽度同步钉为卡宽（原 wrap_content），空槽位 GONE 时
+     * 已显示槽的尺寸与间距不变、整组居中。
      */
     protected void applyCardImageSize(int dialogWidthPx) {
-        int containerW = dialogWidthPx - 2 * dp2px(16);
+        applySlotSizes(containerWidthFor(dialogWidthPx));
+    }
+
+    /**
+     * 弹窗内容真实可用宽（px）= 弹窗宽 − 皮肤宿主左右内边距。
+     * <p>旧写法把内缩硬编为 16dp×2，而 sdialogl 九宫格声明的内容内缩大于该值，五槽总宽因此
+     * 超出真实可用宽，居中的插槽行两侧各溢出约 1/4 卡宽——最左与最右两张卡（及其上方卡位标签）
+     * 只剩中间三张的 3/4（用户反馈）。宿主尚未就绪时仍按 16dp×2 兜底，随后的
+     * {@link #bindContainerWidthCorrection()} 会用行实测宽再纠正一次。
+     */
+    protected int containerWidthFor(int dialogWidthPx) {
+        int hPad = contentHost != null
+                ? contentHost.getPaddingLeft() + contentHost.getPaddingRight()
+                : 2 * dp2px(16);
+        return Math.max(0, dialogWidthPx - hPad);
+    }
+
+    /**
+     * 按真实可用宽反推卡宽并烘培卡图/槽位：
+     * <ul>
+     * <li>卡图与卡位标签：宽 = 可用宽五等分（已减槽外边距），高按 177:254 反推，保证宽高与卡片比例一致；</li>
+     * <li>槽位：宽同步钉为卡宽（原 wrap_content）——标签（如「魔法陷阱区[6]」、灵摆区「[7](2)」尾号）
+     *  超宽时只在槽内缩字而不撑宽槽位，否则整行溢出、两端卡片被裁（用户反馈）；同时因为宽是固定的，
+     *  不足五张时空槽 GONE 后已显示槽宽与间距完全不变，行中已有 {@code gravity="center"} 把不足的五张
+     *  整组居中，对齐 C++ {@code ResizeCardSelectButtons} 的「尺寸不变、整组居中」（若改用 weight 等分，
+     *  空槽消失后余下槽会变宽，卡间距随之拉开）。</li>
+     * </ul>
+     */
+    protected void applySlotSizes(int containerW) {
+        appliedContainerW = containerW;
         int cardW = (containerW - SLOT_COUNT * 2 * dp2px(SLOT_MARGIN_DP)) / SLOT_COUNT;
         if (cardW <= 0) return;
         slotStepPx = cardW + 2 * dp2px(SLOT_MARGIN_DP);
@@ -359,6 +430,74 @@ abstract class CardDisplayDialogBase {
                 iv.setLayoutParams(lp);
             }
         }
+        for (int i = 0; i < SLOT_COUNT; i++) {
+            View slot = slotViews[i];
+            if (slot != null) {
+                ViewGroup.LayoutParams slp = slot.getLayoutParams();
+                if (slp != null && slp.width != cardW) {
+                    slp.width = cardW;
+                    slot.setLayoutParams(slp);
+                }
+            }
+            TextView tv = tvPositions[i];
+            if (tv != null) {
+                ViewGroup.LayoutParams tlp = tv.getLayoutParams();
+                if (tlp != null && tlp.width != cardW) {
+                    tlp.width = cardW;
+                    tv.setLayoutParams(tlp);
+                }
+            }
+        }
+        slotLabelMaxPx = cardW;
+        fitAllPositionLabels();
+    }
+
+    /**
+     * 按插槽行的布局实测宽纠正卡宽：行是 match_parent，其实测宽就是内容可用宽，与推算值
+     * 不符（皮肤九宫格内缩、行/根 margin 等推算不到）时按实测重烘，保证五槽总宽恒等于可用宽
+     * （既等宽又不溢出）。差值小于 3px 不重烘，避免与布局回调互相触发。
+     */
+    protected void bindContainerWidthCorrection() {
+        if (slotViews[0] == null || !(slotViews[0].getParent() instanceof View)) return;
+        View row = (View) slotViews[0].getParent();
+        row.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
+            int w = r - l;
+            if (w <= 0 || Math.abs(w - appliedContainerW) < 3) return;
+            applySlotSizes(w);
+            row.requestLayout();
+        });
+    }
+
+    /**
+     * 卡位标签按固定槽宽自适应：先回写当前方向的基准字号（与 {@link #applyContentScale()} 同源，
+     * 旋转往复不叠乘），再按实测文本宽超槽宽的比例缩小本槽字号（下限为基准的 60%），仍装不下则
+     * 尾部省略号截断。基准取 {@code basePosPx}，上一次缩小的结果不会被当作新基准越缩越小。
+     */
+    protected void fitPositionLabel(int slot) {
+        TextView tv = slot >= 0 && slot < SLOT_COUNT ? tvPositions[slot] : null;
+        if (tv == null || slotLabelMaxPx <= 0) return;
+        float base = basePosPx > 0 ? basePosPx * contentScale() : tv.getTextSize();
+        if (base <= 0) return;
+        tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, base);
+        tv.setSingleLine(true);
+        CharSequence text = tv.getText();
+        int len = text == null ? 0 : text.length();
+        if (len == 0) {
+            tv.setEllipsize(null);
+            return;
+        }
+        float w = tv.getPaint().measureText(text, 0, len);
+        if (w > slotLabelMaxPx) {
+            tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, Math.max(base * 0.6f, base * slotLabelMaxPx / w));
+            tv.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        } else {
+            tv.setEllipsize(null);
+        }
+    }
+
+    /** 逐槽重取标签字号（旋转重排改变了弹窗宽与基准字号后必须重做一次） */
+    protected void fitAllPositionLabels() {
+        for (int i = 0; i < SLOT_COUNT; i++) fitPositionLabel(i);
     }
 
     /**
@@ -402,6 +541,8 @@ abstract class CardDisplayDialogBase {
             applyCardImageSize(width);
             // 旋转后按新方向系数回写字号（绝对回写不叠乘），使文本随卡图/弹窗宽同步缩放
             applyContentScale();
+            // 槽宽与卡位标签可用宽随新方向重烘，标签按新宽重新缩字（否则横转竖后仍按旧宽排布）
+            fitAllPositionLabels();
             ViewGroup.LayoutParams raw = inner.getLayoutParams();
             if (raw instanceof android.widget.FrameLayout.LayoutParams) {
                 android.widget.FrameLayout.LayoutParams flp =
@@ -549,6 +690,8 @@ abstract class CardDisplayDialogBase {
                 } else {
                     tvPositions[i].setBackgroundColor(COLOR_DEFAULT);
                 }
+                // 标签宽度受固定槽宽约束：超宽只缩本槽字号，不撑槽（五张卡等宽完整显示的硬约束）
+                fitPositionLabel(i);
                 // code 可能带 0x80000000 翻面标志位，掩码后再使用（对齐 duelclient.cpp code & 0x7fffffff）
                 int code = item.code & 0x7fffffff;
                 if (code > 0) {

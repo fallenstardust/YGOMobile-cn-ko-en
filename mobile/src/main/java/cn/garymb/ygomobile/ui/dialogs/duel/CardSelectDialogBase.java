@@ -67,15 +67,23 @@ abstract class CardSelectDialogBase {
 
     // 卡图宽高比 177:254：ImageView 高度 = 宽度 × CARD_ASPECT
     protected static final float CARD_ASPECT = 254f / 177f;
-    // 对话框宽度取 layout_game_right 实际宽度的四分之三
+    // 对话框宽度取 layout_game_right 实际宽度的四分之三（横屏沿用）
     protected static final float DIALOG_WIDTH_RATIO = 0.75f;
     /**
-     * 竖屏整体放大系数（宽与文本同比）：竖屏时 layout_game_right 即整屏宽，按 {@link #DIALOG_WIDTH_RATIO}
-     * (0.75) 解算后弹窗与每张卡图明显小于横屏（横屏 layout_game_right 为长边、绝对宽更大）。按需求把竖屏弹窗
-     * 再放大——宽度以整屏两侧收进为准（0.75×1.25≈0.94，两侧各收进约 3%），卡图随宽度变大，标题/卡位文本/
-     * 确定按钮文本按同系数增大，消除旋转后「卡片图和它上面的文本被缩得更小」的观感。
+     * 竖屏弹窗宽度比例（用户规格：宽度与文本系数解耦，落在屏宽内、两侧保留少量留白）：
+     * 竖屏下 {@code layout_game_right} 即整屏宽，本比例直接就是屏宽占比，0.96 即两侧各留约 2%。
+     * 旧写法宽度 = 0.75 × {@link #PORTRAIT_SCALE}（文本系数同时拉宽），提到 0.82×1.25≈1.03
+     * 已被屏宽限幅到满屏（两侧无留白）；现宽度只看本比例、文本只看 {@link #PORTRAIT_SCALE}，
+     * 两者互不拉扯。横屏仍用 {@link #DIALOG_WIDTH_RATIO} × {@link #LANDSCAPE_SCALE}，行为不变。
      */
-    protected static final float PORTRAIT_SCALE = 1.25f;
+    protected static final float PORTRAIT_WIDTH_RATIO = 0.96f;
+    /**
+     * 竖屏文本放大系数（用户规格：由 1.25 调小）：现只作用于标题/卡位文本/确定按钮字号，
+     * 不再参与宽度解算（见 {@link #PORTRAIT_WIDTH_RATIO}）。调小文本后：
+     * 一是卡位标签（如「魔法陷阱区[6]」、合计模式的「 值:xxx/xxx」）更容易装进卡宽，
+     * 少缩字、少省略；二是标签行/标题行高度变矮，整组更紧凑，卡图在屏宽内的占比反而更高。
+     */
+    protected static final float PORTRAIT_SCALE = 1.1f;
     /**
      * 横屏整体缩小系数（宽与文本同比）：横屏 {@code layout_game_right} 为长边、绝对宽更大，
      * 按 {@link #DIALOG_WIDTH_RATIO} (0.75) 解算后弹窗与每张卡图仍偏大。按需求把横屏弹窗再
@@ -85,7 +93,8 @@ abstract class CardSelectDialogBase {
     /**
      * 每个卡槽的水平外边距（dp，左右各一份）：与各 dialog_card_*.xml 中槽位
      * {@code layout_marginHorizontal} 一致，由原 4dp 收紧为 2dp 使卡片列表更紧凑
-     *（卡宽据此反推，需与 {@link #applyCardImageSize(int)} 扣除量同步）。
+     *（卡宽据此反推，需与 {@link #applyCardImageSize(int)} 扣除量同步）。卡间距恒为
+     * 2×本值，不足五张时空槽 GONE、已显示槽保持同一固定宽→间距不变、整组居中。
      */
     protected static final float SLOT_MARGIN_DP = 2f;
 
@@ -191,6 +200,24 @@ abstract class CardSelectDialogBase {
     protected final ImageView[] ivCards = new ImageView[SLOT_COUNT];
     /** 单卡槽步进（px，卡宽 + 左右外边距 {@link #SLOT_MARGIN_DP}dp×2）：滚动条翻页动画的位移基准，随卡图在 {@link #applyCardImageSize(int)} 烘培 */
     protected int slotStepPx = 0;
+    /**
+     * 卡位标签可用宽（px）= 烘培后的固定槽宽，随 {@link #applyCardImageSize(int)} 更新：
+     * 标签只能在这个宽度里缩字，不得反向把槽位撑宽（否则整行溢出弹窗宽，最右一张卡与其
+     * 上方标签被裁掉一半，用户反馈的竖屏第 5 张卡只显示一半的根因）。
+     */
+    protected int slotLabelMaxPx = 0;
+    /**
+     * 皮肤宿主（TipHostLayout）：对话框背景贴图（sdialogl 九宫格）已由 {@code createTipHost}
+     * 从内容根上移到宿主，因此内容被内缩的量就是宿主的左右内边距，卡宽反推必须以它为准
+     *（见 {@link CardSelectDialogMid#containerWidthFor(int)}），不能硬编 16dp。
+     */
+    protected View contentHost;
+    /**
+     * 上一次已应用到卡图/槽位的内容可用宽（px）：插槽行是 match_parent，布局后的实测宽即真实可用宽；
+     * 除宿主内边距外仍可能有行/根的 margin 等隐藏内缩，故实测值与已应用值不符时按实测重烘一次
+     *（见 {@link CardSelectDialogMid#bindContainerWidthCorrection()}），确保五槽总宽恒等于可用宽。
+     */
+    protected int appliedContainerW = 0;
     /**
      * 标题/卡位文本/确定按钮的基准字号（px，取自 XML，横竖屏 density 相同故一致）：首次 {@link #applyContentScale()}
      * 时捕获，此后按当前方向系数以绝对字号回写，避免横竖屏来回旋转时系数叠乘使文本越放越大。
