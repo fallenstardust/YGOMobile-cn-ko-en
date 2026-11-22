@@ -698,13 +698,27 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
         });
     }
 
-    /** 回放结束：用阶段文字（case 101）显示胜负 + 胜利原因（供门面 public showReplayResult 转发）；回放为观战视角，约定 player 0 胜=YOU WIN、player 1 胜=YOU LOSE、player 2=平局，winner<0 表示回放自然播放完毕（无 MSG_WIN 判定）不显示胜负文字 */
-    void showReplayResult(int winner, int reason, String winnerName) {
-        if (winner < 0) return;
+    /**
+     * 回放结束：用阶段文字（case 101）显示胜负 + 胜利原因（供门面 public showReplayResult 转发）。
+     * <p>胜负归属按「当前视角的我方」判定，与 duelclient.cpp MSG_WIN 的 {@code LocalPlayer(player) == 0}
+     * 同构，也与正常决斗/观战的 {@link #onDuelResult} 同口径：录像默认以录制者为视角 0
+     *（ReplayPlayer.startSession 恒置 duelIsFirst=true），但界面「切换视角」按钮会翻转视角侧
+     *（ReplayPlayer.performSwapField 翻 duelIsFirst 并对调名字/LP），此时胜者席位与视角侧不再相等。
+     * 旧写法按 {@code winner == 0} 恒判 YOU WIN，于是切换视角后「视角下方那侧输了」也被说成
+     * YOU WIN（用户反馈：录像里 YOU LOSE 经常不显示，总是只显示 YOU WIN）。
+     * winner==2 为平局（ocgcore PLAYER_NONE），winner&lt;0 表示回放自然播毕（无 MSG_WIN 判定）不显示胜负文字。
+     * <p>胜利说明的「[X] 原因」前缀取【败方】昵称（对齐 duelclient.cpp L1593-1600：我方胜时取
+     * clientname=对方=败者，我方负时取 hostname=我方=败者），不再由调用方传入胜者名。
+     */
+    void showReplayResult(int winner, int reason) {
+        // 引擎已释放（Activity 销毁中）时无视角可换算，也不再弹胜负文字
+        if (winner < 0 || activity.engine == null) return;
+        boolean selfWon = winner != 2 && activity.engine.localPlayer(winner & 1) == 0;
         int code = winner == 2 ? SpecEffectOverlay.TEXT_DRAW_GAME
-                : (winner == 0 ? SpecEffectOverlay.TEXT_YOU_WIN
+                : (selfWon ? SpecEffectOverlay.TEXT_YOU_WIN
                    : SpecEffectOverlay.TEXT_YOU_LOSE);
-        specEffect().showWinText(code, reason, winnerName);
+        String vicName = winner == 2 ? null : playerDisplayName(selfWon ? 1 : 0);
+        specEffect().showWinText(code, reason, vicName);
     }
 
     // === 门面生命周期 / 返回流程对录像状态的复位 ===
