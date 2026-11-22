@@ -201,8 +201,11 @@ abstract class YGOProActivityUi extends YGOProActivityBase {
         // 布局与 layout_game_right 只在录像、决斗、卡组编辑场景回显；大厅聊天（玩家等待）
         // 虽借 layout_game_right 承载聊天区但不属决斗，不得回显卡详面板与决斗场
         GameEngine eng = engine;
-        boolean replaySessionActive = eng != null && eng.replayMode
-                && eng.replayPlayer != null && eng.replayPlayer.hasActiveSession();
+        // 回放语境按会话状态判（LOADING 也算，见 isReplaySessionActive）：外部打开 yrp 时
+        // enterReplayUI 已把决斗场 UI 切上屏，而 replayMode/isRunning 要等后台线程解完录像才置位，
+        // 旧写法在这段窗口里遇到旋转重建会走「非决斗分支」收起 layout_game_right，GL 曲面随之销毁，
+        // 卡片移动动画永不递减、闸门只能按超时一段一段放行——即只剩决斗背景、场上没有卡片、录像卡住
+        boolean replaySessionActive = isReplaySessionActive();
         // 决斗结束弹窗（待点确定返回主界面）期间 engine.disconnect 已令 isStarted/isSpectator 等
         // 全部为假，但「决斗结束」dialog 仍居中于 layout_game_right，旋转不得隐藏它（用户规格：
         // 保持显示到点确定按钮后才隐藏，隐藏由 returnToLanMain 走非决斗分支完成）

@@ -57,6 +57,18 @@ public class MainMenuDialog {
     }
 
     public void showMainMenu() {
+        /**
+         * 回放会话进行中不得重显主菜单（用户反馈：外部打开 yrp 后只剩决斗背景、场上没有卡片和决斗场，
+         * 只听到起手抽卡音效却不再推进）：录像选择窗/设置窗的 dismiss 回调常在焦点变化或退场动画之后
+         * 才补触发 restoreMainMenu，而本方法尾部的 hideGameUI() 会把刚由 enterReplayUI 切过去的决斗场 UI
+         * 整层收起（layout_game_right GONE → GL 曲面销毁 → 卡片移动动画永不递减、统一动画闸门只能按
+         * 兜底超时一段段放行），本窗又偶发因窗口 token 瞬时失效显示失败被静默吞掉（见下方重试注释），
+         * 屏幕上就只剩窗口背景图。回放的收场由 ReplayModeDialog.quitReplay 显式完成（那时 replayMode
+         * 已复位，不受本拦截影响）。
+         */
+        if (activity.isReplaySessionActive()) {
+            return;
+        }
         // 注册自定义旋转重排逻辑：确保横屏转竖屏/竖屏转横屏时对话框按新方向重算宽度
         if (popupWindow != null && popupWindow.getContentView() instanceof FrameLayout) {
             draggableHelper.registerOrientationRelayout(popupWindow, this::relayoutOnRotation);
