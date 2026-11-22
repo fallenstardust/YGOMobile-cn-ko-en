@@ -146,6 +146,11 @@ public class DuelEventHandler extends DuelEventHandlerBase {
         /** 战斗阶段点击「攻击宣言」选中的怪兽：cmdFlag 已清空但尚未进入 arcAttacker 前需隐藏其 attack 箭头；
          *   该卡通讯中还有剩余攻击次数时会重新显示（见 CardOverlayRenderer.drawFieldCardOverlays 对 selectAttacking 的判断）。 */
         engine.field.selectAttacking = atkCard;
+        // 本端已走到攻击结算：按 C++ 口径收掉卡上的「可攻击」标志（duelclient.cpp SendResponse 对
+        // BATTLECMD 应答调 ClearCommandFlag），否则绿色弧播完到下一条战斗指令之间，其余仍可攻击
+        // 怪兽的 attack.png 上下浮动箭头会重新出现（用户反馈：弧动画开始时浮动攻击贴图应立刻消失）。
+        // 只碰攻击集，发动/召唤/切阶段等其余标志保持原样，下一条询问重设
+        engine.clearAttackCommands();
         if (dLoc != 0) {
             engine.soundManager.playSoundEffect(SoundManager.SFX.ATTACK);
             ClientCard defCard = engine.field.getCard(engine.localPlayer(dCtrl & 1), dLoc & 0x7f, dSeq);
