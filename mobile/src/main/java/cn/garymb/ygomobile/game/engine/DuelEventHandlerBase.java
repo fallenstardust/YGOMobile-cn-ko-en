@@ -667,8 +667,11 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
         // 取回的 ClientCard 对象可能残留此前作为手卡 / 洗切被置 0 的 handFlipT，若放任不管，
         // updateHandFlip 会以 0→1 逐帧推进，出现「背面入手→短暂停留→翻开」与原版不一致的观感。
         // 入手前直接把翻面进度吸附到正面终态，渲染线程永不看到其卡背态；code==0 时渲染层仍按卡码
-        // 画卡背不会误露。仅对 p==0（我方视角）生效，对方抽卡维持遮蔽背面语义不变
-        if (p == 0) {
+        // 画卡背不会误露。公开手卡模式（录像/纯单人，见 GameEngine.revealsBothHands）下对方抽卡同样
+        // 直接正面入手：两侧手卡本就是持续公开的，卡码已在手，先里侧抽入再翻正只属于联机对局向对手
+        // 揭示私有入手的语义（用户规格：该两步动画在录像/纯单人下要去掉，与 C++ 对齐）。
+        // 仅正常决斗/观战的对方侧维持卡背起手（其卡码已被服务器遮蔽为 0）
+        if (p == 0 || engine.revealsBothHands()) {
             pcard.handFlipT = 1f;
         } else {
             // 对手的抽卡必须保持卡背：强制 backface 终态（0f）+ 禁止显示 code=0 时的 cardback

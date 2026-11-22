@@ -506,7 +506,16 @@ public class DeckHandMotionManager {
         // 确保无论服务端是否解除 MSG_MOVE→HAND 遮蔽，已拿到的卡码都能支撑完整翻面确认
         arrivingCard.revealHeld = true;
         // localPlayer 已由调用方经 engine.localPlayer 转为本地视角索引：1 即对方席位
-        final boolean flip = localPlayer == 1 && !engine.replayMode;
+        // 公开手卡模式（录像/纯单人）不做「卡背起手→翻正」：两侧手卡本就持续公开、卡码已在手，
+        // 效果抽卡（卡组→手卡走本 MSG_MOVE 分支）应直接正面飞入，与通常抽卡（MSG_DRAW）及 C++ 同构
+        //（用户规格）；正常决斗/观战仍保留对方侧翻正确认不变
+        final boolean publicHand = engine.revealsBothHands();
+        final boolean flip = localPlayer == 1 && !publicHand;
+        if (publicHand && !faceupEntry) {
+            // 复用卡组顶旧对象时 handFlipT 可能残留上次作为手卡/洗切被置的 0f，若不吸附终态，
+            // updateHandFlip 会把它 0→1 逐帧翻正，正是「先里侧抽入再翻到正面」的来源
+            arrivingCard.handFlipT = arrivingCard.code != 0 ? 1f : 0f;
+        }
         if (!engine.field.revealHighlightCards.contains(arrivingCard)) {
             engine.field.revealHighlightCards.add(arrivingCard);
         }
