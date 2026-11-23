@@ -667,19 +667,15 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
         // 我方抽卡入手恒为正面（对齐 C++ gframe 我方手卡只按卡码贴卡面、从不走卡背）：从卡组顶
         // 取回的 ClientCard 对象可能残留此前作为手卡 / 洗切被置 0 的 handFlipT，若放任不管，
         // updateHandFlip 会以 0→1 逐帧推进，出现「背面入手→短暂停留→翻开」与原版不一致的观感。
-        // 公开手卡模式（录像/纯单人，见 GameEngine.revealsBothHands）下对方抽卡同样直接正面入手：
-        // 两侧手卡本就是持续公开的，卡码已在手，先里侧抽入再翻正只属于联机对局向对手揭示私有入手的
-        // 语义（用户规格：该两步动画在录像/纯单人下要去掉，与 C++ 对齐）。
-        // 吸附目标与 DeckHandMotionManager.applyMoveToHandReveal 同口径：只认卡码——有码才吸附正面
-        // 终态；无码（对手私有抽卡已经 localDrawCode 遮蔽为 0）直接落卡背终态。若对零码也写 1f，
-        // updateHandFlip 下一帧会按 code!=0 的目标把 1f 拉回 0f，卡背白走一次压窄展开的多余翻转。
-        // 仅正常决斗/观战的对方侧维持卡背起手（其卡码已被服务器遮蔽为 0）
-        if ((p == 0 || engine.revealsBothHands()) && pcard.code != 0) {
-            pcard.handFlipT = 1f;
-        } else {
-            // 对手的抽卡必须保持卡背：强制 backface 终态（0f）+ 禁止显示 code=0 时的 cardback
-            pcard.handFlipT = 0f;
-        }
+        // 入手朝向与 DeckHandMotionManager.applyMoveToHandReveal 同口径：只认卡码——
+        // 有码即吸附正面终态并以正面状态从卡组飞入手卡（我方抽卡、录像/单人的全量流
+        // 真实卡码、正正堂堂/真实之言类 EFFECT_PUBLIC 公开抽卡 bit31 都属此类）；
+        // 无码（对手私有抽卡已由 localDrawCode 遮蔽为 0）直接落卡背终态。
+        // 不能按「p==0 || revealsBothHands」预先分流：实况公开抽卡同样携带真实卡码，
+        // 若被塞进卡背分支，updateHandFlip 随后会按 code!=0 的目标把它 0→1 翻正，
+        // 即「先里侧抽入再翻到正面」的两步观感；反之对零码写 1f 也会被目标值拉回 0f，
+        // 卡背白白压窄展开一次。
+        pcard.handFlipT = pcard.code != 0 ? 1f : 0f;
         engine.field.addCard(p, handLoc, 0, pcard);
         for (ClientCard hc : engine.field.players[p].hand) {
             // 冻结待码的入手卡不参与让位重排，避免被提前拽离卡组顶坐标
@@ -712,11 +708,15 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
      * 翻成正面（GameFieldMotionBase.updateHandFlip L617 与 FieldCardRenderer.handShowsFace），
      * 于是出现「抽卡阶段常规抽卡 / 效果抽卡都把对方抽的卡亮出卡面」的泄露。故此处对对手（p==1）
      * 的私有抽卡把码遮蔽为 0、令手卡保持卡背；本方抽卡（p==0）与公开抽卡（bit31 置位，如天变
-     * 地异的 public 抽卡）保留原码。检索类「卡组→手卡」不走本路径（经 MSG_CONFIRM_CARDS 揭示），
+     * 地异的 public 抽卡）保留原码；公开手卡模式（录像/纯单人，见 GameEngine.revealsBothHands）
+     * 两侧手卡恒公开，遮蔽分支不启用——全量流里的真实卡码直接用于正面入手。
+     * 检索类「卡组→手卡」不走本路径（经 MSG_CONFIRM_CARDS 揭示），
      * 其展示不受影响——即「抽卡不展示、非抽卡把卡组卡加入手卡才展示」的口径。
      */
-    private static int localDrawCode(int p, int rawCode) {
-        if (p == 1 && (rawCode & 0x80000000) == 0) return 0;
+    private int localDrawCode(int p, int rawCode) {
+        // 公开手卡模式（录像/纯单人）不按视角遮蔽：否则 drawOneCard 只能按零码落卡背，
+        // 等后续手卡刷新补码时才翻正，正好抵消「抽卡直接正面入手」
+        if (!engine.revealsBothHands() && p == 1 && (rawCode & 0x80000000) == 0) return 0;
         return rawCode & 0x7fffffff;
     }
 
