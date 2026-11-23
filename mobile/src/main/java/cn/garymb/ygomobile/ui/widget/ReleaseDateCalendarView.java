@@ -41,9 +41,9 @@ import cn.garymb.ygomobile.lite.R;
  * （拖动端随手走，拖到左右边缘还会连续翻月，方便跨月选范围），松手后区间提交、日历不关。</p>
  *
  * <p>每个日期格子的高度固定为能放下三行卡包名小字，整月固定 6 行，
- * 翻页时日历与弹窗高度都不变；某天包名多于三行时，
- * 前两行照常绘制，第三行用现有的 {@link AlwaysMarqueeTextView} 横向滚动展示剩下的包名，
- * 不再截断成“+N”。</p>
+ * 翻页时日历与弹窗高度都不变；单行包名放不下一列宽时用 {@link AlwaysMarqueeTextView}
+ * 横向滚动展示，不再用省略号截断；某天包名多于三行时，前两行照常绘制，
+ * 第三行滚动展示剩下的包名，不再截断成“+N”。</p>
  *
  * <p>标题行左右各两对按钮：最外侧「» «」按年跳、内侧「› ‹」按月跳，
  * 翻到卡包数据覆盖的最早/最晚月份就停住。月份标题与星期名随系统语言，
@@ -59,7 +59,7 @@ public class ReleaseDateCalendarView extends FrameLayout {
     /** 一个月最多 6 行；行数固定为 6 行，翻月时日历高度不变 */
     private static final int ROWS = 6;
     private static final int COLS = 7;
-    /** 每个日期下方最多列几个卡包名，多出来的用“+N”表示 */
+    /** 每个日期下方最多列几行卡包名，多出来的并入第三行的滚动文本 */
     private static final int MAX_PACK_LINES = 3;
 
     /** 手势状态 */
@@ -115,8 +115,11 @@ public class ReleaseDateCalendarView extends FrameLayout {
     private final Set<Integer> mAvailableDates = new HashSet<>();
     /** 日期 → 当天发售的卡包名 */
     private final Map<Integer, List<String>> mPackNames = new HashMap<>();
-    /** 卡包名超过三行时，第三行用这个滚动文本循环展示剩余包名（按日期缓存） */
-    private final Map<Integer, AlwaysMarqueeTextView> mOverflowViews = new HashMap<>();
+    /**
+     * 卡包名滚动文本：键为 日期*10+行号。单行包名超过一列宽时用滚动文本代替截断，
+     * 超过三行的日期第三行固定滚动展示剩余包名
+     */
+    private final Map<Integer, AlwaysMarqueeTextView> mPackNameViews = new HashMap<>();
     private OnDateRangeChangedListener mListener;
 
     /** 已选的区间（yyyyMMdd）；打开时就是时间轴当前的区间 */
@@ -304,47 +307,72 @@ public class ReleaseDateCalendarView extends FrameLayout {
         if (changed) {
             requestLayout();
         }
-        syncOverflowViews();
+        syncPackNameViews();
         invalidate();
     }
 
     /**
-     * 把包名超过三行的日期挂上滚动文本：前两行仍由 onDraw 静态绘制，
-     * 第三行交给 {@link AlwaysMarqueeTextView} 循环滚动剩下的包名
+     * 同步当前月份可见的卡包名滚动文本：单行超过一列宽时挂 {@link AlwaysMarqueeTextView}
+     * 横向滚动（不再用省略号截断）；超过三行的日期，第三行固定滚动展示剩余包名
      */
-    private void syncOverflowViews() {
+    private void syncPackNameViews() {
+        int width = getWidth();
         int year = mMonth.get(Calendar.YEAR);
         int month = mMonth.get(Calendar.MONTH);
         int days = daysInMonth(year, month);
-        Set<Integer> needed = new HashSet<>();
-        for (int day = 1; day <= days; day++) {
-            int date = year * 10000 + (month + 1) * 100 + day;
-            List<String> names = mPackNames.get(date);
-            if (names != null && names.size() > MAX_PACK_LINES) {
-                needed.add(date);
+        Map<Integer, String> needed = new HashMap<>();
+        if (width > 0) {
+            float maxTextWidth = width / (float) COLS - dp(2);
+            for (int day = 1; day <= days; day++) {
+                int date = year * 10000 + (month + 1) * 100 + day;
+                List<String> names = mPackNames.get(date);
+                if (names == null || names.isEmpty()) {
+                    continue;
+                }
+                int staticLines = Math.min(MAX_PACK_LINES, names.size());
+                boolean overflow = names.size() > MAX_PACK_LINES;
+                if (overflow) {
+                    staticLines = MAX_PACK_LINES - 1;
+                }
+                for (int i = 0; i < staticLines; i++) {
+                    String name = names.get(i);
+                    if (name != null && mPackPaint.measureText(name) > maxTextWidth) {
+                        needed.put(packNameKey(date, i), name);
+                    }
+                }
+                if (overflow) {
+                    // 第三行循环展示放不下的其余包名
+                    needed.put(packNameKey(date, MAX_PACK_LINES - 1), overflowPackText(names));
+                }
             }
         }
-        Iterator<Map.Entry<Integer, AlwaysMarqueeTextView>> iterator = mOverflowViews.entrySet().iterator();
+        Iterator<Map.Entry<Integer, AlwaysMarqueeTextView>> iterator = mPackNameViews.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<Integer, AlwaysMarqueeTextView> entry = iterator.next();
-            if (!needed.contains(entry.getKey())) {
+            if (!needed.containsKey(entry.getKey())) {
                 removeView(entry.getValue());
                 iterator.remove();
             }
         }
-        for (Integer date : needed) {
-            String text = overflowPackText(mPackNames.get(date));
-            AlwaysMarqueeTextView view = mOverflowViews.get(date);
+        for (Map.Entry<Integer, String> entry : needed.entrySet()) {
+            int key = entry.getKey();
+            String text = entry.getValue();
+            AlwaysMarqueeTextView view = mPackNameViews.get(key);
             if (view == null) {
-                view = createOverflowView();
-                view.setTag(date);
-                mOverflowViews.put(date, view);
+                view = createPackNameView();
+                view.setTag(key);
+                mPackNameViews.put(key, view);
                 addView(view);
             }
             if (!text.contentEquals(view.getText())) {
                 view.setText(text);
             }
         }
+    }
+
+    /** 滚动文本的键：日期 + 行号（0..MAX_PACK_LINES-1），同一天多行互不覆盖 */
+    private static int packNameKey(int date, int line) {
+        return date * 10 + line;
     }
 
     /** 超出静态三行的那部分包名，用顿号连成一条给滚动文本来回显示 */
@@ -362,7 +390,7 @@ public class ReleaseDateCalendarView extends FrameLayout {
         return builder.toString();
     }
 
-    private AlwaysMarqueeTextView createOverflowView() {
+    private AlwaysMarqueeTextView createPackNameView() {
         AlwaysMarqueeTextView view = new AlwaysMarqueeTextView(getContext());
         view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 7);
         view.setTextColor(0x8CFFFFFF);
@@ -456,6 +484,15 @@ public class ReleaseDateCalendarView extends FrameLayout {
     }
 
     @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        if (w != oldw) {
+            // 宽度决定一列能放下多长的包名：等这一轮布局结束再挂滚动文本
+            post(this::syncPackNameViews);
+        }
+    }
+
+    @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         int width = right - left;
         float cellWidth = width / (float) COLS;
@@ -463,15 +500,20 @@ public class ReleaseDateCalendarView extends FrameLayout {
         int year = mMonth.get(Calendar.YEAR);
         int month = mMonth.get(Calendar.MONTH);
         int offset = monthOffset(year, month);
-        // 滚动文本固定坐在格子的第三行小字位置
-        float lineTop = gridTop + dp(3) + mNumberHeight + dp(2)
-                + mPackLineHeight * (MAX_PACK_LINES - 1);
+        // 滚动文本按 日期+行号 定位到对应格子的小字行
+        float lineTop = gridTop + dp(3) + mNumberHeight + dp(2);
         for (int i = 0; i < getChildCount(); i++) {
             View child = getChildAt(i);
             if (!(child.getTag() instanceof Integer)) {
                 continue;
             }
-            int date = (Integer) child.getTag();
+            int key = (Integer) child.getTag();
+            int date = key / 10;
+            int line = key % 10;
+            if (line < 0 || line >= MAX_PACK_LINES) {
+                child.layout(0, 0, 0, 0);
+                continue;
+            }
             int index = offset + date % 100 - 1;
             int row = index / COLS;
             int column = index % COLS;
@@ -481,7 +523,7 @@ public class ReleaseDateCalendarView extends FrameLayout {
                 continue;
             }
             int cellLeft = Math.round(column * cellWidth);
-            int lineY = Math.round(lineTop + row * mCellHeight);
+            int lineY = Math.round(lineTop + row * mCellHeight + line * mPackLineHeight);
             child.layout(cellLeft + dp(1), lineY,
                     Math.round(column * cellWidth + cellWidth) - dp(1), lineY + mPackLineHeight);
         }
@@ -715,6 +757,10 @@ public class ReleaseDateCalendarView extends FrameLayout {
             }
             float maxTextWidth = cellWidth - dp(2);
             for (int i = 0; i < shown; i++) {
+                if (mPackNameViews.containsKey(packNameKey(date, i))) {
+                    // 这行包名过长，已交给滚动文本子控件，静态绘制让位
+                    continue;
+                }
                 String text = fitText(names.get(i), maxTextWidth);
                 float lineBaseline = numberBottom + dp(2) + mPackLineHeight * (i + 1) - dp(2);
                 canvas.drawText(text, left + cellWidth / 2f, lineBaseline, packPaint);

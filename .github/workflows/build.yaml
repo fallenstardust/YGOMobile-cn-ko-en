@@ -112,6 +112,7 @@ jobs:
       run: |
         git clone https://github.com/mycard/ygopro-card-list.git --depth 1 ygopro-card-list
         mv ygopro-card-list/pack mobile/assets/data/
+        cp ygopro-card-list/pack.db.sql mobile/assets/data/
 
     - name: Prepare libWindbot.aar
       run: |

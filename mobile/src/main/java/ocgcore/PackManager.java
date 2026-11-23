@@ -58,11 +58,12 @@ public class PackManager implements Closeable {
     private final Map<Integer, String> sqlCardFirstPack = new ConcurrentHashMap<>();
     /**
      * 全部卡包的发售日期节点（yyyyMMdd，升序去重）：搜索结果的时间轴就按这些节点吸附滑动，
-     * 首尾节点即时间轴跨度。只知年份的包按当年 1 月 1 日入节点。
+     * 首尾节点即时间轴跨度。节点同时来自 pack.db.sql 与卡包 ydk 文件名，
+     * 只知年份的 ydk 包按当年 1 月 1 日入节点。
      */
     private final NavigableSet<Integer> releaseDateNodes = new ConcurrentSkipListSet<>();
     /**
-     * 发售日期（yyyyMMdd，已归一）→ 当天发售的卡包名（ydk 文件名去掉日期前缀）。
+     * 发售日期（yyyyMMdd，已归一）→ 当天发售的卡包名（sql 取包名列，ydk 取文件名去掉日期前缀）。
      * 日历里可选日期下方的小字用；同一天有多个包就按顺序存多个
      */
     private final Map<Integer, List<String>> packNamesByDate = new ConcurrentHashMap<>();
@@ -156,7 +157,7 @@ public class PackManager implements Closeable {
                 String packName = extractQuotedField(line, 1);
                 recordSqlReleaseDate(code, date, packName);
                 releaseDateNodes.add(date);
-                recordSqlPackName(date, packName);
+                recordPackName(date, packName);
                 rows++;
             }
         } catch (IOException e) {
@@ -209,10 +210,10 @@ public class PackManager implements Closeable {
     }
 
     /**
-     * 记下某一天发售的真实卡包名（日历里的日期小字用），取自 pack.db.sql 的包名列：
+     * 记下某一天发售的卡包名（日历里的日期小字用），sql 与卡包 ydk 共用：
      * 同一天多个包按出现顺序存多个，重名只留一个。空名不入表。
      */
-    private synchronized void recordSqlPackName(int date, String packName) {
+    private synchronized void recordPackName(int date, String packName) {
         if (packName == null || packName.isEmpty()) {
             return;
         }
@@ -343,7 +344,11 @@ public class PackManager implements Closeable {
             packList.add(new AbstractMap.SimpleEntry<>(packFileName, ids));
             int releaseDate = parseReleaseDate(packFileName);
             if (releaseDate > 0) {
-                // ydk 日期只作 sql 未收录卡的排序/过滤兜底；时间轴节点与日历小字改由 pack.db.sql 提供
+                // 扩展卡包 ypk/zip 与 expansions/pack 下的 ydk 日期也要进时间轴与日历；
+                // sql 未收录卡（如扩展包独有卡）的排序/过滤仍用这里的日期兜底
+                int node = normalizeReleaseDate(releaseDate);
+                releaseDateNodes.add(node);
+                recordPackName(node, packDisplayName(packFileName));
                 for (Integer id : ids) {
                     recordReleaseDate(id, releaseDate);
                 }
@@ -365,7 +370,7 @@ public class PackManager implements Closeable {
 
     /**
      * 某一天发售的卡包名（日历里的日期小字用），同一天多个包返回多个；
-     * 没有包的一天返回空表。日期均取自 pack.db.sql 的真实发售日，键与 {@link #getReleaseDateNodes()} 一致。
+     * 没有包的一天返回空表。日期取自 pack.db.sql 与卡包 ydk，键与 {@link #getReleaseDateNodes()} 一致。
      */
     public synchronized Map<Integer, List<String>> getPackNamesByDate() {
         Map<Integer, List<String>> copy = new ConcurrentHashMap<>(packNamesByDate.size() * 2);
@@ -375,6 +380,28 @@ public class PackManager implements Closeable {
             copy.put(entry.getKey(), names);
         }
         return copy;
+    }
+
+    /**
+     * ydk 文件名转日历展示的卡包名：去掉 {@code .ydk} 与 {@code yyyy-MM-dd } 日期前缀，
+     * 例如 {@code 2024-04-01 1205.ydk → 1205}；无日期前缀时保留原名。
+     */
+    private static String packDisplayName(String packFileName) {
+        if (packFileName == null) {
+            return "";
+        }
+        String name = packFileName;
+        int dot = name.lastIndexOf(Constants.YDK_FILE_EX);
+        if (dot > 0) {
+            name = name.substring(0, dot);
+        }
+        if (name.length() > 5 && name.charAt(4) == '-') {
+            int space = name.indexOf(' ', 5);
+            if (space > 0 && space + 1 < name.length()) {
+                return name.substring(space + 1).trim();
+            }
+        }
+        return name;
     }
 
     /**
@@ -430,9 +457,9 @@ public class PackManager implements Closeable {
     }
 
     /**
-     * 时间轴的滑动节点：pack.db.sql 里出现过的真实发售日（yyyyMMdd，升序去重）。
+     * 时间轴的滑动节点：pack.db.sql 与卡包 ydk 文件名里出现过的发售日（yyyyMMdd，升序去重）。
      * <p>
-     * 逐卡精确到日，不再有 ydk 那种“只知年份按 1 月 1 日入节点”的人造节点；sql 还没读到时返回空数组。
+     * sql 逐卡精确到日；ydk 只知年份的包按当年 1 月 1 日入节点。都还没读到时返回空数组。
      */
     public int[] getReleaseDateNodes() {
         int[] nodes = new int[releaseDateNodes.size()];

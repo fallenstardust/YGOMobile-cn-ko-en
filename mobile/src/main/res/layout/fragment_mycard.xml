@@ -29,11 +29,12 @@
                 android:layout_marginHorizontal="5dp"
                 android:orientation="vertical">
 
-                <androidx.appcompat.widget.AppCompatTextView
+                <cn.garymb.ygomobile.ui.widget.AlwaysMarqueeTextView
                     android:id="@+id/tv_name"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center|right"
+                    android:maxWidth="160dp"
                     android:text="@string/login_mycard"
                     android:textColor="@color/holo_green_bright"
                     android:textSize="16sp"

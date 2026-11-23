@@ -70,3 +70,4 @@ output-metadata.json
 
 /mobile/cn/release/baselineProfiles/
 /mobile/libs
+/mobile/assets/data/*.sql
