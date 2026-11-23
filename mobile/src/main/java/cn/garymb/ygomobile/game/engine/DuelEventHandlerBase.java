@@ -667,12 +667,14 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
         // 我方抽卡入手恒为正面（对齐 C++ gframe 我方手卡只按卡码贴卡面、从不走卡背）：从卡组顶
         // 取回的 ClientCard 对象可能残留此前作为手卡 / 洗切被置 0 的 handFlipT，若放任不管，
         // updateHandFlip 会以 0→1 逐帧推进，出现「背面入手→短暂停留→翻开」与原版不一致的观感。
-        // 入手前直接把翻面进度吸附到正面终态，渲染线程永不看到其卡背态；code==0 时渲染层仍按卡码
-        // 画卡背不会误露。公开手卡模式（录像/纯单人，见 GameEngine.revealsBothHands）下对方抽卡同样
-        // 直接正面入手：两侧手卡本就是持续公开的，卡码已在手，先里侧抽入再翻正只属于联机对局向对手
-        // 揭示私有入手的语义（用户规格：该两步动画在录像/纯单人下要去掉，与 C++ 对齐）。
+        // 公开手卡模式（录像/纯单人，见 GameEngine.revealsBothHands）下对方抽卡同样直接正面入手：
+        // 两侧手卡本就是持续公开的，卡码已在手，先里侧抽入再翻正只属于联机对局向对手揭示私有入手的
+        // 语义（用户规格：该两步动画在录像/纯单人下要去掉，与 C++ 对齐）。
+        // 吸附目标与 DeckHandMotionManager.applyMoveToHandReveal 同口径：只认卡码——有码才吸附正面
+        // 终态；无码（对手私有抽卡已经 localDrawCode 遮蔽为 0）直接落卡背终态。若对零码也写 1f，
+        // updateHandFlip 下一帧会按 code!=0 的目标把 1f 拉回 0f，卡背白走一次压窄展开的多余翻转。
         // 仅正常决斗/观战的对方侧维持卡背起手（其卡码已被服务器遮蔽为 0）
-        if (p == 0 || engine.revealsBothHands()) {
+        if ((p == 0 || engine.revealsBothHands()) && pcard.code != 0) {
             pcard.handFlipT = 1f;
         } else {
             // 对手的抽卡必须保持卡背：强制 backface 终态（0f）+ 禁止显示 code=0 时的 cardback
