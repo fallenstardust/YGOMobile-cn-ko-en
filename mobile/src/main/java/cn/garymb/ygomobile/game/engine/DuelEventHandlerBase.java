@@ -533,7 +533,8 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
         if (chainCount < 1 || chainCount > chains.size()) return;
         GameField.ChainInfo ci = chains.get(chainCount - 1);
         if (ci == null || ci.code <= 0) return;
-        EffectActivationLedger.markApplied(ci.code, ci.desc & 0xf, ci.controler, engine.field.turnCount);
+        EffectActivationLedger.markApplied(ci.code, EffectActivationLedger.resolveOffset(ci.code, ci.desc),
+                ci.controler, engine.field.turnCount);
         GameTopInfoManager.refreshApplyingEffects();
     }
 
@@ -589,8 +590,8 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
         if (chainCount < 1 || chainCount > chains.size()) return;
         GameField.ChainInfo ci = chains.get(chainCount - 1);
         if (ci == null || ci.code <= 0) return;
-        EffectActivationLedger.markPledgeNegated(ci.code, ci.desc & 0xf, ci.controler,
-                engine.field.turnCount, disabled);
+        EffectActivationLedger.markPledgeNegated(ci.code, EffectActivationLedger.resolveOffset(ci.code, ci.desc),
+                ci.controler, engine.field.turnCount, disabled);
         GameTopInfoManager.refreshApplyingEffects();
     }
 

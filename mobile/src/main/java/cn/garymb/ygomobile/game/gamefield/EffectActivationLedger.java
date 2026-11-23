@@ -35,13 +35,19 @@ import ocgcore.data.Card;
  */
 public final class EffectActivationLedger {
 
-    /** 一条发动记录：效果段落锚点 offset + 发动半场（本地索引 0=我方 1=对方）+ 发动回合号
-     * + 发动时所在区域（MSG_CHAINING 的 triggering_location，0=未知）。
+    /** 一条发动记录：效果段落文档序 offset + 发动时的 cdb str 索引 + 发动半场（本地索引 0=我方 1=对方）
+     * + 发动回合号 + 发动时所在区域（MSG_CHAINING 的 triggering_location，0=未知）。
+     * <p>offset 不再是 desc 低 4 位：按 desc 文本反查卡面圆圈序（见 {@link #resolveOffset}），
+     * 供卡详段落标记与呼吸高亮定位；{@code descOffset} 保留原始 str 索引，供
+     * {@code ContinuousEffectApplier} 仍按 {@code code*16+descOffset} 取 cdb 提示文字。
      *  side 非 final：视角互换就地翻转（保持对象身份，使 {@link #LOG} 里的引用仍可精确剪除）。
      *  negated/disabled 也非 final 且不进 equals/hashCode：它们是链的结算结果（状态）而不是
      *  发动本身的身份，同键的另一条已存在记录仍应归一 */
     public static final class Activation {
         public final int offset;
+        /** 发动时 desc 的低 4 位（cdb {@code texts.str{n+1}} 索引）：文本反查后与段落序不同轴，
+         *  取 cdb str 文本时仍必须用它 */
+        public final int descOffset;
         public int side;
         public final int turn;
         /** 发动时卡所在区域（ocgcore  LOCATION：手卡 0x02 / 魔陷区 0x08 …）：「这张卡从手卡发动的场合」
@@ -59,8 +65,9 @@ public final class EffectActivationLedger {
          *  状态不入 equals/hashCode（同 negated/disabled：它们是结算结果而非发动身份） */
         public boolean applied;
 
-        Activation(int offset, int side, int turn, int location) {
+        Activation(int offset, int descOffset, int side, int turn, int location) {
             this.offset = offset;
+            this.descOffset = descOffset;
             this.side = side;
             this.turn = turn;
             this.location = location;
@@ -96,8 +103,19 @@ public final class EffectActivationLedger {
 
     private EffectActivationLedger() {}
 
+    /**
+     * 把 desc 整数解析为账本使用的段落文档序：按 desc 文本反查卡面圆圈序，反查不到才回退
+     * 低 4 位（详见 {@link EffectParagraphLookup}）。引擎侧 {@code markApplied} /
+     * {@code markPledgeNegated} 必须经本方法取 offset，与 {@link #record} 写入的键同轴。
+     */
+    public static int resolveOffset(int code, int descRaw) {
+        return EffectParagraphLookup.offsetOf(code, descRaw);
+    }
+
     /** 登记 code 卡（半场 side、回合 turn、发动区域 location）发动了 descRaw 指向的效果：仅卡码型字符串 id
-     *（>MAX_STRING_ID）有段落序含义，desc==0（脚本未 SetDescription）与系统字符串 id 忽略。
+     *（>MAX_STRING_ID）有段落含义，desc==0（脚本未 SetDescription）与系统字符串 id 忽略。
+     * <p>offset 经 {@link #resolveOffset} 按 desc 文本反查到卡面圆圈序，同时保留原始 str 索引进
+     * {@code Activation.descOffset}。
      * <p>幂等去重（评审 Minor①）：同 (code, offset, side, turn) 键已存在任何日志行时直接返回，
      * 不重复成行——重放/自愈重复投递同一条 MSG_CHAINING 不再把 LOG 推得比服务端
      *  silentChainEvents 大（dropBeyond 误清保留前缀方向）；合法的同键重复发动本只需一条标记，
@@ -106,7 +124,8 @@ public final class EffectActivationLedger {
     public static void record(int code, int descRaw, int side, int turn, int location) {
         long uid = descRaw & 0xFFFFFFFFL;
         if (code <= 0 || uid <= DataManager.MAX_STRING_ID) return;
-        int offset = (int) (uid & 0xf);
+        int offset = EffectParagraphLookup.offsetOf(code, descRaw);
+        int descOffset = (int) (uid & 0xf);
         synchronized (LOG) {
             // 主码行四字段全等即视为同一笔发动（side 为当前视角屏幕侧，swapSides 后两侧
             // 同步翻转，比较口径自洽）
@@ -125,11 +144,11 @@ public final class EffectActivationLedger {
             int[] codes = new int[n];
             Activation[] acts = new Activation[n];
             codes[0] = code;
-            acts[0] = new Activation(offset, side, turn, location);
+            acts[0] = new Activation(offset, descOffset, side, turn, location);
             addCode(code, acts[0]);
             if (mirror) {
                 codes[1] = c.Alias;
-                acts[1] = new Activation(offset, side, turn, location);
+                acts[1] = new Activation(offset, descOffset, side, turn, location);
                 addCode(c.Alias, acts[1]);
             }
             // 每条 record() 调用占一行日志（即使等值去重未新增也记录，与发动事件计数同长），

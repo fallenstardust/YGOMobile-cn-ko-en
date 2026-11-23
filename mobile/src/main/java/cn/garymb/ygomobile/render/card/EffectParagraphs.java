@@ -43,6 +43,13 @@ public final class EffectParagraphs {
     /** 段落总数＝最大文档序 + 1；越界的 offset（辅助/适用效果让位槽）自然无命中 */
     public final int paragraphCount;
 
+    /**
+     * 段落文档序 → 匹配用归一化文本的惰性缓存（{@link #normalizeForMatch} 的结果）。
+     * 纯派生数据：首次 {@link #indexOfText} 时构建，之后只读；并发构建结果一致，
+     * volatile 发布保证可见性，不改变本类的不可变语义。
+     */
+    private volatile String[] normalizedParagraphs;
+
     private EffectParagraphs(String desc, List<int[]> lines, int[] paraOf,
                              int[] paraAnchor, int[] frameOf, int frameCount, int paragraphCount) {
         this.desc = desc;
@@ -165,6 +172,83 @@ public final class EffectParagraphs {
             if (paraOf[i] != offset) continue;
             if (sb.length() > 0) sb.append('\n');
             sb.append(lineAt(i));
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 按文本反查段落文档序：目标文本即 cdb {@code texts.str{n+1}}（脚本 {@code aux.Stringid(code, n)}
+     * 取到的提示文字）。先做归一化比较（去空白/标点/圆圈序号、大小写折叠），再依次退到前缀、包含；
+     * 命中不唯一（同文段落/同长度重叠）时返回 -1，由调用方回退旧口径，绝不猜。
+     * <p>用于解耦「cdb str 索引」与「卡面圆圈序」：脚本给效果的 description 低 4 位是 str 索引，
+     * 只有文本内容才能可靠对应到 ①/②/③ 段落。
+     */
+    public int indexOfText(String text) {
+        String target = normalizeForMatch(text);
+        if (target.isEmpty() || paragraphCount <= 0) return -1;
+        String[] paras = ensureNormalizedParagraphs();
+        // 优先全文相等：唯一才认，同文多段视为歧义
+        int exact = -1, exactCount = 0;
+        for (int off = 0; off < paragraphCount; off++) {
+            if (paras[off].isEmpty() || !paras[off].equals(target)) continue;
+            exact = off;
+            exactCount++;
+        }
+        if (exactCount == 1) return exact;
+        if (exactCount > 1) return -1;
+        int hit = bestOverlap(paras, target, true);
+        if (hit >= 0) return hit;
+        return bestOverlap(paras, target, false);
+    }
+
+    /** 非精确匹配的最短公共长度（归一化后字符数）：过滤「这张卡」一类过短通用句的误命中 */
+    private static final int MATCH_MIN_LEN = 6;
+
+    /** 惰性构建并缓存各段归一化文本；并发首次调用可能各建一份，结果等价且只发布其中之一 */
+    private String[] ensureNormalizedParagraphs() {
+        String[] cached = normalizedParagraphs;
+        if (cached != null) return cached;
+        String[] built = new String[paragraphCount];
+        for (int off = 0; off < paragraphCount; off++) {
+            built[off] = normalizeForMatch(paragraphText(off));
+        }
+        normalizedParagraphs = built;
+        return built;
+    }
+
+    /** 在归一化段落里取与目标公共长度最长且唯一的一段；prefixOnly=true 只认前缀包含 */
+    private static int bestOverlap(String[] paras, String target, boolean prefixOnly) {
+        int best = -1, bestLen = 0;
+        boolean tie = false;
+        for (int off = 0; off < paras.length; off++) {
+            String para = paras[off];
+            if (para.isEmpty()) continue;
+            boolean hit;
+            if (prefixOnly)
+                hit = para.startsWith(target) || target.startsWith(para);
+            else
+                hit = para.contains(target) || target.contains(para);
+            if (!hit) continue;
+            int len = Math.min(para.length(), target.length());
+            if (len < MATCH_MIN_LEN) continue;
+            if (len > bestLen) {
+                bestLen = len;
+                best = off;
+                tie = false;
+            } else if (len == bestLen) {
+                tie = true;
+            }
+        }
+        return tie ? -1 : best;
+    }
+
+    /** 匹配用归一化：只保留字母/数字（含汉字假名韩文）并折叠大小写，丢弃空白、标点与圆圈序号 */
+    private static String normalizeForMatch(String s) {
+        if (s == null || s.isEmpty()) return "";
+        StringBuilder sb = new StringBuilder(s.length());
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (Character.isLetterOrDigit(c)) sb.append(Character.toLowerCase(c));
         }
         return sb.toString();
     }

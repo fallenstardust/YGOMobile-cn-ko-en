@@ -436,8 +436,9 @@ public final class ContinuousEffectApplier {
             boolean hit = model.hasParagraph(a.offset);
             if (!hit && !legacySingle) continue;
             String paragraph = hit ? model.blockText(a.offset) : (legacySingle ? model.desc : "");
-            // cdb str：上游整改后即该段效果文字（短标签或全文）
-            String str = DataManager.get().getDesc((int) ((long) canonical * 16 + a.offset), "");
+            // cdb str（短标签或全文）：按发动时的原始 str 索引取——文本反查后 a.offset 是卡面
+            // 段落文档序，与 cdb str 索引已不同轴，不能再拿它拼 code*16+offset
+            String str = DataManager.get().getDesc((int) ((long) canonical * 16 + a.descOffset), "");
             // 档位收紧（按规律 1/2/3 区分两型无效）：只收「持续适用句」，发动被无效（negated）时摘掉
             // 『…发动的回合』与附加处理档、只留括号内的仍然适用的誓约；效果被无效（disabled）时摘掉
             // 附加处理档（是卡的效果）、保留括号内与『…发动的回合』两档（都不是效果）；

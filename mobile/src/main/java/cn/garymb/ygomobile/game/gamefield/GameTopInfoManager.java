@@ -238,6 +238,9 @@ public class GameTopInfoManager extends GameTopInfoManagerBase {
         // 新一局/重进决斗：上一局的持续适用条目不再成立，徽标与下拉列表一并收口
         resetApplyingHints();
         ContinuousEffectApplier.clearCache();
+        // 卡码→段落模型缓存同步收口：卡包热更/切换语言后按 Card.Desc 引用自动失效，
+        // 这里再于新一局/重进决斗清一次，防长期驻留
+        EffectParagraphLookup.clearCache();
         setPlayerDisplay(0, Constants.PlayerName, DEFAULT_LP_TEXT);
         setPlayerDisplay(1, "Opponent", DEFAULT_LP_TEXT);
         setTurnText(DEFAULT_TURN_TEXT);

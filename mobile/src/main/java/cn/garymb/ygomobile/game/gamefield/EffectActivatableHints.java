@@ -14,10 +14,14 @@ import ocgcore.data.Card;
 /**
  * 指令级「可发动效果」登记簿：登记当前命令询问下发的各可发动选项 desc
  *（MSG_SELECT_IDLE_CMD / MSG_SELECT_BATTLE_CMD / MSG_SELECT_CHAIN 每条可发动项均携带
- * 效果 uid = code*16+段落文档序）。登记点与呼吸绿点/conti_act 动画同源：
+ * 效果 uid = code*16+str 索引）。登记点与呼吸绿点/conti_act 动画同源：
  * CommandDataParser / ChainSelectController 在置 COMMAND_ACTIVATE 标志、入列
  * GameEngine.activatableCards 的同一时刻即登记，玩家点击带绿点的卡即发光，
  * 无需等到命令菜单出现「发动」按钮。
+ * <p>段落序不再直接取 desc 低 4 位：低 4 位只是 cdb {@code texts.str{n+1}} 的索引，
+ * 脚本 {@code aux.Stringid(id, n)} 的 n 与卡面 ①②③ 圆圈序并不保证一致（超量素材提示等
+ * 占用低位是常见情形）。登记时统一经 {@link EffectParagraphLookup#offsetOf} 用 desc 文本
+ * 在卡面描述里反查真实段落序，查不到才回退旧口径。
  * <p>与 {@link EffectActivationLedger}（已发动：绿/红勾+置灰，跨回合账本）相对，本登记簿
  * 只描述「此刻可发动」：登记维度为卡码 × 半场（本地索引 0=我方 1=对方，同账本口径），
  * 异画与本卡共用效果脚本，登记时按卡码镜像写入其 alias，查询按 卡码+alias 并集。
@@ -38,17 +42,18 @@ public final class EffectActivatableHints {
     private EffectActivatableHints() {}
 
     /** 登记 code 卡（半场 side）的一个可发动选项 desc：仅卡码型字符串 id（>MAX_STRING_ID）
-     *  有段落序含义，desc==0（无效果文字的选项，如召唤/特召段）与系统字符串 id 忽略；
-     *  低 4 位=效果段落文档序下标（上游 cdb/script 已整改为与卡面圆圈序一致），
-     *  选项重复下发以幂等集合去重 */
+     *  有段落含义，desc==0（无效果文字的选项，如召唤/特召段）与系统字符串 id 忽略；
+     *  段落序经 {@link EffectParagraphLookup#offsetOf} 按 desc 文本反查卡面圆圈序
+     *  （反查失败才回退低 4 位），选项重复下发以幂等集合去重 */
     public static void register(int code, int side, int descRaw) {
         long uid = descRaw & 0xFFFFFFFFL;
         if (code <= 0 || uid <= DataManager.MAX_STRING_ID) return;
-        add(code, side, (int) (uid & 0xf));
+        int offset = EffectParagraphLookup.offsetOf(code, descRaw);
+        add(code, side, offset);
         // alias 镜像：异画卡与其的本卡（或反之）共用同一效果段落编号，两码都要能查到
         Card c = DataManager.get().getCardManager().getCard(code);
         if (c != null && c.Alias > 0 && c.Alias != code) {
-            add(c.Alias, side, (int) (uid & 0xf));
+            add(c.Alias, side, offset);
         }
     }
 

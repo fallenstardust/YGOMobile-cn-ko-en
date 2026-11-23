@@ -585,10 +585,10 @@ class CardInfoBinder {
     private static final String USED_MARK_PREFIX = "\u00A0 ";
 
     /**
-     * 在关键词高亮结果上叠加「已发动效果」标记（上游 cdb/script 已整改为文档序：效果发动
-     * 经 MSG_CHAINING 下发的描述串=code*16+段落文档序，低 4 位序号即「序号文本数组」下标）。
-     * refs 为发动引用集（descHints 合成记录 + 账本 Activation），卡码型 id 直接按
-     * offset==段落文档序命中，不再做 str 文本匹配（cdb str 保留原文本、不含段落全文）：
+     * 在关键词高亮结果上叠加「已发动效果」标记。refs 为发动引用集（descHints 合成记录 + 账本
+     * Activation）：账本条目的 offset 已由 {@code EffectActivationLedger.resolveOffset} 按 desc
+     * 文本反查为段落文档序；descHints 路径仍按 desc 低 4 位（CLIENT_HINT 的短标签另行兜底）。
+     * 卡码型 id 命中 offset==段落文档序即标整段：
      * <ol>
      * <li>序号文本数组原则（用户规格2）：卡面带序号段落共 n 个、灵摆框段 p 个，文档序
      * 跨框全局连续——下标 0..p-1 为灵摆框段、p..n-1 为怪兽框段，offset 直指对应段。</li>
@@ -620,10 +620,10 @@ class CardInfoBinder {
         final int nowTurn = EffectActivationLedger.getCurrentTurn();
         for (EffectRef ref : refs) {
             long uid = ref.id & 0xFFFFFFFFL;
-            // offset 直指（用户规格：上游已整改为文档序编号）：系统字符串 id（≤MAX_STRING_ID）
-            // 无段序含义不标；卡码型 id 低 4 位=段落文档序下标，命中 meta.docIdx 即标整段，
-            // 越界（辅助/适用效果预留的 ≥n 让位槽）自然无命中。异画卡 Stringid 用原卡号，
-            // uid>>>4 天然共享条目
+            // offset 直指段落文档序：系统字符串 id（≤MAX_STRING_ID）无段序含义不标；
+            // 卡码型 id 的低 4 位即段落下标（账本已在登记时按文本反查归轴），
+            // 命中 meta.docIdx 即标整段，越界（辅助/适用效果预留的 ≥n 让位槽）自然无命中。
+            // 异画卡 Stringid 用原卡号，uid>>>4 天然共享条目
             if (uid <= DataManager.MAX_STRING_ID) continue;
             int offset = (int) (uid & 0xf);
             int head = model.firstLineOf(offset);
@@ -635,7 +635,7 @@ class CardInfoBinder {
             markParagraph(mark, paraOf, head, ref.side == 0 ? 2 : 1);
         }
         // 通讯可发动效果段落（绿/黄呼吸点与 conti_act 动画同源数据：MSG_SELECT_* 选项 desc
-        // 低 4 位=段落文档序）：双半场各自记录归属（1=对方 2=我方），与已发动置灰互不影响
+        // 已在登记时按文本反查归轴）：双半场各自记录归属（1=对方 2=我方），与已发动置灰互不影响
         int[] glowSide = new int[lineCount];
         markGlowParagraphs(glowSide, paraOf, lineCount, ourGlowOffsets, 2);
         markGlowParagraphs(glowSide, paraOf, lineCount, oppGlowOffsets, 1);
