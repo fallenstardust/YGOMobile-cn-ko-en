@@ -367,10 +367,6 @@ inline bool check_playerid(int32_t playerid) {
 #define HINT_NUMBER				9
 #define HINT_CARD				10
 #define HINT_ZONE               11
-// 对手以 EFFECT_OPPO_SELECT_SPSUMMON_ZONE 代选特殊召唤位置后的选中格回报
-// （move_to_field step1：flag 恰为单一位，低位半场＝选择方；客户端按区域宣告高亮 40 帧，
-// 不得并入 HINT_ZONE 的无效效果标注语义——两者单 SZ 位同形）
-#define HINT_OPPO_SELECT_PLACE  12
 //
 #define CHINT_TURN				1
 #define CHINT_CARD				2

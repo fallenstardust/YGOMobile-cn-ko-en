@@ -5,10 +5,21 @@ import java.nio.ByteOrder;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import android.util.Log;
+
 /** 回放投喂执行协作类：承载 pump 单步后的节奏推进、快进计数与落点、实况队列排空/动画等待与胜负结算（持 ReplayPlayer 反向引用，读写同一实例字段以保持时序语义）。 */
 public final class ReplayPacer {
 
+    private static final String TAG = "ReplayPacer";
+
+    /** 渲染心跳过期阈值：超过本时长没有 GL 帧推进动画即判「渲染缺位」（见 {@link #enterStallMode()}） */
+    private static final long RENDER_STALE_MS = 1000L;
+
     private final ReplayPlayer p;
+    /** 实况管线连续等待超时计数（见 {@link #enterStallMode()}）：渲染缺位时不再每步死等 8 秒 */
+    private int stallCount;
+    /** 因连续超时已置起的瞬时落位标志：仅本兜底路径写过才在恢复时清掉，不动快进重排的同一字段语义 */
+    private boolean stallInstantPlace;
 
     ReplayPacer(ReplayPlayer p) {
         this.p = p;
@@ -112,14 +123,68 @@ public final class ReplayPacer {
     void waitForPipelineIdle() {
         long deadline = System.currentTimeMillis() + 8000L;
         while (p.isRunning && !p.isRestarting) {
-            if (!p.engine.hasPendingMsgs() && !p.engine.isAnyAnimationBusy()) return;
-            if (System.currentTimeMillis() > deadline) return;   // 动画兜底超时，防卡死
+            if (!p.engine.hasPendingMsgs() && !p.engine.isAnyAnimationBusy()) {
+                releaseStallMode();
+                return;
+            }
+            if (System.currentTimeMillis() > deadline) {
+                enterStallMode();
+                return;   // 动画兜底超时，防卡死
+            }
             try {
                 Thread.sleep(16);
             } catch (InterruptedException e) {
                 return;
             }
         }
+    }
+
+    /**
+     * 实况管线 8 秒仍未空闲时的兜底（用户反馈：外部打开 yrp 有时只剩决斗背景，场上没有卡片和决斗场，
+     * 只听到起手抽五张的音效却不再推进）：先分清楚是哪种情形——场地卡片移动动画只在
+     * {@code GameFieldView.onDrawFrame} 里推进（{@code GameField.updateCardAnimation}，每帧写一次
+     * {@code field.animBeatMs} 心跳）：
+     * <ul>
+     * <li>心跳新鲜：渲染在跑，只是居中特效/连锁动画排成长队，保持原有节奏，不做任何强制落位；</li>
+     * <li>心跳过期：渲染缺位（决斗场 UI 被别的界面收走 / GL 曲面尚未创建），aniFrame 永不归零，
+     * 闸门只能一段一段等满 8 秒，投喂侧表现为每步 8 秒的「卡死」。此时按快进落点同一语义处置：先置
+     * 瞬时落位（后续派发不再产生动画），主线程按当前模型瞬时落定卡片（FIFO 先于排空 Runnable 执行），
+     * 再一次性排空已投喂队列，保证每次外部打开都能从头放到尾。</li>
+     * </ul>
+     * 本路径置起的瞬时落位只在重新观测到渲染心跳新鲜后才由 {@link #releaseStallMode()} 撤销，
+     * 不干扰快进/重排自己接管同一字段的路径（那一类路径起头会调 {@link #resetStallState()}）。
+     */
+    private void enterStallMode() {
+        if (isRenderAlive()) return;
+        stallCount++;
+        stallInstantPlace = true;
+        p.field.instantPlace = true;
+        p.mainHandler.post(() -> p.field.refreshAllCards());
+        p.engine.drainReplayQueueSync(1000L);
+        Log.w(TAG, "replay pipeline stalled with no GL frames (step=" + p.getCurrentStep()
+                + ", stall=" + stallCount + "), forced instant-place landing to keep playback moving");
+    }
+
+    /** 管线本轮正常排空：退出兜底态（仅当渲染心跳已恢复才撤销本兜底路径置起的瞬时落位） */
+    private void releaseStallMode() {
+        stallCount = 0;
+        if (stallInstantPlace && isRenderAlive()) {
+            stallInstantPlace = false;
+            p.field.instantPlace = false;
+            Log.i(TAG, "replay rendering recovered, restore normal animation pacing");
+        }
+    }
+
+    /** 渲染循环是否仍在推进动画：{@code field.animBeatMs} 由 GL 线程每帧 updateCardAnimation 写入 */
+    private boolean isRenderAlive() {
+        long beat = p.field.animBeatMs;
+        return beat != 0L && System.currentTimeMillis() - beat < RENDER_STALE_MS;
+    }
+
+    /** 新会话/重排起头复位兜底态（不残留上一会话的瞬时落位判定） */
+    void resetStallState() {
+        stallCount = 0;
+        stallInstantPlace = false;
     }
 
     /** 仅等待队列消化（不要求动画空闲）：快进落点/终止收尾用。 */

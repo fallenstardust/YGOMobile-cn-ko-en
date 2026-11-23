@@ -931,13 +931,25 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
     abstract void onRemoteDeckSwitch(String path);
     abstract void onRemoteDeckContent();
 
+    /**
+     * 搜索结果浮层卡片是否正被拖拽（起拖 → 松手/取消之间）。
+     * <p>
+     * 拖拽期间两扇抽屉被 {@code DeckDragDropHelper} 置为 LOCK_MODE_LOCKED_CLOSED，而 DrawerLayout
+     * 的 openDrawer 不看锁定模式（锁定只掐断手势拦截）：续搜/收藏刷新这类异步回调此刻若把抽屉拉开，
+     * 抽屉会在浮动卡片底下重新滑出、并在松手解锁后停在展开态盖住刚插入的卡组网格。
+     * 故所有「程序化开抽屉」的入口都先问一句（数据照常填，只是不抢开抽屉）。
+     */
+    protected boolean isCardDragInFlight() {
+        return mDeckDragHelper != null && mDeckDragHelper.isDragging();
+    }
+
     protected void showSearch(boolean autoClose) {
         if (mDrawerLayout.isDrawerOpen(Constants.CARD_RESULT_GRAVITY)) {
             mDrawerLayout.closeDrawer(Constants.CARD_RESULT_GRAVITY);
         }
         if (autoClose && mDrawerLayout.isDrawerOpen(Constants.CARD_SEARCH_GRAVITY)) {
             mDrawerLayout.closeDrawer(Constants.CARD_SEARCH_GRAVITY);
-        } else if (isLoad) {
+        } else if (isLoad && !isCardDragInFlight()) {
             mDrawerLayout.openDrawer(Constants.CARD_SEARCH_GRAVITY);
         }
     }
@@ -955,7 +967,7 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
         if (autoClose && mDrawerLayout.isDrawerOpen(Constants.CARD_RESULT_GRAVITY)) {
             mDrawerLayout.closeDrawer(Constants.CARD_RESULT_GRAVITY);
             //showNewbieGuide("searchResult");
-        } else if (isLoad) {
+        } else if (isLoad && !isCardDragInFlight()) {
             mDrawerLayout.openDrawer(Constants.CARD_RESULT_GRAVITY);
         }
     }

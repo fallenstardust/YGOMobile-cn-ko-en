@@ -400,7 +400,25 @@ public class GameEngine {
         CardDetailPanel.refreshCardDetailMarks();
     }
 
-    /** 复位区域发动提示 / conti_act 标志（解析 idle/battle 前清空，防上一选择脏标志；连锁路径不经此方法） */
+    /**
+     * 攻击宣言进入结算后收掉卡上的「可攻击」提示：只清 COMMAND_ATTACK 位与 {@code attackableCards}。
+     * <p>对齐 C++：宣言攻击的应答一发出，{@code DuelClient::SendResponse} 就对 MSG_SELECT_BATTLECMD
+     * 调 {@code ClearCommandFlag()}（duelclient.cpp L4511-4515），全部可攻击标志在那一刻归零，因此
+     * 绿色攻击弧与其后的伤害步骤里没有任何卡还带着上下晃动的 attack.png；本端旧写法只在询问重发时
+     * 才重置标志，弧线播完到下一条战斗指令之间会重新亮出其余怪兽的攻击箭头（用户反馈与 C++ 不一致）。
+     * <p>不动发动/召唤/切阶段等其余命令集：那些属于其它询问集，由随后的 MSG_SELECT_BATTLECMD 经
+     * {@code CommandDataParser} 重新置位。
+     */
+    public void clearAttackCommands() {
+        attackableCards.clear();
+        for (int p = 0; p < 2; p++) {
+            for (ClientCard c : field.players[p].monsterZone) {
+                if (c != null) c.cmdFlag &= ~COMMAND_ATTACK;
+            }
+        }
+    }
+
+    /** 复位区域发动提示 / conti_act 标志（解析 idle/battle 前清空，防上一选择脏标志；连锁路径不经本方法） */
     void resetFieldCommandHints() {
         for (int p = 0; p < 2; p++) {
             field.deckAct[p] = false;
@@ -775,6 +793,17 @@ public class GameEngine {
     public boolean isSelfSide(int player) {
         if (soloMode) return player != 2;
         return player != 2 && localPlayer(player & 1) == 0;
+    }
+
+    /**
+     * 本端是否两侧手卡全公开（用户规格：只有录像回放与局域网纯单人这两类「观战自己」的场景）：
+     * 两种场景下双方手卡卡码都由全量消息流/本机引擎给出，手卡一直是正面公开态，因此「从卡组抽卡」
+     * （通常抽卡与卡的效果抽卡）应直接正面入手，不再走「里侧入手→翻到正面」的两步确认——那两步
+     * 只属于联机对局里向对手揭示私有入手的语义，在公开态下反而与桌面版 gframe 不一致（gframe 手卡
+     * 只按卡码贴图，卡码在手即正面）。正常决斗与观战不属本态：对方暗手卡到手仍须保持卡背遮蔽。
+     */
+    public boolean revealsBothHands() {
+        return replayMode || soloMode;
     }
 
     public void release() {

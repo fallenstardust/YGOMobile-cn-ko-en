@@ -325,6 +325,7 @@
     <string name="searchresult">Results</string>
     <string name="Pre_share">Prepare to Share</string>
     <string name="category_pack">Pack</string>
+    <string name="label_release_date">Release Date</string>
     <string name="category_windbot_deck">AI Decks</string>
     <string name="category_Uncategorized">Uncategorized</string>
 
@@ -661,6 +662,7 @@
     <string name="sort_rule_time">Time↓</string>
     <!-- 搜索结果分段说明 -->
     <string name="section_title_star">Lv%1$d</string>
+    <string name="section_title_link">LINK-%1$d</string>
     <string name="section_title_spell">Spell</string>
     <string name="section_title_trap">Trap</string>
     <string name="section_title_other">Other</string>

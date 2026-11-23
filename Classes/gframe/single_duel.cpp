@@ -616,8 +616,7 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 				break;
 			}
 			case HINT_CARD:
-			case HINT_ZONE:
-			case HINT_OPPO_SELECT_PLACE: {
+			case HINT_ZONE: {
 				NetServer::SendBufferToPlayer(players[0], STOC_GAME_MSG, offset, pbuf - offset);
 				NetServer::SendBufferToPlayer(players[1], STOC_GAME_MSG, offset, pbuf - offset);
 				for(auto oit = observers.begin(); oit != observers.end(); ++oit)

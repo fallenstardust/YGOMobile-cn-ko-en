@@ -298,9 +298,11 @@ abstract class YGOProActivityEngine extends YGOProActivityUi {
 
     /**
      * 回放结束：用阶段文字（case 101）显示胜负 + 胜利原因，委托 EngineCallbackDelegate 的居中特效层。
+     * 胜负归属（YOU WIN / YOU LOSE / DRAW）与说明里的【败方】昵称都由 delegate 按当前视角换算
+     *（对齐 duelclient.cpp MSG_WIN 的 LocalPlayer(player)），调用方不再传胜者名。
      */
-    public void showReplayResult(int winner, int reason, String winnerName) {
-        if (engineCallback != null) engineCallback.showReplayResult(winner, reason, winnerName);
+    public void showReplayResult(int winner, int reason) {
+        if (engineCallback != null) engineCallback.showReplayResult(winner, reason);
     }
 
     // 录像回放的召唤/连锁/无效大图与阶段文字已由实况管线（EngineCallbackDelegate 的消息回调）

@@ -313,8 +313,8 @@ public abstract class CardSearcherManagerBase {
         if (sortSel == SORT_RULE_RELEASE_DATE) {
             final PackManager packManager = DataManager.get().getPackManager();
             return (a, b) -> {
-                int dateA = packManager.getCardReleaseDate(a.getCode());
-                int dateB = packManager.getCardReleaseDate(b.getCode());
+                int dateA = packManager.getCardReleaseDate(a);
+                int dateB = packManager.getCardReleaseDate(b);
                 if (dateA == dateB) {
                     return Integer.compare(a.Code, b.Code);
                 }

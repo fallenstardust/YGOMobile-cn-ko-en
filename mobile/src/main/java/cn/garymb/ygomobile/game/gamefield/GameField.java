@@ -160,6 +160,14 @@ public class GameField {
     public boolean isTag;
     /** 回放快进重排期间的即时落位模式：移动/淡入淡出/LP/洗牌动画全部直接到位，不产生 aniFrame——动画闸门天然不阻塞，快进队列可单帧排空（GameEngine.drainReplayQueueNow）；投喂线程置位/复位、主线程派发链读取，volatile 防 JIT 提升旧值使落位门控失效 */
     public volatile boolean instantPlace = false;
+    /**
+     * 渲染循环心跳：{@code GameFieldView.onDrawFrame}（GL 线程）每帧调 {@code updateCardAnimation}
+     * 时写入当前时间。卡片 aniFrame 只由这一条链递减，本值为 0 或长时间不更新即说明渲染根本没在跑
+     *（决斗场 UI 被收走 / GL 曲面尚未创建），此时统一动画闸门只会一段一段等满兜底超时，回放表现为
+     * 「只剩决斗背景、场上没有卡片、录像卡住」；投喂侧据此判定是否需要强制瞬时落位（ReplayPacer）。
+     * GL 线程写、投喂/主线程读，volatile 保证跨线程立即可见。
+     */
+    public volatile long animBeatMs;
     /** 回放态遮蔽保护（用户规格：不引擎重跑也要对方手卡正面）：合并的客户端视角录像里，对方手卡的 UPDATE_DATA/UPDATE_CARD 块被服务器中继遮蔽（整块清零或 code=0），而同一张卡的真实卡码已由流内 MSG_DRAW/MSG_MOVE 未遮蔽中继写入卡对象；若再让零块覆盖会把对方手卡永远压成背面。置位时手卡区已有卡码的卡忽略零块（ClientCard 为独立类，故本开关也为 static；仅随回放会话置位/复位，实况遮蔽语义不受影响） */
     public static boolean preserveMaskedHandCode = false;
     public List<ChainInfo> chains = new ArrayList<>();

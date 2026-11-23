@@ -8,12 +8,12 @@
 #ifndef INTERPRETER_H_
 #define INTERPRETER_H_
 
-#include "lua.hpp"
 #include "common.h"
+#include <cstdio>
 #include <unordered_map>
 #include <list>
 #include <vector>
-#include <cstdio>
+#include <lua.h>
 
 class card;
 struct card_data;

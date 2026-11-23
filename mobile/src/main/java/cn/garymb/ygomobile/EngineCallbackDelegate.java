@@ -193,6 +193,8 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
         activity.fieldCtl.invalidate();
         activity.runOnUiThread(() -> {
             activity.topInfoManager.updateCardCountDisplay(activity.engine.getField());
+            // 回合数随场面变更直接重取，不再只靠 NEW_TURN/NEW_PHASE 两条回调（观战防漏刷）
+            activity.topInfoManager.syncTurnCounter(activity.engine.getField());
             // 堆叠区查看列表弹窗（观战/录像）即时刷新：任何 field 变化后重拉 supplier，将宿主区域最新状态同步到已开着的弹窗（如果有）
             CardDisplayDialog.refreshLiveDialogs();
         });
@@ -246,7 +248,16 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
         // 决斗中的聊天/观战发言以 0xF1 伪帧录入当前 MSG 段（回放模式与决斗外场景自动丢弃，见 GameEngine::recordChatFrame），保存录像时随 V2 尾段并入 yrp，无引擎回放按时间线重现；libygo 不读尾段，兼容性不受影响
         GameEngine eng = activity.engine;
         if (eng != null) eng.recordChatFrame(playerType, message);
-        if (eng != null && eng.inDuel && !eng.replayMode) {
+        // 串行化判据不能只看 inDuel：它要到 MSG_START 真正「派发」时才置真（STOC_DUEL_START 反而先把它写假），
+        // 而观战端整条消息链常被动画闸门一段段持住、开局与局间的队列里常存积压——这段窗口内到达的聊天
+        //（含服务端下发的召唤/特召系统弹幕）会绕过串行链在主线程即时上屏，抢在尚未派发的召唤动画
+        // 前面出现，看上去就是「还没上场的怪兽的召唤词提前弹了」（用户反馈）。
+        // 补的条件只取「队列里还有存量」这一条：队列空时即时与排队等价，而积压中的窗口靠 hasPendingMsgs
+        // 兜住（开局那一串消息里 duelStarted 已为真、inDuel 未真的那一拍队列也必然非空）。刻意不把
+        // duelStarted/siding 也纳进来：局间队列已排空时本就该即时显示，而新一局的 STOC_DUEL_START 会经
+        // prepareNewDuel 把 pendingMsgs 整段丢掉——把一条局间聊天压进那条会被硬清的队列，
+        // 会让它从此永不显示（聊天没有重放机会，不同于可重建的场面消息）。
+        if (eng != null && !eng.replayMode && (eng.inDuel || eng.hasPendingMsgs())) {
             // 对齐 C++：StocChat 与引擎消息在同一条“被动画阻塞”的串行链上（duelclient.cpp ClientAnalyze
             // 在 WaitFrameSignal 期间阻塞整条消息线程，STOC_CHAT 自然排在当前动画之后上屏）。
             // 原先在主线程即时 append，没有积压时（如人机先攻首回合）台词会抢在对应操作动画前面
@@ -687,13 +698,27 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
         });
     }
 
-    /** 回放结束：用阶段文字（case 101）显示胜负 + 胜利原因（供门面 public showReplayResult 转发）；回放为观战视角，约定 player 0 胜=YOU WIN、player 1 胜=YOU LOSE、player 2=平局，winner<0 表示回放自然播放完毕（无 MSG_WIN 判定）不显示胜负文字 */
-    void showReplayResult(int winner, int reason, String winnerName) {
-        if (winner < 0) return;
+    /**
+     * 回放结束：用阶段文字（case 101）显示胜负 + 胜利原因（供门面 public showReplayResult 转发）。
+     * <p>胜负归属按「当前视角的我方」判定，与 duelclient.cpp MSG_WIN 的 {@code LocalPlayer(player) == 0}
+     * 同构，也与正常决斗/观战的 {@link #onDuelResult} 同口径：录像默认以录制者为视角 0
+     *（ReplayPlayer.startSession 恒置 duelIsFirst=true），但界面「切换视角」按钮会翻转视角侧
+     *（ReplayPlayer.performSwapField 翻 duelIsFirst 并对调名字/LP），此时胜者席位与视角侧不再相等。
+     * 旧写法按 {@code winner == 0} 恒判 YOU WIN，于是切换视角后「视角下方那侧输了」也被说成
+     * YOU WIN（用户反馈：录像里 YOU LOSE 经常不显示，总是只显示 YOU WIN）。
+     * winner==2 为平局（ocgcore PLAYER_NONE），winner&lt;0 表示回放自然播毕（无 MSG_WIN 判定）不显示胜负文字。
+     * <p>胜利说明的「[X] 原因」前缀取【败方】昵称（对齐 duelclient.cpp L1593-1600：我方胜时取
+     * clientname=对方=败者，我方负时取 hostname=我方=败者），不再由调用方传入胜者名。
+     */
+    void showReplayResult(int winner, int reason) {
+        // 引擎已释放（Activity 销毁中）时无视角可换算，也不再弹胜负文字
+        if (winner < 0 || activity.engine == null) return;
+        boolean selfWon = winner != 2 && activity.engine.localPlayer(winner & 1) == 0;
         int code = winner == 2 ? SpecEffectOverlay.TEXT_DRAW_GAME
-                : (winner == 0 ? SpecEffectOverlay.TEXT_YOU_WIN
+                : (selfWon ? SpecEffectOverlay.TEXT_YOU_WIN
                    : SpecEffectOverlay.TEXT_YOU_LOSE);
-        specEffect().showWinText(code, reason, winnerName);
+        String vicName = winner == 2 ? null : playerDisplayName(selfWon ? 1 : 0);
+        specEffect().showWinText(code, reason, vicName);
     }
 
     // === 门面生命周期 / 返回流程对录像状态的复位 ===

@@ -1,5 +1,6 @@
 package ocgcore;
 
+import android.content.res.AssetManager;
 import android.os.Build;
 import android.util.Log;
 import android.util.SparseArray;
@@ -20,9 +21,12 @@ import java.util.Map;
 import java.util.NavigableSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.Constants;
+import cn.garymb.ygomobile.GameApplication;
 import cn.garymb.ygomobile.loader.CardLoader;
 import cn.garymb.ygomobile.ui.plus.VUiKit;
 import cn.garymb.ygomobile.utils.DeckUtil;
@@ -41,6 +45,18 @@ public class PackManager implements Closeable {
      */
     private final Map<Integer, Integer> cardReleaseDates = new ConcurrentHashMap<>();
     /**
+     * 卡号 → 最早发售日期（{@code yyyyMMdd}），取自内置 pack.db.sql 总表：这是日期查询的
+     * <b>首选来源</b>，逐卡精确到日，解决了 ydk 文件名里 {@code xxxx-misc} 只能知道年份的问题。
+     * 同一张卡在多个包复刻时只留最早那次；{@link #cardReleaseDates}（ydk 推的）仅作 sql
+     * 未收录卡（如扩展包独有卡）的兜底。
+     */
+    private final Map<Integer, Integer> sqlCardReleaseDates = new ConcurrentHashMap<>();
+    /**
+     * 卡号 → 最初那次发售所属的真实卡包名（pack.db.sql 的包名列）：与 {@link #sqlCardReleaseDates}
+     * 同一次最早记录写入，供卡详情“发售日期 + 包名”展示。只知年份/未入 sql 的卡无记录。
+     */
+    private final Map<Integer, String> sqlCardFirstPack = new ConcurrentHashMap<>();
+    /**
      * 全部卡包的发售日期节点（yyyyMMdd，升序去重）：搜索结果的时间轴就按这些节点吸附滑动，
      * 首尾节点即时间轴跨度。只知年份的包按当年 1 月 1 日入节点。
      */
@@ -55,6 +71,23 @@ public class PackManager implements Closeable {
         return sPackManager;
     }
 
+    /**
+     * pack.db.sql 行尾的发售日字段：{@code ,'yyyy-MM-dd');}。只锁行尾的日期，
+     * 不拆中间可能含逗号/转义单引号的包名、稀有度字段。
+     */
+    private static final Pattern SQL_ROW_DATE =
+            Pattern.compile("'(\\d{4})-(\\d{2})-(\\d{2})'\\);\\s*$");
+    /** pack.db.sql 行首的卡密字段：{@code INSERT INTO pack VALUES(卡密,}。 */
+    private static final Pattern SQL_ROW_ID =
+            Pattern.compile("^INSERT\\s+INTO\\s+pack\\s+VALUES\\s*\\(\\s*(\\d+)\\s*,");
+    /**
+     * pack.db.sql 里的一个单引号字符串字段：{@code '...'}，内部转义的 {@code ''} 归为字段内容。
+     * 按行内出现顺序依次是 包号、包名、稀有度、发售日；用它的第 2 个（包名）作日历小字，
+     * 不拆含逗号/转义引号的字段。
+     */
+    private static final Pattern SQL_QUOTED_FIELD =
+            Pattern.compile("'((?:[^']|'')*)'");
+
     public PackManager() {
     }
 
@@ -63,6 +96,8 @@ public class PackManager implements Closeable {
         // 如果有需要清理的资源，在这里处理
         packList.clear();
         cardReleaseDates.clear();
+        sqlCardReleaseDates.clear();
+        sqlCardFirstPack.clear();
         releaseDateNodes.clear();
         packNamesByDate.clear();
     }
@@ -70,13 +105,141 @@ public class PackManager implements Closeable {
     public boolean load() {
         packList.clear();
         cardReleaseDates.clear();
+        sqlCardReleaseDates.clear();
+        sqlCardFirstPack.clear();
         releaseDateNodes.clear();
         packNamesByDate.clear();
+        // 先同步读内置 pack.db.sql 建立逐卡精确发售日总表（日期查询的首选来源）
+        boolean rsSql = loadPackReleaseSql();
         boolean rs1 = loadFile(AppsSettings.get().getResourcePath() + "/" + Constants.CORE_PACK_PATH);
         boolean rs2 = loadFile(AppsSettings.get().getExpansionsPath() + "/" + Constants.CORE_PACK_PATH);
         // 卡包 ydk 不再解压到 cacheDeck：就地读 expansions 下 zip/ypk 里的 pack/*.ydk
         boolean rs3 = loadArchivePackYdks();
-        return rs1 && rs2 && rs3;
+        return rsSql && rs1 && rs2 && rs3;
+    }
+
+    /**
+     * 读内置 asset {@code data/pack.db.sql}，逐行取（卡密, 日期）建立 {@link #sqlCardReleaseDates}：
+     * 同一张卡多行（多包复刻）只留最早那次，并把每个真实发售日并入时间轴节点。
+     * <p>
+     * 只直读 apk 内的静态总表，不依赖 ydk 那套拷贝/档案机制；sql 不存在或读失败时记录日志
+     * 并返回 false（此时日期全退回 ydk 推的 {@link #cardReleaseDates}）。
+     */
+    private boolean loadPackReleaseSql() {
+        GameApplication app = GameApplication.get();
+        if (app == null) {
+            Log.w(TAG, "pack.db.sql skipped: no application context");
+            return false;
+        }
+        AssetManager assets = app.getAssets();
+        String assetPath = Constants.ASSETS_PATH + Constants.CORE_PACK_RELEASE_SQL;
+        int rows = 0;
+        try (InputStream is = assets.open(assetPath);
+             BufferedReader reader = new BufferedReader(
+                     new InputStreamReader(is, StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                int date = parseSqlRow(line);
+                if (date <= 0) {
+                    continue;
+                }
+                Matcher idM = SQL_ROW_ID.matcher(line);
+                if (!idM.find()) {
+                    continue;
+                }
+                int code;
+                try {
+                    code = (int) Long.parseLong(idM.group(1));
+                } catch (NumberFormatException e) {
+                    continue;
+                }
+                String packName = extractQuotedField(line, 1);
+                recordSqlReleaseDate(code, date, packName);
+                releaseDateNodes.add(date);
+                recordSqlPackName(date, packName);
+                rows++;
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to read pack.db.sql from assets: " + assetPath, e);
+            return false;
+        }
+        if (rows == 0) {
+            Log.w(TAG, "pack.db.sql parsed but matched no card rows");
+        } else {
+            Log.i(TAG, "pack.db.sql: indexed " + sqlCardReleaseDates.size() + " cards from " + rows + " rows.");
+        }
+        return rows > 0;
+    }
+
+    /**
+     * 从 pack.db.sql 的一行 INSERT 里取行尾的 {@code 'yyyy-MM-dd'} 并编为 {@code yyyyMMdd}；
+     * 非 INSERT 行或日期字段不合格式时返回 0。
+     */
+    private static int parseSqlRow(String line) {
+        Matcher m = SQL_ROW_DATE.matcher(line);
+        if (!m.find()) {
+            return 0;
+        }
+        try {
+            int year = Integer.parseInt(m.group(1));
+            int month = Integer.parseInt(m.group(2));
+            int day = Integer.parseInt(m.group(3));
+            if (year <= 0 || month < 1 || month > 12 || day < 1 || day > 31) {
+                return 0;
+            }
+            return year * 10000 + month * 100 + day;
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
+    /**
+     * 记下 sql 总表里卡号的最早发售日期（同卡多行只留最早），并把写下该最早日那次的包名
+     * 一并记入 {@link #sqlCardFirstPack}。加载在本方法内同步完成，但仍用并发容器 + 同步写，
+     * 避免与后续 ydk 加载线、重加载并发时丢更新
+     */
+    private synchronized void recordSqlReleaseDate(int code, int date, String packName) {
+        Integer old = sqlCardReleaseDates.get(code);
+        if (old == null || date < old) {
+            sqlCardReleaseDates.put(code, date);
+            if (packName != null && !packName.isEmpty()) {
+                sqlCardFirstPack.put(code, packName);
+            }
+        }
+    }
+
+    /**
+     * 记下某一天发售的真实卡包名（日历里的日期小字用），取自 pack.db.sql 的包名列：
+     * 同一天多个包按出现顺序存多个，重名只留一个。空名不入表。
+     */
+    private synchronized void recordSqlPackName(int date, String packName) {
+        if (packName == null || packName.isEmpty()) {
+            return;
+        }
+        List<String> names = packNamesByDate.get(date);
+        if (names == null) {
+            names = new ArrayList<>();
+            packNamesByDate.put(date, names);
+        }
+        if (!names.contains(packName)) {
+            names.add(packName);
+        }
+    }
+
+    /**
+     * 取 pack.db.sql 一行里第 {@code index} 个单引号字段的值（{@code ''} 还原为 {@code '}）；
+     * 不足该序号时返回 null。
+     */
+    private static String extractQuotedField(String line, int index) {
+        Matcher m = SQL_QUOTED_FIELD.matcher(line);
+        int seen = 0;
+        while (m.find()) {
+            if (seen == index) {
+                return m.group(1).replace("''", "'");
+            }
+            seen++;
+        }
+        return null;
     }
 
     /**
@@ -180,10 +343,7 @@ public class PackManager implements Closeable {
             packList.add(new AbstractMap.SimpleEntry<>(packFileName, ids));
             int releaseDate = parseReleaseDate(packFileName);
             if (releaseDate > 0) {
-                // 这个包的发售日期就是时间轴上的一个滑动节点
-                int node = normalizeReleaseDate(releaseDate);
-                releaseDateNodes.add(node);
-                recordPackName(node, packFileName);
+                // ydk 日期只作 sql 未收录卡的排序/过滤兜底；时间轴节点与日历小字改由 pack.db.sql 提供
                 for (Integer id : ids) {
                     recordReleaseDate(id, releaseDate);
                 }
@@ -203,44 +363,9 @@ public class PackManager implements Closeable {
         }
     }
 
-    /** 记下某一天发售的卡包名（同一天多个包按加载顺序排列，重名只留一个） */
-    private synchronized void recordPackName(int date, String packFileName) {
-        List<String> names = packNamesByDate.get(date);
-        if (names == null) {
-            names = new ArrayList<>();
-            packNamesByDate.put(date, names);
-        }
-        String name = packDisplayName(packFileName);
-        if (!name.isEmpty() && !names.contains(name)) {
-            names.add(name);
-        }
-    }
-
-    /**
-     * 卡包显示名：ydk 文件名去掉扩展名与日期前缀（“2024-04-01 1205.ydk” → “1205”），
-     * 没有空格分隔的（如 “2024-misc”）原样保留
-     */
-    private static String packDisplayName(String packFileName) {
-        if (packFileName == null) {
-            return "";
-        }
-        String name = packFileName;
-        int dot = name.lastIndexOf(Constants.YDK_FILE_EX);
-        if (dot > 0) {
-            name = name.substring(0, dot);
-        }
-        if (name.length() > 5 && name.charAt(4) == '-') {
-            int space = name.indexOf(' ', 5);
-            if (space > 0 && space + 1 < name.length()) {
-                return name.substring(space + 1).trim();
-            }
-        }
-        return name;
-    }
-
     /**
      * 某一天发售的卡包名（日历里的日期小字用），同一天多个包返回多个；
-     * 没有包的一天返回空表
+     * 没有包的一天返回空表。日期均取自 pack.db.sql 的真实发售日，键与 {@link #getReleaseDateNodes()} 一致。
      */
     public synchronized Map<Integer, List<String>> getPackNamesByDate() {
         Map<Integer, List<String>> copy = new ConcurrentHashMap<>(packNamesByDate.size() * 2);
@@ -305,10 +430,9 @@ public class PackManager implements Closeable {
     }
 
     /**
-     * 时间轴的滑动节点：全部卡包的发售日期（yyyyMMdd，升序去重）。
+     * 时间轴的滑动节点：pack.db.sql 里出现过的真实发售日（yyyyMMdd，升序去重）。
      * <p>
-     * xxxx-misc 这类只知道年份的包按当年 1 月 1 日入节点，但过滤仍按整年判定（见
-     * {@link #isCardReleasedBetween}）；卡包还没读到时返回空数组。
+     * 逐卡精确到日，不再有 ydk 那种“只知年份按 1 月 1 日入节点”的人造节点；sql 还没读到时返回空数组。
      */
     public int[] getReleaseDateNodes() {
         int[] nodes = new int[releaseDateNodes.size()];
@@ -325,22 +449,56 @@ public class PackManager implements Closeable {
     }
 
     /**
-     * 排序用的发售日期：yyyyMMdd，只知年份的包按当年 1 月 1 日归一；
-     * 不在任何卡包里的卡返回 0（排序时这类卡放到最后）
+     * 取一张卡生效的发售日（原始编码）：首取 {@link #sqlCardReleaseDates}（逐卡精确），
+     * sql 未收录时退回 {@link #cardReleaseDates}（ydk 文件名推，misc 包只知年份）。
+     * 两边都没有时返回 null。
+     */
+    private Integer effectiveReleaseDate(int code) {
+        Integer date = sqlCardReleaseDates.get(code);
+        return date != null ? date : cardReleaseDates.get(code);
+    }
+
+    /**
+     * 排序用的发售日期：yyyyMMdd，首取 sql 的精确日，只知年份的 ydk 包按当年 1 月 1 日归一；
+     * 不在任何卡包/sql 里的卡返回 0（排序时这类卡放到最后）
      */
     public int getCardReleaseDate(int code) {
-        Integer date = cardReleaseDates.get(code);
+        Integer date = effectiveReleaseDate(code);
         return date == null ? 0 : normalizeReleaseDate(date);
+    }
+
+    /**
+     * 卡详情“发售日期”用的文本：把生效的最初发售日 {@code yyyyMMdd} 格式化为 {@code yyyy-MM-dd}；
+     * 只知道年份（misc 兜底）时只到年 {@code yyyy}；无任何记录时返回空串。
+     */
+    public String getCardReleaseDateText(int code) {
+        Integer date = effectiveReleaseDate(code);
+        return (date == null || date <= 0) ? "" : formatReleaseDate(date);
+    }
+
+    /**
+     * 把发售日编码 {@code yyyyMMdd} 格式化为 {@code yyyy-MM-dd}；只知道年份（yyyy0001）时
+     * 只到年 {@code yyyy}。调用方保证 {@code date>0}。
+     */
+    private static String formatReleaseDate(int date) {
+        int year = date / 10000;
+        int month = (date / 100) % 100;
+        int day = date % 100;
+        if (month < 1 || month > 12 || day < 1 || day > 31) {
+            // 只知年份的 ydk 编码（yyyy0001）：不拼不存在的月日
+            return String.format(java.util.Locale.US, "%04d", year);
+        }
+        return String.format(java.util.Locale.US, "%04d-%02d-%02d", year, month, day);
     }
 
     /**
      * 某张卡的发售日期是否落在 [startDate, endDate] 内（均为 yyyyMMdd，两端都含）。
      * <p>
-     * xxxx-misc 里的卡只知道年份：只要范围与那一年有交集（滑块扫到该年份的任一天）就保留，
-     * 不把它钉死在 1 月 1 日。没有任何卡包记录的卡返回 false（无日期可比）。
+     * 首取 sql 精确日；退回 ydk 时，xxxx-misc 这类只知年份的卡只要范围与那一年有交集就保留，
+     * 不钉死在 1 月 1 日。没有任何卡包/sql 记录的卡返回 false（无日期可比）。
      */
     public boolean isCardReleasedBetween(int code, int startDate, int endDate) {
-        Integer date = cardReleaseDates.get(code);
+        Integer date = effectiveReleaseDate(code);
         if (date == null) {
             return false;
         }
@@ -349,6 +507,108 @@ public class PackManager implements Closeable {
             return startDate <= year * 10000 + 1231 && endDate >= year * 10000 + 101;
         }
         return date >= startDate && date <= endDate;
+    }
+
+    /**
+     * 异画卡（{@code alias>0}、与主卡描述相同）在 {@link CardManager} 里被 {@code setRealCode(原卡)}
+     * 合并，{@code card.getCode()} 因此回的是原卡卡密。发售日期要按异画<b>自己</b>的卡密
+     * （{@code card.Code}，即 cdb 原始 passcode）优先查，查不到再退回合并后的 {@code getCode()}。
+     * 没日期时返回 null。
+     */
+    private Integer resolveCardReleaseDate(Card card) {
+        if (card == null) {
+            return null;
+        }
+        Integer date = effectiveReleaseDate(card.Code);
+        if (date == null) {
+            int merged = card.getCode();
+            if (merged != card.Code) {
+                date = effectiveReleaseDate(merged);
+            }
+        }
+        return date;
+    }
+
+    /** 同 {@link #getCardReleaseDate(int)}，但按异画自身卡密优先（见 {@link #resolveCardReleaseDate}）。 */
+    public int getCardReleaseDate(Card card) {
+        Integer date = resolveCardReleaseDate(card);
+        return date == null ? 0 : normalizeReleaseDate(date);
+    }
+
+    /** 同 {@link #isCardReleasedBetween(int, int, int)}，但按异画自身卡密优先。 */
+    public boolean isCardReleasedBetween(Card card, int startDate, int endDate) {
+        Integer date = resolveCardReleaseDate(card);
+        if (date == null) {
+            return false;
+        }
+        if (isYearOnlyRelease(date)) {
+            int year = date / 10000;
+            return startDate <= year * 10000 + 1231 && endDate >= year * 10000 + 101;
+        }
+        return date >= startDate && date <= endDate;
+    }
+
+    /**
+     * 卡详情“卡包展示”位的文本（按 {@link Card} 传入，异画按自身卡密优先）：
+     * sql 有日期且有包名时分两行——上行日期、下行包名（包名取相对字号 0.5）；
+     * 只有 ydk 日期或无日期时退回 ydk 包名（ydk 包名本带日期前缀，单行显、不另拼日期）。
+     */
+    public CharSequence getCardPackDisplayText(Card card) {
+        if (card == null) {
+            return "";
+        }
+        Integer date = resolveCardReleaseDate(card);
+        if (date != null && date > 0) {
+            String pack = resolveCardFirstPack(card);
+            String dateText = formatReleaseDate(date);
+            if (pack != null && !pack.isEmpty()) {
+                return buildDatePackText(dateText, pack);
+            }
+            // sql 有日期但无 sql 包名（极少）：退回 ydk 包名，仍无则只显日期
+            String ydk = findPackNameForCard(card);
+            return ydk == null || ydk.isEmpty() ? dateText : ydk;
+        }
+        String ydk = findPackNameForCard(card);
+        return ydk == null ? "" : ydk;
+    }
+
+    /**
+     * 拼两行展示文本：上行 {@code dateText}（正常字号），下行 {@code pack}（{@link android.text.style.RelativeSizeSpan}
+     * 相对字号 0.5，长包名换行也不会把段落撑得过宽）。
+     */
+    private static CharSequence buildDatePackText(String dateText, String pack) {
+        android.text.SpannableStringBuilder sb = new android.text.SpannableStringBuilder();
+        sb.append(dateText);
+        sb.append('\n');
+        int start = sb.length();
+        sb.append(pack);
+        sb.setSpan(new android.text.style.RelativeSizeSpan(0.5f), start, sb.length(),
+                android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return sb;
+    }
+
+    /**
+     * 取异画卡最初发售所属的真实包名：先按自身卡密 {@code card.Code}，查不到再按合并后的
+     * {@code card.getCode()}。无 sql 记录时返回 null。
+     */
+    private String resolveCardFirstPack(Card card) {
+        String pack = sqlCardFirstPack.get(card.Code);
+        if (pack == null) {
+            int merged = card.getCode();
+            if (merged != card.Code) {
+                pack = sqlCardFirstPack.get(merged);
+            }
+        }
+        return pack;
+    }
+
+    /** 按卡密在 ydk 包成员表里找包名：先自身 {@code card.Code}，再合并后的 {@code card.getCode()}。 */
+    private String findPackNameForCard(Card card) {
+        String pack = findPackNameById(card.Code);
+        if (pack == null && card.getCode() != card.Code) {
+            pack = findPackNameById(card.getCode());
+        }
+        return pack;
     }
 
     /**

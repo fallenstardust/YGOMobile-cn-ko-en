@@ -517,10 +517,10 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
 
     private void showCardList(List<Card> cardList, boolean sort) {
         if (!cardList.isEmpty()) {
-            // 关联卡片走移动端自己的固定序（mCardLoader.sort，高星/高攻在前那一族规则），
-            // 卡包展示(sort=false)则保留卡包原顺序：两者都是本页的“原始顺序”，
-            // 顶部规则下拉只在挑了攻击/守备/名称时才在其上重排（用户规格：默认档维持改造前排序）
-            showSearchResultCards(sort ? mCardLoader.sort(cardList) : cardList);
+            // 关联卡片与卡包展示都先走移动端固定序 mCardLoader.sort（怪兽→连接→魔法→陷阱、高星在前），
+            // 与第 0 档分割线的分段键一致；不能直接保留卡包的收集号原序，否则同段卡不相邻、分段会重复出现。
+            // 顶部规则下拉选攻/守/名称/时间时再由 applySortRule 在其上按当前档重排。
+            showSearchResultCards(mCardLoader.sort(cardList));
             //sort为true代表点击“关联卡片”按钮（卡包展示为false），以当前卡片名作为关键词计入搜索历史
             if (sort && mCardDetail != null && mCardDetail.getCardInfo() != null) {
                 mCardSearcher.recordHistoryKeyword(mCardDetail.getCardInfo().Name);

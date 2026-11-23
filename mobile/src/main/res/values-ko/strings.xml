@@ -324,6 +324,7 @@
     <string name="searchresult">결과</string>
     <string name="Pre_share">공유 준비가 되었습니다. 잠시만 기다려주십시오...</string>
     <string name="category_pack">카드 팩</string>
+    <string name="label_release_date">발매일</string>
     <string name="category_windbot_deck">AI 덱</string>
     <string name="category_Uncategorized">미분류 덱</string>
     <string name="please_input_category_name">카테고리를 입력하세요</string>
@@ -579,6 +580,7 @@
     <string name="sort_rule_time">시간↓</string>
     <!-- 검색 결과 구간 표시 -->
     <string name="section_title_star">%1$d성</string>
+    <string name="section_title_link">LINK-%1$d</string>
     <string name="section_title_spell">마법</string>
     <string name="section_title_trap">함정</string>
     <string name="section_title_other">기타</string>

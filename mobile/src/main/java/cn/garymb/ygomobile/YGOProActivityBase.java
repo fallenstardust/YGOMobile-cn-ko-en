@@ -724,7 +724,24 @@ public abstract class YGOProActivityBase extends AppCompatActivity {
         GameEngine eng = engine;
         if (eng == null) return false;
         if (eng.isSingleMode) return true;
-        return eng.replayMode && eng.replayPlayer != null && eng.replayPlayer.hasActiveSession();
+        return isReplaySessionActive();
+    }
+
+    /**
+     * 回放会话是否进行中或正在等加载（{@link ReplayPlayer#isUiSessionAlive()}：LOADING 或已在投喂）：
+     * 与旋转回显的决斗语境快照、聊天 UI 抑制共用同一判据。
+     * <p>主菜单重显入口（{@code MainMenuDialog.showMainMenu}）据此拦截：录像选择窗/设置窗的
+     * {@code dismiss} 回调常在焦点变化或退场动画之后才触发 {@code restoreMainMenu}，而它尾部的
+     * {@code hideGameUI()} 会把刚由 {@code enterReplayUI} 切过去的决斗场 UI 整层收起（layout_game_right
+     * GONE → GL 曲面销毁 → 卡片动画不再推进，只剩窗口背景图），即用户反馈的「外部打开 yrp 后只有
+     * 决斗背景、不显示场上卡片和决斗场、录像卡住」。
+     * <p>判据取会话状态而非 {@code replayMode && isRunning}：外部打开时等卡数据/解析录像的 LOADING
+     * 窗口可长达数十秒，该窗口内 {@code replayMode/isRunning} 均未置起，旧写法在窗口里到来的旋转重建
+     * 会误判为非决斗语境而收起决斗场区，同一机制把回放变成「只有背景的静帧」。
+     */
+    public boolean isReplaySessionActive() {
+        return engine != null && engine.replayPlayer != null
+                && engine.replayPlayer.isUiSessionAlive();
     }
 
     /**

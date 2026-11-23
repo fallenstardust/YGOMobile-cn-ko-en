@@ -309,6 +309,7 @@
     <string name="searchresult">Resultado</string>
     <string name="Pre_share">Pronto para compartilhar, por favor aguarde...</string>
     <string name="category_pack">Pacotes</string>
+    <string name="label_release_date">Data de lançamento</string>
     <string name="category_windbot_deck">Decks I.A.</string>
     <string name="category_Uncategorized">Sem categoria</string>
     <string name="please_input_category_name">Por favor, insira o nome da categoria</string>
@@ -560,6 +561,7 @@
     <string name="sort_rule_time">Tempo↓</string>
     <!-- Títulos de seção dos resultados -->
     <string name="section_title_star">Nv%1$d</string>
+    <string name="section_title_link">LINK-%1$d</string>
     <string name="section_title_spell">Mágica</string>
     <string name="section_title_trap">Armadilha</string>
     <string name="section_title_other">Outro</string>

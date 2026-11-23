@@ -618,6 +618,19 @@ public class ReplayModeDialog {
     public static void startReplayPlayback(YGOProActivity activity, String replayPath, int startTurn) {
         final ReplayPlayer player = activity.getReplayPlayer();
         if (player == null) return;
+        /**
+         * 外部再次打开 yrp（singleTop 走 onNewIntent 直接起播，不经本窗的 loadReplay）时录像选择窗
+         * 可能仍在显示，且其 PopupWindow 挂着 dismiss → restoreMainMenu 回调：该回调会在焦点变化或
+         * 退场动画之后才补触发，restoreMainMenu 尾部的 hideGameUI() 把刚由 enterReplayUI 切过去的决斗场
+         * UI 整层收起（layout_game_right 与其内 GL 曲面一起 GONE），于是只剩窗口背景、场上没有卡片和
+         * 决斗场，卡片移动动画因渲染缺位不再推进，观感即「录像卡住」（用户反馈）。
+         * 按选择窗内点「播放」的内部跳转语义先摘回调再收窗（与本方法下方 loadReplay 的做法同构）。
+         */
+        ReplayModeDialog showing = activity.getReplayModeDialog();
+        if (showing != null && showing.isShowing()) {
+            showing.setOnDismissListener(null);
+            showing.dismiss();
+        }
         // 重复进入回放（外部再次打开 .yrp / 录像选择窗连续点播）：先摘掉旧回调，
         // loadAndPlay 内部会停掉旧投喂线程，剩余回调静默丢弃
         player.detachListener();
@@ -678,17 +691,13 @@ public class ReplayModeDialog {
             @Override
             public void onReplayFinished(int winner, int reason) {
                 activity.runOnUiThread(() -> {
-                    // 取回放中胜者的名字，用于胜利说明 "[胜者名] 原因" 前缀（reason<0x10 时）
-                    String winnerName = null;
-                    if (winner == 0 || winner == 1) {
-                        ReplayReader.ReplayData rd = player.getReplayData();
-                        if (rd != null && winner < rd.playerNames.size()) {
-                            winnerName = rd.playerNames.get(winner);
-                        }
-                    }
                     // 不再在此处隐藏控制条：胜负文字先显示，结束提示弹窗由 FINISHED 状态统一弹出，
-                    // 用户确认后经 quitReplay 退出回放回录像选择窗（对齐 C++ EndDuel 流程）
-                    activity.showReplayResult(winner, reason, winnerName);
+                    // 用户确认后经 quitReplay 退出回放回录像选择窗（对齐 C++ EndDuel 流程）。
+                    // 胜负归属（YOU WIN / YOU LOSE / DRAW）与说明里的【败方】昵称不再在本处按录像头部的
+                    // 胜者名算：改由 showReplayResult 按当前视角换算（对齐 duelclient.cpp MSG_WIN 的
+                    // LocalPlayer(player)），旧写法按 winner==0 恒判 YOU WIN，切换视角后我方输了也说
+                    // 「YOU WIN」，即用户反馈的「录像里 YOU LOSE 经常不显示，总是只显示 YOU WIN」
+                    activity.showReplayResult(winner, reason);
                 });
             }
         });

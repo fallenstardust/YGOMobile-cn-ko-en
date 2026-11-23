@@ -184,6 +184,9 @@ abstract class GameFieldMotionBase {
     }
 
     public void updateCardAnimation(int frame) {
+        // 渲染循环心跳（GL 线程每帧只到这里一次，见 GameFieldView.onDrawFrame）：回放投喂侧据此区分
+        // 「动画真在推进但队列长」与「渲染缺位、aniFrame 永不递减」两种情形，见 GameField.animBeatMs
+        field.animBeatMs = System.currentTimeMillis();
         for (int p = 0; p < 2; p++) {
             updateListAnimation(field.players[p].deck);
             updateListAnimation(field.players[p].hand);

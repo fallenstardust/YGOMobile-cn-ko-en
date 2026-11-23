@@ -377,7 +377,7 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
         PackManager packManager = DataManager.get().getPackManager();
         List<Card> kept = new ArrayList<>(cards.size());
         for (Card card : cards) {
-            if (packManager.isCardReleasedBetween(card.getCode(), mFilterStartDate, mFilterEndDate)) {
+            if (packManager.isCardReleasedBetween(card, mFilterStartDate, mFilterEndDate)) {
                 kept.add(card);
             }
         }
@@ -462,7 +462,7 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
 
     /**
      * 当前排序档位下这张卡属于哪一段（返回值直接当段落说明，null = 该档不分段）：
-     * 星数档→星数（魔陷按种类）、攻守档→数值区间、名称档→首字符、时间档→年份。
+     * 星数档→星数（连接怪兽写 LINK-X、魔陷按种类）、攻守档→数值区间、名称档→首字符、时间档→年份。
      * 文字取本地化资源，随界面语言；只根据卡片自身属性判断，所以反向排序时分段自然跟着反向。
      */
     private String sectionTitleOf(Card card, int sortSel) {
@@ -476,6 +476,11 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
                     if (Card.isType(card.Type, CardType.Trap)) return context.getString(R.string.section_title_trap);
                     return context.getString(R.string.section_title_other);
                 }
+                // 连接怪兽的 getStar() 拿到的是 LINK 值而不是等级，分割线不能写“X星”；
+                // 星数档本身就以怪兽子类为主键排序，连接组天然与同级怪兽分开成段
+                if (card.isLink()) {
+                    return context.getString(R.string.section_title_link, card.getLinkNumber());
+                }
                 return context.getString(R.string.section_title_star, card.getStar());
             case 1:
                 return statBucketTitle(card.Attack);
@@ -484,7 +489,7 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
             case 3:
                 return nameSectionTitle(card.Name);
             case CardSearcherManagerBase.SORT_RULE_RELEASE_DATE:
-                int date = DataManager.get().getPackManager().getCardReleaseDate(card.getCode());
+                int date = DataManager.get().getPackManager().getCardReleaseDate(card);
                 return date == 0 ? context.getString(R.string.section_title_unknown)
                         : context.getString(R.string.section_title_year, date / 10000);
             default:

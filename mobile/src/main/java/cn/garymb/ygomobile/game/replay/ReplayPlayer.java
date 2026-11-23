@@ -1,6 +1,9 @@
 package cn.garymb.ygomobile.game.replay;
 import cn.garymb.ygomobile.game.engine.GameEngine;
+import cn.garymb.ygomobile.game.gamefield.EffectActivationLedger;
 import cn.garymb.ygomobile.game.gamefield.GameField;
+import cn.garymb.ygomobile.game.gamefield.GameTopInfoManager;
+import cn.garymb.ygomobile.game.gamefield.SummonPledgeLedger;
 
 import android.os.Handler;
 import android.os.Looper;
@@ -159,6 +162,20 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
     /** 是否有正在进行的回放会话（UI 判定按钮可用性与退出确认） */
     public boolean hasActiveSession() {
         return isRunning;
+    }
+
+    /**
+     * 回放 UI 是否应当处于显示态：等待加载（LOADING）或会话已在投喂。
+     * <p>外部打开 yrp 的路径先 {@code enterReplayUI()} 切到决斗场、再把解析/等卡数据/建源放在
+     * {@link #loadAndPlay} 的后台线程做（{@code DataManager.awaitLoaded} 上限 20 秒，叠加首次资源检查
+     * 会更长），这段窗口里 {@code replayMode/isRunning} 都还没置起。若期间发生旋转重建
+     *（onCreate 里的 {@code applyOrientationLock} 改显示方向就会触发），旧的判定认为不属于决斗语境，
+     * 会把 {@code layout_game_right} 整块收起——GL 曲面随之销毁，卡片移动动画永不递减、统一动画闸门
+     * 只能按兜底超时一段段放行，观感即「只剩决斗背景、场上没有卡片和决斗场、录像卡住」（用户反馈）。
+     * 主菜单重显入口同样按本判据拦截，不让迟到的 dismiss 回调在这段窗口里抹掉决斗场 UI。
+     */
+    public boolean isUiSessionAlive() {
+        return state == State.LOADING || hasActiveSession();
     }
 
     public void pause() {
@@ -334,6 +351,9 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
             chatFrameCount = ReplayChatTimeline.countChatFrames(replayData.msgFrames);
             chatTimeline.build(replayData == null ? null : replayData.msgFrames);
             startSession();
+            // 新会话开头按 MSG_START 同口径清一次发动/召唤誓约账本：旧格式重跑全程不重投 MSG_START
+            //（gframe 由 dField.Initial 建场），上一场决斗或上一轮回留下的 applied 标记不清就永远不会清
+            resetDuelMarkLedgers();
             // 消息记录·聊天tab（用户规格：打开录像即全部可见）：时间线建好、昵称写入后即把全部
             // 聊天帧一次性预载入表（主线程侧解析格式化），无需播放到对应时间点
             final List<byte[]> preloadChat = chatTimeline.collectChatBodies();
@@ -350,6 +370,8 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
             setState(State.PLAYING);
             isRunning = true;
             isPaused = false;
+            // 管线超时兜底态随新会话复位（防上一会话因渲染缺位进入的瞬时落位判定残留）
+            pacer.resetStallState();
             skipTurn = startTurn > 1 ? startTurn - 1 : 0;
             isSkipping = skipTurn > 0;
             notifyHint(ReplayReportUtil.buildReplayInfo(replayData, startTurn, chatFrameCount));
@@ -399,6 +421,24 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
             out.add(id == null ? 0 : ReplayCodeMapper.mapCode(id));
         }
         return out;
+    }
+
+    /**
+     * 回放会话/重排起头的决斗级标记复位（用户反馈：录像里「持续适用中的效果」及其头像感叹号
+     * 在该卡发动并适用前就出现在血条下方，正常决斗与观战无此问题）：两本账本（发动、召唤誓约）
+     * 与卡详标记都是决斗级静态状态，正常由实况链路在 MSG_START/MSG_WIN 上清零（见
+     * DuelEventHandlerBase.onStart/onWin）；而旧格式重跑全程不重投 MSG_START，「从头重放/上一步」
+     * 也是直接从第 0 步重算，那条清零点根本不会发生，上一轮留下的 applied/negated 条目就永远残留：
+     * 本局播到对应链之前条目已入列，感叹号也提前闪动。此处按 MSG_START 同口径清一次并重新解算徽标，
+     * 使回放的持续适用效果显示时机与正常决斗/观战完全一致。
+     */
+    private void resetDuelMarkLedgers() {
+        EffectActivationLedger.clear();
+        EffectActivationLedger.setCurrentTurn(0);
+        SummonPledgeLedger.clear();
+        CardDetailPanel.refreshCardDetailMarks();
+        // 徽标与已展开列表按清零后的账本重解（入口自身 post 主线程，投喂线程调用安全）
+        GameTopInfoManager.refreshApplyingEffects();
     }
 
     /** 旧格式重跑的初始场（对齐 replay_mode.cpp StartDuel 的 dField.Initial），纯消息模式由实况管线 MSG_START 建场，两路口径一致。 */
@@ -533,6 +573,9 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onReplayRenderHold(true);
         });
+        // 本轮重排自己接管 instantPlace（beginInstantSkip/落点 endInstantSkip），
+        // 超时兜底计的瞬时落位判定必须先清零，避免 releaseStallMode 把重排需要的标志误抹
+        pacer.resetStallState();
         if (pendingReverse) {
             // 逆向倒放：投喂线程抓取当前（N）各显示卡渲染位置快照，落点后交主线程从 N 位逆向补间回 N-1 位
             displaySnapN.clear();
@@ -559,6 +602,9 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
             // 重跑无 MSG_START：初始场与卡面就地重建（与 load 路径同口径）
             buildInitialField();
             zoneCounter.applyReplayDeckCodes();
+            // 重跑/重排不重投 MSG_START，实况链路上的账本清零点不会发生：本轮重算从第 0 步重新登记发动，
+            // 旧一轮「已适用/已无效」条目必须先清，否则本局尚未走到那条链，持续适用中效果就已在血条下列出
+            resetDuelMarkLedgers();
             landAtStart = false;
         }
         if (engineDriven && skipStep == 0) {

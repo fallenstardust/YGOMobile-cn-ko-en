@@ -6,12 +6,16 @@
  */
 
 #include "scriptlib.h"
+#include "interpreter.h"
 #include "duel.h"
 #include "field.h"
 #include "card.h"
 #include "effect.h"
 #include "group.h"
 #include "ocgapi.h"
+#include <algorithm>
+#include <lauxlib.h>
+#include <lua.h>
 
 #ifdef _IRR_ANDROID_PLATFORM_
 int32_t scriptlib::duel_load_script(lua_State *L) {

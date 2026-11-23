@@ -117,6 +117,12 @@ public interface Constants {
     String CORE_BG_PATH = CORE_SKIN_PATH + "/extra/bgs";
     String CORE_DECK_PATH = "deck";
     String CORE_PACK_PATH = "pack";
+    /**
+     * 卡包发售日期总表（来自 ygopro-card-list 的 pack.db.sql）的 asset 文件名，实际 asset 路径为
+     * {@link #ASSETS_PATH} + 本名。每行 {@code INSERT INTO pack VALUES(卡密,'包号','包名','稀有度','yyyy-MM-dd');}
+     * 提供每张卡的最初发售日期，比 pack 目录下 {@code xxxx-misc.ydk} 只知年份更精确。
+     */
+    String CORE_PACK_RELEASE_SQL = "pack.db.sql";
     String CORE_EXPANSIONS = "expansions";
     String CORE_SINGLE_PATH = "single";
     String CORE_IMAGE_PATH = "pics";

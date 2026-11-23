@@ -144,6 +144,15 @@ public final class CardOverlayRenderer {
     private ClientCard hideAttackCard;
     /** 已选定为当前攻击目标的对方怪兽：攻击弧展示期内不再在其卡上绘制 attack 浮动箭头 */
     private ClientCard hideAttackTarget;
+    /**
+     * 攻击弧正在展示的整段期间：场上所有卡上的 attack.png 浮动箭头一并隐藏（用户规格）。
+     * C++ 里这份抑制不是逐卡做的：宣言攻击的应答一发出，{@code DuelClient::SendResponse} 就对
+     * MSG_SELECT_BATTLECMD 调 {@code ClearCommandFlag()}（duelclient.cpp L4511-4515），所有卡的
+     * COMMAND_ATTACK 同时清零，故绿色拱形箭头播放期间没有任何卡还带着上下晃动的攻击贴图。
+     * 本端 cmdFlag 由后续询问才重设，这里在渲染层按同一观感整段抑制，避免弧线与其他仍可攻击怪兽
+     * 的浮动箭头同屏并存（用户反馈「视觉上和 C++ 不一致」的直接来源）。
+     */
+    private boolean hideAllAttackIcons;
 
     // 可发动绿点专用矩阵 scratch：buildCardModel 内部会占用 view.mModelTmp 作手卡 billboard 临时量，
     // 不能把 mModelTmp 同时作为其 out，故本处用独立数组避免 multiplyMM 结果/源同数组的未定义行为。
@@ -192,12 +201,15 @@ public final class CardOverlayRenderer {
         // 同理，已被选定为攻击目标的怪兽（arcTarget）卡上也不再显示攻击箭头
         hideAttackCard = null;
         hideAttackTarget = null;
+        hideAllAttackIcons = false;
         if (f.arcAttacker != null) {
             long el = view.animTimeMs - f.arcStartMs;
             // 与 drawAttackArc 同源：小负值视为窗口内（竞态首帧仍抑制 attack.png，避免闪一帧浮动箭头）
             if (el <= ATTACK_ARC_MS) {
                 hideAttackCard = f.arcAttacker;
                 hideAttackTarget = f.arcTarget;
+                // 弧线一开播就整段抑制所有卡的 attack.png（对齐 C++ 应答时 ClearCommandFlag 的效果）
+                hideAllAttackIcons = true;
             }
         } else if (f.arcAttacker == null && f.selectAttacking != null) {
             /** 战斗阶段点击「攻击宣言」选中的怪兽：cmdFlag 已清空但尚未进入 arcAttacker，
@@ -367,14 +379,15 @@ public final class CardOverlayRenderer {
         // 烘焙刻度（compositePendulum），此处不重复叠加。
         drawPendulumScaleOverlay(c, mr4);
         // 可攻击宣言的怪兽：在其上方绘制上下浮动的 tAttack 箭头（对齐 drawing.cpp L685-693）；
-        // 攻击弧线显示期间的攻击者隐藏该贴图，改由滑动的绿色箭头动画表达；
-        // 已选定为攻击目标的对方怪兽（hideAttackTarget）同样不再显示——箭头只标记攻击手。
+        // 攻击弧线显示期间整段抑制本贴图（见 {@link #hideAllAttackIcons}），攻击语义只留滑动的绿色箭头动画；
+        // 弧线未启而仅为攻击者/目标抑制的两张卡仍按 hideAttackCard/hideAttackTarget 单独排除。
         // 我方：cmdFlag 含 COMMAND_ATTACK（由 battle cmd 精确置位）；
         // 对方：战斗宣言阶段的表侧攻击表示怪兽，近似判断（收不到对方 battle cmd）；
         // 必须叠加 TYPE_MONSTER 门槛，否则魔陷区盖卡揭开后 position 同为攻击表示会误显示箭头。
-        boolean showAttack = (c.cmdFlag & GameEngine.COMMAND_ATTACK) != 0
+        boolean showAttack = !hideAllAttackIcons
+                && ((c.cmdFlag & GameEngine.COMMAND_ATTACK) != 0
                 || (oppAttackHint && (c.type & TYPE_MONSTER) != 0
-                    && c.controler == 1 && c.isFaceUp() && c.isAttack());
+                    && c.controler == 1 && c.isFaceUp() && c.isAttack()));
         if (showAttack && c != hideAttackCard && c != hideAttackTarget) {
             drawAttackIcon(c);
         }

@@ -400,8 +400,32 @@ public class GameTopInfoManager extends GameTopInfoManagerBase {
      * @param isMyTurn 本地视角：是否为我方回合
      */
     public void updateTurn(int turn, boolean isMyTurn) {
-        setTurnText(String.valueOf(turn));
+        // 与 syncTurnCounter 共用同一个 0 态口径：MSG_RELOAD_FIELD 不带回合数，非撤回触发的 reload
+        // 会把 turnCount 留在 0（只有撤回重同步分支才回填），此时写“0”会顶出一个「第0回合」，
+        // 与新一局开局的同 0 态一样落回默认值
+        setTurnText(turn > 0 ? String.valueOf(turn) : DEFAULT_TURN_TEXT);
         applyTurnHighlight(isMyTurn ? TURN_PLAYER_ME : TURN_PLAYER_OPP);
+    }
+
+    /**
+     * 回合数随场面变更直接重取（观战防漏刷）：原先只有 MSG_NEW_TURN / MSG_NEW_PHASE 两条回调会写
+     * {@code tv_turn_counter}，观战端整条消息链被动画闸门一段段持住时，这两条链路只要有一次没走到
+     * UI，数字就会长时间停在上一处写下的值上（用户反馈的「好几个回合都是第一回合」）。
+     * 本方法在任何一次场面变更后按 {@code field.turnCount} 重取一次，使显示恒与屏幕上真正呈现的局面同源；
+     * 文本未变时不写，避免每帧重绘。
+     * <p>turnCount 为 0（新一局 field.clear() 之后、首个 MSG_NEW_TURN 之前：猜拳、开牌、建堆叠）
+     * 时显式落回 {@link #DEFAULT_TURN_TEXT}：不能“不写”——match 局间不会重走 prepareForDisplay/reset，
+     * 否则顶部会一直挂着上一局的回合数（如第 1 局打到 12 回合，第 2 局开局到首个 NEW_TURN 之间
+     * 就显示 12）；也不写“0”，避免「第0回合」。回合方高亮仍由 {@link #updateTurn} 负责。</p>
+     */
+    public void syncTurnCounter(GameField field) {
+        if (tvTurnCounter == null || field == null) {
+            return;
+        }
+        final String text = field.turnCount > 0 ? String.valueOf(field.turnCount) : DEFAULT_TURN_TEXT;
+        if (!text.contentEquals(tvTurnCounter.getText())) {
+            tvTurnCounter.setText(text);
+        }
     }
 
     // === LP 血条与 LPBarFrame（drawing.cpp L936-973、L996-1003） ===
