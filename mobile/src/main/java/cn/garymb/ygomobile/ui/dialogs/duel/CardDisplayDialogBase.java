@@ -135,6 +135,10 @@ abstract class CardDisplayDialogBase {
      *  在 show/dismiss 时维护，在 field 变化时由 {@link #refreshLiveDialogs()} 统一刷。*/
     protected static final List<CardDisplayDialog> LIVE_DIALOGS = new ArrayList<>();
 
+    /** 全部正在展示的本类弹窗（含未安装 liveSupplier 的普通确认窗）：面板只持有最近一个
+     *  实例的引用，被后续弹窗覆盖引用的旧实例会漏关；决斗退出/回放结束时按本名单统一收口 */
+    protected static final List<CardDisplayDialog> ALL_DIALOGS = new ArrayList<>();
+
     protected final Context context;
     protected final ImageLoader imageLoader;
     protected final Handler handler = new Handler(Looper.getMainLooper());
@@ -268,6 +272,7 @@ abstract class CardDisplayDialogBase {
             // 关窗先停掉里侧除外呼吸动画并清理 foreground，防动画持有已脱离的视图
             cancelAllFacedownMarks();
             LIVE_DIALOGS.remove(this);
+            ALL_DIALOGS.remove(this);
             if (dismissListener != null) dismissListener.onDismiss();
         });
 

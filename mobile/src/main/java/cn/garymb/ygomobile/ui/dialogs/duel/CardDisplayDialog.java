@@ -66,6 +66,16 @@ public class CardDisplayDialog extends CardDisplayDialogBase {
         }
     }
 
+    /** 决斗内展示弹窗的统一收口（断线/回放结束/观战退出/撤回）：卡详面板只记录最近一个
+     *  实例，被后续弹窗覆盖引用的旧实例会漏关，故按静态名单把仍在显示的实例全部关掉。
+     *  仅主线程调用（上述退出路径均在 UI 线程）。 */
+    public static void dismissAllOpen() {
+        for (CardDisplayDialog d : new ArrayList<>(ALL_DIALOGS)) {
+            if (d != null && d.isShowing()) d.dismiss();
+        }
+        ALL_DIALOGS.clear();
+    }
+
     public CardDisplayDialog setTitle(String title) {
         this.titlePrefix = title;
         updateTitle();
@@ -183,6 +193,10 @@ public class CardDisplayDialog extends CardDisplayDialogBase {
                 }
                 if (liveSupplier != null && !LIVE_DIALOGS.contains(this)) {
                     LIVE_DIALOGS.add(this);
+                }
+                // 无论有无 liveSupplier 都登记：普通确认窗同样可能残留到决斗退出
+                if (!ALL_DIALOGS.contains(this)) {
+                    ALL_DIALOGS.add(this);
                 }
             } catch (Exception e) {
                 // Token expired or window already showing

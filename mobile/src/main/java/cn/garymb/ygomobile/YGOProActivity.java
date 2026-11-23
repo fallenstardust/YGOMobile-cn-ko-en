@@ -151,7 +151,9 @@ public class YGOProActivity extends YGOProActivityEngine {
         isGameStarted = false;
         if (engineCallback != null) engineCallback.resetDuelEndState();
         if (topInfoManager != null) topInfoManager.stopTimer();
-        if (dialogUtil != null) dialogUtil.dismissOpenGameDialogs();
+        // 同 dismissDuelDialogsForExit：纯观战可能从未弹过询问窗（dialogUtil 未惰性创建），
+        // 不能判空跳过，否则展示类弹窗会残留遮挡局域网主界面
+        getDialogUtil().dismissOpenGameDialogs();
         // 撤回快照里被即时隐藏的询问窗一并作废：决斗已结束，服务端迟到/被拒的撤回 ACK
         // 不得再把上一局的旧询问窗重新弹回主界面（restoreUndoHiddenDialogs 只认快照）
         clearUndoHiddenDialogs();
@@ -187,6 +189,19 @@ public class YGOProActivity extends YGOProActivityEngine {
             Toast.makeText(this, toastMsg, Toast.LENGTH_SHORT).show();
         }
     }
+
+    /**
+     * 回放结束/退出观战等场景的弹窗收口：与 {@link #returnToLanMain} 同一口径关闭仍在
+     * 窗口上显示的决斗内弹窗（展示列表/确认/选项/宣言…）。录像退出走
+     * ReplayModeDialog.quitReplay、不经 returnToLanMain，故单列为公开入口。
+     */
+    public void dismissDuelDialogsForExit() {
+        // 不能沿用 dialogUtil 判空跳过：录像播放期间 MessageUIHandler 对所有 select 询问直接
+        // return，dialogUtil 可能从未被惰性创建（纯观看、未弹过询问窗），判空会让收口整个跳过，
+        // 堆叠区展示窗就会留在录像选择界面上。getDialogUtil 同时负责惰性创建。
+        getDialogUtil().dismissOpenGameDialogs();
+    }
+
     /**
      * 显式退出玩家等待界面时由 MainMenuNavigator.onExitWaiting 在 disconnect 前调用：
      * 抑制本次 DISCONNECTED 自动 returnToLanMain（否则会连带弹出 LanModeDialog/MainMenuDialog），

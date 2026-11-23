@@ -669,11 +669,15 @@ public class ReplayModeDialog {
                             // 再弹结束提示框（确认后才 quitReplay 回录像选择窗）
                             activity.getCardDetailPanel().hideReplayControls();
                             activity.getCardDetailPanel().closeGameButtons();
+                            // 播完即收口仍在显示的决斗内弹窗（堆叠区展示列表/确认窗等），
+                            // 不让它们盖在结束提示框或随后重开的录像选择界面上
+                            activity.dismissDuelDialogsForExit();
                             showReplayEndDialog(activity, player, endDlgShown, false);
                             break;
                         case ERROR:
                             // 同 PLAYING：阶段格不用“⏹”图标覆盖，保持当前阶段语义
                             // 对齐 MSG_RETRY 分支 L311-316："Error occurs." 提示后等待确认
+                            activity.dismissDuelDialogsForExit();
                             showReplayEndDialog(activity, player, endDlgShown, true);
                             break;
                         default:
@@ -756,6 +760,10 @@ public class ReplayModeDialog {
             player.detachListener();
             player.stop();
         }
+        // 与观战退出（returnToLanMain → dismissOpenGameDialogs）同口径：先把仍挂在窗口上的
+        // 决斗内弹窗收口，再收决斗场 UI——PopupWindow 不随 layout 隐藏而消失，否则会浮在
+        // 录像选择界面上
+        activity.dismissDuelDialogsForExit();
         hideReplayControls(activity);
         // 退出回放不再直接回主菜单，而是重新打开录像选择界面并还原上次选中的录像：
         // 先做与主菜单显示等价的界面清理（隐藏决斗场/恢复菜单背景/菜单 BGM），

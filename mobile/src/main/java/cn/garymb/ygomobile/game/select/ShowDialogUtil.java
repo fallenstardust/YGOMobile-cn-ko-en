@@ -480,6 +480,9 @@ public class ShowDialogUtil {
         }
         rpsResultShown = false;
         lastHandSent = 0;
+        // 卡片展示/确认窗（含堆叠区实时列表与确认类普通窗）：卡详面板只持最近一个实例引用，
+        // 被后续弹窗覆盖引用的旧窗会漏关，统一按静态名单收口（决斗退出/观战退出不残留）
+        CardDisplayDialog.dismissAllOpen();
         // 一并关闭选项弹窗与全部宣言/表示形式弹窗（选项/属性/数字/种族/卡片/形式），与退出对战同口径：
         // 这些弹窗不可取消，决斗结束或撤回时若仍在显示会残留遮挡，且按钮已发不出应答，故统一主动关闭
         boolean closed = dismissAnnounceDialogs();
