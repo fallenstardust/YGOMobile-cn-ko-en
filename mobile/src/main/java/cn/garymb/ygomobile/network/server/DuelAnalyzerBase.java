@@ -156,6 +156,15 @@ abstract class DuelAnalyzerBase implements YGOProtocol {
      *  供 {@link UndoQuestionGuard#resyncAfterUndo} 在 reload 之后补发翻转与顶卡卡码。 */
     boolean liveDeckReversed;
 
+    /** 引擎当前的场地封锁掩码（协议侧位布局：p0 低 16 位、p1 高 16 位，与客户端 disabledField 同构）：
+     *  ocgcore 的 MSG_FIELD_DISABLED 携的是 {@code player[].disabled_location} 的完整累计值而非常量位
+     *  （processor.cpp refresh_location_info：仅在值变化时下发整值），所以本字段只需赋值不需或运算；
+     *  live 与静默重放共用 analyze，且重放从开局重建引擎（开局无封锁，{@link #beginSilentReplay} 归零），
+     *  故重放到回退点停下后本字段即回退点的真值，供 {@link UndoQuestionGuard#resyncAfterUndo} 在重同步批
+     *  末尾补发一条 MSG_FIELD_DISABLED——query_field_info 的 reload 载荷不携禁用态，不补发则客户端只能
+     *  靠发动条数戳剪除白 X，链外适用的封区（戳为 0）永远剪不掉（用户反馈：撤回后白 X 不消失）。 */
+    int liveDisabledField;
+
     // 协作类（同包，持 analyzer 反向引用，共享状态读写本体）
     DuelViewBroadcaster broadcaster;
     DuelZoneRefresh zoneRefresh;

@@ -728,6 +728,7 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
     @Override
     public void onResume() {
         super.onResume();
+        reloadLimitListIfPending();
     }
 
     @Override
@@ -749,6 +750,35 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
         if (!hidden && mReleaseDateFilter != null) {
             mReleaseDateFilter.refreshRange();
         }
+        // 同理复核一次禁限表：本页可能在顶部资源检查未完成时就被打开
+        if (!hidden) {
+            reloadLimitListIfPending();
+        }
+    }
+
+    /**
+     * 禁限表补齐（用户反馈：app 刚启动、顶部检查资源进度条未到 100% 时就打开卡组管理页，
+     * 卡列表的禁/限/准限标识整页消失）：根因是 init 时 limit 目录尚未拷完，LimitManager 只能
+     * 给出空表，适配器拿到的就是它；资源检查完成后页面也不会自动重取（卡图上的标识在
+     * {@code DeckAdapater.onBindViewHolder} 按绑定时 {@code mLimitList} 现算，所以下面只需重挂表
+     * 并通知重绘，不必重读 ydk）。
+     * <p>
+     * 只在「当前生效表名与现存最后使用表名不一致」时动一次，平时回到本页零开销；
+     * 用户在设置里改了默认禁限表也走同一判据，效果是回到本页即跟随新表。
+     */
+    protected void reloadLimitListIfPending() {
+        if (!isAdded() || mDeckAdapater == null || mCardLoader == null || activity == null) return;
+        LimitList current = mDeckAdapater.getLimitList();
+        LimitList want = mSettings.getGenesysMode() == 1
+                ? activity.getmLimitManager().getLastGenesysLimit()
+                : activity.getmLimitManager().getLastLimit();
+        if (want == null) return;
+        String currentName = current != null ? current.getName() : null;
+        if (TextUtils.equals(currentName, want.getName())) return;
+        // 卡加载器的表同步更新：它决定后续 read/搜索的禁限口径
+        mCardLoader.setLimitList(want);
+        // setLimitList 内部会重绘卡组网格与搜索列表（含计分板/副卡组栏目的张数校验）
+        setLimitList(want);
     }
 
     @Override
@@ -757,10 +787,12 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
 
     @Override
     public void onUserVisible() {
-        // 切回本页时复核时间轴跨度：卡包数据可能在页面隐藏期间才读完
+        // 切回本页复核时间轴跨度：卡包数据可能在页面隐藏期间才读完
         if (mReleaseDateFilter != null) {
             mReleaseDateFilter.refreshRange();
         }
+        // 同理复核禁限表（资源检查可能刚完成）
+        reloadLimitListIfPending();
     }
 
     @Override

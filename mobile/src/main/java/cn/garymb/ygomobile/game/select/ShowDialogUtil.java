@@ -495,6 +495,10 @@ public class ShowDialogUtil {
         }
         // 连锁场上点击模式复位：关闭询问窗、退出命令上下文并清除高亮，避免脏状态残留到下一局
         YesOrNoDialog.dismissChainQuery();
+        // 全部在显是/否询问窗一并收口（用户反馈：决斗中正在显示询问窗时对方投降/断开连接退出决斗，
+        // 只收 chainQueryDialog 与知会窗会把非连锁类的 EFFECT_YN/YESNO 询问留在结算与主界面上）：
+        // 这些窗都是独立窗口，不随 layout_game_right 隐藏而销毁，且应答已发不出去
+        YesOrNoDialog.dismissShowingDialogs();
         // 知会窗（对位 C++ wMessage）同样收口：不可取消的它若不主动关闭会遮挡返回界面；
         // 不计入 closed——它不是应答类弹窗，撤回被拒时无需按询问快照重建
         YesOrNoDialog.dismissNoticeDialog();

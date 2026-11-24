@@ -182,6 +182,17 @@ public class GameField {
     final List<PendingOverlay> pendingOverlays = new ArrayList<>();
     public int[] extraPCount = new int[2];
     public long disabledField;
+    /** 待落地的「禁用区域」选择结果（本地视角，位布局同 disabledField）：
+     *  {@code Duel.SelectDisableField} 类脚本在玩家选完格子后立刻 Duel.Hint(HINT_ZONE) 宣告同一列，
+     *  而白 X 用的 MSG_FIELD_DISABLED 要等效果处理末尾的 refresh_location_info 才下发（ocgcore
+     *  processor.cpp 仅在 disabled_location 变化时发整值）——那一刻白 X 还未落地，同列魔陷格会先
+     *  吃进玫红呼吸与无效徽记（用户反馈）。选格会话把选中的格位暂存到这里，供 applyHintZone 事前
+     *  跳过同列标注，并在 MSG_FIELD_DISABLED 落地/回合结束/清场时作废。
+     *  由 {@code FieldSelectManager.handlePlaceSelection} 经 {@link #setPendingDisfield} 写入。 */
+    public int pendingDisfieldMask;
+    /** 连锁处理期间缓冲的 HINT_ZONE 掩码与其当时的发动条数戳（见 {@link #applyHintZone}） */
+    private int pendingHintZones;
+    private int pendingHintStamp;
     /** HINT_ZONE 通讯（duelclient.cpp L1529-1572）展开出的被标注魔陷格集，位布局与 disabledField 同构（本地视角：seat0 MZ bits0-6 / SZ bits8-15，seat1 高 16 位）；仅接受无效类效果的 SZ 位来位——无限泡影类脚本效果处理成功时 Duel.Hint(HINT_ZONE, tp, 0x1<<(seq+8)) 宣告自身所在列的 SZONE 位，本端把它标到同列两张魔陷格——同侧 SZONE 格（同 seq）与对侧镜像 SZONE 格（4-seq，aux.GetColumn 同式）；仅主列 seq 0-4（额外怪兽列无魔陷对应格）。MZ 位（bit0-6/16-22）为封锁格子类卡片（封锁龙/黄金国亡灵 等，效果伴随 MSG_FIELD_DISABLED 白 X）的怪兽纵列宣告，桌面端只对掩码位瞬时高亮 40 帧、从不扩张魔陷格；本端若同样展开会出现「白 X 同纵列魔陷格错误显示泡影标注」的误报，故不产生持久标注。效果携 RESET_PHASE+PHASE_END，故下一个 MSG_NEW_TURN 清除。 */
     public int hintZoneMask;
     /** HINT_OPPO_SELECT_PLACE(12) 位置回报的瞬时高亮（本地视角，位布局同 hintZoneMask）与到期时刻：
@@ -391,6 +402,9 @@ public class GameField {
         displayCards.clear();
         contiAct = false;
         disabledField = 0;
+        pendingDisfieldMask = 0;
+        pendingHintZones = 0;
+        pendingHintStamp = 0;
         hintZoneMask = 0;
         flashZoneMask = 0;
         flashZoneUntilMs = 0;
@@ -428,15 +442,47 @@ public class GameField {
         return resolvingChainOrdinal > 0 ? resolvingChainOrdinal : EffectActivationLedger.eventCount();
     }
 
-    /** 接收 HINT_ZONE 掩码（本地视角）展开为魔陷格标注集存 hintZoneMask：仅 SZONE 位标注同纵列两格（同侧 seq 与对侧镜像 4-seq），MZ 位为封区类宣告不做持久标注，来位已被 disabledField 封锁时跳过，仅主列 seq 0-4。不含 HINT_OPPO_SELECT_PLACE(12)：位置回报只走 {@link #flashZones} 瞬时高亮（单 SZ 位与泡影标注同形，不可并入本标注集） */
+    /** 接收 HINT_ZONE 掩码（本地视角）展开为魔陷格标注集存 hintZoneMask：仅 SZONE 位标注同纵列两格（同侧 seq 与对侧镜像 4-seq），MZ 位为封区类宣告不做持久标注。来位落在「已被封区（白 X）、已选定待封（pendingDisfieldMask）或本条掩码自带同列 MZ 位」的视觉纵列时同样跳过：区域不能使用的效果（封锁龙/黄金国亡灵 等）只封格、不含「无效魔法陷阱区」，但这类脚本常沿用无限泡影的写法把同一列的 SZONE 位一并宣告，不拦住就会出现用户反馈的误报（白 X 同列魔陷格玫红呼吸 + 格上无效徽记）；仅主列 seq 0-4。不含 HINT_OPPO_SELECT_PLACE(12)：位置回报只走 {@link #flashZones} 瞬时高亮（单 SZ 位与泡影标注同形，不可并入本标注集） */
     public void applyHintZone(int zones) {
-        final int stamp = currentStamp();
+        if (zones == 0) return;
+        //连锁效果处理期间的区域宣告先缓冲，整段连锁结束（MSG_CHAIN_END，此时本链的
+        // refresh_location_info 已跑完、白 X 已落地）再按当时的场地态落标：封区类脚本在选完
+        // 格子后立刻 Duel.Hint(HINT_ZONE) 宣告同列 SZONE 位，白 X 的 MSG_FIELD_DISABLED 要晚得多，
+        // 当场就标会出现用户反馈的误报；而对手选格的场合本端根本没有选格会话可拦，只能缓到
+        // 链尾再判。戳位随掩码一同缓下，避免补落时 resolvingChainOrdinal 已被链尾处理置回 0。
+        if (resolvingChainOrdinal > 0) {
+            pendingHintZones |= zones;
+            if (pendingHintStamp == 0) pendingHintStamp = currentStamp();
+            return;
+        }
+        applyHintZoneNow(zones, currentStamp());
+    }
+
+    /** 整段连锁结束：把期间缓冲的区域宣告按当前（已含白 X）场地态补落一次，同列被封的仍被剔除 */
+    public void flushPendingHintZones() {
+        int zones = pendingHintZones;
+        int stamp = pendingHintStamp;
+        pendingHintZones = 0;
+        pendingHintStamp = 0;
+        if (zones != 0) applyHintZoneNow(zones, stamp);
+    }
+
+    /** HINT_ZONE 落标的本体（同列已封区则跳过）：链外即时应用与链尾缓冲补落共用 */
+    private void applyHintZoneNow(int zones, int stamp) {
         for (int bit = 0; bit < ZONE_BIT_COUNT; bit++) {
             if ((zones & (1 << bit)) == 0) continue;
             if ((bit & 8) == 0) continue;                       // MZ 位：封区宣告，跳过
             if ((disabledField & (1L << bit)) != 0) continue;   // 该格已带白 X：不叠加标注
-            markSpellColumn(bit >= 16 ? 1 : 0, (bit & 7), stamp);
+            //同列已被封区/刚被选为封区对象（另一侧的怪兽格也算）：属封区类宣告而非无效魔陷区
+            if (isColumnLocked(zoneColumnKey(bit >= 16 ? 1 : 0, bit & 7), zones)) continue;
+            markSpellColumn(bit >= 16 ? 1 : 0, bit & 7, stamp);
         }
+    }
+
+    /** 记录本次「禁用区域」选格会话选中的格位（仅 MSG_SELECT_DISFIELD 会话应答时调用）：
+     *  随后的 HINT_ZONE 不得把同列魔陷格标成无限泡影样式，白 X 落地即作废本暂存 */
+    public void setPendingDisfield(int bits) {
+        pendingDisfieldMask = bits;
     }
 
     /** 记录一条位置回报的瞬时高亮（本地视角）：只影响渲染帧，不写 hintZoneMask/条数戳，
@@ -460,25 +506,72 @@ public class GameField {
         hintZoneStamp[bit] = stamp;
     }
 
+    /** 主列 0-4 的视觉纵列键（与 {@link #markSpellColumn} 同镜像口径：一侧第 seq 列即另一侧第
+     *  4-seq 列）；额外怪兽区(5/6)与 MR<4 的额外魔陷列(6/7)不参与列级判定，返回 -1 */
+    private static int zoneColumnKey(int seat, int seq) {
+        if (seat < 0 || seat > 1 || seq < 0 || seq > 4) return -1;
+        return seat == 0 ? seq : 4 - seq;
+    }
+
+    /** 某视觉纵列在标注/封区位图里占的位下标：两侧 MZ 主列与两侧 SZ 主列共 4 位（位布局同 disabledField） */
+    private static int[] columnBitIndices(int key) {
+        return new int[]{key, 8 + key, 16 + (4 - key), 16 + 8 + (4 - key)};
+    }
+
+    /** 该视觉纵列是否已属封区效果：已落地的白 X、待落地的禁区选择结果（pendingDisfieldMask）、
+     *  以及本条 HINT_ZONE 掩码自带的同列 MZ 位三者任一命中即算（两侧怪兽/魔陷任一格被封即该列） */
+    private boolean isColumnLocked(int key, int extraMask) {
+        if (key < 0) return false;
+        for (int bit : columnBitIndices(key)) {
+            if ((disabledField & (1L << bit)) != 0) return true;
+            if ((pendingDisfieldMask & (1 << bit)) != 0) return true;
+            if ((extraMask & (1 << bit)) != 0) return true;
+        }
+        return false;
+    }
+
+    /** 新落位的封区格清除同视觉纵列已有的 HINT_ZONE 标注（变色格与无效徽记，值同戳一并清）：
+     *  封区效果常沿用无限泡影写法先/后宣告同列 SZONE 位，两条消息到达次序不一，故除
+     *  {@link #applyHintZone} 的事前拦住外，这里再做事后回收（用户反馈的误报根因） */
+    private void clearColumnMarksAt(int bit) {
+        int seat = bit >= 16 ? 1 : 0;
+        int seq = (bit & 8) == 0 ? (bit & 7) : ((bit & 15) - 8);
+        int key = zoneColumnKey(seat, seq);
+        if (key < 0) return;
+        for (int b : columnBitIndices(key)) {
+            if ((hintZoneMask & (1 << b)) == 0) continue;
+            hintZoneMask &= ~(1 << b);
+            hintZoneStamp[b] = 0;
+        }
+    }
+
     /** MSG_FIELD_DISABLED 下发的完整禁用掩码（本地视角）整值落位：新增格记当前发动条数，
      *  仍禁的格沿用更早一次发动的条数（同一掩码被后续效果重发时不得把条数戳推到后来那次发动上），
-     *  解禁的格同时清位与戳 */
+     *  解禁的格同时清位与戳；新增封区位同时回收同列的 HINT_ZONE 变色/无效徽记标注
+     * （封区不含无效魔陷区，用户反馈的误报） */
     public void applyDisabledField(int mask) {
         long prev = disabledField;
         final int stamp = currentStamp();
         disabledField = mask & 0xFFFFFFFFL;
+        //白 X 已落地：禁区选择暂存位失去意义，作废以免继续压制后续无关 HINT_ZONE 的标注
+        pendingDisfieldMask = 0;
         for (int bit = 0; bit < ZONE_BIT_COUNT; bit++) {
             if ((mask & (1 << bit)) != 0) {
                 if ((prev & (1L << bit)) == 0) disabledStamp[bit] = stamp;
+                clearColumnMarksAt(bit);
             } else {
                 disabledStamp[bit] = 0;
             }
         }
     }
 
-    /** 回合结束（MSG_NEW_TURN）清除 HINT_ZONE 纵列标注：颜色与无效徽记连同条数戳一并归零 */
+    /** 回合结束（MSG_NEW_TURN）清除 HINT_ZONE 纵列标注：颜色与无效徽记连同条数戳一并归零；
+     *  待落地的禁区选择暂存位同样作废（跨回合未落地即视为该次选择已失效） */
     public void clearHintZoneMarks() {
         hintZoneMask = 0;
+        pendingDisfieldMask = 0;
+        pendingHintZones = 0;
+        pendingHintStamp = 0;
         Arrays.fill(hintZoneStamp, 0);
     }
 

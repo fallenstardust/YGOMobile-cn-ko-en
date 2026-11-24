@@ -313,16 +313,19 @@ abstract class YesOrNoDialogBase {
     }
 
     /**
-     * 构建消息行左侧卡图堆栈（用户规格：多个卡名时全部显示卡图，横向排列、每张压住前一张
-     * 的 1/3，再显示 message 文本）：
+     * 构建消息行左侧卡图堆栈（用户规格：多个卡名时全部显示卡图，横向排列、第一张在最左并被
+     * 第二张压住 1/3，第二张又被第三张压住，以此类推，之后才显示 message 文本）：
      * <ul>
      * <li>首张沿用布局常驻的 {@code iv_yes_no_card_image}（协议主卡，或按旧口径从文本首个
      * 卡名回退解析出的那张），尺寸/背景/点击行为与旧单卡图完全一致；</li>
-     * <li>其余按同一尺寸动态追加，{@code marginStart = -卡宽/3} 实现叠压；LinearLayout 按
-     * 子视图序绘制，后追加者天然盖在前一张之上；</li>
+     * <li>子视图序严格按「卡名出现顺序」重建（removeAllViews 后重新挂回首张）：旧实现只从尾部
+     * 摘除动态项、默认常驻首张仍在 index 0，一旦该张被别处（收缩把手/窗口重建）挪出首位，
+     * 叠压方向就会反过来；</li>
+     * <li>每张显式递增 translationZ（同时置 outlineProvider=null 不出阴影），绘制序按 Z 排，
+     * 叠压方向不再依赖容器默认的子视图序；{@code marginStart = -卡宽/3} 只控制横向位置；</li>
      * <li>无任何卡名时整个容器隐藏（旧实现只隐单张图，容器留着仍占一列空白）。</li>
      * </ul>
-     * 同一 root 反复显示时只摘除动态追加项，常驻首张留在原位复用。
+     * 同一 root 反复显示时整堆重建，常驻首张回到 index 0 复用。
      *
      * @param stack 卡图堆栈容器（{@code ll_yes_no_card_stack}）
      * @return 是否显示了卡图
@@ -340,10 +343,14 @@ abstract class YesOrNoDialogBase {
         if (codes.isEmpty()) {
             stack.setVisibility(View.GONE);
             bindCardDetailClick(first, 0);   // 清掉可能残留的上一次卡码，隐藏态不可点
+            stack.removeAllViews();
+            stack.addView(first);            // 常驻首张回到 index 0，下次显示仍可当首张用
             return false;
         }
         stack.setVisibility(View.VISIBLE);
-        while (stack.getChildCount() > 1) stack.removeViewAt(stack.getChildCount() - 1);
+        // 整堆重建：index 0 恒为第一个卡名（最左、最底层），后续每张依次往上叠压
+        stack.removeAllViews();
+        stack.addView(first);
         LinearLayout.LayoutParams base = (LinearLayout.LayoutParams) first.getLayoutParams();
         int cardW = base != null && base.width > 0
                 ? base.width : DialogScale.dpToPx(context, STACK_CARD_WIDTH_DP);
@@ -353,6 +360,9 @@ abstract class YesOrNoDialogBase {
         int pad = Math.round(context.getResources().getDisplayMetrics().density);
         ImageLoader loader = new ImageLoader();
         bindStackCardImage(loader, (ImageView) first, codes.get(0));
+        stack.setTranslationZ(0f);
+        first.setTranslationZ(0f);
+        first.setOutlineProvider(null);
         for (int i = 1, n = codes.size(); i < n; i++) {
             ImageView iv = new ImageView(DialogScale.wrap(context));
             iv.setPadding(pad, pad, pad, pad);
@@ -361,6 +371,9 @@ abstract class YesOrNoDialogBase {
             lp.gravity = Gravity.CENTER_VERTICAL;
             lp.leftMargin = -overlap;   // 横向压住前一张的 1/3
             iv.setLayoutParams(lp);
+            // 逐张抬 Z：后一张盖在前一张之上（用户规格叠压方向），并去掉抬 Z 带来的投影
+            iv.setTranslationZ(i * 0.1f);
+            iv.setOutlineProvider(null);
             bindStackCardImage(loader, iv, codes.get(i));
             stack.addView(iv);
         }

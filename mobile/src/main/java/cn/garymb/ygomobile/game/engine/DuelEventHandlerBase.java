@@ -540,6 +540,10 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
 
     @Override
     public void onChainEnd() {
+        // 整段连锁结束：先把效果处理期间缓冲的 HINT_ZONE 区域宣告按当前场地态补落一次（此时本链
+        // 的 MSG_FIELD_DISABLED 已到达，封区同列的误标会被剔除），再把登记序置回 0；顺序颠倒会使
+        // 补落时退回按实时条数落戳，后续撤回剪除判据错位（见 GameField.applyHintZone）
+        engine.field.flushPendingHintZones();
         // 对齐 duelclient.cpp MSG_CHAIN_END L3436-3442：逐链清除对象卡与发动卡的
         // is_showchaintarget 后再 chains.clear()
         for (GameField.ChainInfo ch : engine.field.chains) {

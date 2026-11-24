@@ -529,6 +529,10 @@ final class DuelAnalyzer extends DuelAnalyzerBase {
                     break;
                 }
                 case EngineMessage.MSG_FIELD_DISABLED: {
+                    // 掩码是引擎的完整累计封锁态（processor.cpp 仅在变化时下发整值），直接记下：
+                    // 静默重放同样经过这里，重放到回退点停下后即回退点的真值，供撤回重同步补发。
+                    // cursor 指向消息类型字节之后的载荷首字节（与上面 MSG_CHAINING 的 code@cursor 同口径）
+                    liveDisabledField = readInt32(msg, cursor);
                     cursor += 4;
                     broadcastMsg(range(msg, start, cursor));
                     break;

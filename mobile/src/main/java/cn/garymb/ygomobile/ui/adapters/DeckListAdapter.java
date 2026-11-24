@@ -132,6 +132,12 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
         } else {
             holder.ll_extra_n_side.setVisibility(View.VISIBLE);
         }
+        // 先行卡与违规标记每行都显式定值：item_deck_list_ 里 banned_mark 的 XML 默认就是 visible，
+        // 旧实现只在 deckInfo != null 的分支里改可见性——app 刚启动、顶部检查资源未到 100% 时
+        // cards.cdb 与禁卡表目录尚未就位，DeckLoader.readDeck 返回 null，于是整个列表全部带着
+        // 「不符合禁卡」标记显示（用户反馈）；同理禁限表未就位时也必须主动隐去标记。
+        boolean isPrerelease = false;
+        boolean isViolation = false;
         if (deckInfo != null) {
             //判断是否含有先行卡
             Deck deck = this.deckInfo.toDeck();
@@ -139,51 +145,37 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
             for (int i = 0; i < deck.getDeckCount(); i++) {
                 strList.add(deck.getAlllist().get(i).toString());
             }
-            for (int i = 0; i < deck.getDeckCount(); i++) {
+            for (int i = 0, n = deck.getDeckCount(); i < n; i++) {
                 if (strList.get(i).length() > 8) {
-                    holder.prerelease_star.setVisibility(View.VISIBLE);
+                    isPrerelease = true;
                     break;
-                } else {
-                    holder.prerelease_star.setVisibility(View.GONE);
-                    continue;
                 }
             }
-            //判断是否符合默认禁卡表以显示标识
+            //判断是否符合默认禁卡表以显示标识：含任一张超限/禁止卡即标记
+            //（旧写法在循环末尾用 else 置 GONE，实际由最后扫到的那张卡说了算）
             if (mLimitList != null) {
-                for (int i = 0; i < deck.getDeckCount(); i++) {
-                    if (mLimitList.getStringForbidden().contains(strList.get(i))) {
-                        holder.banned_mark.setVisibility(View.VISIBLE);
+                List<String> forbidden = mLimitList.getStringForbidden();
+                List<String> limited = mLimitList.getStringLimit();
+                List<String> semiLimited = mLimitList.getStringSemiLimit();
+                for (int i = 0, n = deck.getDeckCount(); i < n; i++) {
+                    String key = strList.get(i);
+                    if (forbidden != null && forbidden.contains(key)) {
+                        isViolation = true;
                         break;
-                    } else if (mLimitList.getStringLimit().contains(strList.get(i))) {
-                        int limitcount = 0;
-                        for (int j = 0; j < deck.getDeckCount(); j++) {
-                            if (strList.get(i).equals(strList.get(j))) {
-                                limitcount++;
-                            }
-                        }
-                        if (limitcount > 1) {
-                            holder.banned_mark.setVisibility(View.VISIBLE);
-                            break;
-                        }
-                    } else if (mLimitList.getStringSemiLimit().contains(strList.get(i))) {
-                        int semicount = 0;
-                        for (int k = 0; k < deck.getDeckCount(); k++) {
-                            if (strList.get(i).equals(strList.get(k))) {
-                                semicount++;
-                            }
-
-                        }
-                        if (semicount > 2) {
-                            holder.banned_mark.setVisibility(View.VISIBLE);
-                            break;
-                        }
-                    } else {
-                        holder.banned_mark.setVisibility(View.GONE);
-                        continue;
+                    }
+                    if (limited != null && limited.contains(key) && countSame(strList, key) > 1) {
+                        isViolation = true;
+                        break;
+                    }
+                    if (semiLimited != null && semiLimited.contains(key) && countSame(strList, key) > 2) {
+                        isViolation = true;
+                        break;
                     }
                 }
             }
         }
+        holder.prerelease_star.setVisibility(isPrerelease ? View.VISIBLE : View.GONE);
+        holder.banned_mark.setVisibility(isViolation ? View.VISIBLE : View.GONE);
         //多选
         if (isManySelect) {
             if (selectList.contains(item))
@@ -249,6 +241,15 @@ public class DeckListAdapter<T extends TextSelect> extends BaseQuickAdapter<T, D
 
     public interface OnItemSelectListener<T> {
         void onItemSelect(int position, T item);
+    }
+
+    /** 同一张卡在卡组里的张数（与原内层计数循环同口径，抽出来便于阅读） */
+    private static int countSame(List<String> list, String key) {
+        int count = 0;
+        for (int i = 0, n = list.size(); i < n; i++) {
+            if (key.equals(list.get(i))) count++;
+        }
+        return count;
     }
 
     /**

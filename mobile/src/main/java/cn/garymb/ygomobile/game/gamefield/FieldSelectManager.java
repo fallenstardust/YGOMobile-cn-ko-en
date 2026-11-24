@@ -22,6 +22,12 @@ import ocgcore.enums.CardType;
  */
 class FieldSelectManager extends FieldSelectManagerBase {
 
+    /** 本次选格会话是否为「禁用区域」（MSG_SELECT_DISFIELD）：与普通放置不同，它选完格子后
+     *  脚本会立刻 Duel.Hint(HINT_ZONE) 宣告同一列，而白 X 的 MSG_FIELD_DISABLED 要到效果处理
+     *  末尾才下发。会话应答时把选中格位交给 GameField 暂存，使这段窗口内的 HINT_ZONE 不会
+     *  把同列魔陷格误标成无限泡影样式（用户反馈的误报）。 */
+    boolean placeSelectIsDisfield;
+
     /**
      * Constructor (package entry of the split chain, called by GameFieldController;
      * the ctl assignment lives in the base layer).
@@ -165,6 +171,8 @@ class FieldSelectManager extends FieldSelectManagerBase {
 
     protected void doBeginPlaceSelect(boolean isDisfield) {
         isPlaceSelecting = true;
+        // 记下本次询问是否「禁用区域」，应答时据此决定是否暂存封区位
+        placeSelectIsDisfield = isDisfield;
         // 选格询问取代旧的指示物取除会话：旧会话的候选标记已由上一条应答的 ClearSelect 清掉，
         // 此处只需关闭点击路由入口，不再把本会话的点击当取除处理
         isCounterSelecting = false;
@@ -394,6 +402,11 @@ class FieldSelectManager extends FieldSelectManagerBase {
         }
         // 数量满足：按 gframe 固定次序组装多条应答并发送
         byte[] resp = buildPlaceResponse(selectedFieldBits);
+        if (placeSelectIsDisfield && ctl.engine != null && ctl.engine.getField() != null) {
+            // 禁用区域的选中格位先交给场地暂存（白 X 落地前就要生效，否则这一刻同列魔陷格
+            // 会先出玫红呼吸与无效徽记）；位布局与选格会话同为本地视角，可直接复用
+            ctl.engine.getField().setPendingDisfield(selectedFieldBits);
+        }
         finishPlaceSelect();
         ctl.engine.sendResponse(resp);
     }
@@ -401,6 +414,7 @@ class FieldSelectManager extends FieldSelectManagerBase {
     /** 结束放置区域选择会话：清状态、去高亮、隐藏 cancelOrFinish（联动恢复洗切手卡） */
     protected void finishPlaceSelect() {
         isPlaceSelecting = false;
+        placeSelectIsDisfield = false;
         selectedFieldBits = 0;
         placeSelectRemain = 0;
         ctl.viewController.clearHighlight();

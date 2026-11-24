@@ -79,6 +79,13 @@ final class UndoQuestionGuard implements YGOProtocol {
                     }
                 }
             }
+            // 场地封锁（白 X）状态回退补齐（用户反馈：撤回后区域不能使用的白 X 不消失）：
+            // query_field_info 的 reload 载荷不携 disabled_location，客户端 field.clear() 又把
+            // disabledField 归零，只能靠「发动条数戳 > 保留条数」剪除；而链外适用的封区效果
+            //（召唤/入场即封、不进连锁）落戳为 0，剪除判据永不成立。这里按静默重放导出的引擎真值
+            // 无条件补发一条完整掩码（与实况同一条 applyFieldDisabled 路径）：仍在封的格保留、
+            // 已解禁的格即时清掉。整局重放自行回到回退点的席位经 undoResyncBurst 闸门跳过。
+            analyzer.broadcastMsg(disabledFieldPayload(analyzer.liveDisabledField));
             int responder = analyzer.room.lastResponse;
             byte[] terminal = analyzer.silentTerminal;
             // 状态门复位无条件先做（旧实现把它排在重挂可行性判定之后，一旦早退就连复位一起跳过）：
@@ -140,6 +147,18 @@ final class UndoQuestionGuard implements YGOProtocol {
                 .put((byte) player)
                 .put((byte) 0)
                 .putInt(code)
+                .array();
+    }
+
+    /**
+     * 合成一条 MSG_FIELD_DISABLED（{@code type(1B) + 完整封锁掩码(int32 LE)}，协议侧位布局）：
+     * 引擎只在 disabled_location 变化时下发该消息且携的是累计整值（processor.cpp
+     * refresh_location_info），故重同步批末尾直接重发重放导出的真值即可让客户端整值落位。
+     */
+    private static byte[] disabledFieldPayload(int mask) {
+        return ByteBuffer.allocate(5).order(ByteOrder.LITTLE_ENDIAN)
+                .put((byte) EngineMessage.MSG_FIELD_DISABLED)
+                .putInt(mask)
                 .array();
     }
 
@@ -321,6 +340,9 @@ final class UndoQuestionGuard implements YGOProtocol {
         analyzer.liveChainActive = false;
         // 卡组是否处于「天变地异」翻转态同样由重放里的 MSG_REVERSE_DECK 重新导出（开局为未翻转）
         analyzer.liveDeckReversed = false;
+        // 场地封锁掩码同理：重建引擎开局无任何封区，重放里的 MSG_FIELD_DISABLED 逐条整值覆盖，
+        // 停下后即回退点的真值（供 resyncAfterUndo 补发，客户端据此即时消除已失效的白 X）
+        analyzer.liveDisabledField = 0;
         // 引擎即将重建：旧的 liveQuestion 属于要被抹掉的那一段，保活绝不能再把它重发出去
         analyzer.liveQuestion = null;
         analyzer.liveQuestionGeneration = -1;

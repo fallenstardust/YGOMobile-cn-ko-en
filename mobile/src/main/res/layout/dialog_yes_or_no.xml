@@ -48,10 +48,10 @@
             android:layout_gravity="center"
             android:orientation="horizontal">
 
-            <!-- 卡图堆栈（用户规格：message 中出现多个卡名时全部显示卡图，横向排列并每张压住
-                 前一张的 1/3，之后才轮到消息文本）：首张为布局常驻的 iv_yes_no_card_image（协议
-                 主卡），其余由 YesOrNoDialogBase#buildMentionedCardStack 以负 marginStart 动态追加，
-                 后追加者在 LinearLayout 绘制序中位于上层，天然压在前一张之上 -->
+            <!-- 卡图堆栈（用户规格：message 中出现多个卡名时全部显示卡图，第一张在最左并被第二张
+                 压住 1/3、第二张又被第三张压住，以此类推，之后才轮到消息文本）：首张为布局常驻的
+                 iv_yes_no_card_image（协议主卡），其余由 YesOrNoDialogBase#buildMentionedCardStack 以负
+                 marginStart 动态追加；整堆按卡名顺序重建并逐张递增 translationZ，叠压方向固定 -->
             <LinearLayout
                 android:id="@+id/ll_yes_no_card_stack"
                 android:layout_width="wrap_content"
