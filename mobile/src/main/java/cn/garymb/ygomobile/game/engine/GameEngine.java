@@ -742,6 +742,24 @@ public class GameEngine {
     public boolean inDuel = false;
     public boolean siding = false;
 
+    /**
+     * 服务端在 SingleDuel::TPResult / TagDuel::TPResult 是否已完成 players 数组与 dp->type 的
+     * 重映射：1v1 交换两个座位、tag 同时交换 (0↔2) 与 (1↔3)。此后 STOC_CHAT 携带的
+     * chat_player_type 不再是 lobby 座位号，而是 game-index（先攻方=0）。
+     * 客户端 selfType 不随之变更（保持大厅座位语义），因此在 duelStarted=true、inDuel=false
+     * 的“等待先攻结果”窗口内，需要依靠本标志将 chat_player_type 先转回 lobby 语义，
+     * 否则同阵营（本人或 tag 队友）的聊天会被错分到右侧对手头像下。
+     *
+     * 写入点：MSG_START（与 inDuel=true 同一 Runnable 内，依据 duelIsFirst 与自身 lobby
+     * team bit 的异或；观战则从 playertype 0x10/0x11 高位直接读出）。
+     * 复位点：STOC_DUEL_START（新一局开球前的安全默认）、STOC_CHANGE_SIDE 与
+     * STOC_WAITING_SIDE（服务端 DuelEndProc 已在这些包前将 dp->type 回写到 pplayer）。
+     * 特别注意：STOC_DUEL_END 一定不能复位——服务端 DuelEndProc 的“非 match”与“match
+     * 已分胜负”分支只下发 STOC_DUEL_END、不会将 dp->type 回写 lobby，本局 game-index
+     * 语义延续到连接断开；提前置 false 会把结算后对手发的“gg”归到我方头像下。
+     */
+    public boolean tpSwapped = false;
+
     /** 回放模式：录像消息经 ReplayPlayer 切片后投入本引擎实况管线渲染；SELECT 询问/胜负结算在 GameMessageParser 侧抑制（应答已录制在文件里，弹选择窗会悬挂流程） */
     public boolean replayMode = false;
     /** 残局（single mode）模式：本地引擎直驱残局 lua，消息投喂本引擎实况管线；与 replayMode 互斥 */

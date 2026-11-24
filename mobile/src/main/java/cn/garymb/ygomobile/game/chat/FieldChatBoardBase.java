@@ -214,10 +214,56 @@ abstract class FieldChatBoardBase {
     }
 
     /**
+     * 将服务端下发的 chat_player_type 直接映射为“是否与我在同一阵营”的判定，不依赖
+     * chatLocalType 的本地槽位映射——避免服务端 TPResult 已将 dp->type 重映射为 game-index、
+     * 而本端 inDuel 尚未置真的“等待先攻结果”窗口内，chatLocalType 仍按 lobby seat-index
+     * 语义处理而将同阵营聊天误归为对手一侧。
+     * <p>判定优先级：
+     * <ul>
+     *   <li>回放：同“对局中”，以 duelIsFirst 反推 host 队与 game team 的对应；</li>
+     *   <li>实况 inDuel=true：chat_player_type 已为 game-index，isDuelFirst 直接反映我方
+     *       所在 game team（观察者同样适用：服务端将 playertype 高位写入 duelIsFirst）；</li>
+     *   <li>实况 inDuel=false：默认 chat_player_type 仍为 lobby seat-index，观察者左侧
+     *       固定为 host 队伍、duel 玩家左侧为自身 lobby team；若 tpSwapped=true（服务端已
+     *       TPResult 而本端尚未处理 MSG_START），将左侧阵营位取反后再比较。</li>
+     * </ul>
+     */
+    protected boolean isChatOurTeam(int playerType) {
+        if (ctl.engine == null) return playerType == 0 || playerType == 2;
+        if (playerType < 0 || playerType >= 4) return false;
+        boolean isTag = ctl.engine.getGameMode() == 2;
+        int sideBit = isTag ? 0x2 : 0x1;
+        int selfType = ctl.engine.getSelfType();
+        int leftTeamBit;
+        if (ctl.engine.replayMode || ctl.engine.isInDuel()) {
+            // 对局中（含回放）：以 duelIsFirst 为准，同 chatLocalType 中的 inDuel 分支。
+            leftTeamBit = ctl.engine.isDuelFirst() ? 0 : sideBit;
+        } else {
+            // 未进入对局：默认 lobby seat-index。观察者左侧固定 host 队（bit 0），
+            // duel 玩家左侧为自己 lobby 队（selfType & sideBit）。
+            if (selfType >= 4) {
+                leftTeamBit = 0;
+            } else {
+                leftTeamBit = selfType & sideBit;
+            }
+            // 服务端 TPResult 已交换、本端尚未处理 MSG_START 时，需将左侧阵营位取反。
+            // !isSiding 与 chatLocalType 中的同一个预翻条件对齐：match 局间 DuelEndProc 已把
+            // dp->type 回写到 pplayer、onChangeSide 已复位 tpSwapped=false，正常不会同时命中
+            // siding=true 与 tpSwapped=true；这里的 !isSiding 是防回归的显式约束，确保
+            // 换备窗口内一律按 lobby seat-index 语义处理聊天分边。
+            if (ctl.engine.tpSwapped && !ctl.engine.isSiding()) leftTeamBit ^= sideBit;
+        }
+        return (playerType & sideBit) == leftTeamBit;
+    }
+
+    /**
      * 复刻 gframe game.cpp ChatLocalPlayer——把 STOC_CHAT 的发送方座位号（对局内为决斗序号
      * dp->type）转换为 AddChatMsg 用于命名槽位与分边的 chatType（0-3）。分边规则：chatType∈{0,2}=
      * 我方队（左）、{1,3}=对方队（右）（对齐 AddChatMsg L2325 player==0||2）。不返回 is_self 位
      * （本端口音效在引擎层统一处理）。
+     * <p>服务端 TPResult 已交换、本端尚未处理 MSG_START 的窗口内，chat_player_type 已是 game-index
+     * 而 inDuel 仍为 false：此时先将 game-index 转回 lobby 语义再走下方 seat-index 映射，避免同阵营
+     * 聊天错归为对手一侧。
      */
     protected int chatLocalType(int player) {
         if (player > 3) return player;
@@ -236,7 +282,11 @@ abstract class FieldChatBoardBase {
                 // 对局中：按先攻判定是否需要换边
                 player = ctl.engine.isDuelFirst() ? player : oppositeChatPlayer(player, isTag);
             } else {
-                // 换备卡 / 等待猜拳结果：按原始座位边界换边
+                // 换备卡 / 等待猜拳结果：先处理服务端 TPResult 已将 chat_player_type 重映射为
+                // game-index 的情形——取反一次将 game-index 转回 lobby seat-index，后面的
+                // selftype 边界映射就能拿到与 duelStarted=false 阶段一致的语义。
+                if (ctl.engine.tpSwapped && !ctl.engine.isSiding())
+                    player = oppositeChatPlayer(player, isTag);
                 int selftypeBoundary = isTag ? 2 : 1;
                 if (selftype >= selftypeBoundary && selftype < 4)
                     player = oppositeChatPlayer(player, isTag);

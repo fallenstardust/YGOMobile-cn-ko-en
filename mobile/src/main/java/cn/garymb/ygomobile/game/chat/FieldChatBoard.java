@@ -127,9 +127,12 @@ public class FieldChatBoard extends FieldChatBoardBase {
             // 我方（含我方 tag 同伴）→ tv_chat_message_1；对方（含对方 tag）→ tv_chat_message_2。
             // 先按 gframe ChatLocalPlayer 把发送方决斗序号转为命名槽位 chatType，
             // 再据 chatType 分边与取名——修复后攻时对方消息被拼上我方昵称的错位。
-            // 分边：chatType∈{0,2}=我方队（左）、{1,3}=对方队（右）（对齐 AddChatMsg L2325 player==0||2）。
+            // 分边：一律以 isChatOurTeam(playerType) 为准，直接根据服务端 chat_player_type
+            // 判定同阵营，保证“我方及队友固定左侧、对手固定右侧”不随 inDuel/tpSwapped 时间
+            // 窗口偏一；昵称前缀仍取 chatLocalType+chatNameByLocalType，保证同阵营中“队首与
+            // tag 同伴”在 hostname/hostname_tag 两个槽位上不错位。
             int chatType = chatLocalType(playerType);
-            boolean selfSide = (chatType == 0 || chatType == 2);
+            boolean selfSide = isChatOurTeam(playerType);
             appendSideChat(selfSide, chatNameByLocalType(chatType) + ": " + message);
         } else {
             // 系统/脚本错误/观战消息：门控与归一已在方法开头按 gframe 分组完成，此处只渲染
@@ -489,9 +492,10 @@ public class FieldChatBoard extends FieldChatBoardBase {
     /** 将表情图片气泡显示到发送方头像下方，并刷新自动隐藏计时 */
     protected void showEmoteBubble(int playerType, String code) {
         if (ctl.engine == null) return;
-        // 与文字聊天同一套 chatType 分边规则（chatType∈{0,2}=我方）
-        int chatType = chatLocalType(playerType);
-        boolean selfSide = (chatType == 0 || chatType == 2);
+        // 与文字聊天同一套阵营判定：isChatOurTeam 直接以服务端 chat_player_type 映射同阵营位，
+        // 保证“我方与队友表情固定左侧头像、对手及对手队友表情固定右侧头像”，不受先攻交换＼
+        // 发牌动画期间本地 chatType 映射偏一影响。
+        boolean selfSide = isChatOurTeam(playerType);
         ImageView bubble = selfSide ? ivPlayerEmoteBubble : ivOpponentEmoteBubble;
         if (bubble == null) return;
         Bitmap bmp = TextureLoader.get().getEmoticon(code);

@@ -39,6 +39,11 @@ public class DuelStocHandler implements DuelClient.ClientListener {
     @Override
     public void onDisconnected() {
         Log.i(TAG, "Disconnected from server");
+        // 断线兜底复位：本局 tpSwapped 仅当服务端实际执行了 TPResult 才会置真，连接已
+        // 断开时下一场无论复用 GameEngine 与否都不应该带入上一场的 game-index 语义；
+        // 非异常断线场景已由 onDuelStart / onChangeSide / onWaitingSide 三处复位，本行
+        // 仅覆盖“结算后未开新局就掉线”或“建连失败”等无后续 STOC 包可达的窗口。
+        engine.tpSwapped = false;
         if (engine.getState() != GameEngine.GameState.DUEL_END) {
             engine.setEngineState(GameEngine.GameState.DISCONNECTED);
         }
@@ -141,6 +146,9 @@ public class DuelStocHandler implements DuelClient.ClientListener {
         engine.duelStarted = true;
         engine.inDuel = false;
         engine.siding = false;
+        // 新一局开球前重置先攻交换标志，避免上一局的交换状态泄漏到本局“等待先攻结果”窗口
+        // 使同阵营聊天错分到右侧。
+        engine.tpSwapped = false;
         engine.tagSurrenderInitiated = false;
         engine.duelStage = YGOProtocol.DUEL_STAGE_DUELING;
         engine.setEngineState(GameEngine.GameState.DUELING);
@@ -157,6 +165,13 @@ public class DuelStocHandler implements DuelClient.ClientListener {
         engine.duelStarted = false;
         engine.inDuel = false;
         engine.siding = false;
+        // 有意不在此复位 tpSwapped：服务端 DuelEndProc 在“非 match”与“match 已分胜负”两条
+        // 分支上只下发 STOC_DUEL_END，不会把 dp->type 回写到 pplayer，本局 game-index
+        // 语义一直延续到连接断开；此处提前置 false 会把结束后对手 “gg” 类聊天的
+        // chat_player_type=0（先手方）误归为我方、把我方 chat_player_type=1 误归为对手，
+        // 导致结算弹窗未关闭时同阵营聊天错分到另一侧。真正的复位点在 onChangeSide /
+        // onWaitingSide（服务端 DuelEndProc 换边分支已把 dp->type 写回 seat-index）以及
+        // 下一局 onDuelStart（新一局未交换前默认假设为 false）。
         engine.tagSurrenderInitiated = false;
         engine.duelStage = YGOProtocol.DUEL_STAGE_END;
         engine.setEngineState(GameEngine.GameState.DUEL_END);
@@ -219,6 +234,9 @@ public class DuelStocHandler implements DuelClient.ClientListener {
         engine.duelStarted = false;
         engine.inDuel = false;
         engine.siding = true;
+        // 换边阶段服务端 DuelEndProc 已将 dp->type 重置为 lobby 座位（pplayer 回写），
+        // 同步重置先攻交换标志，避免下一局“等待先攻结果”阶段聊天错分侧。
+        engine.tpSwapped = false;
         engine.duelStage = YGOProtocol.DUEL_STAGE_SIDING;
         // 对齐 duelclient.cpp STOC_CHANGE_SIDE L543：进入换 side 前 dField.Clear()。
         // match 局间上一局的场上卡片、LP 增减动画必须在此彻底清除，否则换完备卡回到
@@ -239,6 +257,9 @@ public class DuelStocHandler implements DuelClient.ClientListener {
     @Override
     public void onWaitingSide() {
         engine.inDuel = false;
+        // 观战无 TPResult 交换语义，服务端重置 pplayer 后下发本包——同步重置先攻交换标志，
+        // 保证观战侧聊天与下一局开局的 seat-index 语义重新对齐。
+        engine.tpSwapped = false;
         Log.i(TAG, "Waiting for side change");
         // 对齐 duelclient.cpp STOC_WAITING_SIDE L578：等待对方换备卡时 dField.Clear()，
         // 清除本局换 side 前可能残留的场上卡片与 LP 动画，保证下一局开场是干净空场。

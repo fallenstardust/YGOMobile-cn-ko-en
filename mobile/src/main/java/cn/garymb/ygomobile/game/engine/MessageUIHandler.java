@@ -144,6 +144,20 @@ public class MessageUIHandler {
         // 回放视角恒以录制者为参照（ReplayPlayer.startSession 置恒等映射/切换翻转），不得由 MSG_START 先攻方重新推断，否则 undo/重放重投本消息会把用户已切视角静默翻回
         if (!engine.replayMode) {
             engine.duelIsFirst = (playerType & 1) == 0;
+            // 同步服务端 TPResult 对 dp->type 的阵营重映射：以 duelIsFirst 与自身 lobby team bit
+            // 的异或推断交换与否，供聊天同阵营归位在后续窗口中可取。
+            // lobby 侧：“我方队”对应 duelStarted=true 之前 seat-index 语义中 selfType 所在侧；
+            // game 侧：先手方=game team 0（bit 0），后手方=game team 1（bit 0x1 或 0x2）。
+            boolean isTag = engine.gameMode == 2 && engine.field.isTag;
+            int selfBoundary = isTag ? 2 : 1;
+            int selfType = engine.getSelfType();
+            if (selfType < 4) {
+                boolean selfIsHostTeam = selfType < selfBoundary;
+                engine.tpSwapped = (engine.duelIsFirst != selfIsHostTeam);
+            } else if ((playerType & 0xF0) != 0) {
+                // 观战方 MSG_START 的 playertype 高位直接携带交换信息：0x10=未交换、0x11=已交换。
+                engine.tpSwapped = (playerType & 1) != 0;
+            }
             // 视角在这里被重新推断，昵称必须同步重绑：观战手动「切换视角」只翻 duelIsFirst 与
             // playerInfos 的左右名字（performSpectatorSwap），而 match 局间的本帧会把视角还原到
             // 默认边——整场第一局的 STOC_DUEL_START 确实会发给观战（在那里绑一次），但 side 局进
