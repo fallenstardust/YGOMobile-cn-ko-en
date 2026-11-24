@@ -5,6 +5,9 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
+import android.text.style.RelativeSizeSpan;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -354,20 +357,36 @@ abstract class DeckSelectorDialogBase {
     }
 
     protected void selectUncategorizedCategory() {
-        String uncatName = context.getString(R.string.category_Uncategorized);
-        int uncatIndex = -1;
-        for (int i = 0; i < displayCategoryNames.size(); i++) {
-            if (displayCategoryNames.get(i).equals(uncatName)) {
-                uncatIndex = i;
-                break;
-            }
-        }
+        int uncatIndex = indexOfUncategorized();
         if (uncatIndex < 0) return;
         selectCategoryAndFirstDeck(uncatIndex);
     }
 
+    /** 未分类卡组在显示分类中的下标，未找到返回 -1 */
+    protected int indexOfUncategorized() {
+        String uncatName = context.getString(R.string.category_Uncategorized);
+        for (int i = 0; i < displayCategoryNames.size(); i++) {
+            if (displayCategoryNames.get(i).equals(uncatName)) return i;
+        }
+        return -1;
+    }
+
+    /**
+     * 选中分类并高亮、加载其列表第一个卡组；该分类已无卡组时自动改跳未分类卡组再选首个
+     */
     protected void selectCategoryAndFirstDeck(int catIndex) {
         if (catIndex < 0 || catIndex >= displayCategories.size()) return;
+
+        //当前分类已无卡组（删掉该分类最后一张卡组的场合）：自动改切未分类卡组，
+        //选中并加载未分类的第一个卡组；未分类本身也为空（或本就在未分类）时不递归，
+        //保持取消选中、仅刷新按钮可用态
+        if (displayCategories.get(catIndex).deckList.isEmpty()) {
+            int uncatIndex = indexOfUncategorized();
+            if (uncatIndex >= 0 && uncatIndex != catIndex) {
+                selectCategoryAndFirstDeck(uncatIndex);
+                return;
+            }
+        }
 
         selectedCategoryPos[0] = catIndex;
         categoryAdapter.setSelectedPosition(catIndex);
@@ -642,11 +661,27 @@ abstract class DeckSelectorDialogBase {
             } else {
                 holder = (ViewHolder) convertView.getTag();
             }
-            holder.textView.setText(categories.get(position).categoryName + seatMarkOf(marks, position));
+            holder.textView.setText(labelWithCount(categories.get(position), seatMarkOf(marks, position)));
             holder.textView.setTextSize(8);
             holder.textView.setBackgroundColor(position == selectedPosition ? SELECTED_BG_COLOR : Color.TRANSPARENT);
             holder.textView.setTextColor(YGOUtil.c(position == selectedPosition ? R.color.colorNavy : R.color.white));
             return convertView;
+        }
+
+        /**
+         * 分类条目文本：第一行为分类名（多席位选择时尾部附已分配的席位标记），
+         * 第二行以括号给出该分类下的卡组数量（如「(12)」），字号取 0.8 倍以让分类名为主
+         */
+        private static CharSequence labelWithCount(DeckSelectorUtil.DeckCategory category, String mark) {
+            SpannableStringBuilder sb = new SpannableStringBuilder();
+            sb.append(category.categoryName);
+            if (mark != null && !mark.isEmpty()) sb.append(mark);
+            sb.append('\n');
+            int start = sb.length();
+            sb.append('(').append(String.valueOf(category.deckList.size())).append(')');
+            sb.setSpan(new RelativeSizeSpan(0.8f), start, sb.length(),
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            return sb;
         }
 
         private static class ViewHolder {

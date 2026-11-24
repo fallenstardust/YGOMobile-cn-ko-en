@@ -602,6 +602,12 @@ abstract class GameFieldViewBase extends GLSurfaceView implements GLSurfaceView.
     float handLift(ClientCard c) {
         return card.handLift(c);
     }
+
+    /** 手卡绘制尺寸倍率（仅我方手卡在竖屏下大于 1）：委托 {@link FieldCardRenderer#handScale}，
+     *  使拾取命中框与绘制四边形用同一个尺寸 */
+    float handScale(ClientCard c) {
+        return card.handScale(c);
+    }
     
     /** 选中手卡抬升的 Z 分量：委托 {@link FieldCardRenderer#handLiftZ} */
     float handLiftZ(ClientCard c) {

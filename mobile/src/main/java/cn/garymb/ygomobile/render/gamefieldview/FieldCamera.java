@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
+import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.WindowManager;
 
@@ -13,6 +14,7 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.egl.EGLDisplay;
 
 import cn.garymb.ygomobile.game.gamefield.GameField;
+import cn.garymb.ygomobile.utils.LogUtil;
 
 /**
  * 相机解算与视锥/投影矩阵（由 GameFieldView 的「相机参数 / 取景内容真值 / 矩阵与相机缓存」分栏拆出）。
@@ -77,6 +79,19 @@ public final class FieldCamera {
      * 再往上抬收益递减而横向留白继增，
      *  上限同时受 {@link GameFieldView#MAX_CAMERA_ELEVATION} 钳制 */
     private static final float LANDSCAPE_ELEVATION_LIFT = 20f;
+    /**
+     * 竖屏我方手卡尺寸对齐横屏的倍率上下限（相对竖屏原生取景）：下限 1.0 表示永不缩小于原生，
+     * 上限 2.0 防止异常解算（折叠屏/分屏等极端视图尺寸）把手卡撑到遮挡整个魔陷区。
+     */
+    private static final float MIN_SELF_HAND_SCALE = 1f;
+    private static final float MAX_SELF_HAND_SCALE = 2f;
+    /**
+     * 横屏决斗场视图宽占屏长的比例：activity_ygo_game.xml 水平行为
+     * layout_card_detail_panel(weight 0.3) : layout_game_right(weight 0.7)，而 GameFieldView 在
+     * layout_game_right 内为 match_parent。仅在“本进程从未在横屏布局过”时用作估算，
+     * 一旦横屏解算过就改用实测值。
+     */
+    private static final float LANDSCAPE_FIELD_WIDTH_RATIO = 0.7f;
 
     /**
      * 需要完整入镜的可交互内容（怪兽区 / 魔陷区 / 堆叠区）→ {横向半宽(相对场地中轴), 所在 y 行}。
@@ -143,8 +158,15 @@ public final class FieldCamera {
     final Object camLock = new Object();
     // 视点位置：drawCard 判定卡片正/背面朝向用（仅 GL 线程读写）
     public float camEyeX = CAM_X, camEyeY = 0f, camEyeZ = 1f;
+    /**
+     * 本进程最近一次横屏解算的真实取景输入（视图宽/高 + 顶/底内缩像素）：竖屏求
+     * 「与横屏同尺寸」的手卡倍率时优先采用实测值，从未在横屏布局过时为 0（改走估算）
+     */
+    private static float sLandW = 0f, sLandH = 0f, sLandTopIns = 0f, sLandBotIns = 0f;
     // 我方手卡行动态后移量：solveCamera 写入，绘制与触摸命中共用（主线程也会读）
     public volatile float selfHandShift = 0f;
+    // 竖屏我方手卡的绘制尺寸倍率（横屏恒 1.0）：solveCamera 写入，绘制与触摸命中共用（主线程也会读）
+    public volatile float selfHandScale = 1f;
     // 本次相机重建真正生效的俯仰角（横屏含净空自适应抬升）：billboard 极值反推与预览读数用
     private volatile float effElevationDeg = GameFieldView.DEFAULT_CAMERA_ELEVATION;
 
@@ -162,6 +184,8 @@ public final class FieldCamera {
         float dirY, dirZ;       // 视线前向（YZ 平面内单位向量）
         float tanV;             // tan(fovy/2)（对称基准）
         float selfHandShift;    // 我方手卡行后移量（含 XML 手动微调）
+        float selfCy;           // 解算出的我方手卡行 y（手卡像素尺寸求值用）
+        float selfHandScale = 1f; // 竖屏我方手卡尺寸对齐横屏的倍率（横屏 1.0）
         float frustumHH;        // 离轴视锥竖向半高 tan（含顶部内缩后放大）
         float frustumC;         // 离轴视锥竖向中心偏移 tan（>0 = 视锥上移，内容整体下压）
         float effectiveElevation; // 本次解算真正使用的俯仰角（横屏为净空自适应抬升后的值）
@@ -191,6 +215,15 @@ public final class FieldCamera {
      * </ol>
      */
     CameraSolve solveCamera(int w, int h) {
+        return solveCamera(w, h, view.topInsetPx, view.bottomInsetPx, true);
+    }
+
+    /**
+     * 取景解算内核：topIns/botIns 与 resolveHandScale 供竖屏反推「横屏应有的取景」
+     * （{@link #portraitSelfHandScale}）复用同一套解算；递归解算传 resolveHandScale=false，
+     * 既不再写横屏实测值，也不自我递归。
+     */
+    private CameraSolve solveCamera(int w, int h, float topIns, float botIns, boolean resolveHandScale) {
         CameraSolve s = new CameraSolve();
         if (w <= 1 || h <= 1) return s;
         final float cameraDistance = view.cameraDistance;
@@ -201,8 +234,8 @@ public final class FieldCamera {
         // 旧竖屏把两个内缩置 0（内容居中即顶到视图上缘），是提示文本被遮挡的根因。
         // 两条锚线均为恒定量（提示栏恒占位 + 固定高、输入框恒占位，见 GameFieldController），
         // 故取景不会随提示/聊天内容显隐而重解（用户规格：决斗场不得因提示出现而改变姿态）
-        final float topInsetPx = view.topInsetPx;
-        final float bottomInsetPx = view.bottomInsetPx;
+        final float topInsetPx = topIns;
+        final float bottomInsetPx = botIns;
         final boolean portrait = (float) w / h < 1f;
         // 竖屏：仰角固定 85°（几乎垂直于视角）；横屏：以设置仰角为基准，按「设备纵向 dp 高度
         // 对名义 HUD 占地的挤占程度」自适应抬升（全面屏 17~24:9 的 dp 定值 HUD 挤占净空更多，
@@ -323,7 +356,73 @@ public final class FieldCamera {
         s.dirZ = dZ;
         s.tanV = tanV;
         s.selfHandShift = Math.max(-2.5f, Math.min(2.5f, shift));
+        s.selfCy = selfCy;
+        if (portrait) {
+            if (resolveHandScale) {
+                s.selfHandScale = portraitSelfHandScale(s, w, h, topInsetPx, bottomInsetPx);
+            }
+        } else if (resolveHandScale) {
+            // 横屏：本次取景输入即真机横屏实测值，记录下来供竖屏反推同尺寸手卡倍率
+            sLandW = w;
+            sLandH = h;
+            sLandTopIns = topInsetPx;
+            sLandBotIns = bottomInsetPx;
+        }
         return s;
+    }
+
+    /**
+     * 竖屏我方手卡尺寸对齐横屏的倍率：竖屏决斗场视图比横屏窄（横屏视图宽≈屏长边×0.7 且占满屏高，
+     * 竖屏视图宽=屏短边），而两档取景都把可交互内容的横向带宽贴到视图左右缘，于是同一张手卡的
+     * 屏幕像素尺寸随视图一同缩小。这里用同一套 {@link #solveCamera} 再解一次「横屏应有的取景」
+     *（实测值优先，未实测则按布局权重与屏幕长边估算），取两者「1 世界单位 = 多少屏幕像素」之比
+     * 作为倍率。只放大手卡的绘制尺寸，手卡行位置/间距/整排带宽一律不动，
+     * 因此手卡行总宽度与张数疏密保持竖屏原样（卡变宽仅增加相邻重叠）。
+     * <p>
+     * 精度说明：反推用的横屏取景优先取本进程横屏实测值（视图尺寸 + HUD 内缩，与真机横屏完全
+     * 一致）；本进程尚未在横屏解算过时只能估算（屏幕长边×{@link #LANDSCAPE_FIELD_WIDTH_RATIO}、
+     * HUD 内缩按竖屏占比等比换算），且只能用本视图的 field_zoom / camera_distance（横屏 XML 另取
+     * 1.1 / 8.0，与竖屏 1.0 / 7.6 不同），估算值会偏小约一成——横竖各进一次决斗场即自动转为实测值。
+     */
+    private float portraitSelfHandScale(CameraSolve self, int w, int h, float topIns, float botIns) {
+        int landW;
+        int landH;
+        float landTop;
+        float landBot;
+        if (sLandW > 1f && sLandH > 1f) {
+            landW = (int) sLandW;
+            landH = (int) sLandH;
+            landTop = sLandTopIns;
+            landBot = sLandBotIns;
+        } else {
+            DisplayMetrics dm = view.getResources().getDisplayMetrics();
+            float longEdge = Math.max(dm.widthPixels, dm.heightPixels);
+            float shortEdge = Math.min(dm.widthPixels, dm.heightPixels);
+            landW = (int) (longEdge * LANDSCAPE_FIELD_WIDTH_RATIO);
+            landH = (int) shortEdge;
+            // 未实测横屏 HUD 占地：按视图高等比换算竖屏内缩占比（HUD 为 dp 定值，
+            // 占视图高的比例才是取景的有量，取同比例使估算不致偏离实机太多）
+            landTop = topIns * landH / h;
+            landBot = botIns * landH / h;
+        }
+        CameraSolve land = solveCamera(landW, landH, landTop, landBot, false);
+        if (!land.valid) return 1f;
+        float pxSelf = handPxPerWorldUnit(h, self);
+        float pxLand = handPxPerWorldUnit(landH, land);
+        if (pxSelf <= 1e-4f || pxLand <= 1e-4f) return 1f;
+        float scale = Math.max(MIN_SELF_HAND_SCALE, Math.min(MAX_SELF_HAND_SCALE, pxLand / pxSelf));
+        LogUtil.d("FieldCamera", "portraitSelfHandScale=" + scale + " (landView=" + landW + "x" + landH
+                + ", measured=" + (sLandW > 1f) + ")");
+        return scale;
+    }
+
+    /** 手卡所在深度下「1 世界单位 = 多少屏幕像素」：手卡 billboard 平行屏幕、视锥等距，
+     *  竖向系数即卡片像素尺寸与世界尺寸的比值（分母 2 与横竖共用的 fieldZoom/fieldLength
+     *  在比值中自动抵消） */
+    private static float handPxPerWorldUnit(int viewH, CameraSolve s) {
+        float depth = (s.selfCy - s.eyeY) * s.dirY + (HAND_Z - s.eyeZ) * s.dirZ;
+        if (depth < 0.2f || s.frustumHH <= 1e-4f) return 0f;
+        return viewH / (2f * s.frustumHH * depth);
     }
 
     /**
@@ -433,6 +532,7 @@ public final class FieldCamera {
         camEyeY = s.eyeY;
         camEyeZ = s.eyeZ;
         selfHandShift = s.selfHandShift;
+        selfHandScale = s.selfHandScale;
         effElevationDeg = s.effectiveElevation;
 
         // 离轴（顶部内缩）透视视锥：bottom/top 非对称由 frustumHH 承担（含顶部内缩放大）。

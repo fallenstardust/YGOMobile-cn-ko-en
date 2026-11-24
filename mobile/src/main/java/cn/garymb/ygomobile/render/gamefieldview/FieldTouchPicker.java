@@ -180,7 +180,8 @@ final class FieldTouchPicker {
             float[] tmp = new float[16];
             Matrix.multiplyMM(tmp, 0, out, 0, cam, 0);
             System.arraycopy(tmp, 0, out, 0, 16);
-            Matrix.scaleM(out, 0, FieldGeometry.CARD_W, FieldGeometry.CARD_H, 1f);
+            float hs = view.handScale(c);
+            Matrix.scaleM(out, 0, FieldGeometry.CARD_W * hs, FieldGeometry.CARD_H * hs, 1f);
         } else {
             Matrix.translateM(out, 0, FieldGeometry.mirrorX(c.curX), c.curY, c.curZ);
             Matrix.rotateM(out, 0, (float) Math.toDegrees(-c.curRotY), 0f, 1f, 0f);
@@ -248,7 +249,7 @@ final class FieldTouchPicker {
                 // 再投到 right/up 轴得局部 uv。旧实现用固定 y 平面求交再比 (x,z)±0.45/0.75：
                 // 在竖屏 90° 正俯视下手卡平面趋于水平，任意屏幕纵深的射线都穿过该平面，
                 // 命中区与视觉卡框严重错位（点不中卡、误中邻卡）——改为精确平面求交后
-                // 命中区与绘制四边形（buildCardModel：同中心/同轴向/同 CARD_W×CARD_H）逐像素一致
+                // 命中区与绘制四边形（buildCardModel：同中心/同轴向/同 CARD_W×CARD_H，我方手卡另乘 handScale）逐像素一致
                 List<ClientCard> hand = f.players[p].hand;
                 for (int i = hand.size() - 1; i >= 0; i--) {
                     ClientCard c;
@@ -272,8 +273,10 @@ final class FieldTouchPicker {
                     float dy = ray[1] + ray[4] * t - cy;
                     float dz = ray[2] + ray[5] * t - cz;
                     // right 轴 cam[0..2] / up 轴 cam[4..6]（billboard 正交归一）：局部坐标归一到 ±0.5
-                    float u = (dx * cam[0] + dy * cam[1] + dz * cam[2]) / FieldGeometry.CARD_W;
-                    float v = (dx * cam[4] + dy * cam[5] + dz * cam[6]) / FieldGeometry.CARD_H;
+                    // 我方手卡竖屏按横屏同尺寸放大（handScale），分母同步乘倍率使命中框不缩水
+                    float hs = view.handScale(c);
+                    float u = (dx * cam[0] + dy * cam[1] + dz * cam[2]) / (FieldGeometry.CARD_W * hs);
+                    float v = (dx * cam[4] + dy * cam[5] + dz * cam[6]) / (FieldGeometry.CARD_H * hs);
                     if (Math.abs(u) <= 0.53f && Math.abs(v) <= 0.53f) {
                         return new int[]{p, 0x02, i};
                     }

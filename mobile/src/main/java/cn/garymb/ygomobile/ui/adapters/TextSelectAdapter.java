@@ -22,6 +22,9 @@ public class TextSelectAdapter<T extends TextSelect> extends BaseQuickAdapter<T,
     private final boolean isSelect;
     private boolean isManySelect;
     private final List<T> selectList;
+    /** 与条目一一对应的名称下方第二行文字（卡组分类列表用它显示该分类的卡组数量，如「(12)」）；
+     *  null/空串/越界项不显示，条目回到单行高度，不影响不需要第二行的使用方 */
+    private List<String> subTexts;
 
     public TextSelectAdapter(List<T> data, int select) {
         super(R.layout.text_select_item, data);
@@ -48,6 +51,13 @@ public class TextSelectAdapter<T extends TextSelect> extends BaseQuickAdapter<T,
         int position = getItemPosition(item);
 
         helper.setText(R.id.tv_name, item.getName());
+        String sub = subTexts != null && position >= 0 && position < subTexts.size()
+                ? subTexts.get(position) : null;
+        boolean showSub = sub != null && !sub.isEmpty();
+        helper.setVisible(R.id.tv_count, showSub);
+        if (showSub) {
+            helper.setText(R.id.tv_count, sub);
+        }
         if (isManySelect) {
             if (selectList.contains(item))
                 helper.setBackgroundColor(R.id.ll_layout, YGOUtil.c(R.color.colorMain));
@@ -67,6 +77,15 @@ public class TextSelectAdapter<T extends TextSelect> extends BaseQuickAdapter<T,
 
     public void setSelectPosition(int selectPosition) {
         this.selectPosition = selectPosition;
+    }
+
+    /**
+     * 设置名称下方第二行文字（与条目一一对应）；调用方在同一列表上原地更新内容后
+     * 再调一次本方法（或 notifyDataSetChanged）即可刷新
+     */
+    public void setSubTexts(List<String> subTexts) {
+        this.subTexts = subTexts;
+        notifyDataSetChanged();
     }
 
     public boolean isSelect() {

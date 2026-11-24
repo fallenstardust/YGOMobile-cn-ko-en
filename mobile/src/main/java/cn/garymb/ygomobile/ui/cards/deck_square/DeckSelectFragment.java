@@ -70,6 +70,12 @@ public class DeckSelectFragment extends Fragment {
 
     List<DeckType> typeList = new ArrayList<>();
     List<DeckFile> deckList = new ArrayList<>();     //存储当前卡组分类下的所有卡组
+    /** 左列分类名下方显示的卡组数量行（与 typeList 一一对应，形如「(12)」），由 {@link #rebuildTypeDeckCounts()} 重算 */
+    private final List<String> typeDeckCountTexts = new ArrayList<>();
+    /** 左列固定项的下标：0=卡包展示、1=人机卡组、2=未分类卡组，3 往后才是用户自建分类 */
+    private static final int TYPE_POS_UNCATEGORIZED = 2;
+    /** 新建入口弹出的“卡组分类/卡组”选择列表字号（用户规格：原默认字号在对话框里太小） */
+    private static final float NEW_ENTRY_LIST_TEXT_SP = 14f;
     private YGODeckDialogUtil.OnDeckMenuListener onDeckMenuListener;//通知外部调用方，（如调用本fragment的activity）
     private YGODeckDialogUtil.OnDeckDialogListener mDialogListener;
 
@@ -231,6 +237,7 @@ public class DeckSelectFragment extends Fragment {
                 list.add(getContext().getString(R.string.category_name));
                 list.add(getContext().getString(R.string.deck_name));
                 SimpleListAdapter catelistadapter = new SimpleListAdapter(getContext());
+                catelistadapter.setTextSize(NEW_ENTRY_LIST_TEXT_SP);
                 catelistadapter.set(list);
                 DialogPlus dialog = new DialogPlus(getContext());
                 dialog.setTitle(R.string.new_deck);
@@ -263,6 +270,8 @@ public class DeckSelectFragment extends Fragment {
                                 File file = new File(AppsSettings.get().getDeckDir(), catename.toString());
                                 if (IOUtils.createFolder(file)) {
                                     typeList.add(new DeckType(catename.toString(), file.getAbsolutePath()));
+                                    //新分类先补上数量行（新建分类为 0）再插入条目，避免位置错位
+                                    rebuildTypeDeckCounts();
                                     typeAdp.notifyItemInserted(typeList.size() - 1);
                                     dlg.dismiss();
                                 } else {
@@ -319,6 +328,8 @@ public class DeckSelectFragment extends Fragment {
                 }
                 YGOUtil.showTextToast(getContext().getString(R.string.done));
                 onDeckMenuListener.onDeckMove(deckAdp.getSelectList(), toType);
+                //卡组换了分类，移出与移入的两个分类数量都要回到磁盘现状
+                refreshTypeDeckCounts();
                 List<MyDeckItem> deckItemList = new ArrayList<>();
 
                 // 使用移动后的新路径构建 MyDeckItem
@@ -381,6 +392,8 @@ public class DeckSelectFragment extends Fragment {
                 }
                 YGOUtil.showTextToast(getContext().getString(R.string.done));
                 onDeckMenuListener.onDeckCopy(deckAdp.getSelectList(), toType);
+                //副本落入目标分类，各分类数量回到磁盘现状
+                refreshTypeDeckCounts();
                 clearDeckSelect();
                 dialog.dismiss();
             });
@@ -402,13 +415,17 @@ public class DeckSelectFragment extends Fragment {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         List<DeckFile> selectDeckList = deckAdp.getSelectList();
+                        //clearDeckSelect 会清空适配器内部的多选列表，先快照一份供删除后的自动定位用
+                        List<DeckFile> deletedList = new ArrayList<>(selectDeckList);
                         for (DeckFile deckFile : selectDeckList) {
                             deckFile.getPathFile().delete();
                             deckList.remove(deckFile);
                         }
                         dialogPlus.dismiss();
-                        onDeckMenuListener.onDeckDel(selectDeckList);
+                        onDeckMenuListener.onDeckDel(deletedList);
                         clearDeckSelect();
+                        //删掉的卡组正是当前编辑的那份时，自动选中并加载下一个可用卡组
+                        autoSelectAfterDeckDelete(deletedList);
                     }
                 });
                 dialogPlus.setRightButtonListener(new DialogInterface.OnClickListener() {
@@ -446,6 +463,8 @@ public class DeckSelectFragment extends Fragment {
                 //删除分类后列表重置为未分类，同样重新定位当前卡组
                 deckAdp.setSelectPosition(findCurDeckPosition());
                 deckAdp.notifyDataSetChanged();
+                //分类连同其下卡组一起被删：若删掉的正是当前编辑的卡组，自动选中并加载第一个可用卡组
+                autoSelectAfterDeckDelete(deckFileList);
             }
         }));
         itemTouchHelper.attachToRecyclerView(binding.rvType);
@@ -469,6 +488,8 @@ public class DeckSelectFragment extends Fragment {
         int deckSelectPosition = findCurDeckPosition();
         resultListAdapter = new DeckListAdapter<DeckFile>(getContext(), resultList, -1);
         typeAdp = new TextSelectAdapter<>(typeList, typeSelectPosition);
+        //分类名下方显示该分类的卡组数量（rebuildDeckLists 已填好与 typeList 同序的数量文本）
+        typeAdp.setSubTexts(typeDeckCountTexts);
         deckAdp = new DeckListAdapter<>(getContext(), deckList, deckSelectPosition);
     }
 
@@ -483,6 +504,8 @@ public class DeckSelectFragment extends Fragment {
 
         typeList.clear();
         typeList.addAll(DeckUtil.getDeckTypeList(getContext()));
+        //分类名下方的数量行与重建后的分类列表同序重算
+        rebuildTypeDeckCounts();
 
         int typeSelectPosition = 2;//卡组分类选择，默认值为2（未分类卡组）。0代表“卡包展示”，1代表“人机卡组”
 
@@ -596,6 +619,100 @@ public class DeckSelectFragment extends Fragment {
             }
         }
         return -1;
+    }
+
+    /**
+     * 重算左列每个分类名下方显示的卡组数量（与 typeList 一一对应）：
+     * 卡包展示（下标 0）在开启先行卡时并入压缩包内的先行卡组，与右列实际列出的条目同口径；
+     * 在线分类（path 为空）无法本地计数，给空串使数量行不显示。
+     */
+    private void rebuildTypeDeckCounts() {
+        typeDeckCountTexts.clear();
+        for (int i = 0; i < typeList.size(); i++) {
+            DeckType type = typeList.get(i);
+            String path = type.getPath();
+            if (!type.isLocal() || TextUtils.isEmpty(path)) {
+                typeDeckCountTexts.add("");
+                continue;
+            }
+            int count = DeckUtil.getDeckList(path).size();
+            if (i == 0 && AppsSettings.get().isReadExpansions()) {
+                try {
+                    count += DeckUtil.getExpansionsDeckList().size();
+                } catch (IOException e) {
+                    //先行卡档案读不到时只统计磁盘 pack 目录，不影响列表本身
+                }
+            }
+            typeDeckCountTexts.add("(" + count + ")");
+        }
+    }
+
+    /** 重算各分类卡组数量并刷新左列（卡组增删改/移动/复制/删除分类后调用） */
+    private void refreshTypeDeckCounts() {
+        if (typeAdp == null) {
+            return;
+        }
+        rebuildTypeDeckCounts();
+        typeAdp.notifyDataSetChanged();
+    }
+
+    /**
+     * 卡组（或整个分类）被删后的自动定位与加载（用户规格）：当前分类还有卡组就选中并加载
+     * 该分类列表的第一个；已被删空则左列自动切到未分类卡组，再选中并加载未分类的第一个；
+     * 两处都空时只取消选中。
+     * <p>
+     * 仅在本次确实删掉了当前正在编辑的卡组时自动换组：删的是别的卡组时当前卡组并未失效，
+     * 强行切走会打断用户正在编辑的内容（并弹出「放弃未保存修改」确认），此处只按实际加载的
+     * 卡组重算高亮。
+     * <p>
+     * 加载走与手动点击同一入口 {@code onDeckSelect}，但把“收起对话框”的回调传空实现：
+     * 刚删完卡组的用户通常还要继续整理，对话框不该因一次自动加载就收起来。
+     */
+    private void autoSelectAfterDeckDelete(List<DeckFile> deletedList) {
+        refreshTypeDeckCounts();
+
+        if (!containsCurrentDeck(deletedList)) {
+            //当前卡组没被删：只保证高亮停在实际加载的那份上
+            deckAdp.setSelectPosition(findCurDeckPosition());
+            deckAdp.notifyDataSetChanged();
+            return;
+        }
+
+        if (deckList.isEmpty() && typeAdp.getSelectPosition() != TYPE_POS_UNCATEGORIZED) {
+            //当前分类已删空：左列切到未分类卡组，右列换成未分类的卡组列表
+            typeAdp.setSelectPosition(TYPE_POS_UNCATEGORIZED);
+            deckList.clear();
+            deckList.addAll(DeckUtil.getDeckList(typeList.get(TYPE_POS_UNCATEGORIZED).getPath()));
+        }
+
+        if (deckList.isEmpty()) {
+            deckAdp.setSelectPosition(-1);
+            deckAdp.notifyDataSetChanged();
+            return;
+        }
+
+        deckAdp.setSelectPosition(0);
+        deckAdp.notifyDataSetChanged();
+        if (binding != null) {
+            binding.rvDeck.scrollToPosition(0);
+        }
+        onDeckMenuListener.onDeckSelect(deckList.get(0), () -> {
+        });
+    }
+
+    /** 本次删除的卡组里是否包含当前正在编辑（= 最后使用路径）的那份 */
+    private boolean containsCurrentDeck(List<DeckFile> deletedList) {
+        String lastDeckPath = AppsSettings.get().getLastDeckPath();
+        if (TextUtils.isEmpty(lastDeckPath) || deletedList == null) {
+            return false;
+        }
+        String lastDeckAbsPath = new File(lastDeckPath).getAbsolutePath();
+        for (DeckFile deckFile : deletedList) {
+            if (TextUtils.equals(deckFile.getPath(), lastDeckAbsPath)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

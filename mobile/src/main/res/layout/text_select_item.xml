@@ -16,4 +16,16 @@
         android:id="@+id/tv_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
+
+    <!-- 分类名下方第二行（卡组分类列表用它显示该分类的卡组数量，形如「(12)」）：
+         由 TextSelectAdapter 按条目下标填充，无对应内容的条目保持 gone 不占位 -->
+    <androidx.appcompat.widget.AppCompatTextView
+        android:lines="1"
+        android:gravity="center"
+        android:textColor="@color/white"
+        android:textSize="10sp"
+        android:id="@+id/tv_count"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone" />
 </LinearLayout>

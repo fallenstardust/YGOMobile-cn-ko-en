@@ -13,7 +13,7 @@ import cn.garymb.ygomobile.utils.YGOUtil;
 /**
  * 卡片绘制核心（自 GameFieldView 平移，逻辑零改）：位置取 getCardLocation 动画值并做 X 镜像，
  * 与 ClientField::GetCardLocation 数值完全一致。持视图反向引用读取选中态/相机/纹理缓存，
- * GL 图元经 view.quad 调用；handY/handLift/handLiftZ/buildCardModel/isFrontFacing 供
+ * GL 图元经 view.quad 调用；handY/handLift/handLiftZ/handScale/buildCardModel/isFrontFacing 供
  * FieldTouchPicker 与 SelectionOutlineRenderer 等协作类复用（视图留薄委托）。
  */
 public class FieldCardRenderer {
@@ -59,7 +59,8 @@ public class FieldCardRenderer {
 
     /**
      * 构建卡片模型矩阵（drawCard 与选择轮廓共用，避免姿态计算分叉）：
-     * 手卡走相机 billboard，场上卡按 Y→X→Z 旋转，末尾统一 scale(CARD_W, CARD_H)；
+     * 手卡走相机 billboard，场上卡按 Y→X→Z 旋转，末尾统一 scale(CARD_W, CARD_H)
+     *（我方手卡另乘 {@link #handScale} 的竖屏同横屏尺寸倍率）；
      * 手卡额外按 handFlipT 做 X 轴挤压以呈现「绕竖轴翻面」的视觉效果
      */
     public void buildCardModel(ClientCard c, float[] out) {
@@ -69,11 +70,12 @@ public class FieldCardRenderer {
     private void buildCardModel(ClientCard c, float[] out, float zBias) {
         Matrix.setIdentityM(out, 0);
         if (effectiveLocation(c) == 0x02) {
+            float hs = handScale(c);
             Matrix.translateM(out, 0, FieldGeometry.mirrorX(c.curX),
                     handY(c) + view.cam.mCamRot[5] * handLift(c), c.curZ + handLiftZ(c));
             Matrix.multiplyMM(view.mModelTmp, 0, out, 0, view.cam.mCamRot, 0);
             System.arraycopy(view.mModelTmp, 0, out, 0, 16);
-            Matrix.scaleM(out, 0, FieldGeometry.CARD_W * handFlipSqueeze(c), FieldGeometry.CARD_H, 1f);
+            Matrix.scaleM(out, 0, FieldGeometry.CARD_W * handFlipSqueeze(c) * hs, FieldGeometry.CARD_H * hs, 1f);
         } else {
             int zoneLoc = effectiveLocation(c);
             boolean isPile = zoneLoc == 0x01 || zoneLoc == 0x10
@@ -343,6 +345,16 @@ public class FieldCardRenderer {
     boolean isSelectedCard(ClientCard c) {
         return c.controler == view.selectedPlayer && c.location == view.selectedLocation
                 && c.sequence == view.selectedSequence;
+    }
+
+    /**
+     * 手卡绘制尺寸倍率：仅我方手卡在竖屏下按 FieldCamera 反推的横屏同尺寸倍率放大
+     *（cam.selfHandScale，横屏/对方手卡恒 1.0）。只作用于卡面四边形缩放，手卡行位置与
+     * 间距不经此路径，因此整排手卡总宽度不变（相邻重叠加大）；绘制与触摸命中
+     *（FieldTouchPicker）共用本入口，命中框与视觉逐像素同步。
+     */
+    public float handScale(ClientCard c) {
+        return c.controler == 0 ? view.cam.selfHandScale : 1f;
     }
 
     /**
