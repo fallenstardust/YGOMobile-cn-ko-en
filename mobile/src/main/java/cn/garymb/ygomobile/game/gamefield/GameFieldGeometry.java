@@ -30,8 +30,9 @@ public class GameFieldGeometry {
      *  以拉近两者、仅保留少量防遮挡余量；改动需同步 FieldCamera.OPP_HAND_Y(-3.4-本值)。 */
     private static final float OPP_HAND_PUSH = 0.15f;
 
-    /** 手牌触到侧列带宽封顶时的最小可见露出量（世界单位）：极端张数下宁可卡片间
-     *  层叠更多，也不允许一张手卡被完全盖住（C++ 无此下限，其 gframe 手卡可完全叠掩） */
+    /** 手牌触到侧列带宽封顶时的最小可见露出量（世界单位，乘竖屏我方手卡倍率后与横屏同比）：
+     *  极端张数下宁可卡片间层叠更多，也不允许一张手卡被完全盖住（C++ 无此下限，其 gframe
+     *  手卡可完全叠掩） */
     private static final float HAND_MIN_GAP = 0.1f;
 
     GameFieldGeometry(GameField field) {
@@ -175,7 +176,13 @@ public class GameFieldGeometry {
             case 0x02: { // LOCATION_HAND
                 int count = field.getCardCount(controler, 0x02);
                 if (count <= 0) count = 1;
-                float spacing = handSpacing(count);
+                //竖屏我方手卡按横屏同尺寸放大（GameField.sSelfHandScale，由 FieldCamera 解算写入；
+                //横屏与对方手卡恒 1）：间距与最小露出量乘同倍，使「相邻两卡之间露出的间隔」与横屏
+                //等像素（横屏间隔 = 0.95 − 0.8 卡宽）；下方带宽封顶也按放大后的卡宽算，因此手卡少、
+                //整排没触及两侧列格极限时按横屏间隔铺开，手卡多到触及时仍被压回净空带内（行总宽上限不变）
+                float handScale = controler == 0 ? Math.max(1f, GameField.sSelfHandScale) : 1f;
+                float cardW = 0.8f * handScale;                 // 手卡卡宽（世界单位，含竖屏放大）
+                float spacing = handSpacing(count) * handScale;
                 // 手牌整排宽度硬边界（用户规格）：最左/最右卡不得越入两侧侧列——限制在本侧
                 // 卡组格内沿（fx(7.3)−PW/2，即卡组格左下角）与额外卡组格内沿
                 // （fx(0.6)＋PW/2，即额外格右下角）之间，整排恒夹在两侧列格中间的净空带；
@@ -186,8 +193,8 @@ public class GameFieldGeometry {
                 if (count > 1) {
                     float band = (fx(7.3f) - GameField.PILE_W / 2f)
                             - (fx(0.6f) + GameField.PILE_W / 2f);
-                    float fit = (band - 0.8f) / (count - 1); // 0.8 = 手卡卡宽（世界单位）
-                    spacing = Math.max(Math.min(HAND_MIN_GAP, fit), Math.min(spacing, fit));
+                    float fit = (band - cardW) / (count - 1);
+                    spacing = Math.max(Math.min(HAND_MIN_GAP * handScale, fit), Math.min(spacing, fit));
                 }
                 if (controler == 0) {
                     t[0] = 3.95f - spacing * (count - 1) / 2f + sequence * spacing;
@@ -325,8 +332,9 @@ public class GameFieldGeometry {
         return t;
     }
 
-    /** 手卡间距：小于7张保留些许间距(0.95>卡宽0.8)，大于等于7张开始层叠，越多越密；
-     *  最终间距另受手牌整排在侧列格带宽内的封顶限制（见 getCardLocation LOCATION_HAND） */
+    /** 手卡间距基准（横屏真值）：小于7张保留些许间距(0.95>卡宽0.8)，大于等于7张开始层叠，越多越密；
+     *  竖屏我方手卡另乘尺寸倍率使间隔与横屏等像素，最终间距另受整排在侧列格带宽内的封顶限制
+     * （见 getCardLocation LOCATION_HAND） */
     private static float handSpacing(int count) {
         if (count < 7) return 0.95f;
         return Math.max(0.55f, Math.min(0.72f, 5.0f / count));

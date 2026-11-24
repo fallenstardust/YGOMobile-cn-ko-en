@@ -533,6 +533,8 @@ public final class FieldCamera {
         camEyeZ = s.eyeZ;
         selfHandShift = s.selfHandShift;
         selfHandScale = s.selfHandScale;
+        //几何层同步：手卡落点的间距与带宽封顶按同一倍率放大，保证竖屏手卡间隔像素与横屏一致
+        GameField.sSelfHandScale = s.selfHandScale;
         effElevationDeg = s.effectiveElevation;
 
         // 离轴（顶部内缩）透视视锥：bottom/top 非对称由 frustumHH 承担（含顶部内缩放大）。

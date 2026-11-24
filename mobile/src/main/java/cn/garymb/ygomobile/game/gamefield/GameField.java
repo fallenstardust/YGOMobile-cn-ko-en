@@ -300,6 +300,15 @@ public class GameField {
         sDuelRule = rule;
     }
 
+    /**
+     * 竖屏我方手卡绘制尺寸倍率的静态镜像（由 FieldCamera 每次重建相机时写入，横屏/未解算时 1）：
+     * 卡面尺寸在渲染层（FieldCardRenderer.handScale）、手卡落点在几何层，两层必须用同一个倍率——
+     * 间距与最小露出量按同倍放大，才能使「相邻两卡之间露出的间隔」与横屏等像素；整排带宽封顶
+     * 也按放大后的卡宽计算，手卡多到触及时仍收在两侧列格之间的净空带内（见
+     * {@link GameFieldGeometry} 的 LOCATION_HAND 分支）。
+     */
+    public static volatile float sSelfHandScale = 1f;
+
     /** 同包协作类：坐标几何 / 卡片增删改 / 动画与 HUD。构造注入门面引用，经包级私有直连共享状态。 */
     final GameFieldGeometry geometry;
     final GameFieldCards cards;
