@@ -34,8 +34,13 @@ import cn.garymb.ygomobile.lite.R;
  * 选中的两端就是时间轴的开始/结束区间，区间内铺一条带圆角的连续高亮条。
  *
  * <p>打开时带着时间轴当前的区间与“先改哪一端”；点一个日期先改这一端并自动切到另一端，
- * 再点一个日期就把另一端也定下来（回调 finished = true，调用方可关闭日历），
+ * 再点一个日期就把另一端也定下来（回调 finished = true，但浮窗不收，可以接着反复调），
  * 于是同一个日历里就能把左右两个拨块的日期范围一起选好；只点一次也可以，只改那一端。</p>
+ *
+ * <p>标题下方是一左一右两个日期牌（左 = 开始日期、右 = 结束日期），再下面是一行指引文字：
+ * 哪一种点选定的是哪一端写得明明白白，免了点下去才知道改的是开始还是结束。
+ * 日期牌与网格里两端共用一套画法：空心金边 + 牌底向下的三角 = 下一次点选要改的那端，
+ * 实心金底 = 已经定下来的那端；端点贴到卡包数据的最早/最晚日期时那一侧变淡。</p>
  *
  * <p>手势：轻点选日期；<b>横划</b>按月翻页；<b>长按高亮条</b>后拖动可直接拉出一个区间
  * （拖动端随手走，拖到左右边缘还会连续翻月，方便跨月选范围），松手后区间提交、日历不关。</p>
@@ -51,7 +56,7 @@ import cn.garymb.ygomobile.lite.R;
  */
 public class ReleaseDateCalendarView extends FrameLayout {
 
-    /** 区间变化：finished = 两端都已点选（第二次点选），调用方据此关闭日历 */
+    /** 区间变化：finished = 两端都已点选（第二次点选），浮窗不关，调用方自行决定是否还要做什么 */
     public interface OnDateRangeChangedListener {
         void onDateRangeChanged(int startDate, int endDate, boolean finished);
     }
@@ -75,6 +80,8 @@ public class ReleaseDateCalendarView extends FrameLayout {
 
     /** 横划翻月的判定距离（dp） */
     private static final int SWIPE_THRESHOLD_DP = 48;
+    /** 两个日期牌中间的箭头 */
+    private static final String RANGE_ARROW = " → ";
     /** 拖动时离左右边缘多近开始自动翻月（dp） */
     private static final int EDGE_PAGE_DP = 24;
     /** 边缘自动翻月的间隔（毫秒） */
@@ -86,6 +93,12 @@ public class ReleaseDateCalendarView extends FrameLayout {
     private final Paint mWeekPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint mRangePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint mRangeMutedPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint mChipLabelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint mChipDarkPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint mChipDarkLabelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint mChipPendingFillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint mPointerPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint mHintPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint mDayPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint mDayPlainPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint mDayInRangePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -105,13 +118,20 @@ public class ReleaseDateCalendarView extends FrameLayout {
     /** 高亮条的路径（整条一次填充，圆角只加在真实起止处） */
     private final Path mBandPath = new Path();
     private final float[] mBandRadii = new float[8];
+    /** 日期牌下面那个指着日历的小三角 */
+    private final Path mPointerPath = new Path();
 
     /** 当前展示的月份（固定为 1 号） */
     private final Calendar mMonth = Calendar.getInstance();
     private final Calendar mWork = Calendar.getInstance();
-    /** 标题下方“起 → 止”那行用的日历与日期格式（跟随系统语言） */
+    /** 标题下方“开始日期牌 → 结束日期牌”那行与指引行用的日历与日期格式（跟随系统语言） */
     private final Calendar mDateWork = Calendar.getInstance();
     private final SimpleDateFormat mDateFormat;
+    /** 日期牌上的“开始/结束”短词与指引句里的“开始日期/结束日期”，都跟随系统语言 */
+    private final String mStartShortLabel;
+    private final String mEndShortLabel;
+    private final String mStartLabel;
+    private final String mEndLabel;
     private final Set<Integer> mAvailableDates = new HashSet<>();
     /** 日期 → 当天发售的卡包名 */
     private final Map<Integer, List<String>> mPackNames = new HashMap<>();
@@ -127,9 +147,9 @@ public class ReleaseDateCalendarView extends FrameLayout {
     private int mRangeEnd;
     /** 下一次点选改哪一端（true = 改开始端） */
     private boolean mActiveStart = true;
-    /** 画成实心金底的是哪一端（刚动过的那端，打开时就是被点气泡的那端） */
+    /** 已经定下来、画成实心金底的是哪一端（另一端画空心金框等下一次点选） */
     private boolean mFilledStart = true;
-    /** 本次打开后是否已经点过一次（第二次点选即完成区间） */
+    /** 本次打开后是否已经点过一次（第二次点选即完成区间，指引文字跟着换） */
     private boolean mPickedOnce;
     /** 可翻到的月份上下限（年*12+月，含）；0 = 不限制（还没拿到可选日期） */
     private int mMinYearMonth;
@@ -139,8 +159,10 @@ public class ReleaseDateCalendarView extends FrameLayout {
     private int mMaxAvailDate;
 
     private final int mTitleHeight;
-    /** 标题下方“起 → 止”那行的高度 */
+    /** 标题下方两个日期牌那行的高度（底部留出小三角） */
     private final int mRangeHeight;
+    /** 日期牌下面那行点选指引的高度 */
+    private final int mHintHeight;
     private final int mWeekHeight;
     /** 当前占几行（固定 6 行）与每格高度；格子高度固定三行小字，不随月份变 */
     private int mRows = ROWS;
@@ -213,7 +235,8 @@ public class ReleaseDateCalendarView extends FrameLayout {
         // 日历网格画在 onDraw 里，下面的滚动文本子控件叠在上面，所以必须允许 ViewGroup 自绘
         setWillNotDraw(false);
         mTitleHeight = dp(34);
-        mRangeHeight = dp(18);
+        mRangeHeight = dp(26);
+        mHintHeight = dp(15);
         mWeekHeight = dp(18);
         mNumberHeight = dp(16);
         mPackLineHeight = dp(9);
@@ -246,6 +269,29 @@ public class ReleaseDateCalendarView extends FrameLayout {
         mRangeMutedPaint.setColor(0x66FFD700);
         mRangeMutedPaint.setTextSize(sp(11));
         mRangeMutedPaint.setTextAlign(Paint.Align.LEFT);
+
+        // 日期牌里“开始/结束”的小字比日期矮一号，靠左侧上与日期对齐
+        mChipLabelPaint.setColor(0xCCFFD700);
+        mChipLabelPaint.setTextSize(sp(9));
+        mChipLabelPaint.setTextAlign(Paint.Align.LEFT);
+        mChipDarkPaint.setColor(0xFF101828);
+        mChipDarkPaint.setTextSize(sp(11));
+        mChipDarkPaint.setTextAlign(Paint.Align.LEFT);
+        mChipDarkLabelPaint.setColor(0x99101828);
+        mChipDarkLabelPaint.setTextSize(sp(9));
+        mChipDarkLabelPaint.setTextAlign(Paint.Align.LEFT);
+        // 待点选那一端的牌底给一点中性底色，配合空心金边框与向下的三角足够醒目
+        mChipPendingFillPaint.setColor(0x1FFFFFFF);
+        mPointerPaint.setColor(getColor(R.color.gold));
+
+        mHintPaint.setColor(0xB3FFFFFF);
+        mHintPaint.setTextSize(sp(9));
+        mHintPaint.setTextAlign(Paint.Align.CENTER);
+
+        mStartShortLabel = getString(R.string.label_date_start_short);
+        mEndShortLabel = getString(R.string.label_date_end_short);
+        mStartLabel = getString(R.string.label_date_start);
+        mEndLabel = getString(R.string.label_date_end);
 
         String datePattern = DateFormat.getBestDateTimePattern(Locale.getDefault(), "yMd");
         mDateFormat = new SimpleDateFormat(datePattern, Locale.getDefault());
@@ -458,10 +504,10 @@ public class ReleaseDateCalendarView extends FrameLayout {
         invalidate();
     }
 
-    /** 打开时从哪一端开始改：true = 先改开始端（点的是左拨块的气泡） */
+    /** 打开时从哪一端开始改：true = 先改开始端（点的是左拨块的气泡）；另一端先按已确定画 */
     public void setActiveStart(boolean activeStart) {
         mActiveStart = activeStart;
-        mFilledStart = activeStart;
+        mFilledStart = !activeStart;
         mPickedOnce = false;
     }
 
@@ -472,7 +518,7 @@ public class ReleaseDateCalendarView extends FrameLayout {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int width = getDefaultSize(dp(300), widthMeasureSpec);
-        int height = mTitleHeight + mRangeHeight + mWeekHeight + mCellHeight * mRows;
+        int height = mTitleHeight + mRangeHeight + mHintHeight + mWeekHeight + mCellHeight * mRows;
         setMeasuredDimension(width, resolveSize(height, heightMeasureSpec));
         // 子控件只有超长包名的滚动文本：按格子宽度、一行小字的高度量
         int childWidth = Math.max(0, width / COLS - dp(2));
@@ -496,7 +542,7 @@ public class ReleaseDateCalendarView extends FrameLayout {
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         int width = right - left;
         float cellWidth = width / (float) COLS;
-        float gridTop = mTitleHeight + mRangeHeight + mWeekHeight;
+        float gridTop = gridTop();
         int year = mMonth.get(Calendar.YEAR);
         int month = mMonth.get(Calendar.MONTH);
         int offset = monthOffset(year, month);
@@ -538,10 +584,11 @@ public class ReleaseDateCalendarView extends FrameLayout {
         int month = mMonth.get(Calendar.MONTH);
         int daysInMonth = daysInMonth(year, month);
         int offset = monthOffset(year, month);
-        float gridTop = mTitleHeight + mRangeHeight + mWeekHeight;
+        float gridTop = gridTop();
 
         drawTitle(canvas, width);
-        drawRangeText(canvas, width);
+        drawRangeChips(canvas, width);
+        drawPickHint(canvas, width);
         drawWeekHeader(canvas, cellWidth);
         // 先铺区间高亮条，再画日期数字与卡包名，条子在字下面
         drawRangeBand(canvas, cellWidth, gridTop, year, month, offset, daysInMonth);
@@ -581,48 +628,132 @@ public class ReleaseDateCalendarView extends FrameLayout {
         mTitlePaint.setTextSize(textSize);
     }
 
+    /** 网格顶部：标题行 + 日期牌行 + 指引行 + 星期名 */
+    private float gridTop() {
+        return mTitleHeight + mRangeHeight + mHintHeight + mWeekHeight;
+    }
+
     /**
-     * 标题下方的“起 → 止”：日期格式跟随系统语言；
-     * 端点已经贴到（或超出）卡包数据的最早/最晚日期时，那一侧文字变淡，提示已达边界
+     * 标题下方左“开始”右“结束”两个日期牌，牌里直书哪一端，画法与网格里两端同一套：
+     * 空心金边 = 下一次点选要改的那端，实心金底 = 已经定下来的那端；
+     * 待点选那一侧牌底画一个向下三角指着日历，一眼看出这一笔点下去定的是哪一天
      */
-    private void drawRangeText(Canvas canvas, float width) {
+    private void drawRangeChips(Canvas canvas, float width) {
         if (mRangeStart <= 0 || mRangeEnd <= 0) {
             return;
         }
-        String startText = formatShortDate(mRangeStart);
-        String endText = formatShortDate(mRangeEnd);
-        String arrow = " → ";
-        Paint startPaint = mMinAvailDate > 0 && mRangeStart <= mMinAvailDate
-                ? mRangeMutedPaint : mRangePaint;
-        Paint endPaint = mMaxAvailDate > 0 && mRangeEnd >= mMaxAvailDate
-                ? mRangeMutedPaint : mRangePaint;
-
-        float startWidth = mRangePaint.measureText(startText);
-        float arrowWidth = mRangePaint.measureText(arrow);
-        float endWidth = mRangePaint.measureText(endText);
+        String startDate = formatShortDate(mRangeStart);
+        String endDate = formatShortDate(mRangeEnd);
+        float pad = dp(6);
+        float labelGap = dp(4);
+        float rangeSize = mRangePaint.getTextSize();
+        float labelSize = mChipLabelPaint.getTextSize();
+        float arrowWidth = mRangePaint.measureText(RANGE_ARROW);
+        float startWidth = pad * 2 + mChipLabelPaint.measureText(mStartShortLabel) + labelGap
+                + mRangePaint.measureText(startDate);
+        float endWidth = pad * 2 + mChipLabelPaint.measureText(mEndShortLabel) + labelGap
+                + mRangePaint.measureText(endDate);
         float total = startWidth + arrowWidth + endWidth;
-        float maxWidth = width - dp(16);
-        float baseSize = mRangePaint.getTextSize();
+        float maxWidth = width - dp(12);
         if (maxWidth > 0 && total > maxWidth) {
-            // 日期格式随语言长短不一，放不下就整体缩小字号，画完复原
-            float scaled = baseSize * maxWidth / total;
-            mRangePaint.setTextSize(scaled);
-            mRangeMutedPaint.setTextSize(scaled);
-            startWidth = mRangePaint.measureText(startText);
-            arrowWidth = mRangePaint.measureText(arrow);
-            endWidth = mRangePaint.measureText(endText);
+            // 语言不同牌上文案长短不一，放不下就整体等比缩小，画完复原
+            float scale = maxWidth / total;
+            mRangePaint.setTextSize(rangeSize * scale);
+            mRangeMutedPaint.setTextSize(rangeSize * scale);
+            mChipDarkPaint.setTextSize(rangeSize * scale);
+            mChipLabelPaint.setTextSize(labelSize * scale);
+            mChipDarkLabelPaint.setTextSize(labelSize * scale);
+            arrowWidth *= scale;
+            startWidth *= scale;
+            endWidth *= scale;
             total = startWidth + arrowWidth + endWidth;
         }
-        Paint.FontMetrics fm = mRangePaint.getFontMetrics();
-        float baseline = mTitleHeight + mRangeHeight / 2f - (fm.ascent + fm.descent) / 2f;
-        float x = (width - total) / 2f;
-        canvas.drawText(startText, x, baseline, startPaint);
-        x += startWidth;
-        canvas.drawText(arrow, x, baseline, mRangeMutedPaint);
+        float top = mTitleHeight + dp(1);
+        float bottom = mTitleHeight + mRangeHeight - dp(6);
+        float left = (width - total) / 2f;
+        boolean startPending = mActiveStart;
+        drawDateChip(canvas, left, top, left + startWidth, bottom, mStartShortLabel, startDate,
+                startPending, mMinAvailDate > 0 && mRangeStart <= mMinAvailDate);
+        float x = left + startWidth;
+        Paint.FontMetrics rangeFm = mRangePaint.getFontMetrics();
+        canvas.drawText(RANGE_ARROW, x,
+                (top + bottom) / 2f - (rangeFm.ascent + rangeFm.descent) / 2f, mRangeMutedPaint);
         x += arrowWidth;
-        canvas.drawText(endText, x, baseline, endPaint);
-        mRangePaint.setTextSize(baseSize);
-        mRangeMutedPaint.setTextSize(baseSize);
+        drawDateChip(canvas, x, top, x + endWidth, bottom, mEndShortLabel, endDate,
+                !startPending, mMaxAvailDate > 0 && mRangeEnd >= mMaxAvailDate);
+        // 向下的三角只画在待点选那一侧下面
+        float pointerX = startPending ? left + startWidth / 2f : x + endWidth / 2f;
+        float pointerTop = bottom + dp(0.5f);
+        mPointerPath.reset();
+        mPointerPath.moveTo(pointerX - dp(4), pointerTop);
+        mPointerPath.lineTo(pointerX + dp(4), pointerTop);
+        mPointerPath.lineTo(pointerX, pointerTop + dp(4));
+        mPointerPath.close();
+        canvas.drawPath(mPointerPath, mPointerPaint);
+
+        mRangePaint.setTextSize(rangeSize);
+        mRangeMutedPaint.setTextSize(rangeSize);
+        mChipDarkPaint.setTextSize(rangeSize);
+        mChipLabelPaint.setTextSize(labelSize);
+        mChipDarkLabelPaint.setTextSize(labelSize);
+    }
+
+    /** 一个日期牌：pending = 下一次点选要改的那端（空心金框），否则是已经定下来的那端（实心金底） */
+    private void drawDateChip(Canvas canvas, float left, float top, float right, float bottom,
+                              String label, String date, boolean pending, boolean muted) {
+        mCellRect.set(left, top, right, bottom);
+        float radius = (bottom - top) / 2f;
+        // 牌框与牌底复用网格里两端那两支笔，变淡时整块一起淡，不会牌面淡了边框还亮着
+        Paint datePaint = pending ? mRangePaint : mChipDarkPaint;
+        Paint labelPaint = pending ? mChipLabelPaint : mChipDarkLabelPaint;
+        Paint framePaint = pending ? mEndpointStrokePaint : mEndpointFillPaint;
+        int dateAlpha = datePaint.getAlpha();
+        int labelAlpha = labelPaint.getAlpha();
+        int frameAlpha = framePaint.getAlpha();
+        if (muted) {
+            // 端点已经贴到（或超出）卡包数据的最早/最晚日期：整块牌子变淡，提示已达边界
+            datePaint.setAlpha(0x66);
+            labelPaint.setAlpha(0x66);
+            framePaint.setAlpha(pending ? 0x80 : 0x99);
+        }
+        if (pending) {
+            canvas.drawRoundRect(mCellRect, radius, radius, mChipPendingFillPaint);
+        }
+        canvas.drawRoundRect(mCellRect, radius, radius, framePaint);
+        float contentLeft = left + dp(6);
+        float center = (top + bottom) / 2f;
+        Paint.FontMetrics dateFm = datePaint.getFontMetrics();
+        Paint.FontMetrics labelFm = labelPaint.getFontMetrics();
+        canvas.drawText(label, contentLeft,
+                center - (labelFm.ascent + labelFm.descent) / 2f, labelPaint);
+        canvas.drawText(date, contentLeft + labelPaint.measureText(label) + dp(4),
+                center - (dateFm.ascent + dateFm.descent) / 2f, datePaint);
+        datePaint.setAlpha(dateAlpha);
+        labelPaint.setAlpha(labelAlpha);
+        framePaint.setAlpha(frameAlpha);
+    }
+
+    /**
+     * 日期牌下面的一行指引：用系统语言的句子直白地说清这一次轻点定的是哪一端、
+     * 下一次轻点定的是另一端（选完不收页，关掉靠浮窗右上角的圆圈关闭按钮）
+     */
+    private void drawPickHint(Canvas canvas, float width) {
+        String pending = mActiveStart ? mStartLabel : mEndLabel;
+        String next = mActiveStart ? mEndLabel : mStartLabel;
+        String hint = mPickedOnce
+                ? getString(R.string.calendar_hint_pick_endpoint, pending)
+                : getString(R.string.calendar_hint_pick_range, pending, next);
+        float textSize = mHintPaint.getTextSize();
+        float maxWidth = width - dp(10);
+        float textWidth = mHintPaint.measureText(hint);
+        if (maxWidth > 0 && textWidth > maxWidth) {
+            mHintPaint.setTextSize(textSize * maxWidth / textWidth);
+        }
+        float top = mTitleHeight + mRangeHeight;
+        Paint.FontMetrics fm = mHintPaint.getFontMetrics();
+        canvas.drawText(hint, width / 2f,
+                top + mHintHeight / 2f - (fm.ascent + fm.descent) / 2f, mHintPaint);
+        mHintPaint.setTextSize(textSize);
     }
 
     /** yyyyMMdd → 跟随系统语言的短日期 */
@@ -635,7 +766,7 @@ public class ReleaseDateCalendarView extends FrameLayout {
         String[] names = DateFormatSymbols.getInstance(Locale.getDefault()).getShortWeekdays();
         int firstDayOfWeek = Calendar.getInstance().getFirstDayOfWeek();
         Paint.FontMetrics fm = mWeekPaint.getFontMetrics();
-        float baseline = mTitleHeight + mRangeHeight + (mWeekHeight - (fm.ascent + fm.descent)) / 2f;
+        float baseline = gridTop() - mWeekHeight + (mWeekHeight - (fm.ascent + fm.descent)) / 2f;
         for (int i = 0; i < COLS; i++) {
             int dayOfWeek = (firstDayOfWeek - 1 + i) % 7 + 1;
             canvas.drawText(names[dayOfWeek], cellWidth * i + cellWidth / 2f, baseline, mWeekPaint);
@@ -718,7 +849,8 @@ public class ReleaseDateCalendarView extends FrameLayout {
             boolean isEnd = mRangeEnd > 0 && date == mRangeEnd;
             boolean endpoint = isStart || isEnd;
 
-            // 日期数字占格子顶部一小条；区间两端：实心金底 = 刚动过的一端，金框 = 下一次点选要改的一端
+            // 日期数字占格子顶部一小条；区间两端与标题下方的日期牌同一套画法：
+            // 实心金底 = 已经定下来的那端，空心金框 = 下一次点选要改的那一端
             float numberTop = top + dp(3);
             float numberBottom = numberTop + mNumberHeight;
             mCellRect.set(left + inset, numberTop, left + cellWidth - inset, numberBottom);
@@ -856,7 +988,7 @@ public class ReleaseDateCalendarView extends FrameLayout {
         super.onDetachedFromWindow();
     }
 
-    /** 轻点：标题行按钮翻页，日期格子改区间（点一下改一端，再点一下改另一端并结束） */
+    /** 轻点：标题行按钮翻页，日期格子改区间（点一下改一端并自动切到另一端，再点一下定下另一端） */
     private void handleTap(float x, float y) {
         if (y <= mTitleHeight) {
             // 最外侧按年跳，内侧按月跳；超出卡包数据覆盖的月份会被夹住
@@ -886,7 +1018,7 @@ public class ReleaseDateCalendarView extends FrameLayout {
                 mRangeStart = mRangeEnd;
             }
         }
-        // 刚点的一端画实心；下一次点选改另一端
+        // 刚点的一端已经定下来，画实心；下一次点选改另一端
         mFilledStart = mActiveStart;
         mActiveStart = !mActiveStart;
         boolean finished = mPickedOnce;
@@ -930,7 +1062,7 @@ public class ReleaseDateCalendarView extends FrameLayout {
 
     /** 屏幕坐标 → yyyyMMdd；不在本月格子里返回 0 */
     private int dateAtPoint(float x, float y) {
-        float gridTop = mTitleHeight + mRangeHeight + mWeekHeight;
+        float gridTop = gridTop();
         if (y < gridTop) {
             return 0;
         }
@@ -1017,6 +1149,11 @@ public class ReleaseDateCalendarView extends FrameLayout {
 
     private int getColor(int id) {
         return getResources().getColor(id);
+    }
+
+    /** 日期牌与指引行的文案（可带格式参数），跟随系统语言 */
+    private String getString(int id, Object... args) {
+        return getResources().getString(id, args);
     }
 
     private int dp(float value) {

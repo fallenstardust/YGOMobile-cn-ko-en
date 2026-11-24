@@ -310,6 +310,13 @@
     <string name="Pre_share">Pronto para compartilhar, por favor aguarde...</string>
     <string name="category_pack">Pacotes</string>
     <string name="label_release_date">Data de lançamento</string>
+    <string name="label_date_start_short">Início</string>
+    <string name="label_date_end_short">Fim</string>
+    <string name="label_date_start">data inicial</string>
+    <string name="label_date_end">data final</string>
+    <string name="calendar_hint_pick_range">Toque numa data para definir a %1$s e toque em outra para definir a %2$s</string>
+    <string name="calendar_hint_pick_endpoint">Toque numa data para definir a %1$s e toque no botão Fechar no canto superior direito</string>
+    <string name="calendar_close">Fechar o calendário</string>
     <string name="category_windbot_deck">Decks I.A.</string>
     <string name="category_Uncategorized">Sem categoria</string>
     <string name="please_input_category_name">Por favor, insira o nome da categoria</string>

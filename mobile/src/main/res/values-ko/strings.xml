@@ -325,6 +325,13 @@
     <string name="Pre_share">공유 준비가 되었습니다. 잠시만 기다려주십시오...</string>
     <string name="category_pack">카드 팩</string>
     <string name="label_release_date">발매일</string>
+    <string name="label_date_start_short">시작</string>
+    <string name="label_date_end_short">종료</string>
+    <string name="label_date_start">시작일</string>
+    <string name="label_date_end">종료일</string>
+    <string name="calendar_hint_pick_range">날짜를 눌러 %1$s을(를) 정하고 한 번 더 눌러 %2$s을(를) 정하세요</string>
+    <string name="calendar_hint_pick_endpoint">날짜를 눌러 %1$s을(를) 정하고 오른쪽 위 닫기 버튼을 누르세요</string>
+    <string name="calendar_close">달력 닫기</string>
     <string name="category_windbot_deck">AI 덱</string>
     <string name="category_Uncategorized">미분류 덱</string>
     <string name="please_input_category_name">카테고리를 입력하세요</string>

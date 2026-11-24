@@ -314,6 +314,13 @@
     <string name="Pre_share">共有中，お待ちを……</string>
     <string name="category_pack">パックリスト</string>
     <string name="label_release_date">発売日</string>
+    <string name="label_date_start_short">開始</string>
+    <string name="label_date_end_short">終了</string>
+    <string name="label_date_start">開始日</string>
+    <string name="label_date_end">終了日</string>
+    <string name="calendar_hint_pick_range">日付をタップして%1$sを設定し、もう一度タップして%2$sを設定してください</string>
+    <string name="calendar_hint_pick_endpoint">日付をタップして%1$sを設定し、右上の閉じるボタンをタップしてください</string>
+    <string name="calendar_close">カレンダーを閉じる</string>
     <string name="category_windbot_deck">AIデッキ</string>
     <string name="category_Uncategorized">未分類デッキ</string>
     <string name="please_input_category_name">新しい分類名を入力してください</string>

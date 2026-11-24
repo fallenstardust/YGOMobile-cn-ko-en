@@ -326,6 +326,13 @@
     <string name="Pre_share">Prepare to Share</string>
     <string name="category_pack">Pack</string>
     <string name="label_release_date">Release Date</string>
+    <string name="label_date_start_short">Start</string>
+    <string name="label_date_end_short">End</string>
+    <string name="label_date_start">start date</string>
+    <string name="label_date_end">end date</string>
+    <string name="calendar_hint_pick_range">Tap a date to set the %1$s, then tap again to set the %2$s</string>
+    <string name="calendar_hint_pick_endpoint">Tap a date to set the %1$s, then tap the close button at the top right</string>
+    <string name="calendar_close">Close calendar</string>
     <string name="category_windbot_deck">AI Decks</string>
     <string name="category_Uncategorized">Uncategorized</string>
 

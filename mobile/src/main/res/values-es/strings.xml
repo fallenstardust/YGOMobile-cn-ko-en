@@ -317,6 +317,13 @@
     <string name="Pre_share">Preparando para compartir, espera...</string>
     <string name="category_pack">Paquetes</string>
     <string name="label_release_date">Fecha de lanzamiento</string>
+    <string name="label_date_start_short">Inicio</string>
+    <string name="label_date_end_short">Fin</string>
+    <string name="label_date_start">fecha inicial</string>
+    <string name="label_date_end">fecha final</string>
+    <string name="calendar_hint_pick_range">Toca una fecha para fijar la %1$s y toca otra para fijar la %2$s</string>
+    <string name="calendar_hint_pick_endpoint">Toca una fecha para fijar la %1$s y toca el botón de cerrar arriba a la derecha</string>
+    <string name="calendar_close">Cerrar el calendario</string>
     <string name="category_windbot_deck">Decks I.A.</string>
     <string name="category_Uncategorized">Sin categoría</string>
     <string name="please_input_category_name">Ingresa el nombre de la nueva categoría</string>

@@ -340,6 +340,13 @@
     <string name="Pre_share">准备分享，请稍候……</string>
     <string name="category_pack">卡包展示</string>
     <string name="label_release_date">发售日期</string>
+    <string name="label_date_start_short">开始</string>
+    <string name="label_date_end_short">结束</string>
+    <string name="label_date_start">开始日期</string>
+    <string name="label_date_end">结束日期</string>
+    <string name="calendar_hint_pick_range">轻点日期先定%1$s，再轻点一次定%2$s</string>
+    <string name="calendar_hint_pick_endpoint">轻点日期定%1$s，选好后点右上角关闭</string>
+    <string name="calendar_close">关闭日历</string>
     <string name="category_windbot_deck">人机卡组</string>
     <string name="category_Uncategorized">未分类卡组</string>
     <string name="please_input_category_name">请输入新卡组分类名</string>
