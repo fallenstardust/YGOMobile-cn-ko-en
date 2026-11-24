@@ -80,6 +80,8 @@ public final class ApplyingEffectsPopup {
         String shownKeys = "";
         float shownScale;
         int shownWidth;
+        /** 上一次落地的窗口位置与高度（锚视图随输入法升降时据此判断需不需要重贴） */
+        int shownX, shownY, shownHeight;
 
         Panel(int side) {
             this.side = side;
@@ -92,6 +94,9 @@ public final class ApplyingEffectsPopup {
     private final Panel panelOpp;
     /** 行点击回调（由 GameTopInfoManager 注入） */
     private OnCardClick onCardClick;
+    /** 列表高度上限的基准窗口高：同一宽度内取历史最大值，输入法把窗口压矮期间沿用静置值，
+     *  避免列表高度随键盘升降跳变（宽度变化即重采，覆盖旋转/分屏/折叠） */
+    private int availBaseW, availBaseH;
 
     public ApplyingEffectsPopup(Activity activity, ImageLoader imageLoader) {
         this.activity = activity;
@@ -153,13 +158,26 @@ public final class ApplyingEffectsPopup {
         anchor.getLocationInWindow(anchorLoc);
         barPanel.getLocationInWindow(panelLoc);
         int width = barPanel.getWidth();
-        int avail = anchor.getRootView() != null ? anchor.getRootView().getHeight() : 0;
-        if (width <= 0 || avail <= 0) return;
+        View root = anchor.getRootView();
+        int rawAvail = root != null ? root.getHeight() : 0;
+        if (width <= 0 || rawAvail <= 0) return;
+        int avail = stableAvailHeight(root.getWidth(), rawAvail);
         String key = itemsKey(items);
         boolean live = p.window != null && p.window.isShowing();
-        // 该侧窗口还在且条目与缩放都没变就一律不动（连重绘也不做，不打断玩家滚动）
+        int x = panelLoc[0];
+        // 面板贴顶部信息条下缘向下展开（我方血条在下半屏 → 面板在其下方；对方同理在其面板下方）
+        int y = anchorLoc[1] + anchor.getHeight();
+        // 该侧窗口还在且条目与缩放都没变就一律不动（连重绘也不做，不打断玩家滚动），
+        // 但输入法把窗口压缩/还原会带动血条面板升降，位置变了仍要重贴（用户反馈：列表不随血条框抬高）
         if (live && key.equals(p.shownKeys) && Math.abs(f - p.shownScale) < 0.001f
-                && width == p.shownWidth) return;
+                && width == p.shownWidth) {
+            if (x != p.shownX || y != p.shownY) {
+                p.window.update(x, y, width, p.shownHeight);
+                p.shownX = x;
+                p.shownY = y;
+            }
+            return;
+        }
         ensureContent(p);
         int scrollY = live && p.scroll != null ? p.scroll.getScrollY() : 0;
         p.tvTitle.setText(p.side == 0
@@ -169,14 +187,14 @@ public final class ApplyingEffectsPopup {
         p.content.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
                 View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
         int height = Math.min(p.content.getMeasuredHeight(), Math.round(avail * MAX_HEIGHT_FRACTION));
-        int x = panelLoc[0];
-        // 面板贴顶部信息条下缘向下展开（我方血条在下半屏 → 面板在其下方；对方同理在其面板下方）
-        int y = anchorLoc[1] + anchor.getHeight();
         if (live) {
             p.window.update(x, y, width, height);
             p.shownKeys = key;
             p.shownScale = f;
             p.shownWidth = width;
+            p.shownX = x;
+            p.shownY = y;
+            p.shownHeight = height;
             // 行重建会连带重排版面，把玩家原本滚到的位置在下一帧贴回去（新内容更短时 ScrollView 自行夹取）
             if (p.scroll != null && scrollY > 0) {
                 final int restore = scrollY;
@@ -201,6 +219,9 @@ public final class ApplyingEffectsPopup {
             p.shownKeys = key;
             p.shownScale = f;
             p.shownWidth = width;
+            p.shownX = x;
+            p.shownY = y;
+            p.shownHeight = height;
         } catch (Exception ignored) {
             // 窗口 token 失效（Activity 正在销毁/旋转中）：本次展开放弃，下一次刷新重建
             p.window = null;
@@ -231,6 +252,18 @@ public final class ApplyingEffectsPopup {
     public void dismiss() {
         closePanel(panelSelf);
         closePanel(panelOpp);
+    }
+
+    /** 列表高度上限基准：同一宽度内只采纳历史最大的窗口高（静置态），键盘压缩期沿用该值 */
+    private int stableAvailHeight(int rootW, int rootH) {
+        if (rootW != availBaseW) {
+            availBaseW = rootW;
+            availBaseH = 0;
+        }
+        if (rootH > availBaseH) {
+            availBaseH = rootH;
+        }
+        return availBaseH;
     }
 
     /** 按条目重建本侧列表行（卡图缩略版随 HUD 系数、正文固定 7sp），整行可点转卡详 */

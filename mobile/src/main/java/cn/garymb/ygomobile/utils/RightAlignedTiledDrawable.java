@@ -38,6 +38,12 @@ import androidx.annotation.Nullable;
  * 或未传锚视图时基准区即整个窗口，与旧实现一致。
  * <p>
  * GameFieldView(setZOrderOnTop) 的透明像素透出窗口缓冲，故本背景画在 GL 曲面之下仍然可见。
+ * <p>
+ * 输入法（Activity 为 adjustResize）：键盘弹起会压缩窗口，DecorView 高随之变小、weight 布局的
+ * 顶部面板底缘上移，若按本轮实测几何解算，cover 缩放与落点会整套重算——背景整张缩小、上下跳位，
+ * 键盘收起后用户看到的正是“背景降到血条下方”（用户反馈）。故同一宽度内把静置态（窗口未被压缩时）
+ * 解算出的映射缓存下来，窗口变矮期间原样沿用：背景一律不动，被键盘盖住的底部自然不可见；
+ * 宽度变化（旋转/分屏/折叠）或窗口真正变高（导航栏收起等）即作废重采。
  */
 public class RightAlignedTiledDrawable extends Drawable {
 
@@ -53,6 +59,11 @@ public class RightAlignedTiledDrawable extends Drawable {
     private final View regionAnchor;
     /** 基准区之上的填充色（0 = 不填充，透出窗口原色） */
     private final int outsideColor;
+    /** 静置态（窗口未被输入法压缩）解算出的映射缓存：宽度 + 当时的窗口高 + cover 缩放与图片在
+     *  窗口坐标中的落点（落点冻结、宿主偏移按本轮实测换算，图片才钉在屏幕原位） */
+    private int cacheW, cacheH;
+    private float cacheS, cacheWinLeft, cacheWinTop;
+    private boolean cached;
 
     public RightAlignedTiledDrawable(@NonNull Bitmap bitmap) {
         this(bitmap, null, 0);
@@ -84,6 +95,10 @@ public class RightAlignedTiledDrawable extends Drawable {
         View root = host != null ? host.getRootView() : null;
         int winW = root != null && root.getWidth() > 0 ? root.getWidth() : b.width();
         int winH = root != null && root.getHeight() > 0 ? root.getHeight() : b.height();
+        //本轮窗口比缓存那轮更矮 → 视为被键盘压缩：图片的缩放与落点整套沿用静置态解算结果
+        //（见类头注释），仅宿主偏移按本轮实测换算，使图片在屏幕上纹丝不动
+        boolean compressed = cached && winW == cacheW && winH < cacheH - 1;
+        if (compressed) winH = cacheH;
         int offX = 0;
         int offY = 0;
         if (host != null && root != null) {
@@ -105,12 +120,28 @@ public class RightAlignedTiledDrawable extends Drawable {
         int regionH = winH - regionTop;
 
         // cover：图片缩放到同时铺满基准区宽高（不留白、不重复）
-        float s = Math.max((float) winW / bitmap.getWidth(), (float) regionH / bitmap.getHeight());
         // 图片在窗口坐标中的落点：右缘贴基准区右缘、垂直按基准区居中
-        float winLeft = winW - s * bitmap.getWidth();
-        float winTop = regionTop + (regionH - s * bitmap.getHeight()) / 2f;
+        float s;
+        float winLeft;
+        float winTop;
+        if (compressed) {
+            s = cacheS;
+            winLeft = cacheWinLeft;
+            winTop = cacheWinTop;
+        } else {
+            s = Math.max((float) winW / bitmap.getWidth(), (float) regionH / bitmap.getHeight());
+            winLeft = winW - s * bitmap.getWidth();
+            winTop = regionTop + (regionH - s * bitmap.getHeight()) / 2f;
+            cacheW = winW;
+            cacheH = winH;
+            cacheS = s;
+            cacheWinLeft = winLeft;
+            cacheWinTop = winTop;
+            cached = true;
+        }
         // 换算到本视图画布坐标：背景画在未平移的视图画布上（bounds 只界定绘制范围、不平移画布），
-        // 故画布点 c 的窗口坐标 = c + 宿主视图在窗口中的位置
+        // 故画布点 c 的窗口坐标 = c + 宿主视图在窗口中的位置；偏移始终取本轮实测，
+        // 使键盘压缩期宿主视图升降时图片仍钉在原来的屏幕位置
         float left = winLeft - offX;
         float top = winTop - offY;
 
@@ -124,8 +155,12 @@ public class RightAlignedTiledDrawable extends Drawable {
 
         // 盖掉基准区以上：窗口背景的宿主是整个 DecorView，上面那次 drawRect 会把图一并铺到
         // 卡片详情区，故按同一基准把该段重涂纯色；区域背景的 bounds 本就等于基准区
-        // （offY == regionTop），本段为空、自然不触发
-        int fillBottom = Math.min(b.bottom, Math.max(b.top, regionTop - offY));
+        // （offY == regionTop），本段为空、自然不触发。
+        // 键盘压缩期改按图片上缘重涂：面板底缘已上移、而图片留在原位，若仍按面板底缘重涂，
+        // 面板缘与图片上缘之间会落在图片以外、被 CLAMP 拉成一条顶行色的宽带；改成「图片以上
+        // 一律面板同色」后该段读作面板的自然延伸，与面板同色不突兀
+        int fillBoundary = compressed ? Math.round(top) : regionTop - offY;
+        int fillBottom = Math.min(b.bottom, Math.max(b.top, fillBoundary));
         if (outsideColor != 0 && fillBottom > b.top) {
             fillPaint.setColor(outsideColor);
             canvas.drawRect(b.left, b.top, b.right, fillBottom, fillPaint);

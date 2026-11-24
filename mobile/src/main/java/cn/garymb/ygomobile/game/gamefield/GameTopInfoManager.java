@@ -211,12 +211,24 @@ public class GameTopInfoManager extends GameTopInfoManagerBase {
         setupAvatarImages();
         setupCardBackImages();
         applyTopInfoSize();
+        // 在显的两侧列表重贴：本窗为 adjustResize，点聊天输入框抬键盘会压缩窗口、weight 布局的
+        // 血条面板随之升降，而两侧列表是独立 PopupWindow、不随窗口重排，不重贴就停在键盘弹起前的
+        // 旧位置（用户反馈：列表没跟着血条框一起抬高）。showPanel 内部按位置比对，只在真变了时
+        // 下发 update，条目/缩放未变时不重建行也不打断玩家滚动。
+        final View.OnLayoutChangeListener applyingReanchor = (v, l, t, r, b, ol, ot, or, ob) -> {
+            if (applyingPopup != null && applyingPopup.isShowing()) openApplyingPopup();
+        };
+        if (layoutTopInfo != null) layoutTopInfo.addOnLayoutChangeListener(applyingReanchor);
         // layout_game_right 尺寸变化（旋转/分屏/平板高分辨率）时重新等比缩放 gameTopInfo
         if (layoutGameRight != null) {
             layoutGameRight.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
                 int w = r - l, hgt = b - t;
                 int ow = or - ol, oh = ob - ot;
-                if ((w != ow || hgt != oh) && w > 0 && hgt > 0) applyTopInfoSize();
+                if ((w != ow || hgt != oh) && w > 0 && hgt > 0) {
+                    applyTopInfoSize();
+                    //尺寸变化同样带动面板底缘移动，列表按新几何重贴（HUD 系数变了则连带重排行）
+                    if (applyingPopup != null && applyingPopup.isShowing()) openApplyingPopup();
+                }
             });
         }
         reset();
