@@ -8,6 +8,7 @@
 #ifndef INTERPRETER_H_
 #define INTERPRETER_H_
 
+#include "lua.hpp"
 #include "common.h"
 #include <cstdio>
 #include <unordered_map>

@@ -1526,10 +1526,6 @@ bool DuelClient::ClientAnalyze(unsigned char* msg, size_t len) {
 			mainGame->WaitFrameSignal(30);
 			break;
 		}
-		// HINT_OPPO_SELECT_PLACE：对手以 EFFECT_OPPO_SELECT_SPSUMMON_ZONE 代选特召位置后的
-		// 选中格回报（ocgcore operations.cpp move_to_field step1），与 HINT_ZONE 同为「区域宣告」：
-		// 写一条区域日志并高亮 40 帧，不参与无效效果标注
-		case HINT_OPPO_SELECT_PLACE:
 		case HINT_ZONE: {
 			uint32_t zones = static_cast<uint32_t>(data);
 			if(mainGame->LocalPlayer(player) == 1)
