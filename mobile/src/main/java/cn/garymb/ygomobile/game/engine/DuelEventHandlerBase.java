@@ -253,12 +253,13 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
     public void onNewTurn(int player) {
         // Solo mode: the acting player must always sit at localPlayer==0 (bottom of screen).
         // If MSG_NEW_TURN targets the side currently shown as "opponent", request a perspective
-        // flip. requestSpectatorSwap defers the flip to the next drainPendingMsgs boundary, so
-        // pending animations of the previous turn finish before the view is swapped — same path
-        // as the manual spectator "switch view" button.
+        // flip. Auto flips keep the deferred semantics (requestAutoSpectatorSwap): the flip is
+        // applied at the next message-consumption boundary so pending animations of the previous
+        // turn finish before the view is swapped. The manual spectator "switch view" button is
+        // immediate on purpose and goes through requestSpectatorSwap instead.
         if (engine.soloMode && !engine.replayMode && engine.inDuel
                 && engine.localPlayer(player & 1) == 1) {
-            engine.requestSpectatorSwap();
+            engine.requestAutoSpectatorSwap();
         }
         engine.field.currentPlayer = engine.localPlayer(player);
         engine.field.turnCount++;

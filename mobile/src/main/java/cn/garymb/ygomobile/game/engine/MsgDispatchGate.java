@@ -128,6 +128,8 @@ public class MsgDispatchGate {
      */
     void prepareNewDuel() {
         engine.pendingMsgs.clear();
+        // 上一局排队而未消费的视角翻转随硬复位一并作废（新局的视角由本局 MSG_START 重新推断）
+        engine.clearPendingSpectatorSwap();
         engine.animGateClosed = false;
         engine.dialogGateHeld = false;
         engine.animHoldUntilMs = 0L;
@@ -328,6 +330,13 @@ public class MsgDispatchGate {
             engine.field.instantPlace = false;
             if (engine.soundManager != null) engine.soundManager.setEffectsSuppressed(false);
             engine.animHoldUntilMs = 0;
+            // 排队中尚未生效的视角翻转随本次落位一并消费（一次性排空走的是内联循环，不经过
+            // drainPendingMsgs 的循环顶消费点，不把残留的翻转在这里补上就会被静默积压）；
+            // 放在重刷卡面之前，使最终局面直接以交换后的视角落位
+            if (engine.pendingSpectatorSwap) {
+                engine.pendingSpectatorSwap = false;
+                engine.viewpoint.performSpectatorSwap();
+            }
             // 按最终局面的坐标强制对齐所有卡面（instantPlace 已直接落位，此处重刷避免残留插值坐标）
             engine.field.refreshAllCards();
             if (engine.listener != null) {

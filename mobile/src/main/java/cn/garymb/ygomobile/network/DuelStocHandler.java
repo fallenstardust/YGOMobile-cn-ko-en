@@ -34,6 +34,8 @@ public class DuelStocHandler implements DuelClient.ClientListener {
         // 新连接同样复位撤回闩锁（onConnected 早于 onDuelStart）：上一局残留的
         // 「已撤回、等待新操作」状态不得带入新会话，否则本局按钮会被永久压住
         engine.undoBlockedUntilNewAction = false;
+        // 新一场连接：观战者上一场的「切换视角」选择不带入（默认以服务器先攻方为下方）
+        engine.resetSpectatorViewPreference();
     }
 
     @Override
@@ -44,6 +46,8 @@ public class DuelStocHandler implements DuelClient.ClientListener {
         // 非异常断线场景已由 onDuelStart / onChangeSide / onWaitingSide 三处复位，本行
         // 仅覆盖“结算后未开新局就掉线”或“建连失败”等无后续 STOC 包可达的窗口。
         engine.tpSwapped = false;
+        // 退出观战/掉线：观战视角选择与排队中的翻转一并作废，不带入下一次连接或回大厅
+        engine.resetSpectatorViewPreference();
         if (engine.getState() != GameEngine.GameState.DUEL_END) {
             engine.setEngineState(GameEngine.GameState.DISCONNECTED);
         }
@@ -150,6 +154,8 @@ public class DuelStocHandler implements DuelClient.ClientListener {
         // 使同阵营聊天错分到右侧。
         engine.tpSwapped = false;
         engine.tagSurrenderInitiated = false;
+        // 新一局开球：上一局的投降结算闸门作废，否则本局应答会被当成已作废应答丢弃
+        engine.surrenderSettling = false;
         engine.duelStage = YGOProtocol.DUEL_STAGE_DUELING;
         engine.setEngineState(GameEngine.GameState.DUELING);
         // 不在此直接切决斗曲：STOC_DUEL_START 时仍停留在玩家等待界面（猜拳前），
@@ -173,6 +179,8 @@ public class DuelStocHandler implements DuelClient.ClientListener {
         // onWaitingSide（服务端 DuelEndProc 换边分支已把 dp->type 写回 seat-index）以及
         // 下一局 onDuelStart（新一局未交换前默认假设为 false）。
         engine.tagSurrenderInitiated = false;
+        // 本局已按投降/胜负结算完毕，应答闸门随之一并作废（下一局 onDuelStart 重新判定）
+        engine.surrenderSettling = false;
         engine.duelStage = YGOProtocol.DUEL_STAGE_END;
         engine.setEngineState(GameEngine.GameState.DUEL_END);
         engine.soundManager.stopBGM();
@@ -234,6 +242,9 @@ public class DuelStocHandler implements DuelClient.ClientListener {
         engine.duelStarted = false;
         engine.inDuel = false;
         engine.siding = true;
+        // match 局间换 side：上一局的投降结算闸门在此彻底作废（本局已结束，
+        // 下一局的询问与命令应答必须恢复放行）
+        engine.surrenderSettling = false;
         // 换边阶段服务端 DuelEndProc 已将 dp->type 重置为 lobby 座位（pplayer 回写），
         // 同步重置先攻交换标志，避免下一局“等待先攻结果”阶段聊天错分侧。
         engine.tpSwapped = false;

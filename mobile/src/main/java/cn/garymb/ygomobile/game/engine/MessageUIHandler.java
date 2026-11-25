@@ -143,7 +143,10 @@ public class MessageUIHandler {
         engine.field.setDuelRule(duelRule);
         // 回放视角恒以录制者为参照（ReplayPlayer.startSession 置恒等映射/切换翻转），不得由 MSG_START 先攻方重新推断，否则 undo/重放重投本消息会把用户已切视角静默翻回
         if (!engine.replayMode) {
-            engine.duelIsFirst = (playerType & 1) == 0;
+            // 观战席位叠加其自身「切换视角」选择（GameEngine.spectatorViewSwapped）：观战端队列
+            // 常存积压，不叠加则本条 MSG_START 落地时会把刚手动翻过的视角静默还原，观战就是
+            // 「点切换没反应」（用户实测）；对战玩家不叠加，视角恒为自己那一侧
+            engine.applyDuelFirstFromPlayerType(playerType);
             // 同步服务端 TPResult 对 dp->type 的阵营重映射：以 duelIsFirst 与自身 lobby team bit
             // 的异或推断交换与否，供聊天同阵营归位在后续窗口中可取。
             // lobby 侧：“我方队”对应 duelStarted=true 之前 seat-index 语义中 selfType 所在侧；
@@ -167,6 +170,9 @@ public class MessageUIHandler {
             // bindViewNames 按座位重算是幂等的：对战席位收到过 STOC_DUEL_START 再算一次同值；
             // 残局/回放在方法内自行短路，不干扰各自 runner 按视角直写的名字。
             engine.bindViewNames();
+            // 按座位绑的是默认边，观战者已切换过视角则左右名字再对调一次，否则新一局
+            // 只有场面按交换后的视角落位、昵称却跳回默认边（即「名字与卡组/场面反了」）
+            engine.applySpectatorViewNames();
         }
         // tag_player 初始化（duelclient.cpp L1644-1649：isTag 非先动队首回合由队友先打），后续由 MSG_NEW_TURN 逐回合翻转
         if (engine.field.isTag) {

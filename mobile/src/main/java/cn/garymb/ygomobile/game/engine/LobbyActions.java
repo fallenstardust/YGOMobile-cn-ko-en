@@ -42,7 +42,16 @@ public class LobbyActions {
             engine.singleRunner.quit();
             return;
         }
-        if (isTagMode()) engine.tagSurrenderInitiated = true;
+        if (isTagMode()) {
+            // tag：本席只是发起投降，须队友也确认才判负；期间对局照常推进，
+            // 后续询问仍要作答，故不挂应答闸门
+            engine.tagSurrenderInitiated = true;
+        } else {
+            // 非 tag：本包即为最终答复，服务端随即按投降判负并结束本局；从此刻起本端
+            // 不再发出任何应答（见 GameEngine.surrenderSettling），避免界面上抢在胜负
+            // 通讯落地前点掉的旧询问窗把一条已作废的应答打进已结束的对局
+            engine.surrenderSettling = true;
+        }
         engine.client.sendSurrender();
     }
 

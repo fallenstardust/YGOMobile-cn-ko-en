@@ -43,6 +43,14 @@ public class GameActions {
     }
 
     public void sendResponse(byte[] responseData) {
+        // 投降已进入结算（确认投降后服务端已按投降判负）：同样一律不发。旧写法只拦撤回屏障，
+        // 确认投降后玩家抢点尚未收口的旧询问窗（或自动连锁的延迟应答）仍会把一条作废的应答
+        // 打进已结束的对局，表现为“YOU LOSE 弹了但投降失效、不退出对局”
+        if (engine.isSurrenderSettling()) {
+            Log.w("GameActions", "response dropped: surrender already sent, len="
+                    + (responseData == null ? 0 : responseData.length));
+            return;
+        }
         // 撤回后的应答代次屏障：被撤销询问的迟到应答（弹窗关闭前的点击、未取消的自动应答、
         // 按旧命令列表编码的指令）一律不发。服务端已把待应答席位转到回退后的新局面，错拍应答
         // 轻则被引擎判为非法引发 MSG_RETRY 风暴（表现为通讯中断），重则旧列表里的合法指令凭空

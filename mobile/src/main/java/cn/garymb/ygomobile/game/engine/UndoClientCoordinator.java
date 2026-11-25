@@ -272,7 +272,9 @@ class UndoClientCoordinator {
             field.currentPhase = undoResyncPhase;
         }
         if (engine.soloMode && !engine.replayMode && engine.inDuel && field.currentPlayer == 1) {
-            engine.requestSpectatorSwap();
+            // 自动翻转：沿用「排到下一个消息消费点」语义（reload 后还有一串 refresh 要落位），
+            // 不与玩家手动的即时切视角共用同一条路径
+            engine.requestAutoSpectatorSwap();
         }
         return true;
     }

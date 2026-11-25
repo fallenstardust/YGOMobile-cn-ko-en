@@ -197,6 +197,16 @@ public class GameEngine {
 
     /** tag 模式本方是否已发起投降（等待队友回应）：防止对 STOC_TEAMMATE_SURRENDER 自我弹窗与重复发起 */
     public boolean tagSurrenderInitiated = false;
+    /**
+     * 本局是否已发出投降并进入结算（仅非 tag；tag 需队友一并确认，期间对局照常继续、询问仍要作答）：
+     * {@link LobbyActions#sendSurrender()} 置位，STOC_DUEL_START（新一局）/ STOC_DUEL_END 复位。
+     * <p>置位期间 {@link GameActions#sendResponse(byte[])} 丢弃一切应答：投降确认瞬间界面已把在显的
+     * 询问/选择弹窗全部收口，但延迟排布的自动放弃连锁、命令菜单点击等仍可能带着「上一条已作废询问」
+     * 的意志把应答发出去——服务端此刻已按投降判负，迟到应答只会让本端局面被那条效果继续推进，
+     * 而胜负通讯落地后不再走收尾（用户反馈：确认投降后抢点旧询问窗的「是」，只见 YOU LOSE、
+     * 投降失效且不退出对局）。与撤回应答代次屏障同一处置口径。
+     */
+    public volatile boolean surrenderSettling;
     public int gameMode = 0;
     public int gameRule = 0;
     public int gameLflist = 0;
@@ -600,6 +610,11 @@ public class GameEngine {
         return lobbyActions.isSurrenderPending();
     }
 
+    /** 本局是否已发出投降并进入结算（此期间不再发出任何应答，实现见 GameActions） */
+    public boolean isSurrenderSettling() {
+        return surrenderSettling;
+    }
+
     public void sendToDuelist() {
         lobbyActions.sendToDuelist();
     }
@@ -802,10 +817,45 @@ public class GameEngine {
         return replayPlayer.getReplayZoneCodes(viewPlayer, location);
     }
 
-    /** 观战切视角请求（event_handler.cpp BUTTON_REPLAY_SWAP 观战分支 → is_swapping，实际交换延迟到消息消费点；实现见 DuelViewpointManager） */
+    /** 观战切视角请求（event_handler.cpp BUTTON_REPLAY_SWAP 观战分支 → is_swapping；手动为即时、自动延迟到消息消费点，实现见 DuelViewpointManager） */
     volatile boolean pendingSpectatorSwap;
 
+    /**
+     * 观战者手动「切换视角」的选择（true = 与服务器默认边相反）：跨局保持。
+     * <p>为何必须粘性保存：{@code MSG_START} 在 {@code MessageUIHandler.onStart} 里按报文
+     * {@code playerType} 重新推断 {@link #duelIsFirst}（对齐 duelclient.cpp）。观战端整条消息链
+     * 被动画闸门一段段持住、队列常存积压（日志实证：点击时 {@code inDuel=false} 而本局已接近
+     * 结束、结算时 {@code backlog=true}）——观战者刚点完切换，随后落地的积压 {@code MSG_START}
+     * 就把视角静默还原并把新一局按默认边重建，观感就是「点了完全没反应」，只有先
+     * 「跳到当前」把队列一次性落地、旧 MSG_START 不再在后头等着，之后的切换才能看见。
+     * <p>复位点：新连接建立/断开（换服务器或退出观战回大厅）；新一局不重置，由
+     * {@code onStart} 按其重新叠加视角。
+     */
+    public boolean spectatorViewSwapped;
+
     public void requestSpectatorSwap() { viewpoint.requestSpectatorSwap(); }
+
+    /** 视角自动翻转（solo 逐回合把当回合方转到下方、撤回重同步落位）：仍排到下一个消息消费点，让上一回合的在途动画先播完 */
+    public void requestAutoSpectatorSwap() { viewpoint.requestAutoSpectatorSwap(); }
+
+    /** 作废尚未被消费的视角翻转请求（会话切换点：新一局开场、回放起停），防跨会话残留把当时场地镜像一次 */
+    public void clearPendingSpectatorSwap() { viewpoint.clearPendingSpectatorSwap(); }
+
+    /** 复位观战者的视角选择（新连接建立/断开）：不与下一场服务器的默认边叠加 */
+    public void resetSpectatorViewPreference() {
+        spectatorViewSwapped = false;
+        viewpoint.clearPendingSpectatorSwap();
+    }
+
+    /** 按 MSG_START 的先攻方设定本局视角，观战席位叠加其自身视角选择（实现在 DuelViewpointManager） */
+    public void applyDuelFirstFromPlayerType(int playerType) {
+        viewpoint.applyDuelFirstFromPlayerType(playerType);
+    }
+
+    /** 开局重绑昵称后补一次观战视角对调，使左右昵称与已交换的场面一致（实现在 DuelViewpointManager） */
+    public void applySpectatorViewNames() {
+        viewpoint.applySpectatorViewNames();
+    }
 
     /** 给定协议侧玩家索引（0/1）是否代表我方（2=平局返回 false）；单人模式下双方均为我方 */
     public boolean isSelfSide(int player) {

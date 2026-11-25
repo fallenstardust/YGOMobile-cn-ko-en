@@ -68,7 +68,6 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
     volatile boolean isRunning;
     volatile boolean isPaused;
     volatile boolean isRestarting;
-    private volatile boolean isSwapping;
     /** 快进重排中（跳回合/undo/restart）：即时落位+抑制动画音效，直到落点还原 */
     volatile boolean isSkipping;
     volatile boolean replayWinSeen;
@@ -226,14 +225,34 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         resume();
     }
 
-    /** 交换上下方视角（对齐 gframe 录像界面的“洗牌”按钮 = SwapField） */
+    /**
+     * 交换上下方视角（对齐 gframe 录像界面的“洗牌”按钮 = SwapField）。
+     * <p>暂停态（UI 线程点击）依旧即时交换；播放中不再只置 {@code isSwapping} 等投喂线程
+     * 下一轮循环自己消费，而是挂到与 {@code MSG_*} 同序的主线程串行派发链上执行，两个原因：
+     * <ul>
+     * <li><b>迟到</b>：pump 在每条可见步后 {@code waitForPipelineIdle()}（上限 8 秒）等实况管线与
+     * 动画排空，末尾几步连锁/胜负动画最长，点击因此被积压到“录像播放完毕”才生效；</li>
+     * <li><b>撕裂</b>：{@link #performSwapField()} 会在投喂线程里直接对调 {@code field.players[]}
+     * /逐卡重写 controler/refreshAllCards，与此刻仍在主线程派发的消息（localPlayer 映射刚被
+     * 翻面）与 GL 线程正在插值的 {@code animTo*} 旧目标并发，落空的一帧里双方手卡（及其余半场）
+     * 就互相跳位——即用户反馈的“播放完毕瞬间短暂双方手牌互换”。</li>
+     * </ul>
+     * 挂到串行链后交换与消息处理同线程、同序列（与实况观战 {@code performSpectatorSwap} 同一
+     * 口径），交换体内的 refreshAllCards 会把在途动画一并落定。
+     */
     public void swapField() {
         if (!isRunning) return;
         if (isPaused) {
             performSwapField();
-        } else {
-            isSwapping = true;
+            return;
         }
+        // 会话代数闸门：交换排在待派发队列里，若期间会话已停或已开下一场（队列未经
+        // prepareNewDuel 硬清），不能把上一场的视角交换带进后续实况/新一场的派发链
+        final long gen = sessionGen;
+        engine.postOnMsgQueue(() -> {
+            if (sessionGen != gen || !engine.replayMode) return;
+            performSwapField();
+        });
     }
 
     public void stop() {
@@ -487,10 +506,8 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
                     fedSincePump = 0;
                     continue;
                 }
-                if (isSwapping) {
-                    performSwapField();
-                    isSwapping = false;
-                }
+                // 视角交换已改挂主线程串行派发链（见 swapField）：投喂线程不再直接对调场地，
+                // 避免与主线程消息派发、GL 线程插值并发造成的一帧撕裂
                 ReplaySource.Msg msg = source.next();
                 if (msg == null) {
                     String err = source.getLastError();
@@ -663,6 +680,10 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
     /** 开始回放会话：置实况管线回放标志；录制者视角恒等映射（duelIsFirst=true），双方昵称写 playerInfos */
     private void startSession() {
         engine.replayMode = true;
+        // 实况侧残留而未消费的切视角请求一律作废（标志不在回放链里消费，见
+        // DuelViewpointManager.performSpectatorSwap 的 replayMode 早退）：不清则上一段
+        // solo/观战留下的翻转会在回放某一消费点把半场静默镜像一次
+        engine.clearPendingSpectatorSwap();
         // 回放遮蔽保护：手卡区遮蔽零块（合并客户端视角流里对方手码被置零）不再覆盖流内 MSG_DRAW/MSG_MOVE 已写入的真实卡码→对方手卡保持正面
         GameField.preserveMaskedHandCode = true;
         engine.duelIsFirst = true;
@@ -695,7 +716,16 @@ public final class ReplayPlayer implements ReplayMessageSlicer.ZoneBlocks,
         GameField.preserveMaskedHandCode = false;
         engine.replaySkip = false;
         field.instantPlace = false;
-        engine.duelIsFirst = true;
+        // 不再强置 engine.duelIsFirst = true：本会话视角在 startSession 已按录制者建立，播放途中
+        // 由用户“切换视角”翻转（duelIsFirst 与已对调的 players[]/昵称/LP 同批）。收尾时只把映射
+        // 写回默认而不对调场地，会让协议↔本地映射与仍按旧视角落位的场面错位：此刻队列里/延迟
+        // 排布的收尾刷新（UPDATE_DATA、手卡洗切换面、胜负文字前的最后一次重排）仍按新映射写卡，
+        // 双方手卡就被写进镜像容器——即“播放完毕瞬间双方手牌短暂互换”（对齐 gframe：ReplayThread
+        // 只在开头重置 isFirst，EndDuel 不重置）
+        // 会话已终止：对局标志随之落下（对齐 C++ EndDuel 的 dInfo.isInDuel = false），否则
+        // 回放残留的 inDuel=true 会让后续大厅聊天/切视角/撤回入口沿用已结束的当局语义
+        engine.inDuel = false;
+        engine.clearPendingSpectatorSwap();
         soundManager.setEffectsSuppressed(false);
         isSkipping = false;
         skipStep = 0;

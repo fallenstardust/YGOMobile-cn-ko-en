@@ -84,10 +84,17 @@ import ocgcore.StringManager;
 public class YGOProActivity extends YGOProActivityEngine {
     /**
      * 观战「切换视角」（对齐 event_handler.cpp BUTTON_REPLAY_SWAP player_type==7 分支 →
-     * DuelClient::SwapField）：置位请求由引擎在主线程消息消费点执行 ReplaySwap 同构交换
+     * DuelClient::SwapField）：不再依赖动画闸门与消息消费点，由引擎在调用线程（即点击所在的
+     * 主线程）同步交换半场；inDuel/duelStarted/观战席位 任一成立即可切（观战积压时
+     * inDuel 可能仍为假，旧写法因此表现为点击无响应，见 DuelViewpointManager.requestSpectatorSwap）。
      */
     public void onSpectatorSwapField() {
-        if (engine != null) engine.requestSpectatorSwap();
+        if (engine == null) return;
+        Log.i("YGONativeGame", "spectator swap requested: duelIsFirst=" + engine.isDuelFirst()
+                + " inDuel=" + engine.isInDuel() + " started=" + engine.isStarted()
+                + " spectator=" + engine.isSpectator());
+        engine.requestSpectatorSwap();
+        Log.i("YGONativeGame", "spectator swap done: duelIsFirst=" + engine.isDuelFirst());
     }
 
     /**
@@ -322,9 +329,7 @@ public class YGOProActivity extends YGOProActivityEngine {
                 .setType(YesOrNoDialog.TYPE_YES_NO)
                 .setPositiveButtonText(mStringManager.getSystemString(1213, "是"))
                 .setNegativeButtonText(mStringManager.getSystemString(1214, "否"))
-                .setPositiveButton(v -> {
-                    if (engine != null) engine.sendSurrender();
-                })
+                .setPositiveButton(v -> onSurrenderConfirmed())
                 .setCenterInView(layoutGameRight)
                 .setCancelable(false)
                 .setOnDismissListener(() -> {
@@ -337,6 +342,38 @@ public class YGOProActivity extends YGOProActivityEngine {
     }
 
     /**
+     * 投降确认（用户规格）：点「确定/是」的瞬间收起界面上其它全部决斗弹窗，让胜负判定按投降正常
+     * 走完——旧实现只发 CTOS_SURRENDER 而把仍在显示的连锁/发动询问窗留在屏幕上，玩家抢在胜负
+     * 通讯落地前点掉那张旧询问窗的「是」，就会把一条已作废的应答打到已结束的对局上：服务端按
+     * 应答继续处理连锁，本端局面被那条效果推进，随后到来的 MSG_WIN 只落下「YOU LOSE」文字而
+     * 投降不再收尾（不退出对局，表现为投降直接失效）。
+     * <p>收口口径与点击撤回完全一致（{@link #closeDuelUiForUndo()}：询问/选卡/确认/展示/选项/宣言/
+     * 表示形式/命令菜单连同选择上下文一并作废），再补一刀 {@code YesOrNoDialog.dismissShowingDialogs()}
+     * 兜住 dialogUtil 尚未惰性创建的场次；同时挂上引擎侧投降应答闸门（LobbyActions.sendSurrender），
+     * 接住已经排到主线程队列里、弹窗收口后才到期的自动应答。
+     * <p>tag 模式例外：本席确认只是发起投降，须队友也确认才判负，期间对局照常推进、询问照旧要答，
+     * 因此既不收口弹窗也不拦应答。
+     */
+    void onSurrenderConfirmed() {
+        if (engine != null && !engine.isTagMode()) {
+            // 非 tag：确认即按投降结算处理（应答闸门统一在 LobbyActions.sendSurrender 置位）
+            closeDuelUiForUndo();
+            // 弹窗收口不能只靠 dialogUtil：它惰性创建，本局从未弹过任何询问窗时为 null，
+            // 判空跳过会让在显的连锁/发动询问窗留在屏幕上——正是这条给误答留的窗口（用户反馈）
+            YesOrNoDialog.dismissShowingDialogs();
+            // 撤回快照一并作废：对局即将结束，被拒撤回的迟到 ACK 不得再把旧询问窗弹回界面
+            clearUndoHiddenDialogs();
+            // 防御性释放在显确认卡类弹窗可能持有的消息闸门（弹窗收口时本应随 onDismiss
+            // 一并释放，这里兜底一次）：闸门不解则 MSG_WIN 尾段永远排不下来，
+            // 胜负判定会停在「只弹了 YOU LOSE 文字」这一步
+            engine.releaseMsgGateForDialog();
+        }
+        // tag：本席确认只是发起投降（须队友也确认），对局照常推进、待答询问仍要作答，
+        // 因此只由按钮自身的 dismiss 序列收起本确认窗，不连带收口其它弹窗
+        if (engine != null) engine.sendSurrender();
+    }
+
+    /**
      * 撤回入口（本工程扩展，gframe 无对应交互）：向局域网房间的服务端发 CTOS_UNDO，
      * 请其回退本方最近一次应答。不做二次确认：撤回本身是可逆的回退动作，误触后可再次
      * 发起或由对方重新操作；结果（已回退 / 重建失败 / 不可撤回）由服务端经 STOC_UNDO_ACK
@@ -344,6 +381,8 @@ public class YGOProActivity extends YGOProActivityEngine {
      */
     public void requestUndo() {
         if (engine == null || !engine.isInDuel() || !engine.canUndo()) return;
+        // 已进入投降结算：本局即将结束，撤回既无意义也会与结算流程互踩
+        if (engine.isSurrenderSettling()) return;
         // sendUndo 的准入闸门一致（重同步未落地 / 回退点询问未挂回 / 不足最小间隔）：
         // 本次不会真正发出撤回请求时不隐藏弹窗（隐藏后无人恢复）
         if (!engine.canSendUndo()) return;
