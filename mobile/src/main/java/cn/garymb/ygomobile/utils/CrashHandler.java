@@ -1,5 +1,6 @@
 package cn.garymb.ygomobile.utils;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -7,6 +8,8 @@ import android.os.Build;
 import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
+
+import androidx.core.content.ContextCompat;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -16,11 +19,14 @@ import java.io.Writer;
 import java.lang.reflect.Field;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import cn.garymb.ygomobile.AppsSettings;
+import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
 
 /**
@@ -36,8 +42,10 @@ import cn.garymb.ygomobile.lite.R;
  *       在非致命路径主动写诊断（消息派发异常、回放卡码映射统计），记录后原样抛出，不改变既有行为。</li>
  * </ul>
  *
- * <p>日志目录由 {@link #ensureLogDir()} 保证存在并逐级兼容回退（资源目录 → 外部分区 → 缓存目录），
+ * <p>日志目录由 {@link #ensureLogDir()} / {@link #logDirCandidates()} 逐级兼容（外部根目录
+ * {@code /sdcard/ygocore/log} → 资源目录 → 应用外部分区 → 缓存目录），写入时逐个候选重试，
  * 修复旧实现因 {@code ygocore/log} 目录不存在、{@code FileOutputStream} 静默失败而丢日志的问题。
+ * 已授予外部存储读取权限时优先落公开的外部根目录，错误退出后直接用文件管理器就能取到日志。
  */
 public class CrashHandler implements Thread.UncaughtExceptionHandler {
     public static final String TAG = "YGOMobile-Exception";
@@ -114,17 +122,11 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
         }
     }
 
-    /** 非异常文本诊断（回放卡码映射统计等），落同一目录，文件名前缀 {@code 【YGO-tag】} */
+    /** 非异常文本诊断（回放卡码映射统计等），落同一批候选目录，文件名前缀 {@code 【YGO-tag】} */
     public synchronized void writeReport(String tag, String content) {
-        File dir = ensureLogDir();
-        if (dir == null || content == null) return;
-        File file = new File(dir, "【YGO-" + tag + "】" + formatter.format(new Date()) + ".log");
-        if (file.exists()) file.delete();
-        try (FileOutputStream fos = new FileOutputStream(file)) {
-            fos.write(buildHeader(tag).append(content).toString().getBytes());
-        } catch (Exception e) {
-            Log.e(TAG, "an error occurred while writing report " + file.getName(), e);
-        }
+        if (content == null) return;
+        writeToLogDir("【YGO-" + tag + "】" + formatter.format(new Date()) + ".log",
+                buildHeader(tag).append(content).toString());
     }
 
     @Override
@@ -218,29 +220,95 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
     }
 
     /**
-     * 日志目录保障：优先 {@code ygocore/log}（AppsSettings.getMobileLogPath），不存在则 mkdirs；
-     * 资源目录不可写（未授权/只读）时逐级回退到应用外部文件目录、再到缓存目录，
-     * 避免因目录缺失直接抛出使日志静默丢失。
+     * 日志目录保障：返回第一个可用（已存在或 mkdirs 成功且可写）的候选目录，语义见
+     * {@link #logDirCandidates()}；全部不可用时返回 null，写日志侧降级为只进 logcat。
      */
     private File ensureLogDir() {
-        String path = null;
+        List<File> dirs = logDirCandidates();
+        return dirs.isEmpty() ? null : dirs.get(0);
+    }
+
+    /**
+     * 按优先级给出日志候选目录（均已确保存在且可写，不可用的不入列）：
+     * <ol>
+     *   <li>外部存储根目录下的 {@code ygocore/log}（{@link Constants#ORI_LOG}，与备份卡组用的
+     *       {@code ygocore/deck} 同级）：仅在已授予外部存储读取权限时才用。这个目录用户用文件
+     *       管理器直接能看到，软件错误退出后不必再先进应用私有目录取日志；</li>
+     *   <li>{@code AppsSettings.getMobileLogPath()}：应用资源目录（私有外部目录）下的 ygocore/log，
+     *       未授权时的主用位置；</li>
+     *   <li>应用外部私有文件目录、内部缓存目录：前两者不可写时的兜底，避免日志静默丢失。</li>
+     * </ol>
+     */
+    private List<File> logDirCandidates() {
+        List<File> dirs = new ArrayList<>(4);
+        addDir(dirs, externalLogPath());
         try {
-            path = AppsSettings.get().getMobileLogPath();
+            addDir(dirs, AppsSettings.get().getMobileLogPath());
         } catch (Throwable t) {
             Log.w(TAG, "getMobileLogPath failed", t);
         }
-        File dir = mkdirs(path);
-        if (dir != null) return dir;
         try {
             if (context != null) {
                 File ext = context.getExternalFilesDir("ygocore/log");
-                dir = mkdirs(ext == null ? null : ext.getAbsolutePath());
-                if (dir != null) return dir;
-                dir = mkdirs(new File(context.getCacheDir(), "ygocore/log").getAbsolutePath());
-                if (dir != null) return dir;
+                addDir(dirs, ext == null ? null : ext.getAbsolutePath());
+                addDir(dirs, new File(context.getCacheDir(), "ygocore/log").getAbsolutePath());
             }
         } catch (Throwable t) {
             Log.w(TAG, "fallback log dir failed", t);
+        }
+        return dirs;
+    }
+
+    private static void addDir(List<File> dirs, String path) {
+        File dir = mkdirs(path);
+        if (dir != null && !dirs.contains(dir)) {
+            dirs.add(dir);
+        }
+    }
+
+    /**
+     * 外部根目录的 ygocore/log：没拿到外部存储读取权限时该路径读写不了，返回 null 交给后续候选。
+     * 目标 SDK 为 29 且清单里 {@code requestLegacyExternalStorage} 已开，授权后可直接写。
+     */
+    private String externalLogPath() {
+        return hasExternalStorageAccess() ? Constants.ORI_LOG : null;
+    }
+
+    /** 是否已允许读取外部存储（Android M 以下安装即授予，无需检查） */
+    private boolean hasExternalStorageAccess() {
+        if (context == null) {
+            return false;
+        }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            return true;
+        }
+        try {
+            return ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE)
+                    == PackageManager.PERMISSION_GRANTED;
+        } catch (Throwable t) {
+            Log.w(TAG, "check storage permission failed", t);
+            return false;
+        }
+    }
+
+    /**
+     * 依次向候选目录写 {@code fileName}，成功返回落盘文件的绝对路径，全部失败返回 null。
+     * “目录可建可写”不等于“文件一定写得进去”（部分 ROM 上外部根目录仍会拒写），
+     * 故写入本身也逐候选重试；FileOutputStream 默认覆盖写，同名旧日志不会追加。
+     */
+    private String writeToLogDir(String fileName, String content) {
+        if (fileName == null || content == null) {
+            return null;
+        }
+        for (File dir : logDirCandidates()) {
+            File file = new File(dir, fileName);
+            try (FileOutputStream fos = new FileOutputStream(file)) {
+                fos.write(content.getBytes());
+                fos.flush();
+                return file.getAbsolutePath();
+            } catch (Throwable t) {
+                Log.w(TAG, "write report " + file.getName() + " into " + dir + " failed", t);
+            }
         }
         return null;
     }
@@ -255,10 +323,8 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
     }
 
     private synchronized String saveCrashInfo2File(Throwable ex) {
-        String fileName = null;
-        File dir = ensureLogDir();
+        String saved = null;
         try {
-            fileName = "【YGO】" + formatter.format(new Date()) + ".log";
             StringBuilder sb = buildHeader("CRASH");
             sb.append(ex).append('\n');
             Writer writer = new StringWriter();
@@ -273,20 +339,14 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
             sb.append(writer.toString());
             String content = sb.toString();
             Log.e(TAG, content);
-            if (dir != null) {
-                File file = new File(dir, fileName);
-                try (FileOutputStream fos = new FileOutputStream(file)) {
-                    fos.write(content.getBytes());
-                    fos.flush();
-                } catch (Exception e) {
-                    Log.e(TAG, "an error occurred while writing file " + file, e);
-                }
-            } else {
+            // 逐个候选目录试写（已授权时先写外部根目录 ygocore/log），全失败则只保留 logcat
+            saved = writeToLogDir("【YGO】" + formatter.format(new Date()) + ".log", content);
+            if (saved == null) {
                 Log.e(TAG, "no writable log directory, crash log kept in logcat only");
             }
         } catch (Exception e) {
             Log.e(TAG, "an error occurred while preparing crash log", e);
         }
-        return fileName == null ? null : (dir == null ? null : dir + "/" + fileName);
+        return saved;
     }
 }

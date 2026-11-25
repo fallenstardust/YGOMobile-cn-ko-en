@@ -187,20 +187,21 @@ public abstract class DeckManagerFragmentMenu extends DeckManagerFragmentSearch 
                 }
                 shareDeck();
                 break;
-            case R.id.action_save:
-                // 保存卡组逻辑：判断是否为预加载文件并进行相应处理
-                if (mPreLoadFile != null && mPreLoadFile == mDeckAdapater.getYdkFile()) {
-                    // 预加载文件需要保存到deck文件夹
+            case R.id.action_save: {
+                // 保存卡组逻辑：判断是否为预加载卡组（卡组广场下载的、或外部打开的ydk）并进行相应处理
+                File curYdk = mDeckAdapater.getYdkFile();
+                if (isPreLoadedDeck(curYdk)) {
+                    // 预加载卡组只落在临时目录，需要经重命名对话框保存到deck根目录（未分类卡组）
                     inputDeckName(mPreLoadFile, null, true);
                 } else {
-                    if (mDeckAdapater.getYdkFile() == null) {
+                    if (curYdk == null) {
                         inputDeckName(null, null, true);
                     } else {
                         // 只读分类（人机/AI 与卡包展示、在线缓存）不得落盘改写，口径与本页加卡/拖拽/删除统一
                         if (!isDeckEditable()) {
                             YGOUtil.showTextToast(R.string.donot_edit_Deck);
                         } else {
-                            save(mDeckAdapater.getYdkFile(), false); // 保存卡组文件
+                            save(curYdk, false); // 保存卡组文件
                             if (SharedPreferenceUtil.getServerToken() != null) {
                                 LoginToken loginToken = new LoginToken(SharedPreferenceUtil.getServerUserId(), SharedPreferenceUtil.getServerToken());
                                 VUiKit.defer().when(() -> {
@@ -228,7 +229,8 @@ public abstract class DeckManagerFragmentMenu extends DeckManagerFragmentSearch 
                         }
                     }
                 }
-                break;
+            }
+            break;
             case R.id.action_rename:
                 // 重命名卡组
                 if (mDeckAdapater.getYdkFile() == null) {
@@ -590,6 +592,54 @@ public abstract class DeckManagerFragmentMenu extends DeckManagerFragmentSearch 
 
     }
 
+    /**
+     * 当前显示的卡组是否就是那份预加载卡组（卡组广场下载的 ydk、或从外部应用打开的 ydk）。
+     * <p>
+     * 必须按路径比较而不能比引用：{@code DeckLoader.readDeck} 每次都
+     * {@code deckInfo.source = new File(ydkPath)} 重新建对象，适配器给出的 File 与
+     * {@code mPreLoadFile} 永不会是同一个引用；用 {@code ==} 判定会让这类卡组点保存时
+     * 落到普通分支把内容原样写回临时文件（cache 目录），deck 根目录下的未分类卡组里
+     * 根本看不到这份卡组，却照样弹“保存成功”。
+     *
+     * @param ydk 适配器当前的卡组文件，可为 null
+     * @return 确实是本次预加载的那份卡组时返回 true
+     */
+    protected boolean isPreLoadedDeck(File ydk) {
+        return mPreLoadFile != null && ydk != null
+                && TextUtils.equals(mPreLoadFile.getAbsolutePath(), ydk.getAbsolutePath());
+    }
+
+    /**
+     * 对话框里预填的卡组名：目标目录（savePath 为空即 deck 根目录，也就是未分类卡组）已经占了
+     * 同名文件时，沿用 {@code GameUriManager#getDeckFile} 同款的避让规则给出“名称(2).ydk”这类
+     * 未占用的名字；重命名当场预填的就是自己那份文件，不算冲突，原样返回。
+     * <p>
+     * 不这样做的后果：卡组广场下载的卡组与本地已有卡组重名时（很常见，同一份卡组下两次），
+     * 点确定只会得到一句“文件已存在”，仍然没有存进未分类。
+     */
+    protected String suggestDeckName(File oldYdk, String savePath, String fileName) {
+        File dir = new File(TextUtils.isEmpty(savePath) ? mSettings.getDeckDir() : savePath);
+        if (isNameFree(dir, oldYdk, fileName)) {
+            return fileName;
+        }
+        String base = fileName.endsWith(YDK_FILE_EX)
+                ? fileName.substring(0, fileName.length() - YDK_FILE_EX.length()) : fileName;
+        for (int i = 2; i < 10; i++) {
+            String candidate = base + "(" + i + ")" + YDK_FILE_EX;
+            if (isNameFree(dir, oldYdk, candidate)) {
+                return candidate;
+            }
+        }
+        return fileName;
+    }
+
+    /** 目标目录里这个名字是否可用：不存在，或存在的就是待重命名的那份卡组本身 */
+    private boolean isNameFree(File dir, File oldYdk, String fileName) {
+        File target = new File(dir, fileName);
+        return !target.exists()
+                || (oldYdk != null && TextUtils.equals(target.getAbsolutePath(), oldYdk.getAbsolutePath()));
+    }
+
     protected void inputDeckName(File oldYdk, String savePath, boolean keepOld) {
         DialogPlus builder = new DialogPlus(getContext());
         builder.setTitle(R.string.intpu_name);
@@ -598,7 +648,8 @@ public abstract class DeckManagerFragmentMenu extends DeckManagerFragmentSearch 
         editText.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
         editText.setSingleLine();
         if (oldYdk != null) {
-            editText.setText(oldYdk.getName());
+            // 预填名先避开目标目录的同名卡组（重命名时仍为自己当前的名字）
+            editText.setText(suggestDeckName(oldYdk, savePath, oldYdk.getName()));
         }
         builder.setContentView(editText);
         builder.setOnCloseLinster(DialogInterface::dismiss);
@@ -629,10 +680,14 @@ public abstract class DeckManagerFragmentMenu extends DeckManagerFragmentSearch 
                         syncDeckManageDialog();
                     }
                 } else {
-                    if (oldYdk == mPreLoadFile) {
+                    if (isPreLoadedDeck(oldYdk)) {
+                        // 内容已落到 deck 目录下的正式卡组文件，预加载标记随之失效
                         mPreLoadFile = null;
                     }
                     dlg.dismiss();
+                    // 目标分类目录可能被删过（或首次写入 deck 根目录），先保证它在，
+                    // 否则 createNewFile 与随后的写文件都会静默失败
+                    IOUtils.createFolder(ydk.getParentFile());
                     try {
                         boolean ret = ydk.createNewFile();
                     } catch (Throwable ignore) {

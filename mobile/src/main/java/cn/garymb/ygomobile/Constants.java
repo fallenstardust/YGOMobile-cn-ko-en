@@ -259,6 +259,11 @@ public interface Constants {
     String ORI_TEXTURES = Environment.getExternalStorageDirectory() + "/" + Constants.PREF_DEF_GAME_DIR + "/" + Constants.CORE_SKIN_PATH;
     String ORI_PICS = Environment.getExternalStorageDirectory() + "/" + Constants.PREF_DEF_GAME_DIR + "/" + Constants.CORE_IMAGE_PATH;
     String ORI_EXPANSIONS = Environment.getExternalStorageDirectory() + "/" + Constants.PREF_DEF_GAME_DIR + "/" + Constants.CORE_EXPANSIONS;
+    /**
+     * 外部存储根目录下的日志目录（{@code /sdcard/ygocore/log}）：已授予外部存储读取权限时，
+     * 错误退出形成的崩溃日志优先落这里，便于不经应用直接用文件管理器取日志
+     */
+    String ORI_LOG = Environment.getExternalStorageDirectory() + "/" + Constants.PREF_DEF_GAME_DIR + "/" + Constants.MOBILE_LOG;
 
     long LOG_TIME = 2 * 1000;
     /***
