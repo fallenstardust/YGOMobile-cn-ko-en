@@ -124,12 +124,12 @@ public class CardReleaseDateFilter implements DateRangeSlider.OnRangeChangedList
         mSlider.postDelayed(mRetryRange, RANGE_RETRY_DELAY);
     }
 
-    /** 新一批结果已按当前范围填进适配器：计数要跟着换成过滤后的条数 */
+    /** 新一批结果已按当前范围填进适配器：计数要跟着换成过滤后的条数（收起分段不减条数） */
     public void updateResultCount() {
         if (mCountView == null || mAdapter == null) {
             return;
         }
-        mCountView.setText(String.valueOf(mAdapter.getItems().size()));
+        mCountView.setText(String.valueOf(mAdapter.getTotalCardCount()));
     }
 
     @Override

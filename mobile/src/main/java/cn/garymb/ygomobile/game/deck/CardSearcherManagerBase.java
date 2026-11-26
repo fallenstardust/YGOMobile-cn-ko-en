@@ -24,6 +24,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import cn.garymb.ygomobile.AppsSettings;
@@ -274,8 +276,10 @@ public abstract class CardSearcherManagerBase {
     }
 
     /**
-     * 卡组编辑搜索结果的默认排序（sortSel=0）：怪兽(通常→效果→仪式→融合→同调→超量→连接)→
-     * 魔法→陷阱，各类内部按子类/等级。供关键词卡片列表等外部复用，保证两处排序逻辑同源、观感一致。
+     * 卡组编辑搜索结果的默认排序（sortSel=0）：怪兽按星数从大到小分段，同一数字上连接（LINK-X）
+     * 在前、超量（阶级）其次、等级（星）在后，所以不会出现两个同号分段；再往下是魔法→陷阱。
+     * 攻守与名称档不分卡种，见 {@link #makeComparator(int, boolean)}。
+     * 段内再按子类/攻守。供关键词卡片列表等外部复用，保证两处排序逻辑同源、观感一致。
      */
     public static Comparator<Card> defaultSearchComparator() {
         return makeComparator(0);
@@ -299,11 +303,19 @@ public abstract class CardSearcherManagerBase {
     public static final int SORT_RULE_RELEASE_DATE = 4;
 
     /**
-     * 排序比较器统一实现：类秩(怪兽→魔法→陷阱)优先，再按 sortSel 解算子类/攻守/名称，
-     * 末尾以卡码兜底；时间档例外，不分卡种，直接按卡包发售日期排序。
+     * 排序比较器统一实现，末尾都以卡码兜底：
+     * <ul>
+     *     <li>星数档：类秩(怪兽→魔法→陷阱)优先，再按星数与分段家族；</li>
+     *     <li>攻守档：攻/守数值就是主键，<b>不分卡种</b>（与电脑端 deck_con 的 SortList 同口径）；</li>
+     *     <li>名称档：首字母段（# / 0 / A~Z）就是主键，同样不分卡种；</li>
+     *     <li>时间档：按卡包发售日期，不分卡种。</li>
+     * </ul>
+     * 攻守与名称两档之所以不能先按卡种分组：搜索结果列的分割线段名就是数值区间/首字母，
+     * 分组会让同段的卡不相邻，魔法与陷阱里那些数值相同的卡还会再切出一条同名分割线
+     * （卡查页“按攻击排序时出现一堆只有一张的重复分割线”的根因）。
      * <p>
-     * reverse=true 时只把该规则的<b>主排序键</b>反向，分组（怪兽/魔法/陷阱、子类）
-     * 与其余兜底键不变：星数/攻击/守备变成升序，名称与时间变成降序
+     * reverse=true 就是把该档正向的次序整体反过来：星数档的星数与同数字上的家族先后一起反
+     * （星数↓ LINK→阶→星 变成 星数↑ 星→阶→LINK），攻守数值、名称段与段内次序、时间年份同样反向
      */
     protected static Comparator<Card> makeComparator(int sortSel) {
         return makeComparator(sortSel, false);
@@ -325,17 +337,132 @@ public abstract class CardSearcherManagerBase {
                 return reverse ? -cmp : cmp;
             };
         }
+        if (sortSel == 1 || sortSel == 2) {
+            return (a, b) -> {
+                int cmp = compareByStat(a, b, sortSel, reverse);
+                return cmp != 0 ? cmp : Integer.compare(a.Code, b.Code);
+            };
+        }
+        if (sortSel == 3) {
+            return (a, b) -> {
+                int cmp = compareByName(a, b, reverse);
+                return cmp != 0 ? cmp : Integer.compare(a.Code, b.Code);
+            };
+        }
         return (a, b) -> {
             int classA = getCardClassRank(a), classB = getCardClassRank(b);
             if (classA != classB) return Integer.compare(classA, classB);
+            // 走到这里只剩星数档（攻守与名称档已经在上面分走，时间档更早返回）
             int cmp = (classA == 0) ? compareMonsterBySortType(a, b, sortSel, reverse)
                     : Integer.compare(getCardSubTypeRank(a, classA), getCardSubTypeRank(b, classB));
-            if (cmp == 0 && classA != 0 && sortSel == 3) {
-                String na = a.Name != null ? a.Name : "", nb = b.Name != null ? b.Name : "";
-                cmp = reverse ? nb.compareTo(na) : na.compareTo(nb);
-            }
             return cmp != 0 ? cmp : Integer.compare(a.Code, b.Code);
         };
+    }
+
+    /**
+     * 攻守档比较器：先比本档的数值（正向降序、反向升序），再比另一项数值、怪兽子类与星数。
+     * 不分卡种，所以魔法/陷阱与同数值的怪兽落在同一条分割线里，段名不会重复
+     */
+    protected static int compareByStat(Card a, Card b, int sortSel, boolean reverse) {
+        int mainA = sortSel == 1 ? a.Attack : a.Defense;
+        int mainB = sortSel == 1 ? b.Attack : b.Defense;
+        int cmp = reverse ? Integer.compare(mainA, mainB) : Integer.compare(mainB, mainA);
+        if (cmp != 0) return cmp;
+        int otherA = sortSel == 1 ? a.Defense : a.Attack;
+        int otherB = sortSel == 1 ? b.Defense : b.Attack;
+        cmp = reverse ? Integer.compare(otherA, otherB) : Integer.compare(otherB, otherA);
+        if (cmp != 0) return cmp;
+        int classA = getCardClassRank(a), classB = getCardClassRank(b);
+        if (classA != classB) return Integer.compare(classA, classB);
+        cmp = Integer.compare(getCardSubTypeRank(a, classA), getCardSubTypeRank(b, classB));
+        if (cmp != 0) return cmp;
+        return Integer.compare(b.getStar(), a.getStar());
+    }
+
+    /**
+     * 名称档比较器：首字母段（# / 0 / A~Z）是主键，段内再按卡名本身比；
+     * reverse=true 时段与段内次序一起反，就是正向的完整镜像
+     */
+    protected static int compareByName(Card a, Card b, boolean reverse) {
+        String na = a.Name != null ? a.Name : "", nb = b.Name != null ? b.Name : "";
+        int cmp = Character.compare(nameSectionKey(na), nameSectionKey(nb));
+        if (cmp != 0) return reverse ? -cmp : cmp;
+        cmp = na.compareTo(nb);
+        return reverse ? -cmp : cmp;
+    }
+
+    /** 首字的拼音首字母缓存（GB2312 转码不便宜，全卡表排序会算很多次） */
+    private static final Map<Character, Character> PINYIN_INITIALS = new ConcurrentHashMap<>();
+
+    /**
+     * GB2312 一级汉字里 23 个拼音分区的起始码（GB2312 没有以 I/U/V 开头的分区，所以是 23 不是 26）。
+     * 逐个对应 {@link #PINYIN_SECTION_LETTERS}：0xB0A1=啊 0xB0C5=芭 0xB2C1=擦 0xB4EE=搭 0xB6EA=蛾
+     * 0xB7A2=发 0xB8C1=噶 0xB9FE=哈 0xBBF7=击 0xBFA6=喀 0xC0AC=垃 0xC2E8=妈 0xC4C3=拿 0xC5B6=哦
+     * 0xC5BE=啪 0xC6DA=期 0xC8BB=然 0xC8F6=撒 0xCBFA=tā段首字 0xCDDA=挖 0xCEF4=昔 0xD1B9=压 0xD4D1=匝。
+     * 直接写成十六进制码值而不是汉字：源文件编码变动时这张表不会跟着错
+     */
+    private static final int[] PINYIN_SECTION_START = new int[]{
+            0xB0A1, 0xB0C5, 0xB2C1, 0xB4EE, 0xB6EA, 0xB7A2, 0xB8C1, 0xB9FE, 0xBBF7, 0xBFA6,
+            0xC0AC, 0xC2E8, 0xC4C3, 0xC5B6, 0xC5BE, 0xC6DA, 0xC8BB, 0xC8F6, 0xCBFA, 0xCDDA,
+            0xCEF4, 0xD1B9, 0xD4D1};
+
+    /** 与 {@link #PINYIN_SECTION_START} 逐段对应的拼音首字母 */
+    private static final char[] PINYIN_SECTION_LETTERS = "ABCDEFGHJKLMNOPQRSTWXYZ".toCharArray();
+
+    /** 一级汉字最后一个字（座）的码值；二级字按部首而非拼音排，取不到首字母 */
+    private static final int GB2312_LEVEL1_LAST = 0xD7F9;
+
+    /**
+     * 名称档这张卡属于哪个段：只用 {@code #}（符号与其他文字开头）、{@code 0}（数字开头）
+     * 与 {@code A~Z}（英文首字母或汉字第一个字的拼音首字母）这三类段名（用户规格）。
+     * 假名、谚文与 GB2312 收不到的汉字取不到拼音首字母，一律归 {@code #}
+     */
+    public static char nameSectionKey(String name) {
+        if (name == null || name.isEmpty()) return '#';
+        char c = name.charAt(0);
+        if (c >= '0' && c <= '9') return '0';
+        if (c >= 'A' && c <= 'Z') return c;
+        if (c >= 'a' && c <= 'z') return (char) (c - 'a' + 'A');
+        char initial = pinyinInitial(c);
+        return initial == 0 ? '#' : initial;
+    }
+
+    /** 单个汉字的拼音首字母；不是 GB2312 一级汉字（含假名、谚文、符号）时返回 0 */
+    private static char pinyinInitial(char c) {
+        Character cached = PINYIN_INITIALS.get(c);
+        if (cached != null) return cached.charValue();
+        char letter = lookupPinyinInitial(c);
+        PINYIN_INITIALS.put(c, letter);
+        return letter;
+    }
+
+    private static char lookupPinyinInitial(char c) {
+        int code = gb2312Code(c);
+        // 不在一级字区（0xB0A1~0xD7F9）的字不能按拼音分区查
+        if (code < PINYIN_SECTION_START[0] || code > GB2312_LEVEL1_LAST) return 0;
+        for (int i = PINYIN_SECTION_START.length - 1; i >= 0; i--) {
+            if (code >= PINYIN_SECTION_START[i]) {
+                return i < PINYIN_SECTION_LETTERS.length ? PINYIN_SECTION_LETTERS[i] : 'Z';
+            }
+        }
+        return 0;
+    }
+
+    /** 字符的 GB2312 双字节码值（无符号）；ASCII、符号区与转不了的字符都返回 0 */
+    private static int gb2312Code(char c) {
+        byte[] bytes;
+        try {
+            bytes = String.valueOf(c).getBytes("GB2312");
+        } catch (Exception e) {
+            return 0;
+        }
+        // 不在 GB2312 里的字符会被转成单个 '?'
+        if (bytes.length < 2) return 0;
+        int high = bytes[0] & 0xFF;
+        int low = bytes[1] & 0xFF;
+        // 0xA1~0xAF 是符号与序号区，不是汉字
+        if (high < 0xB0) return 0;
+        return high * 256 + low;
     }
 
     protected boolean matchesAllFilters(Card card, List<String> keywordTerms) {
@@ -474,6 +601,27 @@ public abstract class CardSearcherManagerBase {
         return hits;
     }
 
+    /**
+     * 列表开头属于“完全命中置顶组”的张数（与 {@link #pinKeywordMatches} 完全同口径）。
+     * <p>
+     * 置顶组是拼在结果最前的一段连续条目，分段说明需要把这一段与本体分开：否则置顶的那张卡
+     * 会在本体里再出一次自己的分段，分割线出现两个同号段（如两次“6星”）。关键词为空或首张不命中返回 0。
+     */
+    public static int countLeadingKeywordMatches(List<Card> cards, String keyword) {
+        String key = keyword == null ? "" : keyword.trim();
+        if (cards == null || cards.isEmpty() || key.isEmpty()) {
+            return 0;
+        }
+        List<String> terms = new ArrayList<>();
+        terms.add(key.toLowerCase(Locale.US));
+        terms.addAll(splitKeywordTerms(key));
+        int count = 0;
+        while (count < cards.size() && isExactNameMatch(cards.get(count), terms)) {
+            count++;
+        }
+        return count;
+    }
+
     private static boolean isExactNameMatch(Card card, List<String> terms) {
         if (card == null || card.Name == null) {
             return false;
@@ -521,6 +669,27 @@ public abstract class CardSearcherManagerBase {
         return 0;
     }
 
+    /** 星数档分段家族：连接（按连接数，星数↓时排在该数字最前） */
+    public static final int STAR_SECTION_LINK = 0;
+    /** 星数档分段家族：超量（按阶级） */
+    public static final int STAR_SECTION_XYZ = 1;
+    /** 星数档分段家族：其他怪兽（按等级，排在该数字最后） */
+    public static final int STAR_SECTION_LEVEL = 2;
+
+    /**
+     * 星数档（sortSel=0）这张卡属于哪个分段家族，取值 {@link #STAR_SECTION_LINK} /
+     * {@link #STAR_SECTION_XYZ} / {@link #STAR_SECTION_LEVEL}。
+     * <p>
+     * 这个值是星数相同时的次键（用户规格：星数↓ 时 LINK-6→6阶→6星），所以连接在前、
+     * 超量其次、等级在后；星数↑ 则是它的完整镜像（6星→6阶→LINK-6）。
+     * 卡查页与卡组管理页的分割线文字也按它取“LINK/阶/星”口径，与排序键同源。
+     */
+    public static int getStarSectionFamily(Card card) {
+        if (Card.isType(card.Type, CardType.Xyz)) return STAR_SECTION_XYZ;
+        if (Card.isType(card.Type, CardType.Link)) return STAR_SECTION_LINK;
+        return STAR_SECTION_LEVEL;
+    }
+
     protected static int compareMonsterBySortType(Card a, Card b, int sortSel, boolean reverse) {
         int subA = getCardSubTypeRank(a, 0), subB = getCardSubTypeRank(b, 0);
         if (sortSel == 3) {
@@ -528,7 +697,22 @@ public abstract class CardSearcherManagerBase {
             int cmp = na.compareTo(nb);
             return reverse ? -cmp : cmp;
         }
-        // 主键：攻击/守备档直接比数值（缺省降序），星数档子类在前、星数（等级）在次键
+        if (sortSel == 0) {
+            // 星数档：主键是星数本身（星数↓时 13 在前、星数↑时 1 在前），同一个数字上再按
+            // LINK→阶→星 先后排（星数↓：LINK-6→6阶→6星）；反向就是这套次序的完整镜像，
+            // 这样每个段名在整列里只出现一次（分割线不会重复）
+            int cmp = reverse ? Integer.compare(a.getStar(), b.getStar()) : Integer.compare(b.getStar(), a.getStar());
+            if (cmp != 0) return cmp;
+            int famA = getStarSectionFamily(a), famB = getStarSectionFamily(b);
+            cmp = reverse ? Integer.compare(famB, famA) : Integer.compare(famA, famB);
+            if (cmp != 0) return cmp;
+            cmp = Integer.compare(subA, subB);
+            if (cmp != 0) return cmp;
+            cmp = Integer.compare(b.Attack, a.Attack);
+            if (cmp != 0) return cmp;
+            return Integer.compare(b.Defense, a.Defense);
+        }
+        // 主键：攻击/守备档直接比数值（缺省降序），其余档位按子类在前、星数在次键
         int priA, priB;
         if (sortSel == 1) {
             priA = reverse ? a.Attack : b.Attack;
@@ -550,7 +734,7 @@ public abstract class CardSearcherManagerBase {
             secA = b.Attack;
             secB = a.Attack;
         } else {
-            // 星数档的星数比较随反向翻转，其余兜底键不变
+            // 兜底档位的星数比较随反向翻转，其余兜底键不变
             secA = reverse ? (a.Level & 0xff) : (b.Level & 0xff);
             secB = reverse ? (b.Level & 0xff) : (a.Level & 0xff);
         }

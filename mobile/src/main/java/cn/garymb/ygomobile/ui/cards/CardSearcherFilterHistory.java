@@ -484,6 +484,9 @@ public abstract class CardSearcherFilterHistory extends CardSearcherBase {
         CardSearchInfo info = new CardSearchInfo.Builder()
                 .keyword(keyword)
                 .cardTypes(new ArrayList<>())
+                // 这类条目只带关键词、不带禁卡表：把记下时正在用的禁限展现模式一起记下，
+                // 撤回时才不会从起源点数模式被切回禁限常规模式
+                .genesys_mode(genesys_Switch != null && genesys_Switch.isChecked())
                 .build();
         // 与 performSearch 保持一致的去重：若已存在相同条件则将其移到末尾，避免重复条目
         int sameIndex = findSameSearchInfo(searchHistory, info);
@@ -654,6 +657,10 @@ public abstract class CardSearcherFilterHistory extends CardSearcherBase {
             return false;
         }
         if (!TextUtils.equals(info1.getLimitName(), info2.getLimitName())) {
+            return false;
+        }
+        // 起源点数/禁限常规模式也属于可还原的条件，模式不同就是两次不同的检索
+        if (info1.isGenesysMode() != info2.isGenesysMode()) {
             return false;
         }
 

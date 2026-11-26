@@ -568,6 +568,8 @@
     <string name="sort_rule_time">Tiempo↓</string>
     <!-- Títulos de sección de resultados -->
     <string name="section_title_star">Nv%1$d</string>
+    <!-- Las Xyz forman secciones aparte: no se mezclan con los niveles iguales -->
+    <string name="section_title_rank">Rango%1$d</string>
     <string name="section_title_link">LINK-%1$d</string>
     <string name="section_title_spell">Mágica</string>
     <string name="section_title_trap">Trampa</string>

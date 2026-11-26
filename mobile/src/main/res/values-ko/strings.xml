@@ -587,6 +587,8 @@
     <string name="sort_rule_time">시간↓</string>
     <!-- 검색 결과 구간 표시 -->
     <string name="section_title_star">%1$d성</string>
+    <!-- 엑シーズ 몬스터는 별도 구간: 같은 숫자라도 레벨과 랭크가 섞이지 않음 -->
+    <string name="section_title_rank">랭크%1$d</string>
     <string name="section_title_link">LINK-%1$d</string>
     <string name="section_title_spell">마법</string>
     <string name="section_title_trap">함정</string>

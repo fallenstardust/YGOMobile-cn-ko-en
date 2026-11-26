@@ -5,6 +5,7 @@ import static cn.garymb.ygomobile.Constants.ASSET_ATTR_RACE;
 import android.content.Context;
 import android.text.SpannableString;
 import android.text.style.BackgroundColorSpan;
+import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -24,7 +25,9 @@ import org.greenrobot.eventbus.EventBus;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import cn.garymb.ygomobile.AppsSettings;
 import cn.garymb.ygomobile.bean.events.CardInfoEvent;
@@ -269,15 +272,15 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
      * 其余每张 1 列。非宫格、没有分段、或列数为 1 时都当 1 列
      */
     private int spanSizeAt(int position) {
-        if (!mGrid || mGridSpan <= 1 || position < 0 || position >= mSectionTitles.size()) {
+        if (!mGrid || mGridSpan <= 1 || position < 0 || position >= mSectionKeys.size()) {
             return 1;
         }
-        String title = mSectionTitles.get(position);
-        if (title == null) {
+        String key = mSectionKeys.get(position);
+        if (key == null) {
             return 1;
         }
         // 下一张还属于同一段 → 不是本段最后一张
-        if (position + 1 < mSectionTitles.size() && title.equals(mSectionTitles.get(position + 1))) {
+        if (position + 1 < mSectionKeys.size() && key.equals(mSectionKeys.get(position + 1))) {
             return 1;
         }
         int column = (position - getSectionStart(position)) % mGridSpan;
@@ -286,10 +289,10 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
 
     /** 该位置所属分段的起点位置（无分段时就是它自己） */
     private int getSectionStart(int position) {
-        if (position < 0 || position >= mSectionStarts.size()) {
+        if (position < 0 || position >= mSectionHeads.size()) {
             return position;
         }
-        return mSectionStarts.get(position);
+        return mSectionHeads.get(position);
     }
 
     /**
@@ -305,17 +308,17 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
     }
 
     /**
-     * 结果排序规则的第 0 档（下拉位序“星数↑”）：卡查页与卡组管理页维持改造前的原样顺序，
-     * 即搜索线程按移动端 {@link cn.garymb.ygomobile.utils.CardSort} 排好的序列（高星在前、
-     * 怪兽→连接→魔法→陷阱）。置顶不靠这里，一律由
-     * {@link CardSearcherManagerBase#pinKeywordMatches} 在任何档位后统一保证。
+     * 星数档（排序按钮“星数↓”，再点一次变“星数↑”）：卡查页与卡组管理页都按
+     * “星数 + {@link CardSearcherManagerBase#getStarSectionFamily 分段家族}”排，
+     * 而不是直接沿用搜索线程交来的序列，以保证同一个星数段在整列里只出现一次。
+     * 置顶不靠这里，一律由 {@link CardSearcherManagerBase#pinKeywordMatches} 在任何档位后统一保证。
      * 决斗内卡组编辑器不读这里，它用自己的档位（{@link CardSearcherManagerBase} 的比较器）
      */
     public static final int SORT_RULE_ORIGINAL = 0;
 
     /**
-     * 搜索线程交来的原始顺序（未套本页规则）：规则下拉重排时始终以它为底，
-     * 切回第 0 档才能完整回到原样，而不是在已排过的结果上再排一次
+     * 搜索线程交来的原始顺序（未套本页规则）：规则按钮重排时始终以它为底（并经发售日期过滤），
+     * 而不是一档一档在已排过的结果上叠加，切回任何一档都回到该档自己的确定次序
      */
     private final List<Card> mRawCards = new ArrayList<>();
 
@@ -330,19 +333,32 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
     private boolean mSortReversed;
 
     /**
-     * 分段说明：与数据等长的标题表，每一项都是该卡所属分段的说明（该排序档不分段时为 null）。
-     * 跟随当前排序规则与方向重算，供 {@link SectionDividerDecoration} 画分割线
+     * 分段结构（跟随当前排序规则与方向重算）：{@link #mSectionCards} 是排好序、含已收起段的
+     * 完整结果，适配器真正展示的是其中未收起的段。每个可见位置都有自己的段名键（null = 本档不分段）
+     * 与所属段的首位置（宫格断行算列号、分割线留高都用它）
      */
-    private final List<String> mSectionTitles = new ArrayList<>();
-    /** 每个位置所属分段的起点位置（宫格断行算列号用），与 mSectionTitles 等长 */
-    private final List<Integer> mSectionStarts = new ArrayList<>();
+    private final List<Card> mSectionCards = new ArrayList<>();
+    private final List<String> mSectionKeys = new ArrayList<>();
+    private final List<Integer> mSectionHeads = new ArrayList<>();
+    /** 段首位置 → 该行上方要画的分割带（自上而下，先排紧随其上的已收起段，末尾是本段自己） */
+    private final SparseArray<List<SectionDividerDecoration.SectionBand>> mTopBands = new SparseArray<>();
+    /** 末尾整段被收起时挂在最后一个可见条目下方的分割带（一条条目都没有时也用它从顶部画） */
+    private List<SectionDividerDecoration.SectionBand> mTailBands;
+    /** 已收起的分段（集合里存的是不含张数的段名键） */
+    private final Set<String> mCollapsedSections = new HashSet<>();
+    /** 当前排序档位：点分割带折叠/展开时要按同一档位重算段名，不能让页面再传一次 */
+    private int mSortSel = SORT_RULE_ORIGINAL;
 
-    /** 记住原始顺序；各页面在拿到搜索结果时先调本方法，再调 {@link #applySortRule(int)} */
+    /**
+     * 记住原始顺序；各页面在拿到搜索结果时先调本方法，再调 {@link #applySortRule(int)}。
+     * 新一批结果进来会把上一轮的折叠状态收掉（段名键与旧结果无关，全部展开才符合预期）
+     */
     public void setRawCards(List<Card> cards) {
         mRawCards.clear();
         if (cards != null) {
             mRawCards.addAll(cards);
         }
+        mCollapsedSections.clear();
     }
 
     /**
@@ -385,67 +401,212 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
     }
 
     /**
-     * 按本页当前选中的规则档位把原始顺序填入适配器：第 0 档直接原样，其余档位走
-     * {@link #sortByRule}；无论哪一档，卡名与检索词完全命中的卡都排到最前
-     * （用户规格：置顶不随排序档位变）。
+     * 按本页当前选中的规则档位把原始顺序填入适配器：五个档位都走 {@link #sortByRule}
+     * 同一套比较器（星数档的正反向都按“星数 + 分段家族”排，见
+     * {@link CardSearcherManagerBase#getStarSectionFamily}，这样每个星数段在整列里只出现一次）；
+     * 无论哪一档，卡名与检索词完全命中的卡都排到最前（用户规格：置顶不随排序档位变）。
      * 本方法自己 notifyDataSetChanged，调用方不必再设数据
      */
     public void applySortRule(int sortSel) {
+        // 换了规则档位就把折叠状态清掉：段名键是按档位算的（星数/攻守区间/首字母/年份），
+        // 把上一档的键带到新档只会莫名盖住几段；同一档位内切正反向则保持折叠结果
+        if (sortSel != mSortSel) {
+            mCollapsedSections.clear();
+        }
+        mSortSel = sortSel;
         List<Card> filtered = filterByReleaseDate(mRawCards);
-        // 第 0 档正向就是搜索线程交来的原样顺序（含完全命中置顶）；反向（星数↑）才走比较器
-        List<Card> ordered = (sortSel == SORT_RULE_ORIGINAL && !mSortReversed)
-                ? filtered : sortByRule(filtered, sortSel, mSortReversed);
+        List<Card> ordered = sortByRule(filtered, sortSel, mSortReversed);
+        mSectionCards.clear();
         // 置顶靠稳定分区完成：命中组与非命中组各自保持上面排好的次序，不会打乱档位
-        set(CardSearcherManagerBase.pinKeywordMatches(ordered, mSearchKeyword));
-        rebuildSectionTitles(sortSel);
-        notifyDataSetChanged();
+        mSectionCards.addAll(CardSearcherManagerBase.pinKeywordMatches(ordered, mSearchKeyword));
+        rebuildSections(false);
     }
 
-    /** 该位置所属分段的说明；null 表示该排序档不分段（非法的位置也返回 null） */
+    /** 分段完整结果条数（含已收起的段）；顶部计数用它在折叠前后都不变 */
+    public int getTotalCardCount() {
+        return mSectionCards.size();
+    }
+
+    /** 该位置所属分段首位置上方要画的分割带（同段内任意位置问出来都同一份） */
     @Override
-    public String getSectionTitle(int position) {
-        if (position < 0 || position >= mSectionTitles.size()) {
+    public List<SectionDividerDecoration.SectionBand> getTopBands(int position) {
+        int head = getSectionHead(position);
+        if (head < 0) {
             return null;
         }
-        return mSectionTitles.get(position);
+        return mTopBands.get(head);
+    }
+
+    /** 该位置下方要画的分割带：只有末尾几段整段被收起时挂在最后一个可见条目下面 */
+    @Override
+    public List<SectionDividerDecoration.SectionBand> getBottomBands(int position) {
+        if (mTailBands == null || mTailBands.isEmpty() || position != mSectionKeys.size() - 1) {
+            return null;
+        }
+        return mTailBands;
+    }
+
+    /** 该位置所属分段的首位置（适配器数据里的下标）；越界或不分段返回 -1 */
+    @Override
+    public int getSectionHead(int position) {
+        if (position < 0 || position >= mSectionHeads.size()) {
+            return -1;
+        }
+        return mSectionHeads.get(position);
+    }
+
+    /** 全部分段都被收起时没有可见条目，分割带改从列表顶部画起，否则再也没法点开 */
+    @Override
+    public List<SectionDividerDecoration.SectionBand> getEmptyBands() {
+        if (!mSectionKeys.isEmpty() || mTailBands == null || mTailBands.isEmpty()) {
+            return null;
+        }
+        return mTailBands;
     }
 
     /**
-     * 按当前排序规则给结果分段：相邻两卡的段说明不同即新一段，与排序方向无关。
-     * 段说明末尾带上本段卡片张数（单位随语言的量词，见 section_title_with_count）
+     * 点分割带的回调（{@link SectionDividerDecoration} 的手势识别到后调过来）：
+     * 翻转该段的折叠状态并重建可见条目与分割带。段名按不含张数的键存，
+     * 所以同一档正反向切换、张数变化都仍然对得上
      */
-    private void rebuildSectionTitles(int sortSel) {
-        mSectionTitles.clear();
-        mSectionStarts.clear();
-        List<Card> data = getData();
-        int size = data.size();
-        // 第一遍：每张卡所属分段的基础说明（不含张数）与段首位置
-        List<String> baseTitles = new ArrayList<>(size);
-        String previous = null;
-        int sectionStart = 0;
-        for (int i = 0; i < size; i++) {
-            String base = sectionTitleOf(data.get(i), sortSel);
-            if (base == null || !base.equals(previous)) {
-                sectionStart = i;
-            }
-            baseTitles.add(base);
-            mSectionStarts.add(sectionStart);
-            previous = base;
+    @Override
+    public void toggleSection(String sectionKey) {
+        if (sectionKey == null || sectionKey.isEmpty()) {
+            return;
         }
-        // 第二遍：数出一段有多少张，拼上张数后整段共用同一个字符串
-        // （宫格断行与装饰器都靠相邻位置是否同串判断分段边界）
+        if (!mCollapsedSections.remove(sectionKey)) {
+            mCollapsedSections.add(sectionKey);
+        }
+        // 折叠与展开都走增量通知，ItemAnimator 才能播增删动画（用户规格：要有快速的过渡动画）
+        rebuildSections(true);
+    }
+
+    /**
+     * 按当前排序规则给结果分段并算出分割带：相邻两卡的段名键不同即新一段，与排序方向无关。
+     * 段说明末尾带上本段卡片张数（单位随语言的量词，见 section_title_with_count）
+     * <p>
+     * 开头的“完全命中置顶组”整段用检索词本身当段名：这几张卡被稳定分区提到了最前，
+     * 若继续按卡自身属性起名，就会在本体同星数/同攻守那一段之外再画出一条同名分割段。
+     * <p>
+     * 被收起的段不交出可见条目，它的分割带累积起来挂到下一个可见段首行的上方（自上而下），
+     * 末尾没有可见段时挂在最后一个可见条目下方（一个可见条目都没有时交给 {@link #getEmptyBands()}）。
+     *
+     * @param animate 本次重建是否来自折叠/展开：是则发精确的区间通知让 ItemAnimator 播动画
+     */
+    private void rebuildSections(boolean animate) {
+        // 旧可见条目要留着算增量：折叠/展开前后的两段差集就是本次要动画的区间
+        List<Card> previous = new ArrayList<>(getData());
+        mSectionKeys.clear();
+        mSectionHeads.clear();
+        mTopBands.clear();
+        mTailBands = null;
+        int size = mSectionCards.size();
+        // 置顶组就是开头的连续 pinnedCount 张（稳定分区保证），按张数分段而不是逐张判定，
+        // 免得在整列结果上重复算一遍分词与全等
+        int pinnedCount = CardSearcherManagerBase.countLeadingKeywordMatches(mSectionCards, mSearchKeyword);
+        String pinnedKey = pinnedCount > 0 ? mSearchKeyword.trim() : null;
+        // 第一遍：每张卡的段名键（不含张数）
+        List<String> keys = new ArrayList<>(size);
+        for (int i = 0; i < size; i++) {
+            keys.add(pinnedKey != null && i < pinnedCount
+                    ? pinnedKey : sectionTitleOf(mSectionCards.get(i), mSortSel));
+        }
+        // 第二遍：切段（段名键 + 起始下标 + 张数），再按段的折叠状态生成分割带与可见条目
+        List<SectionDividerDecoration.SectionBand> pending = null;
+        List<Card> display = new ArrayList<>(size);
         int i = 0;
         while (i < size) {
+            String key = keys.get(i);
             int end = i + 1;
-            while (end < size && sameTitle(baseTitles.get(end), baseTitles.get(i))) {
+            while (end < size && sameTitle(keys.get(end), key)) {
                 end++;
             }
-            String display = sectionDisplayTitle(baseTitles.get(i), end - i);
+            int count = end - i;
+            if (key != null && mCollapsedSections.contains(key)) {
+                // 整段收起：不留条目，只把分割带（箭头朝上）攒着等下一段或末尾画
+                pending = appendBand(pending, new SectionDividerDecoration.SectionBand(
+                        key, sectionDisplayTitle(key, count), true));
+                i = end;
+                continue;
+            }
+            int head = display.size();
             for (int k = i; k < end; k++) {
-                mSectionTitles.add(display);
+                display.add(mSectionCards.get(k));
+                mSectionKeys.add(key);
+                mSectionHeads.add(head);
+            }
+            // 段首行上方的分割带：先前面被收起的段（保持原有上下顺序），再本段自己
+            List<SectionDividerDecoration.SectionBand> bands =
+                    pending == null ? new ArrayList<>(1) : new ArrayList<>(pending);
+            pending = null;
+            if (key != null) {
+                bands.add(new SectionDividerDecoration.SectionBand(
+                        key, sectionDisplayTitle(key, count), false));
+                mTopBands.put(head, bands);
+            } else if (!bands.isEmpty()) {
+                // 本档不分段（理论上不会走到，防一手）：已收起段的带子仍要能画出来
+                mTopBands.put(head, bands);
             }
             i = end;
         }
+        mTailBands = pending;
+        applyDisplay(previous, display, animate);
+    }
+
+    /**
+     * 把新算出的可见条目写回适配器：
+     * <ul>
+     *     <li>animate=true（只用于点分割带折叠/展开）：先用公共前缀与公共后缀夹出本次真正变动的
+     *     一段，再发 notifyItemRangeRemoved / notifyItemRangeInserted，条目才能被 ItemAnimator
+     *     淡出/淡入，而不是整表瞬间重排（用户反馈“太僵硬”的根因就是走了 notifyDataSetChanged）；</li>
+     *     <li>animate=false（新一批结果、换排序规则或方向）：整表刷新，不播入场动画。</li>
+     * </ul>
+     * 折叠/展开只会让某一段整段消失或整段回来，所以夹出来的一定是一段连续区间，
+     * 与数据变化严格一致（不一致会让 RecyclerView 直接抛 inconsistent 异常）
+     */
+    private void applyDisplay(List<Card> previous, List<Card> next, boolean animate) {
+        List<Card> data = getData();
+        data.clear();
+        data.addAll(next);
+        if (!animate) {
+            notifyDataSetChanged();
+            return;
+        }
+        int oldSize = previous.size();
+        int newSize = next.size();
+        int first = 0;
+        while (first < oldSize && first < newSize && previous.get(first) == next.get(first)) {
+            first++;
+        }
+        int lastOld = oldSize - 1;
+        int lastNew = newSize - 1;
+        while (lastOld >= first && lastNew >= first && previous.get(lastOld) == next.get(lastNew)) {
+            lastOld--;
+            lastNew--;
+        }
+        int removed = lastOld - first + 1;
+        int inserted = lastNew - first + 1;
+        if (removed <= 0 && inserted <= 0) {
+            // 条目集合没变（只是段名/张数文本变了）：重绘即可
+            notifyDataSetChanged();
+            return;
+        }
+        int header = getHeaderLayoutCount();
+        if (removed > 0) {
+            notifyItemRangeRemoved(first + header, removed);
+        }
+        if (inserted > 0) {
+            notifyItemRangeInserted(first + header, inserted);
+        }
+    }
+
+    /** 往待画的分割带列表里追加一条（列表按需创建，没被收起过就不分配） */
+    private static List<SectionDividerDecoration.SectionBand> appendBand(
+            List<SectionDividerDecoration.SectionBand> bands, SectionDividerDecoration.SectionBand band) {
+        List<SectionDividerDecoration.SectionBand> list =
+                bands == null ? new ArrayList<>(2) : bands;
+        list.add(band);
+        return list;
     }
 
     private static boolean sameTitle(String a, String b) {
@@ -462,7 +623,8 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
 
     /**
      * 当前排序档位下这张卡属于哪一段（返回值直接当段落说明，null = 该档不分段）：
-     * 星数档→星数（连接怪兽写 LINK-X、魔陷按种类）、攻守档→数值区间、名称档→首字符、时间档→年份。
+     * 星数档→按怪兽的分段家族写 LINK/阶级/星数（连接「LINK-3」、超量「6阶」、
+     * 等级怪兽「13星」，魔陷按种类）、攻守档→数值区间、名称档→# / 0 / A~Z、时间档→年份。
      * 文字取本地化资源，随界面语言；只根据卡片自身属性判断，所以反向排序时分段自然跟着反向。
      */
     private String sectionTitleOf(Card card, int sortSel) {
@@ -476,18 +638,24 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
                     if (Card.isType(card.Type, CardType.Trap)) return context.getString(R.string.section_title_trap);
                     return context.getString(R.string.section_title_other);
                 }
-                // 连接怪兽的 getStar() 拿到的是 LINK 值而不是等级，分割线不能写“X星”；
-                // 星数档本身就以怪兽子类为主键排序，连接组天然与同级怪兽分开成段
-                if (card.isLink()) {
-                    return context.getString(R.string.section_title_link, card.getLinkNumber());
+                // 怪兽段名按分段家族取，与 CardSearcherManagerBase 星数档的排序键同源：
+                // 连接的 getStar() 拿到的是 LINK 值、超量拿到的是阶级，两者都不能写“X星”
+                switch (CardSearcherManagerBase.getStarSectionFamily(card)) {
+                    case CardSearcherManagerBase.STAR_SECTION_LINK:
+                        return context.getString(R.string.section_title_link, card.getLinkNumber());
+                    case CardSearcherManagerBase.STAR_SECTION_XYZ:
+                        return context.getString(R.string.section_title_rank, card.getStar());
+                    default:
+                        return context.getString(R.string.section_title_star, card.getStar());
                 }
-                return context.getString(R.string.section_title_star, card.getStar());
             case 1:
                 return statBucketTitle(card.Attack);
             case 2:
                 return statBucketTitle(card.Defense);
             case 3:
-                return nameSectionTitle(card.Name);
+                // 名称档只分 #（符号与其他文字）、0（数字）与 A~Z（英文首字母或汉字第一个字的
+                // 拼音首字母）；段名与 CardSearcherManagerBase 名称档的排序主键同一实现，不会错位
+                return String.valueOf(CardSearcherManagerBase.nameSectionKey(card.Name));
             case CardSearcherManagerBase.SORT_RULE_RELEASE_DATE:
                 int date = DataManager.get().getPackManager().getCardReleaseDate(card);
                 return date == 0 ? context.getString(R.string.section_title_unknown)
@@ -510,22 +678,6 @@ public class CardListAdapter extends BaseRecyclerAdapterPlus<Card, BaseViewHolde
         }
         int top = (value + 499) / 500 * 500;
         return top + "~" + (top - 499);
-    }
-
-    /**
-     * 名称分段：数字归「数字」，英文字母按首字母（小写归到同一大写段），
-     * 其余 ASCII 符号归「#」，中文/日文等非 ASCII 字符按该字符单独成段
-     */
-    private String nameSectionTitle(String name) {
-        if (name == null || name.isEmpty()) {
-            return "#";
-        }
-        char c = name.charAt(0);
-        if (c >= '0' && c <= '9') return context.getString(R.string.section_title_digits);
-        if (c >= 'A' && c <= 'Z') return String.valueOf(c);
-        if (c >= 'a' && c <= 'z') return String.valueOf((char) (c - 'a' + 'A'));
-        if (c < 128) return "#";
-        return String.valueOf(c);
     }
 
     /** 设定当前排序是否反向（再次点击已选中的排序按钮时切换）；下一次 applySortRule 生效 */

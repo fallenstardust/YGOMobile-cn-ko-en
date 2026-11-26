@@ -573,6 +573,8 @@
     <string name="sort_rule_time">時間↓</string>
     <!-- 搜尋結果分段說明 -->
     <string name="section_title_star">%1$d星</string>
+    <!-- 超量怪獸單獨成段：同一數字的等級段與階級段分開排列 -->
+    <string name="section_title_rank">%1$d階</string>
     <string name="section_title_link">LINK-%1$d</string>
     <string name="section_title_spell">魔法</string>
     <string name="section_title_trap">陷阱</string>

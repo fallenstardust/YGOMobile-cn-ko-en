@@ -576,6 +576,8 @@
     <string name="sort_rule_time">时间↓</string>
     <!-- 搜索结果分段说明 -->
     <string name="section_title_star">%1$d星</string>
+    <!-- 超量怪兽单独成段：同一数字的等级段与阶级段不会互相穿插 -->
+    <string name="section_title_rank">%1$d阶</string>
     <string name="section_title_link">LINK-%1$d</string>
     <string name="section_title_spell">魔法</string>
     <string name="section_title_trap">陷阱</string>

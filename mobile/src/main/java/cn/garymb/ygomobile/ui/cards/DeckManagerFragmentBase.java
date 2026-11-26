@@ -333,8 +333,11 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
         mCardListAdapter.setGridLayout(isResultGridPreferred());
         mListView.setLayoutManager(new FastScrollLinearLayoutManager(getContext()));
         mListView.setAdapter(mCardListAdapter);
-        // 结果列表/宫格的分段说明：列表按每张卡、宫格按整行分段（切换布局后不用重挂）
-        mListView.addItemDecoration(new SectionDividerDecoration(getContext(), mCardListAdapter));
+        // 结果列表/宫格的分段说明：列表按每张卡、宫格按整行分段（切换布局后不用重挂）；
+        // 同一份装饰器还要接分割带的点击手势（点带子折叠/展开该段）
+        SectionDividerDecoration sectionDivider = new SectionDividerDecoration(getContext(), mCardListAdapter);
+        mListView.addItemDecoration(sectionDivider);
+        sectionDivider.attachTo(mListView);
         // 顶部计数同一行的排序规则按钮与展现模式切换
         setupResultSortButtons();
         btnResultViewMode = layoutView.findViewById(R.id.btn_result_view_mode);
@@ -625,8 +628,8 @@ public abstract class DeckManagerFragmentBase extends BaseFragemnt implements Re
 
     /**
      * 结果列表填入数据与刷新：先记住搜索线程交来的原始顺序，再按本页当前档位填入，
-     * 最后复核一次展现布局。第 0 档（星数）就是改造前的原样顺序（含关键词完全命中置顶），
-     * 卡包展示的原始顺序就是卡包顺序本身，因此也不会被打乱
+     * 最后复核一次展现布局。五个档位（含第 0 档星数）都套与决斗内卡组编辑器同源的规则，
+     * 星数档按等级/阶级/连接数分段，同一个星数段不会在分割线上重复出段
      */
     protected void fillSearchResultList(List<Card> cards) {
         if (mCardListAdapter == null) return;

@@ -400,6 +400,9 @@ public class CardSearcher extends CardSearcherExtraFilters implements View.OnCli
                     .sum_logic(isSum)
                     .atk_or_def_logic(isOr)
                     .keyword(keyword)
+                    // 起源点数/禁限常规模式随条目一起记入历史：撤回时按它原样还原，
+                    // 不再靠禁卡表名称去反推（名称推不出来的条目会把模式误切回常规）
+                    .genesys_mode(genesys_Switch.isChecked())
                     .build();
 
             performSearch(searchInfo, true);
@@ -449,11 +452,10 @@ public class CardSearcher extends CardSearcherExtraFilters implements View.OnCli
         String keywordValue = info.getKeyWord() != null ? info.getKeyWord().getValue() : "";
         keyWord.setText(keywordValue, false);
         keyWord.dismissDropDown();
-        // 恢复genesys模式开关（根据禁卡表名称判断）
-        boolean genesysMode = false;
-        if (!TextUtils.isEmpty(info.getLimitName())) {
-            genesysMode = mLimitManager.getGenesysLimitNames().contains(info.getLimitName());
-        }
+        // 恢复genesys模式开关：按条目记下时的禁限展现模式原样还原。
+        // 不能再按禁卡表名称反推：卡片详情里点高亮词/关联卡片记下的条目只带关键词、
+        // 不带禁卡表，反推会把它当成禁限常规模式，撤回时把用户的起源点数模式关掉
+        boolean genesysMode = info.isGenesysMode();
         if (genesysMode != genesys_Switch.isChecked()) {
             genesys_Switch.setChecked(genesysMode);
         }

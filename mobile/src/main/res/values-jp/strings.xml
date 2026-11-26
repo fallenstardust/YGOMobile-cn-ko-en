@@ -571,6 +571,8 @@
     <string name="sort_rule_time">時間↓</string>
     <!-- 検索結果の見出し -->
     <string name="section_title_star">%1$d星</string>
+    <!-- エクシーズモンスターは別区間：同じ数字のレベル階級が混ざらない -->
+    <string name="section_title_rank">ランク%1$d</string>
     <string name="section_title_link">LINK-%1$d</string>
     <string name="section_title_spell">魔法</string>
     <string name="section_title_trap">罠</string>

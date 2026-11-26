@@ -669,6 +669,7 @@
     <string name="sort_rule_time">Time↓</string>
     <!-- 搜索结果分段说明 -->
     <string name="section_title_star">Lv%1$d</string>
+    <string name="section_title_rank">Rank%1$d</string>
     <string name="section_title_link">LINK-%1$d</string>
     <string name="section_title_spell">Spell</string>
     <string name="section_title_trap">Trap</string>

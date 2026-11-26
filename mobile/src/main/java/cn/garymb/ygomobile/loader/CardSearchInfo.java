@@ -22,6 +22,11 @@ public class CardSearchInfo implements ICardFilter {
     private int linkKey;
     private int limitType;
     private String limitName;
+    /**
+     * 这条检索条件记下来时处于哪种禁限展现模式：true = 起源点数模式，false = 禁限常规模式。
+     * 只用于搜索历史的前后撤回把它原样还原（不参与任何筛选判定）
+     */
+    private boolean genesys_mode;
     private List<Long> cardtypes;
     private List<Long> spelltraptypes;
     private List<Long> attribute;
@@ -48,6 +53,11 @@ public class CardSearchInfo implements ICardFilter {
 
     public String getLimitName() {
         return limitName;
+    }
+
+    /** 记下本条检索条件时是否为起源点数模式（撤回时据此还原开关，不靠禁卡表名称反推） */
+    public boolean isGenesysMode() {
+        return genesys_mode;
     }
 
     public CardKeyWord getKeyWord() {
@@ -182,6 +192,11 @@ public class CardSearchInfo implements ICardFilter {
             return this;
         }
 
+        public Builder genesys_mode(boolean genesys) {
+            searchInfo.genesys_mode = genesys;
+            return this;
+        }
+
         public Builder keyword(String val) {
             searchInfo.keyWord = new CardKeyWord(val);
             return this;
@@ -289,6 +304,7 @@ public class CardSearchInfo implements ICardFilter {
                 "LimitType=" + getLimitType() +
                 ", Ot=" + getOt() +
                 ", LimitName=" + getLimitName() +
+                ", GenesysMode=" + isGenesysMode() +
                 ", KeyWord=" + getKeyWord() +
                 ", cardType=" + getCardTypes() +
                 ", spellTrapType=" + getSpellTrapTypes() +

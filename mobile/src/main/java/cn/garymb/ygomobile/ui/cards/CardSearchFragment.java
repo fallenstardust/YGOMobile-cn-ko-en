@@ -128,8 +128,11 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
         mCardListAdapter.setGridLayout(isResultGridPreferred());
         mListView.setLayoutManager(new FastScrollLinearLayoutManager(getContext()));
         mListView.setAdapter(mCardListAdapter);
-        // 结果列表/宫格的分段说明：列表按每张卡、宫格按整行分段（切换布局后不用重挂）
-        mListView.addItemDecoration(new SectionDividerDecoration(getContext(), mCardListAdapter));
+        // 结果列表/宫格的分段说明：列表按每张卡、宫格按整行分段（切换布局后不用重挂）；
+        // 同一份装饰器还要接分割带的点击手势（点带子折叠/展开该段）
+        SectionDividerDecoration sectionDivider = new SectionDividerDecoration(getContext(), mCardListAdapter);
+        mListView.addItemDecoration(sectionDivider);
+        sectionDivider.attachTo(mListView);
         // 顶部计数同一行的排序规则按钮与展现模式切换
         setupResultSortButtons();
         mBtnViewMode = layoutView.findViewById(R.id.btn_result_view_mode);
@@ -182,8 +185,8 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
 
     /**
      * 结果填入与刷新：先记住搜索线程交来的原始顺序，再按本页当前档位填入，
-     * 最后复核一次展现布局。第 0 档（星数）就是改造前的原样顺序（含关键词完全命中置顶），
-     * 其余档位（攻守/名称/时间）才去套与决斗内卡组编辑器同源的规则
+     * 最后复核一次展现布局。五个档位（含第 0 档星数）都套与决斗内卡组编辑器同源的规则，
+     * 星数档按等级/阶级/连接数分段，同一个星数段不会在分割线上重复出段
      */
     private void fillSearchResultList(List<Card> cards) {
         mCardListAdapter.setRawCards(cards);
@@ -195,7 +198,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
             mReleaseDateFilter.refreshRange();
             mReleaseDateFilter.updateResultCount();
         } else {
-            mResult_count.setText(String.valueOf(mCardListAdapter.getItems().size()));
+            mResult_count.setText(String.valueOf(mCardListAdapter.getTotalCardCount()));
         }
         // 布局管理器与列数变化会 requestLayout，填数据路径故 post 到本轮布局之外；
         // 尚未量出宽度时适配器先给 1 列兜底，等下一次填结果数据时再算
@@ -356,7 +359,7 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
     @Override
     public void onSearchResult(List<Card> cardInfos, boolean isHide) {
         // 关键词搜索与收藏列表直接交搜索结果线程的原样顺序，
-        // 由 fillSearchResultList 按本页档位决定要不要重排（第 0 档保持原样）
+        // 由 fillSearchResultList 按本页档位重排（各档位都套比较器，含第 0 档星数）
         showSearchResultCards(cardInfos);
     }
 
@@ -518,8 +521,9 @@ public class CardSearchFragment extends BaseFragemnt implements CardLoader.CallB
     private void showCardList(List<Card> cardList, boolean sort) {
         if (!cardList.isEmpty()) {
             // 关联卡片与卡包展示都先走移动端固定序 mCardLoader.sort（怪兽→连接→魔法→陷阱、高星在前），
-            // 与第 0 档分割线的分段键一致；不能直接保留卡包的收集号原序，否则同段卡不相邻、分段会重复出现。
-            // 顶部规则下拉选攻/守/名称/时间时再由 applySortRule 在其上按当前档重排。
+            // 不能直接保留卡包的收集号原序，否则同段卡不相邻、分段会重复出现。
+            // 分段键由 fillSearchResultList 里的 applySortRule 按本页当前档位定：星数档按
+            // “等级/阶级/连接数”严格分段，攻/守/名称/时间档各按自己的分段键。
             showSearchResultCards(mCardLoader.sort(cardList));
             //sort为true代表点击“关联卡片”按钮（卡包展示为false），以当前卡片名作为关键词计入搜索历史
             if (sort && mCardDetail != null && mCardDetail.getCardInfo() != null) {

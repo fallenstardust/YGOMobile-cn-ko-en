@@ -195,14 +195,14 @@ public abstract class DeckManagerFragmentSearch extends DeckManagerFragmentDeck 
 
     @Override
     public void onSearchResult(List<Card> cardInfos, boolean isHide) {
-        // 关键词搜索与收藏列表直接交搜索线程的原样顺序（含完全命中卡名置顶），
-        // 由 fillSearchResultList 按本页档位决定要不要重排（第 0 档保持原样）
+        // 关键词搜索与收藏列表先直接交搜索线程的原样顺序（含完全命中卡名置顶），
+        // 再由 fillSearchResultList 按本页档位重排（各档位都套比较器，第 0 档也按星数分段）
         showSearchResultCards(cardInfos, isHide);
     }
 
     /**
-     * 结果填入 + 顶部计数 + 抽屉展示。卡包展示的原始顺序就是卡包顺序本身，
-     * 也不会在第 0 档被套上其它规则
+     * 结果填入 + 顶部计数 + 抽屉展示。卡包展示交给本页的原始顺序已经过
+     * {@link cn.garymb.ygomobile.utils.CardSort}，填页时再按本页档位重排
      */
     private void showSearchResultCards(List<Card> cardInfos, boolean isHide) {
         // 关键词以搜索面板当前输入为准：重置后为空就要把上一次的关键词清掉，
@@ -383,8 +383,9 @@ public abstract class DeckManagerFragmentSearch extends DeckManagerFragmentDeck 
     protected void showCardList(List<Card> cardList, boolean sort) {
         if (!cardList.isEmpty()) {
             // 关联卡片与卡包展示都先走移动端固定序 mCardLoader.sort（怪兽→连接→魔法→陷阱、高星在前），
-            // 与第 0 档分割线的分段键一致；不能直接保留卡包的收集号原序，否则同段卡不相邻、分段会重复出现。
-            // 顶部规则下拉选攻/守/名称/时间时再由 applySortRule 在其上按当前档重排。
+            // 不能直接保留卡包的收集号原序，否则同段卡不相邻、分段会重复出现。
+            // 分段本身由 fillSearchResultList 里的 applySortRule 按本页当前档位定下来：
+            // 星数档按“等级/阶级/连接数”严格分段，攻/守/名称/时间档各按自己的分段键。
             showSearchResultCards(mCardLoader.sort(cardList), false);
             //sort为true代表点击“关联卡片”按钮（卡包展示为false），以当前卡片名作为关键词计入搜索历史
             if (sort && mCardDetail != null && mCardDetail.getCardInfo() != null) {
