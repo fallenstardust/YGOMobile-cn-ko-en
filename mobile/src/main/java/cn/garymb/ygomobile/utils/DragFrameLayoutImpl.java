@@ -452,19 +452,28 @@ class DragFrameLayoutImpl extends DragFrameLayoutBase {
                         childConsumedDown = false;
                         return super.dispatchTouchEvent(ev);
                     }
+                    // 手势独占子视图（卡片图）：按住滑动归子视图（跳卡切换详情），不得被拖窗抢占
+                    // ——否则滑动超过拖窗阈值就会抢走手势并给子视图补发 CANCEL，ACTION_MOVE 丢失
+                    touchOnExclusiveChild = DraggablePopupHelper
+                            .isTouchOnGestureExclusiveView(ev.getRawX(), ev.getRawY());
+                    if (touchOnExclusiveChild) {
+                        childConsumedDown = false;
+                        return super.dispatchTouchEvent(ev);
+                    }
                     handleDrag(ev);
                     boolean result = super.dispatchTouchEvent(ev);
                     childConsumedDown = result;
                     return result || true;
 
                 case MotionEvent.ACTION_MOVE:
-                    if (!touchOnScrollable && !touchOnCollapseWidget && hasPressedScrollableChild()) {
+                    if (!touchOnScrollable && !touchOnCollapseWidget && !touchOnExclusiveChild
+                            && hasPressedScrollableChild()) {
                         // DOWN 时预判定漏了、但可滚动子视图（滑块/列表）实际已接住并在跟踪：
                         // 改判为滚动手势交回子视图，禁止起拖 dialog
                         touchOnScrollable = true;
                         return super.dispatchTouchEvent(ev);
                     }
-                    if (!touchOnScrollable && !touchOnCollapseWidget) {
+                    if (!touchOnScrollable && !touchOnCollapseWidget && !touchOnExclusiveChild) {
                         handleDrag(ev);
                         if (dragging) {
                             if (childConsumedDown) {
@@ -480,13 +489,14 @@ class DragFrameLayoutImpl extends DragFrameLayoutBase {
 
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
-                    if (!touchOnScrollable && !touchOnCollapseWidget) {
+                    if (!touchOnScrollable && !touchOnCollapseWidget && !touchOnExclusiveChild) {
                         handleDrag(ev);
                     }
                     boolean upResult = super.dispatchTouchEvent(ev);
                     dragging = false;
                     touchOnScrollable = false;
                     touchOnCollapseWidget = false;
+                    touchOnExclusiveChild = false;
                     childConsumedDown = false;
                     return childConsumedDown ? upResult : (upResult || true);
             }

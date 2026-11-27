@@ -35,7 +35,10 @@ import androidx.core.view.ScrollingView;
 import androidx.core.widget.NestedScrollView;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.WeakHashMap;
 
 import cn.garymb.ygomobile.Constants;
 import cn.garymb.ygomobile.lite.R;
@@ -51,11 +54,42 @@ import cn.garymb.ygomobile.lite.R;
  * 壳声明在基类中，行为与实现细节与拆分前完全一致。</p>
  */
 public class DraggablePopupHelper extends DraggablePopupHelperBase {
+    /**
+     * 手势独占视图登记（弱引用，仅主线程读写）：登记后，触点落在该视图上的按下手势由子视图
+     * 独占，包装层不得拖窗抢占（DragFrameLayoutImpl 在 ACTION_DOWN 时判定）。用于卡片列表
+     * 弹窗的卡片图：按住卡片滑动要跳卡切换详情，若包装层在滑动超过拖窗阈值时抢走手势并
+     * 补发 CANCEL，卡片就收不到 ACTION_MOVE。
+     */
+    private static final Set<View> GESTURE_EXCLUSIVE_VIEWS =
+            Collections.newSetFromMap(new WeakHashMap<View, Boolean>());
+
     public DraggablePopupHelper(Context context, String dialogId) {
         this.context = context;
         this.dialogId = dialogId;
         this.prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         loadPosition();
+    }
+
+    /** 登记一个手势独占视图（按住该视图滑动时不拖窗，见 {@link #isTouchOnGestureExclusiveView}） */
+    public static void registerGestureExclusiveView(View view) {
+        if (view != null) GESTURE_EXCLUSIVE_VIEWS.add(view);
+    }
+
+    /** 屏幕坐标是否落在已登记的手势独占视图上（拖窗抢占判据，仅 ACTION_DOWN 当拍调用） */
+    public static boolean isTouchOnGestureExclusiveView(float rawX, float rawY) {
+        int[] loc = new int[2];
+        for (View view : GESTURE_EXCLUSIVE_VIEWS) {
+            if (view == null || !view.isShown()
+                    || view.getWidth() <= 0 || view.getHeight() <= 0) {
+                continue;
+            }
+            view.getLocationOnScreen(loc);
+            if (rawX >= loc[0] && rawX < loc[0] + view.getWidth()
+                    && rawY >= loc[1] && rawY < loc[1] + view.getHeight()) {
+                return true;
+            }
+        }
+        return false;
     }
     public void setupDraggablePopup(PopupWindow popupWindow, View contentView,
                                      int designW, int designH) {

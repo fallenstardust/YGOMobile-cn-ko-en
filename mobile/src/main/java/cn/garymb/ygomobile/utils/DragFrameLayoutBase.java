@@ -123,6 +123,9 @@ abstract class DragFrameLayoutBase extends FrameLayout {
         protected float preCollapseTY;
         /** 本次手势 DOWN 是否落在收缩横条/把手上：是则整体禁用拖拽逻辑 */
         protected boolean touchOnCollapseWidget;
+        /** 本次手势 DOWN 是否落在手势独占视图（卡片图等）上：是则整体禁用拖拽，手势归子视图
+         *  （按住卡片滑动可跳卡切换详情，不能被拖窗抢占，见 DraggablePopupHelper#registerGestureExclusiveView） */
+        protected boolean touchOnExclusiveChild;
         /** 收缩横条的布局补偿监听目标（旋转重建后聊天输入框/区域尚未布局时挂一次性重锚，按实例去重） */
         protected final List<View> collapseAnchorWatches = new ArrayList<>();
 

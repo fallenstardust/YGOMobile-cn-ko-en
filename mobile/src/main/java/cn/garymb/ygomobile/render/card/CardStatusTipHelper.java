@@ -23,6 +23,7 @@ import java.util.TreeMap;
 import cn.garymb.ygomobile.game.gamefield.GameField;
 import cn.garymb.ygomobile.game.gamefield.ClientCard;
 import cn.garymb.ygomobile.lite.R;
+import cn.garymb.ygomobile.utils.DraggablePopupHelper;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
@@ -38,8 +39,14 @@ import ocgcore.enums.CardType;
  *   锚点换成本卡并<b>立刻</b>显示其通讯状态标签 —— 换锚的这一拍先收起上一张卡片的气泡，
  *   因此「点击其他卡片」就是上一张 cardtip 唯一的自动隐藏时机；另起 {@link #HOLD_THRESHOLD_MS}
  *   计时，只用于抬手时判定「按满阈值不视为点击」，与气泡显隐无关；
- * - ACTION_UP：清定时器，未超过阈值才回调 onSlotClick 视为选中；<b>不收起气泡</b> —— 点击列表中
- *   某张卡后其标签一直显示、不自动消失（旧语义的「抬手即 EGET_ELEMENT_LEFT 隐藏」已废弃）；
+ * - ACTION_MOVE：手指保持按下滑到另一张卡上时（用户规格），按下动画、详情面板与状态气泡
+ *   一并切到新卡（见 {@link #onMove}）；离开卡片（卡间间隙/空白）不切换，抬手按最后
+ *   停留的卡结算。卡片上的按下手势由卡片独占、包装层不拖窗（见
+ *   {@code DraggablePopupHelper#registerGestureExclusiveView}），否则滑动超过 8px 就会被
+ *   拖窗抢占并给卡片补发 CANCEL，MOVE 根本到不了本类；
+ * - ACTION_UP：清定时器，未超过阈值才回调 onSlotClick 视为选中（目标为最后按下的卡）；
+ *   <b>不收起气泡</b> —— 点击列表中某张卡后其标签一直显示、不自动消失（旧语义的
+ *   「抬手即 EGET_ELEMENT_LEFT 隐藏」已废弃）；
  * - ACTION_CANCEL（含拖动弹窗时包装层补发的 CANCEL）：清定时器、不触发选中，气泡按其锚定卡片
  *   继续保留；
  * - 宿主翻页 / 刷新槽位 / 关闭弹窗（{@link #hide()}）解除锚点并收起 —— 槽位与卡片的对应关系
@@ -138,6 +145,12 @@ public class CardStatusTipHelper {
      */
     private boolean holdFired;
 
+    /**
+     * 本次手势当前按下的槽位：DOWN 起手记录，ACTION_MOVE 滑到另一张卡时切换
+     * （按下动画、详情与气泡随之换卡），UP 以它为点击目标；手势结束/宿主刷新后为 -1
+     */
+    private int pressedSlot = -1;
+
     private final Runnable holdTask = new Runnable() {
         @Override
         public void run() {
@@ -225,31 +238,36 @@ public class CardStatusTipHelper {
      * 接管槽位触摸。listener 对全部事件返回 true，View 自身的点击/长按机制完全不参与，
      * 按下态由 setPressed 手动维护，避免 onTouchEvent 在缺少 DOWN 的情况下误触发 performClick。
      * slotView 显式置为可点击，保证 ACTION_DOWN 一定投递到本 View（"按下卡片图"的直接命中面），
-     * 并对 anchor（卡片图）施加简单的按下/抬起动画。
+     * 并对 anchor（卡片图）施加简单的按下/抬起动画。slotView 同时登记为手势独占视图：
+     * 按住后滑到另一张卡时由 {@link #onMove} 换卡换详情，包装层不把这次手势抢去拖窗。
      */
     public void attach(final int slot, View slotView, View anchor) {
         if (slotView == null || slot < 0 || slot >= MAX_SLOTS) return;
         anchors[slot] = anchor != null ? anchor : slotView;
         slotView.setClickable(true);
         slotView.setFocusable(true);
-        final View pressView = anchors[slot];
+        // 卡片按下期间手势独占：按住滑动可跨卡切换详情，包装层不得把这次手势抢去拖窗
+        //（否则滑动超过拖窗阈值即被补发 CANCEL，卡片收不到 ACTION_MOVE）
+        DraggablePopupHelper.registerGestureExclusiveView(slotView);
         slotView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 switch (event.getActionMasked()) {
                     case MotionEvent.ACTION_DOWN:
                         v.setPressed(true);
-                        applyPressEffect(pressView, true);
+                        applyPressEffect(anchors[slot], true);
                         onDown(slot);
+                        break;
+                    case MotionEvent.ACTION_MOVE:
+                        onMove(event.getRawX(), event.getRawY());
                         break;
                     case MotionEvent.ACTION_UP:
                         v.setPressed(false);
-                        applyPressEffect(pressView, false);
                         onUp(slot);
                         break;
                     case MotionEvent.ACTION_CANCEL:
                         v.setPressed(false);
-                        applyPressEffect(pressView, false);
+                        releasePressedAnchor();
                         onCancel();
                         break;
                     default:
@@ -290,6 +308,7 @@ public class CardStatusTipHelper {
     private void onDown(int slot) {
         handler.removeCallbacks(holdTask);
         holdFired = false;
+        pressedSlot = slot;
         pinnedSlot = slot;
         hideBubble();
         if (pressedListener != null) pressedListener.onCardPressed(slot);
@@ -298,8 +317,61 @@ public class CardStatusTipHelper {
     }
 
     /**
+     * 按住滑动换卡（用户规格）：手指保持按下从一张卡滑到另一张卡时，不必抬起即可查看新卡详情。
+     * 触点进入另一张已附着的卡片才切换；落在卡间间隙/空白处不切换（保持最后一张，避免
+     * 滑过间隙时反复闪断），抬手时按最后停留的卡结算点击
+     */
+    private void onMove(float rawX, float rawY) {
+        if (pressedSlot < 0) return;
+        int slot = findSlotAt(rawX, rawY);
+        if (slot < 0 || slot == pressedSlot) return;
+        switchPressedSlot(slot);
+    }
+
+    /** 换卡：旧卡复原按下动画，新卡进入按下态，详情面板与通讯状态标签一并切到新卡 */
+    private void switchPressedSlot(int newSlot) {
+        int old = pressedSlot;
+        pressedSlot = newSlot;
+        if (old >= 0 && old < MAX_SLOTS) {
+            applyPressEffect(anchors[old], false);
+        }
+        applyPressEffect(anchors[newSlot], true);
+        pinnedSlot = newSlot;
+        hideBubble();
+        if (pressedListener != null) pressedListener.onCardPressed(newSlot);
+        showTip();
+    }
+
+    /** 屏幕坐标命中的已附着卡片槽位（含可见性与布局有效性校验），都不命中返回 -1 */
+    private int findSlotAt(float rawX, float rawY) {
+        int[] loc = new int[2];
+        for (int i = 0; i < MAX_SLOTS; i++) {
+            View view = anchors[i];
+            if (view == null || !view.isShown()
+                    || view.getWidth() <= 0 || view.getHeight() <= 0) {
+                continue;
+            }
+            view.getLocationOnScreen(loc);
+            if (rawX >= loc[0] && rawX < loc[0] + view.getWidth()
+                    && rawY >= loc[1] && rawY < loc[1] + view.getHeight()) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /** 复原当前按下卡的按下动画并结束本次手势的按下跟踪（换卡时旧卡已在 {@link #switchPressedSlot} 复原） */
+    private void releasePressedAnchor() {
+        if (pressedSlot >= 0 && pressedSlot < MAX_SLOTS) {
+            applyPressEffect(anchors[pressedSlot], false);
+        }
+        pressedSlot = -1;
+    }
+
+    /**
      * 抬手只判定「是否视为点击」，不收起气泡：本次点击卡片的标签一直显示，
      * 到下一次点击其他卡片（{@link #onDown} 换锚）或宿主刷新/翻页/关闭（{@link #hide()}）为止。
+     * 点击目标取最后按下的卡（按住滑到另一张卡再抬手即选中该卡）；按下动画在本拍复原。
      * 位置由 margin 承载 + {@link #requestReposition()} 跟锚，常显不会再触发旧版
      * 「抬手后标签被父层重锚清零平移而停在屏幕左上角」的问题。
      */
@@ -307,7 +379,9 @@ public class CardStatusTipHelper {
         handler.removeCallbacks(holdTask);
         boolean held = holdFired;
         holdFired = false;
-        if (!held && clickListener != null) clickListener.onSlotClick(slot);
+        int clickSlot = pressedSlot >= 0 ? pressedSlot : slot;
+        releasePressedAnchor();
+        if (!held && clickListener != null) clickListener.onSlotClick(clickSlot);
     }
 
     /** 手势被打断（拖拽弹窗、手指移出）：不触发选中，已显示的气泡仍随其锚定卡片保留 */
@@ -326,6 +400,8 @@ public class CardStatusTipHelper {
         repositionPending = false;
         holdFired = false;
         pinnedSlot = -1;
+        // 宿主刷新时手指可能仍按住卡片：一并复原按下动画并终止按下跟踪（槽位对应的卡已换）
+        releasePressedAnchor();
         hideBubble();
     }
 
