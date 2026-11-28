@@ -54,6 +54,12 @@ public final class ServerConnection {
     /** 是否房主（对齐 C++ host_player 判定，仅用于 STOC_TYPE_CHANGE 的 0x10 位）。 */
     public boolean host;
     /**
+     * 对局进行中该席位已掉线、正在宽限期内等重连（本工程扩展）：连接对象仍留在 {@code players[seat]}
+     * 里所以下行链路无需改造，但写一个已断的 socket 只会每包刷一条失败日志，故置位后 {@link #send}
+     * 直接丢弃；重连接回时清除（新连接对象本身不会置位）。
+     */
+    public boolean linkDetached;
+    /**
      * 撤回整局重放的答复欠账：重放期间服务端把人机已见过的每条询问又发了一遍，它对这些询问的答复
      * 一律晚于撤回落地，不能当成对新挂出询问的应答喂进引擎。故重放每挂出一条询问在此计数，
      * 它的 CTOS_RESPONSE 一律丢弃并递减（见 {@code GameRoom#handlePacket}），同时延后重挂直到欠账清零。
@@ -153,6 +159,10 @@ public final class ServerConnection {
 
     /** 发送 STOC 包：[uint16 小端长度(=1+载荷长)][proto][载荷]。 */
     public void send(int proto, byte[] payload) {
+        // 掉线宽限期内的席位：socket 已不可用，丢弃而不写（对齐 C++ 对已断 DuelPlayer 不再续写）
+        if (linkDetached) {
+            return;
+        }
         int plen = 1 + (payload == null ? 0 : payload.length);
         byte[] pkt = new byte[2 + plen];
         pkt[0] = (byte) (plen & 0xFF);

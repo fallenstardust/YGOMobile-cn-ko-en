@@ -124,12 +124,24 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
             case DISCONNECTED:
                 // 断开通讯同样立即清除残留蚂蚁线（包括早退分支，后续界面切换不依赖选择态高亮）
                 activity.fieldCtl.clearSelectionVisuals();
+                // 建立连接/入房阶段就失败（尚停在局域网或建主弹窗）：恢复按钮、留在原弹窗并已由
+                // 引擎知会弹错，不得再进玩家等待界面、也不得回退到主菜单（用户规格）
+                if (activity.onLanJoinAborted()) break;
                 if (duelEnd.duelEndHandling) break; // 决斗结束流程已接管返回逻辑，避免重复
                 if (duelEnd.suppressDisconnectedReturn) {
                     duelEnd.suppressDisconnectedReturn = false; // 退出入口已接管导航，单次消费
                     break;
                 }
-                activity.returnToLanMain(activity.isGameStarted ? "与服务器连接已断开" : null);
+                // 重连终止（主机拒绝接入 / 30s 重连超时）已由 ConnectionManager#abortResume 送达
+                // 专属知会（1405/1502）并自行收尾 disconnect()：本处只做导航，不再叠加同义 toast
+                //（单次消费）。导航落到 LanModeDialog 并回显上次的主机/端口/房间密码（用户规格）。
+                final boolean lossNotified = activity.engine != null
+                        && activity.engine.linkLossNoticeShown;
+                if (activity.engine != null) {
+                    activity.engine.linkLossNoticeShown = false;
+                }
+                activity.returnToLanMain(!lossNotified && activity.isGameStarted
+                        ? activity.mStringManager.getSystemString(1401, "连接已断开。") : null);
                 break;
         }
     }
@@ -594,6 +606,18 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
         activity.runOnUiThread(() -> activity.topInfoManager.onTimeLimitUpdate(player, leftTime, activity.engine.getGameTimeLimit()));
     }
 
+    /**
+     * 对局内链路状态（断线重连，用户规格）：该侧席位正在重连时在其头像上叠转圈 + 半透黑底。
+     * side 已由 {@code ConnectionManager} 按本地视角换算（0=我方含 tag 队友、1=对方），
+     * 本端只负责把指示送到顶部信息条。
+     */
+    @Override
+    public void onLinkStateChanged(int side, boolean lost) {
+        activity.runOnUiThread(() -> {
+            if (activity.topInfoManager != null) activity.topInfoManager.setLinkState(side, lost);
+        });
+    }
+
     @Override
     public void onChainAnimation(int code, int controler, int location, int sequence) {
         if (activity.engine != null && activity.engine.replaySkip) return; // 回放快进：丢弃发动大图
@@ -670,6 +694,9 @@ class EngineCallbackDelegate implements GameEngine.EngineListener {
     public void onJoinGame(int lflist, int rule, int mode, int duelRule,
                            int noCheckDeck, int noShuffleDeck,
                            int startLp, int startHand, int drawCount, int timeLimit) {
+        // 用户规格（对齐 gframe Handle_STOC_JOIN_GAME 才 ShowElement(wHostPrepare)）：收到服务端
+        // 入房回执才弹出玩家等待界面；发起连接当拍不再预弹，失败时因此也不会闪现等待界面
+        activity.onRoomJoinAck();
         // 对齐 gframe duelclient.cpp L737：STOC_JOIN_GAME 到达即写入 duel_rule/start_lp，早于 MSG_START（猜拳之前），让场地贴图 field/field2/field3 与格子布局按 rule 提前分流
         activity.engine.field.dInfo.duelRule = duelRule;
         activity.engine.field.dInfo.startLp = startLp;

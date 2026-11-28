@@ -349,6 +349,9 @@ final class UndoQuestionGuard implements YGOProtocol {
         analyzer.liveQuestionFromUndo = false;
         analyzer.liveQuestionResponder = -1;
         analyzer.silentTurnCount = 0;
+        // 回合数同样从开局重算：重建引擎后的重流会重新逐条 MSG_NEW_TURN 累加，停下即回退点真值
+        //（与 silentTurnCount 同一复用逻辑，供 STOC_RESUME_ACK 类需服务端侧回合数的下发取用）
+        analyzer.liveTurnCount = 0;
         analyzer.silentTurnPlayer = 0;
         analyzer.silentPhase = 0;
         // 发动账本同步计数复位：重放前缀里有几条有效发动，撤回后客户端账本就该保留几条

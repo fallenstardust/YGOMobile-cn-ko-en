@@ -569,7 +569,9 @@ public class GameFieldController extends GameFieldControllerBase {
         // 用户规格：按住卡片与点击卡片一样显示卡片详情——任何场合长按场上/手卡/堆叠区的卡
         // 都刷新详情面板（原先只在选卡会话内且限候选卡才响应，普通场景按住毫无反应）。
         // GestureDetector 已识别为长按的手势不会再派发 onSingleTapUp，故会话中长按候选卡
-        // 只查看卡片、不会切换选中或发出应答；长按也不弹命令菜单、不带状态气泡
+        // 只查看卡片、不会切换选中或发出应答；长按也不弹命令菜单（状态气泡同样展示，见下方）。
+        // 按住浏览（同一手势内手指移到另一张卡）复用本入口：视图侧逐次拾取并只在命中卡
+        // 变化时下发（FieldTouchPicker#handleLongPressMove），语义与本处完全一致——详情与气泡同步切换
         if (engine == null) return;
         ClientCard card = engine.getField().getCard(player, location, sequence);
         if (card == null) return;
@@ -579,11 +581,21 @@ public class GameFieldController extends GameFieldControllerBase {
         } else {
             activity.showCardInfoPanel(card);
         }
+        // 状态气泡跟随（用户规格：按住浏览切卡详时一并切气泡）：走与点击同一个排期入口，代际
+        // 去重使快速滑过时只有最后一张上屏；气泡为在屏窗口时就地换文字重落位（FieldTip#show），
+        // 不逐张重建 PopupWindow。堆叠区（卡组/墓地/除外/额外）同点击口径不展示顶卡气泡
+        //（C++ 悬停 stTip 的 stat 段仅 location & 0xe 才拼接）并收起旧气泡
+        if (location == 0x01 || location == 0x40 || location == 0x10 || location == 0x20) {
+            hideFieldStatusTip();
+        } else {
+            scheduleFieldStatusTip(fieldView, card, player, location, sequence, x, y);
+        }
     }
 
     @Override
     public void onFieldLongPressEnd() {
-        // 状态标签改为点击后持续显示（直到点击卡片以外/另一张卡取代），抬手不再隐藏
+        // 状态标签改为点击后持续显示（直到点击卡片以外/另一张卡取代），抬手不再隐藏；
+        // 按住浏览同样如此：抬手后详情面板与气泡停留在最后查看的那张卡
     }
 
     /**

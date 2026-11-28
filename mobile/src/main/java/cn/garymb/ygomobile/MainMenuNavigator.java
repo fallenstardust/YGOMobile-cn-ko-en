@@ -22,6 +22,24 @@ class MainMenuNavigator implements
 
     private final YGOProActivity activity;
 
+    // === 「等到 STOC_JOIN_GAME 才进玩家等待界面」（用户规格，对齐 gframe）===
+    /**
+     * 本次连接是否仍在等待入房回执：由局域网「加入游戏」/「建主确认」/外部 uri 直连三个入口置位，
+     * STOC_JOIN_GAME 到达时消费并弹出玩家等待界面，失败（连不通/回执超时/服务端拒绝）时消费并
+     * 停在来源弹窗。
+     * <p>对齐 gframe：{@code wHostPrepare} 只在 {@code duelclient.cpp Handle_STOC_JOIN_GAME} 里显示，
+     * {@code ClientEvent(BEV_EVENT_EOF|ERROR)} 与 {@code ConnectTimeout} 的失败分支只恢复按钮并把
+     * 窗口留在 {@code wLanWindow}/{@code wCreateHost}，从不弹出等待界面，也不回主菜单。
+     */
+    private boolean awaitingRoomJoin;
+    /** 等待回执期间的来源弹窗：true=建主界面（本机建主），false=局域网主界面（加入他人主机） */
+    private boolean pendingFromCreateHost;
+    /** 外部 uri 直连（{@code YGOStarter.startGame} 带 options/host）：无局域网弹窗可停留 */
+    private boolean pendingDirectJoin;
+    /** 回执到达后建玩家等待界面要用的昵称与 TAG 席位展开标志 */
+    private String pendingNickname = "";
+    private boolean pendingTagMode;
+
     MainMenuNavigator(YGOProActivity activity) {
         this.activity = activity;
     }
@@ -75,12 +93,92 @@ class MainMenuNavigator implements
         activity.engine.gameTimeLimit = timeLimit;
         activity.engine.hasJoinRoomInfoCache = true;
 
-        if (activity.createHostDialog != null) activity.createHostDialog.hideForNavigation();
+        // 建主也要等到环回的 STOC_JOIN_GAME 才进等待界面：期间锁住建主两键、留在建主界面，
+        // 失败（端口被占/引擎不可用/环回不通/回执超时）时停在本界面并弹错
+        //（对齐 gframe BUTTON_HOST_CONFIRM：StartServer/StartClient 失败只 addMessageBox(1402)）
         // LAN 建主入口（含勾选纯单人）与 SingleModeDialog 纯单人页同会置 engine.soloMode=true，
-        // 但退出等待的目标不同：LAN 建主（无论否勾选纯单人）退出后应回 LanModeDialog；
-        // 仅当来源为 SingleModeDialog 纯单人页时才回 MainMenuDialog，故此处主动置回 false 避免串道
+        // 但退出等待的目标不同：LAN 建主退出后应回 LanModeDialog，仅来源为纯单人页时才回
+        // MainMenuDialog，故此处主动置回 false 避免串道
         activity.soloLaunchedFromSingleMode = false;
-        showPlayerWaiting(userName, modeIdx == 2);
+        beginRoomJoin(userName, modeIdx == 2, true, false);
+    }
+
+    /**
+     * 外部 uri / 卡商页直连（{@code YGOStarter.startGame} 带 options 或 host extra）入口：
+     * 本类同样只在 STOC_JOIN_GAME 到达后才建玩家等待界面；失败时没有可停留的局域网弹窗，
+     * 故交由门面的 {@code returnToLanMain} 落到局域网主界面（绝不落到主菜单）。
+     */
+    void beginDirectRoomJoin(String nickname) {
+        beginRoomJoin(nickname, false, false, true);
+    }
+
+    /** 登记一次「等待入房回执」的连接，并按来源弹窗锁定入口按钮（锁键行为对齐 C++ setEnabled(false)） */
+    private void beginRoomJoin(String nickname, boolean tagMode,
+                               boolean fromCreateHost, boolean directJoin) {
+        awaitingRoomJoin = true;
+        pendingTagMode = tagMode;
+        pendingFromCreateHost = fromCreateHost;
+        pendingDirectJoin = directJoin;
+        pendingNickname = (nickname != null && !nickname.isEmpty())
+                ? nickname : Constants.PlayerName;
+        if (fromCreateHost && activity.createHostDialog != null) {
+            activity.createHostDialog.setConnecting(true);
+        } else if (!directJoin && activity.lanModeDialog != null) {
+            activity.lanModeDialog.setConnecting(true);
+        }
+    }
+
+    /** 解锁本次连接锁定的来源弹窗按钮（回执到达与失败两条路径共用） */
+    private void releaseConnectingUi() {
+        if (activity.lanModeDialog != null) activity.lanModeDialog.setConnecting(false);
+        if (activity.createHostDialog != null) activity.createHostDialog.setConnecting(false);
+    }
+
+    /**
+     * STOC_JOIN_GAME 已到达（由 {@code EngineCallbackDelegate.onJoinGame} 转发）：直到这一刻才
+     * 隐去来源弹窗并弹出玩家等待界面（对齐 gframe：等待界面随 Handle_STOC_JOIN_GAME 出现）。
+     * 非本导航发起的连接（人机/纯单人建主等自带等待入口的流程）不得重复弹窗。
+     */
+    void onRoomJoined() {
+        if (!awaitingRoomJoin) return;
+        awaitingRoomJoin = false;
+        final String nickname = pendingNickname;
+        // TAG 席位展开：建主路径本就知道模式，加入路径取服务端回执里的实际模式
+        final boolean tagMode = pendingTagMode
+                || (activity.engine != null && activity.engine.gameMode == 2);
+        final boolean fromCreateHost = pendingFromCreateHost;
+        final boolean directJoin = pendingDirectJoin;
+        pendingFromCreateHost = false;
+        pendingDirectJoin = false;
+        releaseConnectingUi();
+        if (fromCreateHost && activity.createHostDialog != null) {
+            activity.createHostDialog.hideForNavigation();
+            // 成房提示搬到回执之后（过去在点“确定”当拍就报“房间已创建”，失败时也照报）
+            activity.createHostDialog.showRoomReadyNotice();
+        } else if (!directJoin && activity.lanModeDialog != null) {
+            // 内部跳转：抑制 dismiss→restoreMainMenu 兜底，避免等待界面背后再叠出主菜单
+            activity.lanModeDialog.hideForNavigation();
+        }
+        // 外部直连无源弹窗可隐，但需先收起决斗 UI（与原 showPlayerWaitingForDirectJoin 同口径）
+        if (directJoin) activity.hideGameUI();
+        showPlayerWaiting(nickname, tagMode);
+    }
+
+    /**
+     * 建立连接/入房失败（等待回执期间收到 DISCONNECTED）：消费等待态并恢复按钮。
+     *
+     * @return true 表示本次失败属于「从局域网/建主弹窗发的连接」，调用方不再走 returnToLanMain
+     *         的换界面逻辑（用户规格：停在原弹窗并弹错，不得出现玩家等待界面与主菜单）；
+     *         外部 uri 直连没有可停留的弹窗，返回 false 仍由门面落到局域网主界面。
+     */
+    boolean onRoomJoinAborted() {
+        if (!awaitingRoomJoin) return false;
+        awaitingRoomJoin = false;
+        final boolean staysInDialog = !pendingDirectJoin;
+        pendingFromCreateHost = false;
+        pendingDirectJoin = false;
+        releaseConnectingUi();
+        return staysInDialog;
     }
 
     @Override
@@ -100,11 +198,11 @@ class MainMenuNavigator implements
         String userName = (nickname != null && !nickname.isEmpty()) ? nickname : Constants.PlayerName;
         activity.saveLastConnectionInfo(userName, ip, portNum, "", password);
         activity.engine.setPlayerName(userName);
+        // 先登记等待态再发连接：连接结果经 onRoomJoined/onRoomJoinAborted 消费，本处不再隐藏
+        // 局域网界面、也不再直接弹玩家等待界面（用户规格：只有真正入房才进等待界面）
+        beginRoomJoin(userName, false, false, false);
         activity.engine.connectToServer(ip, portNum, false, "", password,
                 0, 0, 5, 8000, 5, 1, 0, false, false);
-
-        if (activity.lanModeDialog != null) activity.lanModeDialog.hideForNavigation();
-        showPlayerWaiting(userName, false);
     }
 
     // === PlayerWaitingDialog.OnPlayerWaitingListener ===

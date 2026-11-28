@@ -68,6 +68,10 @@ public final class LanGameServer implements YGOProtocol {
     /** 单线程房间执行器：决斗引擎非线程安全，所有 CTOS/timer/断开均在此串行。 */
     private ExecutorService roomExecutor;
 
+    /** 断线重连宽限期到期检查的延时载体（主线程 Looper，投递后仍回到房间执行器执行）。 */
+    private final android.os.Handler graceHandler =
+            new android.os.Handler(android.os.Looper.getMainLooper());
+
     /** 房间状态，volatile 以便 UDP 广播线程读取最新值。 */
     private volatile GameRoom room;
 
@@ -241,6 +245,16 @@ public final class LanGameServer implements YGOProtocol {
                 r.joinGame(conn, body, false);
                 break;
             }
+            case CTOS_RESUME_GAME: {
+                // 断线席位接回原对局（本工程扩展）：与 JOIN_GAME 同为“新连接首次入房”包，
+                // 故同样在此路由，不进 handlePacket 的状态门（新连接尚未入座，会被丢包）
+                GameRoom r = room;
+                if (r == null) {
+                    return;
+                }
+                r.resumeGame(conn, body);
+                break;
+            }
             default: {
                 GameRoom r = room;
                 if (r != null) {
@@ -375,6 +389,17 @@ public final class LanGameServer implements YGOProtocol {
     /** {@link #stopServer()} 的别名，保持对外生命周期 API 简洁。 */
     public void stop() {
         stopServer();
+    }
+
+    /**
+     * 断线席位的宽限期到期检查（本工程扩展）：对局的回合计时器只在开限时才存在、且 endDuel 会
+     * 停掉它（match 局间换 side 期间无定时器），不能复用；故用主线程 Handler 延时把检查投回
+     * 房间执行器（与收包/应答串行，不会与重连争席）。
+     * 席位已在宽限期内重连时 {@code GameRoom#onDetachedSeatExpired} 因掉线时刻已清零而空转，无需取消。
+     */
+    void scheduleDetachedSeatExpiry(final GameRoomMid r, final int seat) {
+        graceHandler.postDelayed(() -> post(() -> r.onDetachedSeatExpired(seat)),
+                GameRoomBase.RESUME_GRACE_MS);
     }
 
     public boolean isRunning() {

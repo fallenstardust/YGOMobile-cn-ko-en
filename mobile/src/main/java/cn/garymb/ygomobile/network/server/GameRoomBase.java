@@ -33,6 +33,15 @@ abstract class GameRoomBase implements YGOProtocol {
     /** 观战人数上限（对齐 game.h DEFAULT_WATCHER，取一个保守值）。 */
     protected static final int MAX_OBSERVER = 50;
 
+    /**
+     * 对局中掉线席位的宽限期（本工程扩展，用户规格 60s）：期间不判负、不释放席位，等其他端
+     * 用 CTOS_RESUME_GAME 接回；到时仍未重连则按原有“对手离开”处理。
+     */
+    static final long RESUME_GRACE_MS = 60000L;
+
+    /** 每席位的掉线时刻（0 = 在线）：与 {@code ServerConnection#linkDetached} 配对，供宽限到期判定。 */
+    final long[] detachedAtMs = new long[4];
+
     /** 最大可用规则号（对齐 game.h CURRENT_RULE / MASTER_RULE）。 */
     static final int CURRENT_RULE = 5;
 

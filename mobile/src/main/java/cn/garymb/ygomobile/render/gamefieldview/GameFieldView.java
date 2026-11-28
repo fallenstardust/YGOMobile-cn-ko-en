@@ -48,7 +48,7 @@ import cn.garymb.ygomobile.utils.CrashHandler;
  * <p>
  * 监听收口：卡片/区域点击与长按、阶段按钮、相机变化等所有 listener 均由
  * {@link GameFieldViewController} 实现并注册，手势识别（GestureDetector）同样由控制器持有，
- * 本视图仅保留拾取入口（dispatchTap/dispatchLongPress）与回调触发。
+ * 本视图仅保留拾取入口（dispatchTap/dispatchLongPress/dispatchLongPressMove）与回调触发。
  * <p>
  * XML 可调参数（declare-styleable GameFieldView）：field_camera_elevation（仰角/倾斜度）/
  * field_camera_distance（相机距离）/ field_zoom（等比总缩放）/ field_width（横向拉伸）/ field_length（纵向拉伸）/

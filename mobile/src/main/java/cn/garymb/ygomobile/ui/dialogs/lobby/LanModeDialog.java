@@ -51,6 +51,12 @@ public class LanModeDialog {
     private EditText etHostPort;
     private EditText etRoomPassword;
 
+    // 需随「连接中」状态锁定/解锁的入口按钮（对齐 gframe wLanWindow 的 btnJoinHost/btnCreateHost/
+    // btnJoinCancel 三键）：弹窗实例会被 reshow 复用，故从 show() 局部变量提升为字段
+    private Button btnCreateHost;
+    private Button btnJoinGame;
+    private Button btnExitLan;
+
     private LanDiscoveryManager discoveryManager;
     private HostListAdapter hostListAdapter;
     private final List<LanDiscoveryManager.HostEntry> discoveredHosts = new ArrayList<>();
@@ -91,10 +97,10 @@ public class LanModeDialog {
         etHostIp = customView.findViewById(R.id.et_host_ip);
         etHostPort = customView.findViewById(R.id.et_host_port);
         etRoomPassword = customView.findViewById(R.id.et_room_password);
-        Button btnCreateHost = customView.findViewById(R.id.btn_create_host);
+        btnCreateHost = customView.findViewById(R.id.btn_create_host);
         Button btnRefreshLan = customView.findViewById(R.id.btn_refresh_lan);
-        Button btnJoinGame = customView.findViewById(R.id.btn_join_game);
-        Button btnExitLan = customView.findViewById(R.id.btn_exit_lan);
+        btnJoinGame = customView.findViewById(R.id.btn_join_game);
+        btnExitLan = customView.findViewById(R.id.btn_exit_lan);
         ListView lvHostList = customView.findViewById(R.id.lv_host_list);
 
         // 行内标签与“加入游戏”按钮文字统一复用 gframe 既有系统字符串（对齐 game.cpp wLanWindow），
@@ -241,6 +247,29 @@ public class LanModeDialog {
 
         anchorView.setVisibility(View.GONE);
         draggableHelper.showPopup(popupWindow, anchorView);
+    }
+
+    /**
+     * 连接进行中（已发出 CTOS_JOIN_GAME，正在等 STOC_JOIN_GAME 回执）：锁定建主/加入/退出三键，
+     * 「加入游戏」改写为“连接中…”，并把弹窗改为不可点外关闭，避免在等回执期间被误关。
+     * <p>对齐 gframe：{@code BUTTON_JOIN_HOST}/{@code BUTTON_HOST_CONFIRM} 成功 StartClient 后把
+     * {@code btnCreateHost/btnJoinHost/btnJoinCancel} 置不可用，而 {@code ConnectTimeout}/
+     * {@code ClientEvent(BEV_EVENT_EOF)} 失败分支里重新启用并把窗口留在 wLanWindow。
+     */
+    public void setConnecting(boolean connecting) {
+        if (btnJoinGame != null) {
+            btnJoinGame.setEnabled(!connecting);
+            btnJoinGame.setText(connecting
+                    ? mStringManager.getSystemString(1707, "连接中…")
+                    : mStringManager.getSystemString(1223, "加入游戏"));
+        }
+        if (btnCreateHost != null) btnCreateHost.setEnabled(!connecting);
+        if (btnExitLan != null) btnExitLan.setEnabled(!connecting);
+        if (popupWindow != null) {
+            // PopupWindow 没有 Dialog 的 setCancelable，改用关掉「点外触摸关闭」避免等回执期间被误点关
+            //（返回键仍可关，但失败收尾只会恢复按钮与弹错，不会串到其它界面）
+            popupWindow.setOutsideTouchable(!connecting);
+        }
     }
 
     /**

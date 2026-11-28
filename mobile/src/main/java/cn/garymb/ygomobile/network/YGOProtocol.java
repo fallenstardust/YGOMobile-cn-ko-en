@@ -44,6 +44,13 @@ public interface YGOProtocol {
      * 时才会发出，因此不会误落在不了解该包号的第三方 gframe 服务器上。
      */
     int CTOS_ASK_RESEND = 0x27;
+    /**
+     * 断线重连（本工程扩展包号，第三方 gframe 服务器不认识此包会直接忽略）：对局进行中掉线的席位
+     * 在宽限期内用同一房间密码重新连入时发本包，请服务端把该席位接回**原对局**而不是重新入大厅。
+     * 载荷与 {@code CTOS_JoinGame} 同构以复用读写：{@code [version(u16)][pad(u16)][seat(u16)][pad(u16)][pass(u16[20])]}，
+     * 其中原本恒为 0 的 gameid 位置改填请求恢复的席位号。
+     */
+    int CTOS_RESUME_GAME = 0x28;
 
     int STOC_GAME_MSG = 0x1;
     int STOC_ERROR_MSG = 0x2;
@@ -74,6 +81,19 @@ public interface YGOProtocol {
     /** 可撤回状态（本工程扩展包号）：1 字节 [0|1]，按连接身份分别下发——1 = 本席位（或房主可
      *  代撤的范围内）存在可回退的动作锚点，客户端据此让撤回图标闪动发光提示「现在可以撤回」。 */
     int STOC_UNDO_STATE = 0x25;
+    /**
+     * 断线重连受理结果（本工程扩展包号）：服务端已把该席位接回进行中的对局，紧接着一批全量重同步
+     *（与撤回同一条 reload/refresh 链）。载荷
+     * {@code [seat(1B)][turn(1B)][currentPlayer(1B)][phase(u16 LE)]}：turn/currentPlayer/phase 为服务端
+     * 侧真值（{@code MSG_RELOAD_FIELD} 不携回合数与阶段，客户端需在重同步落地时回填）。
+     */
+    int STOC_RESUME_ACK = 0x26;
+    /**
+     * 对局内席位链路状态（本工程扩展包号）：载荷 {@code [seat(1B)][state(1B)]}，state 取
+     * {@code LINK_STATE_*}。服务端在某决斗位掉线/重连成功/宽限耗尽时发给在场其它端，
+     * 客户端据此在对应头像上显示「重连中」（转圈 + 半透黑底）/ 恢复 / 已离开。
+     */
+    int STOC_PEER_LINK_STATE = 0x27;
 
     int ERRMSG_JOINERROR = 0x1;
     int ERRMSG_DECKERROR = 0x2;
@@ -110,6 +130,18 @@ public interface YGOProtocol {
     int HOST_CAP_UNDO = 0x1;
     /** HostInfo pad[1] 能力位：bit1 = 本机服务端实现了 CTOS_ASK_RESEND（询问丢失自愈重挂）。 */
     int HOST_CAP_ASK_RESEND = 0x2;
+    /**
+     * HostInfo pad[1] 能力位：bit2 = 本机服务端实现了 CTOS_RESUME_GAME（对局中掉线的席位可在宽限期内
+     * 接回原对局）。第三方 gframe 主机不置位，客户端对其不再反复重发恢复包。
+     */
+    int HOST_CAP_RESUME = 0x4;
+
+    /** {@code STOC_PEER_LINK_STATE.state}：该席位已掉线，正在等待重连（头像转圈 + 半透黑底）。 */
+    int LINK_STATE_RECONNECTING = 0;
+    /** {@code STOC_PEER_LINK_STATE.state}：该席位已重连成功，指示解除。 */
+    int LINK_STATE_RESUMED = 1;
+    /** {@code STOC_PEER_LINK_STATE.state}：宽限期耗尽仍未重连，该席位彻底离开（本局按现有规则结算）。 */
+    int LINK_STATE_GONE = 2;
 
     int DUEL_STAGE_BEGIN = 0;
     int DUEL_STAGE_FINGER = 1;

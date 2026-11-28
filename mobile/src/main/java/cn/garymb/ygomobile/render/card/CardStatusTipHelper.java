@@ -819,6 +819,9 @@ public class CardStatusTipHelper {
      * SpecEffectOverlay 采用同一图层约定：用全屏透明、不拦截触摸的 PopupWindow（独立窗口，位于
      * GL 曲面之上）承载气泡标签，稳定显示在卡片前面，不再被遮挡。
      * <p>
+     * 已在屏时<b>就地复用同一窗口</b>（只换文字与落位），见 {@link #show}：决斗场按住浏览逐卡
+     * 跟随必须走这条路——逐张销毁重建窗口每跳一张卡就空一帧（闪断），且窗口增删拖慢 UI 线程。
+     * <p>
      * 锚定：我方卡片把气泡放在卡片「上边缘」之上；对方卡片对其视角是倒置 180° 的，其卡名/信息
      * 落在视觉下缘，故把气泡放在「下边缘上方」。卡片上下边缘由 GameFieldView.getCardScreenBounds
      * 投影得到的实际绘制四边形给出（bounds 为空时回退到触点）。字体比列表内 cardtip 小一号。
@@ -826,15 +829,32 @@ public class CardStatusTipHelper {
      */
     public static final class FieldTip {
         private static PopupWindow sWindow;
+        private static FrameLayout sRoot;
+        private static TextView sTip;
+        /** 气泡当前锚定的决斗场视图：只有同一视图上的在屏气泡才允许就地复用 */
+        private static View sAnchor;
 
         public static void show(Activity activity, View anchor, String text,
                                 float tapX, float tapY, float[] bounds, boolean mine) {
+            if (activity == null || anchor == null || text == null || text.isEmpty()) {
+                hide();
+                return;
+            }
+            final float density = activity.getResources().getDisplayMetrics().density;
+            if (isReusable(anchor)) {
+                sTip.setText(text);
+                // 显式测量后立刻重落位：不等下一轮 traversal，气泡与卡片同帧切换（无闪断）。
+                // 规格与 FrameLayout 复测一致（WRAP_CONTENT + TextView maxWidth），故实测宽高不会偏离
+                int maxW = (int) (TIP_MAX_WIDTH_DP * density + 0.5f);
+                sTip.measure(View.MeasureSpec.makeMeasureSpec(maxW, View.MeasureSpec.AT_MOST),
+                        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+                positionTip(sTip, sRoot, anchor, tapX, tapY, bounds, mine, density,
+                        sTip.getMeasuredWidth(), sTip.getMeasuredHeight());
+                return;
+            }
             hide();
-            if (activity == null || anchor == null || text == null || text.isEmpty()) return;
             View decor = activity.getWindow().getDecorView();
             if (decor == null || decor.getWindowToken() == null) return;
-
-            final float density = activity.getResources().getDisplayMetrics().density;
 
             final TextView tv = new TextView(activity);
             tv.setTextColor(Color.WHITE);
@@ -868,6 +888,9 @@ public class CardStatusTipHelper {
                 return;
             }
             sWindow = window;
+            sRoot = root;
+            sTip = tv;
+            sAnchor = anchor;
 
             // 待 PopupWindow 完成测量布局后再定位（此时 root 有真实宽高可做越界翻转钳制）
             final float[] fb = bounds;
@@ -875,23 +898,33 @@ public class CardStatusTipHelper {
             root.post(new Runnable() {
                 @Override
                 public void run() {
-                    positionTip(tv, root, anchor, tapX, tapY, fb, fm, density);
+                    positionTip(tv, root, anchor, tapX, tapY, fb, fm, density,
+                            tv.getWidth() > 0 ? tv.getWidth() : tv.getMeasuredWidth(),
+                            tv.getHeight() > 0 ? tv.getHeight() : tv.getMeasuredHeight());
                 }
             });
         }
 
+        /** 在屏气泡可否就地换内容：同一决斗场视图、窗口仍在显示且已完成首帧落位 */
+        private static boolean isReusable(View anchor) {
+            return sWindow != null && sWindow.isShowing() && sTip != null && sRoot != null
+                    && sAnchor == anchor && anchor.isAttachedToWindow()
+                    // 首帧落位前 root 还是 INVISIBLE：此时换内容会被随后排队的一次旧触点定位覆盖，
+                    // 宁可走重建路径
+                    && sRoot.getVisibility() == View.VISIBLE;
+        }
+
         private static void positionTip(TextView tv, FrameLayout root, View anchor,
                                         float tapX, float tapY, float[] bounds, boolean mine,
-                                        float density) {
-            if (sWindow == null) return;   // 已 hide()，post 回调延后触发的兜底
+                                        float density, int w, int h) {
+            // 已 hide()（含排队期间被隐藏）或本回调属于已被替换的旧气泡：不再落位
+            if (sWindow == null || sTip != tv) return;
             int[] aLoc = new int[2];
             int[] rLoc = new int[2];
             anchor.getLocationInWindow(aLoc);
             root.getLocationInWindow(rLoc);
             float margin = TIP_EDGE_MARGIN_DP * density;
             float gap = 8f * density;
-            int w = tv.getWidth() > 0 ? tv.getWidth() : tv.getMeasuredWidth();
-            int h = tv.getHeight() > 0 ? tv.getHeight() : tv.getMeasuredHeight();
             int rootW = root.getWidth();
             int rootH = root.getHeight();
 
@@ -938,6 +971,9 @@ public class CardStatusTipHelper {
                 }
                 sWindow = null;
             }
+            sRoot = null;
+            sTip = null;
+            sAnchor = null;
         }
     }
 }

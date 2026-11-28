@@ -53,7 +53,8 @@ abstract class GameFieldViewBase extends GLSurfaceView implements GLSurfaceView.
         /** 点击未命中卡片（空白处/场内阶段按钮/无卡区域）：宿主据此隐藏状态悬浮标签 */
         void onFieldBlankClick(float tapX, float tapY);
 
-        /** 长按命中卡片：x/y 为视图内触点坐标（状态悬浮标签锚定用） */
+        /** 长按命中卡片：x/y 为视图内触点坐标（状态悬浮标签锚定用）；按住不抬起移到
+         *  另一张卡时以同一回调再次下发（逐卡切换卡片详情与状态气泡，同样不做选中/不应答） */
         void onFieldLongPress(int player, int location, int sequence, float x, float y);
 
         /** 长按手势结束（抬手/取消）：宿主据此隐藏状态悬浮标签 */
@@ -550,6 +551,19 @@ abstract class GameFieldViewBase extends GLSurfaceView implements GLSurfaceView.
      */
     public void dispatchLongPress(float x, float y) {
         picker.handleLongPress(x, y);
+    }
+
+    /**
+     * 按住浏览入口（长按成立后同一手势内的 ACTION_MOVE）：手指移到另一张卡时刷新卡片详情，
+     * 与 {@link #dispatchLongPress} 同规格（不做选中、不发应答）；长按起点未命中卡片时不产生回调
+     */
+    public void dispatchLongPressMove(float x, float y) {
+        picker.handleLongPressMove(x, y);
+    }
+
+    /** 复位按住浏览登记（新按下 / 抬手、取消）：下个手势重新以长按起点卡为准 */
+    public void resetLongPressHold() {
+        if (picker != null) picker.resetLongPressHold();
     }
 
     /**

@@ -158,8 +158,10 @@ abstract class YGOProActivityEngine extends YGOProActivityUi {
         if (options != null) {
             long time = intent.getLongExtra(YGOGameOptions.YGO_GAME_OPTIONS_BUNDLE_TIME, 0);
             if (System.currentTimeMillis() - time < YGOGameOptions.TIME_OUT) {
+                // 用户规格：外部直连同样不得在连接建立当拍就进玩家等待界面——先登记“等回执”，
+                // STOC_JOIN_GAME 到达后才由 MainMenuNavigator 弹窗；失败则弹错并落到局域网主界面
+                beginDirectRoomJoin(options.mUserName);
                 joinFromOptions(options);
-                PlayerWaitingDialog.showPlayerWaitingForDirectJoin((YGOProActivity) this, options);
                 return true;
             }
         }
@@ -174,10 +176,10 @@ abstract class YGOProActivityEngine extends YGOProActivityUi {
             int port = intent.getIntExtra("port", 7911);
             String room = intent.getStringExtra("room");
             saveLastConnectionInfo(Constants.PlayerName, host, port, room, "");
+            beginDirectRoomJoin(Constants.PlayerName);
             engine.connectToServer(host, port, false,
                     room != null ? room : "", "",
                     0, 0, 5, 8000, 5, 1, 0, false, false);
-            PlayerWaitingDialog.showPlayerWaitingForDirectJoin((YGOProActivity) this, null);
             return true;
         }
 

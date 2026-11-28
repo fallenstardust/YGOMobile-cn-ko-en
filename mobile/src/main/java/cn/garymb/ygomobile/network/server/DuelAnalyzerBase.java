@@ -147,6 +147,12 @@ abstract class DuelAnalyzerBase implements YGOProtocol {
     int pendingActionQuestion;
     /** 最近一条 MSG_NEW_PHASE 的阶段值（协议侧位掩码），live 与重放均更新；供 {@link #isPhaseActivationAnchor} 判定 DP/SP。 */
     int livePhase;
+    /**
+     * 已走过的回合数（MSG_NEW_TURN 逐条 +1；{@link #beginSilentReplay} 先归零，重放到回退点停下
+     * 即回退点的回合数）。{@code MSG_RELOAD_FIELD} 不携回合数，现仅供断线重连的 STOC_RESUME_ACK
+     * 把客户端 {@code field.turnCount} 回填到服务端真值（与撤回靠 STOC_UNDO_ACK 补齐同源）。
+     */
+    int liveTurnCount;
     /** 最近一条 MSG_NEW_TURN 的当前回合玩家（协议侧，-1=未定）。live 与重放均更新。 */
     int liveTurnPlayer = -1;
     /** 是否正处于连锁结算中（MSG_CHAINING 置真、CHAIN_END/新回合/新阶段复位）；DP/SP 发动询问仅在不在连锁中才计为锚点。 */

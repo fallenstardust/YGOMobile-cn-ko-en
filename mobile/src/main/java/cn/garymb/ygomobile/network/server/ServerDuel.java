@@ -517,4 +517,61 @@ final class ServerDuel extends ServerDuelBase {
         }
         analyzer.rehangPendingQuestion("client ask-resend");
     }
+
+    // ==================================================================
+    // 断线重连（本工程扩展：STOC_RESUME_ACK / 重同步）
+    // ==================================================================
+
+    /**
+     * STOC_RESUME_ACK 载荷 {@code [seat(1B)][turn(1B)][currentPlayer(1B)][phase(u16 LE)]}。
+     * <p>回合数/当前回合玩家/阶段取分析器从实况消息持续跟踪的真值：{@code MSG_RELOAD_FIELD} 本身
+     * 不携这三项（客户端 reload 会 clear 场地），不回填则重连后回合数显示归零、阶段停在旧值，
+     * 与撤回靠 STOC_UNDO_ACK 补齐同理。
+     */
+    byte[] resumeAckPayload(int seat) {
+        int ph = analyzer.livePhase & 0xFFFF;
+        return new byte[]{(byte) seat, (byte) analyzer.liveTurnCount,
+                (byte) Math.max(analyzer.liveTurnPlayer, 0),
+                (byte) (ph & 0xFF), (byte) ((ph >> 8) & 0xFF)};
+    }
+
+    /**
+     * 重连席位接回对局后的场面重同步：复用撤回那一条全量重同步链（reload + 六个区域 refresh
+     * + 卡组翻转/封锁补齐 + 询问重挂）。不回退发动账本（不走 STOC_UNDO_ACK）、不写录像
+     *（{@code resyncAfterUndo} 全程 recordSuppressed）。
+     *
+     * <p><b>只发给重连席位</b>：其余端（含观战）的局面本来就没断，广播 reload 反而会把它们打回
+     * 零——客户端的 reload 处理先 {@code field.clear()}（回合数/阶段/区域标注归零），而
+     * {@code MSG_RELOAD_FIELD} 不携回合数，只有拿到 STOC_RESUME_ACK/STOC_UNDO_ACK 暂存值的那一端
+     * 能回填（{@code ReloadFieldBuilder} 的 undoResync 分支），没拿到的一直要等下一个
+     * MSG_NEW_TURN 才能恢复回合数。这里复用撤回为“已靠整局重放回到回退点的席位”准备的
+     * {@code undoReplaySinks}+{@code undoResyncBurst} 跳过闸门，不另写一套单席位发送路径。
+     */
+    void resyncResumedPeer(ServerConnection resumed) {
+        if (pduel == 0L) {
+            return;
+        }
+        analyzer.undoReplaySinks.clear();
+        for (int i = 0; i < room.seatCount(); i++) {
+            ServerConnection c = room.players[i];
+            // solo 下一个席位可能对应房主自己那条连接，按身份去重且绝不能跳过重连者本人
+            if (c == null || c == resumed || analyzer.undoReplaySinks.contains(c)) {
+                continue;
+            }
+            analyzer.undoReplaySinks.add(c);
+        }
+        for (ServerConnection o : room.observers) {
+            if (o != resumed && !analyzer.undoReplaySinks.contains(o)) {
+                analyzer.undoReplaySinks.add(o);
+            }
+        }
+        final List<ServerConnection> skipped = new ArrayList<>(analyzer.undoReplaySinks);
+        try {
+            analyzer.resyncAfterUndo(OcgDuelEngine.queryFieldInfo(pduel));
+            // 没有整局重放席位：仍按撤回同样延后一小段再挂询问，使重连方在路上的旧应答先落地被状态门吞掉
+            scheduleUndoQuestionHang(skipped);
+        } finally {
+            analyzer.undoReplaySinks.clear();
+        }
+    }
 }

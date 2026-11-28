@@ -492,6 +492,30 @@ public abstract class YGOProActivityBase extends AppCompatActivity {
     }
 
     /**
+     * STOC_JOIN_GAME 已到达：由 {@code EngineCallbackDelegate.onJoinGame} 转发。只有真正入房后
+     * 才隐去来源弹窗并弹出玩家等待界面（对齐 gframe：wHostPrepare 随 Handle_STOC_JOIN_GAME 出现）。
+     */
+    void onRoomJoinAck() {
+        if (menuNav != null) menuNav.onRoomJoined();
+    }
+
+    /**
+     * 建立连接/入房失败（等待回执期间收到 DISCONNECTED）：恢复局域网/建主弹窗按钮并留在原界面。
+     *
+     * @return true 表示本次失败已由弹窗入口收尾，调用方不再走 {@code returnToLanMain} 换界面
+     */
+    boolean onLanJoinAborted() {
+        return menuNav != null && menuNav.onRoomJoinAborted();
+    }
+
+    /**
+     * 外部 uri / 卡商页直连入口：登记“等到 STOC_JOIN_GAME 才进等待界面”后再后台连接
+     */
+    void beginDirectRoomJoin(String nickname) {
+        if (menuNav != null) menuNav.beginDirectRoomJoin(nickname);
+    }
+
+    /**
      * 集中决策当前场景 BGM 并交 SoundManager 播放（实现见 {@link BgmSceneController}），
      * 必须在主线程调用。
      */

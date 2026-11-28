@@ -279,6 +279,24 @@ class UndoClientCoordinator {
         return true;
     }
 
+    /**
+     * 断线重连接回原席位后的重同步登记（与撤回共用 {@link #applyUndoResync} 落点）：只把服务端的
+     * 回合/当前玩家/阶段留给紧接着的 MSG_RELOAD_FIELD 消费。
+     * <p>与撤回的两点关键区别：①{@code chainEvents} 置 -1——局面没有往回走，绝不能剪除发动账本
+     * 与召唤誓约；②不设应答屏障也不作废录像段（旧询问由服务端重挂后原样待答，本端只是补齐了
+     * 缺的那一段刷新）。
+     */
+    void onLinkResumeAck(int turn, int currentPlayer, int phase) {
+        undoResyncTurn = turn;
+        undoResyncPlayer = currentPlayer;
+        undoResyncPhase = phase;
+        undoResyncChainEvents = -1;
+        undoKeptChainEvents = -1;
+        undoResyncLatchAtMs = System.currentTimeMillis();
+        // reload 紧随本包排在服务端下行队列里，不按「ACK 未到」窗口自愈
+        undoReloadQueued = true;
+    }
+
     void clearUndoResync() {
         resetUndoResyncLatch();
         lastUndoSentAt = 0L;

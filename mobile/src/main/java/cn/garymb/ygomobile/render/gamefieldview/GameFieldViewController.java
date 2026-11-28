@@ -18,6 +18,7 @@ import cn.garymb.ygomobile.loader.ImageLoader;
  * <p>
  * 监听统一收口：GameFieldView 的所有监听（卡片/区域点击与长按、阶段按钮、相机变化）
  * 均以本控制器自身实现注册，手势识别（GestureDetector）也由本控制器持有；
+ * 长按成立后的手指移动（按住浏览逐卡切换卡片详情）同样在本处的 OnTouchListener 中驱动。
  * 业务方（GameFieldController 等）注册委托回调，全部回调调用经此中转。
  */
 public class GameFieldViewController
@@ -32,6 +33,15 @@ public class GameFieldViewController
     private GameFieldView.OnCardClickListener cardClickDelegate;
     private GameFieldView.OnPhaseButtonListener phaseButtonDelegate;
     private Runnable cameraChangedDelegate;
+
+    /**
+     * 本次手势的长按已成立（按住浏览中）：后续的 ACTION_MOVE 交给视图做逐卡切换详情。
+     * <p>抬手/取消不复位，只在下一次 ACTION_DOWN 复位：长按成立后同一手势的抬手可能被
+     * GestureDetector 再补一个 onSingleTapUp（部分厂商 ROM 行为），那个回调在本标志复位前
+     * 就会到达，若在抬手处清掉它，抬手点会重新走 handleTap——选中卡片、在选卡会话里发出应答，
+     * 违反“长按只查看、不做选中对象”的用户规格（见 {@link #onSingleTapUpForHold()}）。
+     */
+    private boolean detailHoldActive;
 
     /**
      * 相机变化内部代理：只向视图注册一次，触发时转发给可随时替换的业务委托
@@ -57,7 +67,8 @@ public class GameFieldViewController
 
     /**
      * 手势识别（原 GameFieldView 内部匿名监听）迁移至此：
-     * 点按/长按在本控制器识别，再回调视图拾取入口（dispatchTap/dispatchLongPress）
+     * 点按/长按在本控制器识别，再回调视图拾取入口（dispatchTap/dispatchLongPress）；
+     * 长按成立后的同手势移动走 {@link GameFieldView#dispatchLongPressMove} 实现按住逐卡切换卡片详情
      */
     private void setupGestureHandling(Activity activity) {
         gestureDetector = new GestureDetector(activity, new GestureDetector.SimpleOnGestureListener() {
@@ -70,6 +81,8 @@ public class GameFieldViewController
 
             @Override
             public boolean onSingleTapUp(MotionEvent e) {
+                // 本次手势长按已成立：抬手不再走点按拾取（不选中、不发应答）
+                if (onSingleTapUpForHold()) return true;
                 fieldView.dispatchTap(e.getX(), e.getY());
                 return true;
             }
@@ -77,6 +90,9 @@ public class GameFieldViewController
             @Override
             public void onLongPress(MotionEvent e) {
                 fieldView.dispatchLongPress(e.getX(), e.getY());
+                // 起点命中卡片时视图已登记该卡（见 FieldTouchPicker#handleLongPress），
+                // 此后按住移动即逐卡切换详情；起点在空白处时移动入口自行忽略
+                detailHoldActive = true;
             }
         });
         fieldView.setOnTouchListener((v, event) -> {
@@ -86,11 +102,31 @@ public class GameFieldViewController
                 // 外部派发点（Activity / 弹窗包装层）手势落定时不再补取消（用户规格：只有
                 // 点到卡片以外的其它 UI 才取消选中），也避免点手卡时先降后升的抬升抖动
                 GameFieldController.notifyFieldViewDown();
-            }
-            if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL)
+                detailHoldActive = false;
+                fieldView.resetLongPressHold();
+            } else if (action == MotionEvent.ACTION_POINTER_DOWN) {
+                // 第二指落下即结束按住浏览：多指手势不再逐卡切换详情
+                detailHoldActive = false;
+                fieldView.resetLongPressHold();
+            } else if (action == MotionEvent.ACTION_MOVE) {
+                if (detailHoldActive) {
+                    fieldView.dispatchLongPressMove(event.getX(), event.getY());
+                }
+            } else if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
                 fieldView.dispatchPhaseButtonPressEnd();
+                // 本次按住浏览结束（detailHoldActive 留到下次按下，拦住抬手补发的 onSingleTapUp）
+                fieldView.resetLongPressHold();
+            }
             return gestureDetector.onTouchEvent(event);
         });
+    }
+
+    /**
+     * 抬手点按拦截：长按已成立（本次手势处于按住浏览）时返回 true，调用方不再派发点按拾取。
+     * 只在长按成立的手势中拦住这一次抬手，不干扰随后的正常点击。
+     */
+    private boolean onSingleTapUpForHold() {
+        return detailHoldActive;
     }
 
     public void init(GameField field, ImageLoader imageLoader, GameFieldView.OnCardClickListener listener) {

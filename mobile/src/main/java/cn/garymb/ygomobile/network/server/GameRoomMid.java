@@ -57,7 +57,7 @@ abstract class GameRoomMid extends GameRoomBase {
         //（gframe 等第三方服务端该 3 字节为未定义填充，不会凑出这个魔术字节）。
         // TAG 同样开放撤回：整局重放重同步已按“多个重放席位”实现，与纯单人 TAG 体验一致。
         hostInfo.extMagic = HOST_EXT_MAGIC;
-        hostInfo.extCaps = HOST_CAP_UNDO | HOST_CAP_ASK_RESEND;
+        hostInfo.extCaps = HOST_CAP_UNDO | HOST_CAP_ASK_RESEND | HOST_CAP_RESUME;
         roomName = BufferIO.readUTF16(body, 20);
         roomPass = BufferIO.readUTF16(body, 20);
         conn.host = true;
@@ -228,7 +228,147 @@ abstract class GameRoomMid extends GameRoomBase {
             // 从未入座，直接丢弃
             return;
         }
+        // 对局进行中的意外掉线不再立刻判负（用户规格）：先把席位留在宽限期内等同一玩家重连，
+        // 并向其它端下发「该席位正在重连」指示（头像转圈 + 半透黑底）；主动退出（CTOS_LEAVE_GAME）
+        // 不经本路，仍按原规则立即离开
+        if (holdDetachedSeat(conn)) {
+            return;
+        }
         leaveGame(conn);
+    }
+
+    /**
+     * 把刚掉线的决斗位按原席位号保留在宽限期内。
+     *
+     * <p>为什么保留连接对象而不是置空 {@code players[seat]}：引擎、区域刷新与询问挂回全部靠
+     * {@code room.duelPlayer(team)} 解席位，置空会让服务端认为“无人在答”而挂不住询问，回不来也重挂不了；
+     * 保留并用 {@code linkDetached} 屏蔽写入，则引擎对同一席位的一切下行都是空操作，局面自然停在
+     * 掉线那一刻（限时局仍按原有计时走到超时判负，与 C++ 一致）。
+     *
+     * <p>房主连接掉线不保留：房主就是建主端自己，它没了意味着本机正在退出/停服，重连无意义。
+     *
+     * @return true 表示本席位已进入重连宽限期（调用方不得再走离开流程）
+     */
+    private boolean holdDetachedSeat(ServerConnection dp) {
+        if (dp == hostPlayer || duel == null) {
+            return false;
+        }
+        final int seat = dp.type;
+        if (seat == NETPLAYER_TYPE_OBSERVER || seat >= seatCount()) {
+            return false;
+        }
+        if (duelStage != DUEL_STAGE_FINGER && duelStage != DUEL_STAGE_FIRSTGO
+                && duelStage != DUEL_STAGE_DUELING && duelStage != DUEL_STAGE_SIDING) {
+            return false;
+        }
+        dp.linkDetached = true;
+        detachedAtMs[seat] = System.currentTimeMillis();
+        Log.i(TAG, "席位 " + seat + "（" + displayName(dp) + "）掉线，保留 "
+                + (RESUME_GRACE_MS / 1000L) + "s 等待重连");
+        notifyPeerLinkState(seat, LINK_STATE_RECONNECTING);
+        broadcastSystemChat(displayName(dp) + " 连接中断，正在尝试重连…");
+        server.scheduleDetachedSeatExpiry(this, seat);
+        return true;
+    }
+
+    /** 向在场其它端广播某席位的链路状态（观战同步可见：他们不显示头像指示但聊天流里有通报）。 */
+    void notifyPeerLinkState(int seat, int state) {
+        byte[] payload = new byte[]{(byte) seat, (byte) state};
+        for (int i = 0; i < seatCount(); i++) {
+            ServerConnection c = players[i];
+            if (c != null && i != seat) {
+                c.send(STOC_PEER_LINK_STATE, payload);
+            }
+        }
+        for (ServerConnection o : observers) {
+            o.send(STOC_PEER_LINK_STATE, payload);
+        }
+    }
+
+    /**
+     * 宽限期耗尽仍未重连：按原有的“对手离开”收尾（席位置空、对局结束并结算），同时通知其它端
+     * 指示可以收回。由 {@link LanGameServer#scheduleDetachedSeatExpiry} 延时投递到房间执行器，
+     * 已重连（{@code detachedAtMs[seat]} 已清零）或席位已换人时空转。
+     */
+    void onDetachedSeatExpired(int seat) {
+        if (seat < 0 || seat >= detachedAtMs.length || detachedAtMs[seat] == 0L) {
+            return;
+        }
+        ServerConnection dp = players[seat];
+        detachedAtMs[seat] = 0L;
+        Log.i(TAG, "席位 " + seat + " 重连宽限期耗尽，按离开处理");
+        notifyPeerLinkState(seat, LINK_STATE_GONE);
+        if (dp == null) {
+            return;
+        }
+        dp.linkDetached = false;
+        broadcastSystemChat(displayName(dp) + " 重连超时，已离开房间");
+        if (duel != null) {
+            duel.onOpponentLeft(dp);
+        } else {
+            players[seat] = null;
+            ready[seat] = false;
+        }
+        dp.close();
+    }
+
+    /**
+     * CTOS_RESUME_GAME（本工程扩展）：掉线席位带原席位号与房间密码重新连入，把它接回进行中的对局。
+     * <p>身份核对只用房间密码（与加入同一凭证）：同一设备上重连的昵称可能与掉线前不同（玩家改过
+     * 名字），强行比对昵称会把正常重连拒之门外；席位号+密码已足以限定“只能接回自己原来那一席”。
+     * 昵称与掉线前不一致时只记日志不拒。
+     */
+    void resumeGame(ServerConnection conn, ByteBuffer body) {
+        if (body == null || body.remaining() < 48) {
+            conn.close();
+            return;
+        }
+        int version = body.getShort() & 0xFFFF;
+        body.getShort(); // padding u16
+        int seat = body.getShort() & 0xFFFF;
+        body.getShort(); // padding u16（CTOS_JoinGame 的 gameid 高 16 位）
+        String pass = BufferIO.readUTF16(body, 20);
+        if (version != Constants.PRO_VERSION || !pass.equals(roomPass)
+                || seat >= seatCount() || detachedAtMs[seat] == 0L) {
+            Log.w(TAG, "resume 被拒: seat=" + seat + " version=" + version
+                    + " detached=" + (seat < detachedAtMs.length ? detachedAtMs[seat] : -1));
+            sendError(conn, ERRMSG_JOINERROR, 2);
+            conn.close();
+            return;
+        }
+        ServerConnection dead = players[seat];
+        if (dead != null && !dead.name.equals(conn.name)) {
+            Log.i(TAG, "resume 昵称与掉线前不同（" + dead.name + " → " + conn.name + "），仍按席位接回");
+        }
+        if (conn.name == null || conn.name.isEmpty()) {
+            conn.name = dead != null ? dead.name : "";
+        }
+        detachedAtMs[seat] = 0L;
+        // 新连接替下已断的连接：席位表与开局前席位/TAG 行动席位一并换人，后续下行全部走新 socket
+        if (dead != null) {
+            dead.linkDetached = false;
+            for (int i = 0; i < pplayer.length; i++) {
+                if (pplayer[i] == dead) pplayer[i] = conn;
+            }
+            for (int i = 0; i < curPlayer.length; i++) {
+                if (curPlayer[i] == dead) curPlayer[i] = conn;
+            }
+        }
+        players[seat] = conn;
+        conn.type = seat;
+        conn.host = dead != null && dead.host;
+        conn.state = ServerConnection.STATE_FREE;
+        // 回执本人席位与服务端侧真值（回合/当前玩家/阶段），紧接的重同步批靠本包补齐；
+        // duel 为空（理论上进不到本分支，掉线保留只对存在的对局生效）时给零值而不是 null，
+        // 以免客户端因包长不足而丢弃回执、始终收不到接回确认只能始终转圈到重试超时
+        conn.send(STOC_RESUME_ACK, duel != null ? duel.resumeAckPayload(seat)
+                : new byte[]{(byte) seat, 0, 0, 0, 0});
+        conn.send(STOC_TYPE_CHANGE, new byte[]{(byte) ((conn.host ? 0x10 : 0) | seat)});
+        notifyPeerLinkState(seat, LINK_STATE_RESUMED);
+        broadcastSystemChat(displayName(conn) + " 已重新连接");
+        if (duel != null) {
+            duel.resyncResumedPeer(conn);
+        }
     }
 
     // ==================================================================

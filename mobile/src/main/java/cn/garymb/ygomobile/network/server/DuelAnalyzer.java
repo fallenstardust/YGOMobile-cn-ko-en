@@ -413,6 +413,9 @@ final class DuelAnalyzer extends DuelAnalyzerBase {
                     cursor++;
                     // live 与重放均记录当前回合玩家（协议侧）与连锁态，供 DP/SP 发动锚点判定（见 isPhaseActivationAnchor）
                     liveTurnPlayer = msg[start + 1] & 0xFF;
+                    // 回合数同样 live/重放共用计数（beginSilentReplay 先归零，重放到回退点停下即回退点回合数）：
+                    // 供断线重连的 STOC_RESUME_ACK 回填客户端 field.turnCount
+                    liveTurnCount++;
                     liveChainActive = false;
                     if (silent) {
                         // 重放只统计回合数与回合方，不重置限时（由 ServerDuel 从弹出步的快照回填）

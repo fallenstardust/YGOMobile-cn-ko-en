@@ -12,6 +12,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
@@ -73,6 +74,16 @@ public class DuelClient implements YGOProtocol {
          * 0 = 无可撤回动作（刚开局、或本段只有抽卡/连锁等被动应答），图标不亮。
          */
         default void onUndoState(int canUndo) {}
+        /**
+         * STOC_RESUME_ACK（本工程扩展）：本席位在掉线后被服务端接回原对局。seat 为服务端确认的席位号，
+         * turn/currentPlayer/phase 为服务端侧真值（随后一批 MSG_RELOAD_FIELD 不携这三项，由上层回填）。
+         */
+        default void onResumeAck(int seat, int turn, int currentPlayer, int phase) {}
+        /**
+         * STOC_PEER_LINK_STATE（本工程扩展）：某席位在对局中的链路状态，state 取
+         * {@code YGOProtocol.LINK_STATE_*}（0=掉线重连中、1=已重连、2=宽限耗尽已离开）。
+         */
+        default void onPeerLinkState(int seat, int state) {}
         void onJoinGame(int lflist, int rule, int mode, int duelRule,
                         int noCheckDeck, int noShuffleDeck,
                         int startLp, int startHand, int drawCount, int timeLimit,
@@ -97,6 +108,19 @@ public class DuelClient implements YGOProtocol {
 
     public int selfType = -1;
 
+    /**
+     * 本次断开是否由本机主动 {@link #disconnect()} 触发（对齐 C++ {@code close_reason}）：
+     * 读线程因异常收尾或写失败时保持 false，上层据此区分「用户退出」与「链路中断需重连」。
+     */
+    private volatile boolean userClosed;
+
+    /**
+     * 最后一次 {@link #connect} 失败是否卡在地址解析（主机名写错/内网 DNS 不可达）：
+     * 对齐 C++ {@code menu_handler.cpp BUTTON_JOIN_HOST} 先 {@code ResolveHostName} 失败弹 sys 1412、
+     * 而 {@code StartClient} 失败才弹 sys 1400 的两步区分。
+     */
+    private volatile boolean lastResolveFailed;
+
     public void setListener(ClientListener listener) {
         this.listener = listener;
     }
@@ -105,9 +129,22 @@ public class DuelClient implements YGOProtocol {
         return connected.get();
     }
 
+    /** 最后一次断开是否本机主动发起（false = 链路异常中断，可能需要重连） */
+    public boolean wasUserClosed() {
+        return userClosed;
+    }
+
+    /** 最后一次连接失败是否为地址解析失败（供上层在 sys 1412 与 1400 之间取舍） */
+    public boolean wasLastConnectResolveFailure() {
+        return lastResolveFailed;
+    }
+
     public boolean connect(String host, int port) {
+        userClosed = false;
+        lastResolveFailed = false;
         if (connected.get()) {
             disconnect();
+            userClosed = false;
         }
         try {
             socket = new Socket();
@@ -128,6 +165,20 @@ public class DuelClient implements YGOProtocol {
                 if (listener != null) listener.onConnected();
             });
             return true;
+        } catch (UnknownHostException e) {
+            // 主机名解析不出地址：与 C++ ResolveHostName 失败同一处理（上层报 sys 1412）
+            lastResolveFailed = true;
+            Log.e(TAG, "Resolve/connect failed: " + host, e);
+            mainHandler.post(() -> {
+                if (listener != null) listener.onError("无法解析主机地址: " + e.getMessage());
+            });
+            return false;
+        } catch (SocketTimeoutException e) {
+            Log.e(TAG, "Connect timeout", e);
+            mainHandler.post(() -> {
+                if (listener != null) listener.onError("连接超时: " + e.getMessage());
+            });
+            return false;
         } catch (IOException e) {
             Log.e(TAG, "Connect failed", e);
             mainHandler.post(() -> {
@@ -138,6 +189,19 @@ public class DuelClient implements YGOProtocol {
     }
 
     public void disconnect() {
+        userClosed = true;
+        closeLink();
+    }
+
+    /**
+     * 链路因异常中断（读线程报错/写失败）：与主动断开走同一套收尾，但不置 {@code userClosed}，
+     * 使上层能把本次 {@code onDisconnected} 识别为「掉线」并进入重连而不是退界面。
+     */
+    private void closeLinkByError() {
+        closeLink();
+    }
+
+    private void closeLink() {
         if (!running.compareAndSet(true, false)) {
             return;
         }
@@ -190,7 +254,7 @@ public class DuelClient implements YGOProtocol {
             }
         } finally {
             if (running.get()) {
-                disconnect();
+                closeLinkByError();
             }
         }
     }
@@ -288,6 +352,12 @@ public class DuelClient implements YGOProtocol {
                 case STOC_UNDO_STATE:
                     handleUndoState(buf);
                     break;
+                case STOC_RESUME_ACK:
+                    handleResumeAck(buf);
+                    break;
+                case STOC_PEER_LINK_STATE:
+                    handlePeerLinkState(buf);
+                    break;
                 case STOC_TP_RESULT:
                 case STOC_LEAVE_GAME:
                 case STOC_FIELD_FINISH:
@@ -382,6 +452,22 @@ public class DuelClient implements YGOProtocol {
         if (listener != null) {
             listener.onUndoState(canUndo);
         }
+    }
+
+    /** STOC_RESUME_ACK 载荷：{@code [seat][turn][currentPlayer][phase(u16 LE)]}（本工程扩展）。 */
+    private void handleResumeAck(ByteBuffer buf) {
+        if (buf.remaining() < 5 || listener == null) return;
+        int seat = buf.get() & 0xFF;
+        int turn = buf.get() & 0xFF;
+        int currentPlayer = buf.get() & 0xFF;
+        int phase = buf.getShort() & 0xFFFF;
+        listener.onResumeAck(seat, turn, currentPlayer, phase);
+    }
+
+    /** STOC_PEER_LINK_STATE 载荷：{@code [seat][state]}（本工程扩展）。 */
+    private void handlePeerLinkState(ByteBuffer buf) {
+        if (buf.remaining() < 2 || listener == null) return;
+        listener.onPeerLinkState(buf.get() & 0xFF, buf.get() & 0xFF);
     }
 
     private void handleChat(ByteBuffer buf) {
@@ -487,6 +573,21 @@ public class DuelClient implements YGOProtocol {
         buf.putShort((short) 0);
         buf.putInt(0);
         BufferIO.writeUTF16(buf, pass, 20);
+        sendRaw(BufferIO.finalizePacket(buf));
+    }
+
+    /**
+     * CTOS_RESUME_GAME（本工程扩展）：对局中掉线后带原席位号与房间密码请求接回原对局。
+     * 载荷与 {@link #sendJoinGame} 同构，只把原本恒为 0 的 gameid 低 16 位填成请求席位号，
+     * 服务端据此把新连接替下已断的那条。
+     */
+    public void sendResumeGame(int seat, String pass) {
+        ByteBuffer buf = BufferIO.createPacket(CTOS_RESUME_GAME);
+        buf.putShort((short) Constants.PRO_VERSION);
+        buf.putShort((short) 0);
+        buf.putShort((short) seat);
+        buf.putShort((short) 0);
+        BufferIO.writeUTF16(buf, pass == null ? "" : pass, 20);
         sendRaw(BufferIO.finalizePacket(buf));
     }
 
@@ -610,7 +711,7 @@ public class DuelClient implements YGOProtocol {
                 }
             } catch (IOException e) {
                 Log.e(TAG, "Send failed", e);
-                disconnect();
+                closeLinkByError();
             }
         });
     }
@@ -650,6 +751,8 @@ public class DuelClient implements YGOProtocol {
             case STOC_TEAMMATE_SURRENDER: return "STOC_TEAMMATE_SURRENDER";
             case STOC_UNDO_ACK: return "STOC_UNDO_ACK";
             case STOC_UNDO_STATE: return "STOC_UNDO_STATE";
+            case STOC_RESUME_ACK: return "STOC_RESUME_ACK";
+            case STOC_PEER_LINK_STATE: return "STOC_PEER_LINK_STATE";
             default: return "UNKNOWN_STOC";
         }
     }

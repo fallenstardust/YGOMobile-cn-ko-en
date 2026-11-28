@@ -18,6 +18,7 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
@@ -247,6 +248,8 @@ public class GameTopInfoManager extends GameTopInfoManagerBase {
     public void reset() {
         stopTimer();
         stopUndoPulse();
+        // 新一局/重进决斗：上一局的链路状态不得带入（服务端宽限期内的指示属于上一场会话）
+        clearLinkStates();
         // 新一局/重进决斗：上一局的持续适用条目不再成立，徽标与下拉列表一并收口
         resetApplyingHints();
         ContinuousEffectApplier.clearCache();
@@ -306,7 +309,64 @@ public class GameTopInfoManager extends GameTopInfoManagerBase {
         stopTimer();
         stopUndoPulse();
         resetApplyingHints();
+        // 离场/退出决斗 UI：重连指示一并收回，不得残留到下一局
+        clearLinkStates();
         if (layoutTopInfo != null) layoutTopInfo.setVisibility(View.GONE);
+    }
+
+    // === 断线重连指示（用户规格：该侧头像上转圈 + 半透黑底）===
+    /** 我方/对方头像框上的重连叠层（懒建，不进 XML：横竖屏两套布局同一 id，代码建一次两处生效） */
+    private View linkMaskSelf;
+    private View linkMaskPeer;
+
+    /**
+     * 某侧席位的链路状态（side：0=我方含 tag 队友、1=对方）：重连期间在该侧头像框上叠
+     * 半透黑底 + 转圈，接回/放弃即解除。
+     * <p>图层：叠层是头像框（普通 View）的子视图，与头像同在 HUD 带内——GameFieldView 虽为
+     * setZOrderOnTop(true)，但相机已按 topInset 让场地内容避开这条带，此处 GL 像素全透明，
+     * 普通 View 照旧可见（头像/昵称/血条同为本带内容），无需另起 PopupWindow。
+     */
+    public void setLinkState(int side, boolean lost) {
+        View box = side == 0 ? layoutPlayerAvatarBox : layoutOpponentAvatarBox;
+        if (box == null) return;
+        View mask = ensureLinkMask(box, side);
+        if (mask == null) return;
+        mask.setVisibility(lost ? View.VISIBLE : View.GONE);
+    }
+
+    /**
+     * 懒建并挂载某一侧的重连叠层。头像框本身就是 FrameLayout（头像 + 头像框 + 持续适用徽标），
+     * 叠层加在最后即绘制在它们之上；旋转重建后 box 是新实例，按 parent 归属判定重建。
+     */
+    private View ensureLinkMask(View box, int side) {
+        View existing = side == 0 ? linkMaskSelf : linkMaskPeer;
+        if (existing != null && existing.getParent() == box) return existing;
+        if (existing != null && existing.getParent() instanceof ViewGroup) {
+            ((ViewGroup) existing.getParent()).removeView(existing);
+        }
+        FrameLayout mask = new FrameLayout(activity);
+        mask.setBackgroundColor(0x99000000);        // 半透黑底（用户规格）
+        ProgressBar ring = new ProgressBar(activity, null,
+                android.R.attr.progressBarStyleSmall);
+        ring.setIndeterminate(true);
+        mask.addView(ring, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                Gravity.CENTER));
+        mask.setVisibility(View.GONE);
+        // 头像框字段按 View 声明（与其他 top_info 视图一致），这里回到 ViewGroup 加子视图
+        if (box instanceof ViewGroup) {
+            ((ViewGroup) box).addView(mask, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        }
+        if (side == 0) linkMaskSelf = mask;
+        else linkMaskPeer = mask;
+        return mask;
+    }
+
+    /** 解除两侧重连指示（新一局准备/离场）：头像不留残影。 */
+    public void clearLinkStates() {
+        if (linkMaskSelf != null) linkMaskSelf.setVisibility(View.GONE);
+        if (linkMaskPeer != null) linkMaskPeer.setVisibility(View.GONE);
     }
 
     /** 我方 LP 血条实测宽度（聊天消息最大宽度基准，对齐 drawing.cpp 玩家聊天 maxwidth） */

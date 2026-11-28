@@ -134,6 +134,13 @@ public class GameEngine {
 
         /** 回放重排（上一步/从头重放）渲染冻结屏障：hold=true 同时冻结 GL 渲染（重算权威态期间保留当前帧不上屏）并抑制/清空 SpecEffectOverlay 居中特效；hold=false 落点后统一解除（驱动逆向补间与恢复正常特效接收）；默认空实现 */
         default void onReplayRenderHold(boolean hold) {}
+
+        /**
+         * 对局内链路状态（断线重连，用户规格）：side 为本地视角（0=我方含 tag 队友、1=对方），
+         * lost=true 表示该侧席位与主机的链路已中断、正在重连（服务端宽限期内）。
+         * 宿主据此在该侧头像上叠转圈动画 + 半透黑底；lost=false 即收回。
+         */
+        default void onLinkStateChanged(int side, boolean lost) {}
     }
 
     // 核心状态与基础设施（协作类经 engine. 引用访问：同包类用包级私有，network 包的 DuelStocHandler 需 public）
@@ -187,6 +194,17 @@ public class GameEngine {
     public boolean serverCapsUndo = false;
     /** 服务端支持 CTOS_ASK_RESEND（YGOProtocol.HOST_CAP_ASK_RESEND） */
     public boolean serverCapsAskResend = false;
+    /** 服务端支持 CTOS_RESUME_GAME（YGOProtocol.HOST_CAP_RESUME）：对局中掉线可接回原席位 */
+    public boolean serverCapsResume = false;
+    /** 本端与主机的链路已中断、正在重连中（用户规格：我方头像转圈 + 半透黑底） */
+    public volatile boolean selfLinkLost;
+    /** 对局中对方（含 tag 对手队）席位正在重连：下标为本地视角侧，0=我方、1=对方 */
+    public final boolean[] peerLinkLost = new boolean[2];
+    /**
+     * 本次断线反馈已由重连流程自身的知会（sys 1502/1405）送达：置位一次供界面在
+     * DISCONNECTED 返回流程里消耗，不再叠加同义的“与服务器连接已断开” toast。
+     */
+    public volatile boolean linkLossNoticeShown;
     /** 服务端确认存在可回退锚点（STOC_UNDO_STATE） */
     public boolean undoAvailable = false;
     /** 撤回一次性闩锁：发出 CTOS_UNDO 置位，「上一次撤回的全量重同步已落地」（UndoClientCoordinator
@@ -499,6 +517,73 @@ public class GameEngine {
      *  botCommands/deckFiles 按下标一一对应待拉起的人机席位（TAG 为 3 席） */
     public void launchWindBot(String host, int port, List<String> botCommands, List<String> deckFiles) {
         connection.launchWindBot(host, port, botCommands, deckFiles);
+    }
+
+    /** STOC_JOIN_GAME 已到达（由 {@code DuelStocHandler} 调用）：作废「等待入房回执」看门狗。
+     * <p>对齐 gframe：C++ 在 {@code StartClient} 只对加入他人主机布 5s {@code connect_timeout_event}，
+     * 而 {@code ConnectTimeout} 以 {@code CONNECT_STATE_JOINED} 为准早退；本处把「已入房」记在
+     * 收到 JOIN_GAME 那一刻，连接成功但未入房同样能在限时内报回局域网界面。
+     */
+    public void notifyJoinAck() {
+        connection.notifyJoinAck();
+    }
+
+    /**
+     * 已连上但未收到 STOC_JOIN_GAME 时链路断开（实现见 ConnectionManager）：按 C++
+     * {@code ClientEvent(BEV_EVENT_EOF|ERROR)} 同一分支弹 sys 1402 类文案。
+     *
+     * @return true 表示本次断开发生在入房阶段（界面停在局域网/建主弹窗，不进等待界面）
+     */
+    public boolean onJoinLinkLost() {
+        return connection.onJoinLinkLost();
+    }
+
+    /** 取 gframe 既有系统串作知会文案（实现见 ConnectionManager）：供 network 包构造连接/入房失败文本 */
+    public String sysNotice(int sysId, String fallback) {
+        return connection.sysNotice(sysId, fallback);
+    }
+
+    /**
+     * 对局中本端与主机的链路中断（读线程报错/写失败，或求援用尽的应答无响应）：
+     * 尝试带原席位号接回原对局，实现见 {@code ConnectionManager#beginLinkResume}。
+     *
+     * @return true 表示已进入重连（调用方不得再按断线退界面）
+     */
+    public boolean beginLinkResume(String reason) {
+        return connection.beginLinkResume(reason);
+    }
+
+    /** STOC_RESUME_ACK：服务端已把本席位接回原对局（重同步批紧接在后） */
+    public void onResumeAck(int seat, int turn, int currentPlayer, int phase) {
+        connection.onServerResumeAck(seat, turn, currentPlayer, phase);
+    }
+
+    /** STOC_PEER_LINK_STATE：某席位掉线/重连成功/宽限耗尽 */
+    public void onPeerLinkState(int seat, int state) {
+        connection.onServerPeerLinkState(seat, state);
+    }
+
+    /**
+     * 重连期间收到 {@code ERRMSG_JOINERROR}（服务端已不再保留本席位）：终止重连并按断线收尾。
+     *
+     * @return true 表示该错误已被重连流程消费，调用方不再另弹错
+     */
+    public boolean onLinkResumeRefused() {
+        return connection.onLinkResumeRefused();
+    }
+
+    /** 作废进行中的重连尝试与各席链路标志（新连接建立/主动断开） */
+    public void resetLinkStates() {
+        connection.resetLinkStates();
+    }
+
+    /**
+     * 重连成功后把服务端侧的回合/当前玩家/阶段登记待回填：与撤回共用同一个
+     *「下一次 MSG_RELOAD_FIELD 落地时消费」入口（reload 不携这三项）；与撤回不同的是
+     * chainEvents 走 -1 分支，即局面并未往回走，发动账本/召唤誓约一律不回退。
+     */
+    public void applyResumeAckState(int turn, int currentPlayer, int phase) {
+        undoCoord.onLinkResumeAck(turn, currentPlayer, phase);
     }
 
     // ==== 录像回放控制（实现见 ConnectionManager） ====

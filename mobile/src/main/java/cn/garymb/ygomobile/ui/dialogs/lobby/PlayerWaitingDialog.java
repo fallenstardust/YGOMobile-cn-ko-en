@@ -193,25 +193,9 @@ public class PlayerWaitingDialog extends PlayerWaitingDialogMid {
                 });
         dialog.show();
     }
-    // === 静态入口：由 YGOProActivity 调用（直连/人机直接进入玩家等待界面） ===
-
-    public static void showPlayerWaitingForDirectJoin(YGOProActivity activity, YGOGameOptions options) {
-        activity.hideGameUI();
-        String name = Constants.PlayerName;
-        if (options != null && options.mUserName != null && !options.mUserName.isEmpty()) {
-            name = options.mUserName;
-        }
-        final String playerName = name;
-        View anchor = activity.getDialogContainer();
-        anchor.post(() -> {
-            if (activity.isFinishing() || activity.isDestroyed()) return;
-            PlayerWaitingDialog dialog = new PlayerWaitingDialog(activity, activity.getPlayerWaitingListener());
-            activity.setPlayerWaitingDialog(dialog);
-            dialog.setOnDismissListener(() -> activity.getMainMenuDialog().restoreMainMenu());
-            dialog.show(anchor);
-            dialog.setPlayerName(0, playerName);
-        });
-    }
+    // === 静态入口：由 YGOProActivity 调用（人机/纯单人建主直接进入玩家等待界面）===
+    // 局域网加入/建主与外部 uri 直连不再走本类静态入口：它们由 MainMenuNavigator 在收到
+    // STOC_JOIN_GAME 回执后才弹窗（用户规格：连接失败不得进入等待界面）
 
     public static void showPlayerWaitingForBotHost(YGOProActivity activity) {
         activity.hideGameUI();

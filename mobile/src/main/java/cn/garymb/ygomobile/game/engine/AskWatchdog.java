@@ -21,6 +21,14 @@ class AskWatchdog {
     private static final long ASK_PROBE_INTERVAL_MS = 1500L;
     /** 看门狗复查周期。 */
     private static final long ASK_WATCHDOG_TICK_MS = 500L;
+    /**
+     * 不依赖服务端求援能力的链路卡死判定窗口：本端答完之后既没有新询问也没有等待提示
+     * 达此时长，即认为与主机的链路已经不通，转入断线重连。
+     * <p>取宽于求援窗口（2.5s）的 8s，是为了把“服务端只是慢/求援能修好”与“链路已断”分开；
+     * 它不会误伤对方长考：引擎在等别人应答时一定会向本端下发 MSG_WAITING，而等待提示同样
+     * 刷新 {@link #lastAskRxAt}（与求援判据同源）。
+     */
+    private static final long LINK_STUCK_MS = 8000L;
 
     private volatile long lastAskRxAt;
     /**
@@ -49,11 +57,19 @@ class AskWatchdog {
                 return;
             }
             long tx = lastResponseTxAt;
+            long now = System.currentTimeMillis();
+            // 答完之后长时间无任何询问/等待提示（不论服务端是否支持求援）：按用户规格视为
+            // 我方与服务端（主机）通信超时，转入重连（我方头像转圈，不再把界面退回大厅）
+            if (tx != 0L && tx > lastAskRxAt && now - tx >= LINK_STUCK_MS
+                    && engine.beginLinkResume("no message " + (now - tx) + "ms after our response")) {
+                Log.w(TAG, "no ask/waiting message " + (now - tx) + "ms after our response: link lost, resuming");
+                askWatchdogRunning = false;
+                return;
+            }
             if (tx == 0L || tx <= lastAskRxAt || !canProbeAsk() || askProbeCount >= ASK_PROBE_MAX) {
                 askWatchdogRunning = false;
                 return;
             }
-            long now = System.currentTimeMillis();
             if (now - tx >= ASK_STUCK_GRACE_MS && now - askProbeAt >= ASK_PROBE_INTERVAL_MS) {
                 askProbeCount++;
                 askProbeAt = now;
@@ -72,13 +88,24 @@ class AskWatchdog {
                 && (engine.isHost || engine.serverCapsAskResend);
     }
 
+    /**
+     * 链路卡死判定（与求援不同，不要求服务端支持 {@code CTOS_ASK_RESEND}）：
+     * 第三方主机也能用，它只会走重连尝试而不发求援包。
+     */
+    boolean canWatchLink() {
+        return engine.duelStarted && !engine.replayMode && !engine.isSingleMode
+                && !engine.isSpectator();
+    }
+
     /** 由 GameActions 在实际发出 CTOS_RESPONSE 后回调：开始看门狗计时。
      *  撤回闩锁不再在此解除（旧语义「本方发出一条应答才算完成一次撤回」使连续撤回不可用）：
      *  改由 {@link UndoClientCoordinator#applyUndoResync} 在重同步落地时、以及被拒时解除，
      *  能不能再撤的准入见 {@link UndoClientCoordinator#canSendUndo} */
     void notifyResponseSent() {
         lastResponseTxAt = System.currentTimeMillis();
-        if (!canProbeAsk() || askWatchdogRunning) {
+        // 看门狗同时担当“答完后链路卡死”的判定（不依赖求援能力），因此连不支持
+        // CTOS_ASK_RESEND 的第三方主机也能进入重连；任务内的求援仍受 canProbeAsk 把关
+        if (!canProbeAsk() && !canWatchLink() || askWatchdogRunning) {
             return;
         }
         askWatchdogRunning = true;

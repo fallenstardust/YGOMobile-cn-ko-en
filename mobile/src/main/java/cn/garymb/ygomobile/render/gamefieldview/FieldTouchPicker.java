@@ -12,8 +12,9 @@ import cn.garymb.ygomobile.game.gamefield.ClientCard;
  * 触摸拾取（射线反投影，GameFieldView「触摸拾取」分栏）。
  * <p>
  * 手势识别（GestureDetector）已迁移至 GameFieldViewController，其识别出手势后经门面
- * {@code dispatchTap}/{@code dispatchLongPress}/{@code dispatchLongPressEnd} 回调本类完成拾取与
- * 业务回调分发，拾取逻辑与旧 Canvas 版一致。绘制做了 X 镜像：命中点须镜像还原到真实场地坐标
+ * {@code dispatchTap}/{@code dispatchLongPress}/{@code dispatchLongPressMove}/{@code resetLongPressHold}
+ * （另有 {@code dispatchLongPressEnd}）回调本类完成拾取与业务回调分发，拾取逻辑与旧 Canvas 版一致。
+ * 绘制做了 X 镜像：命中点须镜像还原到真实场地坐标
  * 后再与卡数据比较。射线反投影用 {@link FieldCamera#pickInvVPSnapshot()} 的视逆投影快照，
  * 手卡 billboard 命中：与卡片所在屏幕平行平面精确求交后投到 right/up 轴得局部 uv（与绘制同源）；
  * 阶段按钮命中优先转发达 {@link PhaseButtonRenderer}。
@@ -21,6 +22,14 @@ import cn.garymb.ygomobile.game.gamefield.ClientCard;
 final class FieldTouchPicker {
 
     private final GameFieldView view;
+
+    // === 按住浏览（长按成立后手指不抬起，移到别的卡片上逐卡切换卡片详情）===
+    // 本次按住中已下发过详情的卡三元组；holdPlayer < 0 表示本次按住尚未进入浏览态
+    //（长按起点没命中卡片，或手指已抬起/重新按下）。
+    // 只记三元组而不记 ClientCard：堆叠区顶卡的 sequence 随张数变化，逐次重新拾取才不会锁死旧卡。
+    private int holdPlayer = -1;
+    private int holdLocation = -1;
+    private int holdSequence = -1;
 
     FieldTouchPicker(GameFieldView view) {
         this.view = view;
@@ -100,7 +109,8 @@ final class FieldTouchPicker {
     }
 
     /**
-     * 长按手势统一入口
+     * 长按手势统一入口：命中卡片才刷新详情与状态气泡（不做选中/不弹菜单），并把该卡登记为
+     * 按住浏览的起点，后续手指在同一手势内移动由 {@link #handleLongPressMove} 逐卡切换
      */
     void handleLongPress(float x, float y) {
         GameFieldView.OnCardClickListener listener = view.cardClickListener;
@@ -111,10 +121,53 @@ final class FieldTouchPicker {
         try {
             int[] hit = hitCard(ray, f);
             if (hit != null) {
+                holdPlayer = hit[0];
+                holdLocation = hit[1];
+                holdSequence = hit[2];
                 listener.onFieldLongPress(hit[0], hit[1], hit[2], x, y);
             }
         } catch (Throwable ignored) {
         }
+    }
+
+    /**
+     * 按住浏览：长按成立后手指不抬起移到另一张卡片上时，按新命中卡再次下发
+     * {@link GameFieldView.OnCardClickListener#onFieldLongPress} 刷新卡片详情。与长按起点完全同规格
+     * ——只查看卡片：不做选中（不调 {@code setSelectedCard}）、不联动 SetShowMark 图标、
+     * 不弹命令菜单，选卡会话中也不会发出应答；卡片详情与状态气泡由宿主同步切换
+     *（见 {@code GameFieldController#onFieldLongPress}）。
+     * <p>三点去抖/护栏：①长按起点未命中卡片（{@link #holdPlayer} < 0）时整段忽略，空白处按住
+     * 拖动不会凭空冒出卡详；②同一张卡上的连续 MOVE 直接返回，避免逐事件重跑详情绑定
+     *（含关键词可查的全卡表扫描）拖慢 UI 线程；③移到空白处保持上一张卡详情不变。
+     */
+    void handleLongPressMove(float x, float y) {
+        if (holdPlayer < 0) return;
+        GameFieldView.OnCardClickListener listener = view.cardClickListener;
+        GameField f = view.field;
+        if (listener == null || f == null) return;
+        float[] ray = buildRay(x, y);
+        if (ray == null) return;
+        try {
+            int[] hit = hitCard(ray, f);
+            // 移到卡片以外（空格子/场外）：不改动当前展示中的卡片详情
+            if (hit == null) return;
+            if (hit[0] == holdPlayer && hit[1] == holdLocation && hit[2] == holdSequence) return;
+            holdPlayer = hit[0];
+            holdLocation = hit[1];
+            holdSequence = hit[2];
+            listener.onFieldLongPress(hit[0], hit[1], hit[2], x, y);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /**
+     * 复位按住浏览登记（新按下 / 抬手、事件取消）：下次长按重新以起点命中卡登记，
+     * 避免上一手势的三元组让空白处长按后的移动误触发详情切换
+     */
+    void resetLongPressHold() {
+        holdPlayer = -1;
+        holdLocation = -1;
+        holdSequence = -1;
     }
 
     /**

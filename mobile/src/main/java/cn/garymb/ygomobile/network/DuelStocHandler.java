@@ -30,6 +30,9 @@ public class DuelStocHandler implements DuelClient.ClientListener {
         // 同理丢弃上一会话的服务端能力位（换成不支持撤回的服务器时不得残留按钮）
         engine.serverCapsUndo = false;
         engine.serverCapsAskResend = false;
+        engine.serverCapsResume = false;
+        // 新会话作废上一场的重连尝试与两侧头像指示（不拖到下一局的 prepareForDisplay）
+        engine.resetLinkStates();
         engine.undoAvailable = false;
         // 新连接同样复位撤回闩锁（onConnected 早于 onDuelStart）：上一局残留的
         // 「已撤回、等待新操作」状态不得带入新会话，否则本局按钮会被永久压住
@@ -41,6 +44,17 @@ public class DuelStocHandler implements DuelClient.ClientListener {
     @Override
     public void onDisconnected() {
         Log.i(TAG, "Disconnected from server");
+        // 入房阶段（已 CONNECTED、未收到 JOIN_GAME）就断开：按 C++ ClientEvent 同一分支弹 1402
+        // 并停在原弹窗，不进等待界面也不走下面的对局重连（本端还没席位可言）
+        if (engine.onJoinLinkLost()) {
+            return;
+        }
+        // 对局中本端与主机的链路意外中断（非用户主动退出）：先进入重连，不把界面退回大厅、
+        // 也不清场（用户规格：我方头像显示转圈 + 半透黑底并尝试重新请求）；重连期间不得
+        // 走下面的状态位复位，否则 tpSwapped/观战视角会被误清带入接回后的局面
+        if (!engine.client.wasUserClosed() && engine.beginLinkResume("socket closed")) {
+            return;
+        }
         // 断线兜底复位：本局 tpSwapped 仅当服务端实际执行了 TPResult 才会置真，连接已
         // 断开时下一场无论复用 GameEngine 与否都不应该带入上一场的 game-index 语义；
         // 非异常断线场景已由 onDuelStart / onChangeSide / onWaitingSide 三处复位，本行
@@ -56,6 +70,18 @@ public class DuelStocHandler implements DuelClient.ClientListener {
     @Override
     public void onError(String message) {
         Log.e(TAG, "Network error: " + message);
+    }
+
+    @Override
+    public void onResumeAck(int seat, int turn, int currentPlayer, int phase) {
+        // 重连成功：本端已接回原席位，服务端紧接着一批 reload/refresh 全量重同步
+        engine.onResumeAck(seat, turn, currentPlayer, phase);
+    }
+
+    @Override
+    public void onPeerLinkState(int seat, int state) {
+        // 某席位掉线重连中 / 已重连 / 宽限耗尽离开：由 ConnectionManager 按本方队/对方队分侧上报
+        engine.onPeerLinkState(seat, state);
     }
 
     @Override
@@ -324,7 +350,16 @@ public class DuelStocHandler implements DuelClient.ClientListener {
         String errorMsg;
         switch (msg) {
             case YGOProtocol.ERRMSG_JOINERROR:
-                errorMsg = "无法加入房间";
+                // 重连期间的拒绝＝服务端已不再保留本席位（宽限耗尽/房间已散）：交给重连流程终止
+                // 并按断线收尾，不再把本错误弹出去（每 2s 一次重试会按秒重弹）
+                if (engine.onLinkResumeRefused()) {
+                    return;
+                }
+                // 对齐 duelclient.cpp ERRMSG_JOINERROR 的码值→串号：0=人满(1403)、1=密码错误(1404)、
+                // 2=其余拒绝(1405)；服务端发完本包即关连，界面据 DISCONNECTED 停在局域网界面
+                errorMsg = engine.sysNotice(
+                        code == 0 ? 1403 : (code == 1 ? 1404 : 1405),
+                        code == 0 ? "无法加入主机。" : (code == 1 ? "密码错误。" : "主机拒绝了连接。"));
                 break;
             case YGOProtocol.ERRMSG_DECKERROR: {
                 int errorType = (code >> 28) & 0xF;
@@ -335,10 +370,16 @@ public class DuelStocHandler implements DuelClient.ClientListener {
                 return;
             }
             case YGOProtocol.ERRMSG_SIDEERROR:
-                errorMsg = "副卡组错误";
+                // 对齐 duelclient.cpp ERRMSG_SIDEERROR → sys 1408（更换副卡组失败。）
+                errorMsg = engine.sysNotice(1408, "更换副卡组失败。");
                 break;
             case YGOProtocol.ERRMSG_VERERROR:
-                errorMsg = "版本不匹配";
+                // 对齐 duelclient.cpp ERRMSG_VERERROR L502：sys 1411「版本不匹配(%X.0%X.%X)。」
+                // 按 code>>12 / (code>>4)&0xff / code&0xf 三段十六进制填充
+                errorMsg = engine.sysNotice(1411, "版本不匹配(%X.0%X.%X)。")
+                        .replaceFirst("%X", versionHex(code >> 12))
+                        .replaceFirst("%X", versionHex((code >> 4) & 0xFF))
+                        .replaceFirst("%X", versionHex(code & 0x0F));
                 break;
             default:
                 errorMsg = "未知错误: " + msg;
@@ -349,6 +390,11 @@ public class DuelStocHandler implements DuelClient.ClientListener {
         engine.mainHandler.post(() -> {
             if (engine.listener != null) engine.listener.onNoticeMessage(finalMsg);
         });
+    }
+
+    /** sys 1411 的 %X 占位值：C++ {@code %X} 为大写十六进制。 */
+    private static String versionHex(int v) {
+        return Integer.toHexString(v & 0xFFFF).toUpperCase();
     }
 
     @Override
@@ -398,11 +444,17 @@ public class DuelStocHandler implements DuelClient.ClientListener {
                            int noCheckDeck, int noShuffleDeck,
                            int startLp, int startHand, int drawCount, int timeLimit,
                            int extCaps) {
+        // 真正入房成功（对齐 C++ 置 CONNECT_STATE_JOINED）：撤回连接阶段的回执看门狗，此后
+        // 宿主据本包才弹出玩家等待界面（连接建好但未入房不得进等待界面）
+        engine.notifyJoinAck();
         // 服务端能力位（HostInfo pad 扩展）：支持撤回时在连入方也点亮撤回按钮，
         // 让“谁操作谁撤回”在两台设备对局时同样成立（房主端另经 isHost 保证）
         engine.serverCapsUndo = (extCaps & YGOProtocol.HOST_CAP_UNDO) != 0;
         // bit1：服务端会在询问可能被丢掉时重发（CTOS_ASK_RESEND），看门狗仅在它为真时布防
         engine.serverCapsAskResend = (extCaps & YGOProtocol.HOST_CAP_ASK_RESEND) != 0;
+        // bit2：服务端允许对局中掉线的席位带原席位号接回（CTOS_RESUME_GAME），
+        // 第三方 gframe 主机不置位，本端对其重连只会重试到超时后按断线收尾
+        engine.serverCapsResume = (extCaps & YGOProtocol.HOST_CAP_RESUME) != 0;
         // Solo mode is encoded in mode bit 4 (0x10). Strip it before storing gameMode so
         // existing comparisons (gameMode==2 for tag / ==MODE_MATCH etc.) keep working.
         engine.soloMode = (mode & 0x10) != 0;

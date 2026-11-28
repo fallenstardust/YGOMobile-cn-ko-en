@@ -63,6 +63,11 @@ public class CreateHostDialog {
     private EditText etHostName;
     private EditText etHostPassword;
 
+    // “连接中”期间需锁定的两键（对齐 gframe wCreateHost 的 btnHostConfirm/btnHostCancel）：
+    // 弹窗实例会被 reshow 复用，故从 show() 局部变量提升为字段
+    private Button btnConfirmCreate;
+    private Button btnCancelCreate;
+
     public interface OnCreateHostListener {
         /**
          * cardAllowed 即协议 HostInfo.rule（卡片允许，对齐 game.cpp cbRule 选中索引 0..5），
@@ -120,8 +125,8 @@ public class CreateHostDialog {
         chkSoloMode = customView.findViewById(R.id.chk_solo_mode);
         etHostName = customView.findViewById(R.id.et_host_name);
         etHostPassword = customView.findViewById(R.id.et_host_password);
-        Button btnConfirmCreate = customView.findViewById(R.id.btn_confirm_create);
-        Button btnCancelCreate = customView.findViewById(R.id.btn_cancel_create);
+        btnConfirmCreate = customView.findViewById(R.id.btn_confirm_create);
+        btnCancelCreate = customView.findViewById(R.id.btn_cancel_create);
 
         applySystemStrings(customView, btnConfirmCreate, btnCancelCreate);
 
@@ -205,16 +210,9 @@ public class CreateHostDialog {
                         lp, hand, draw, time,
                         noCheckDeck, noShuffleDeck, soloMode, hostName, password, nick);
             }
-
-            String localIp = LanDiscoveryManager.getLocalIpAddress();
-            if (localIp != null) {
-                Toast.makeText(context,
-                        mStringManager.getSystemString(1701, "房间已创建，本机IP: %ls，等待玩家加入")
-                                .replace("%ls", localIp + ":7911"),
-                        Toast.LENGTH_LONG).show();
-            } else {
-                Toast.makeText(context, mStringManager.getSystemString(1702, "房间已创建，等待玩家加入"), Toast.LENGTH_SHORT).show();
-            }
+            // 不再在此弹“房间已创建”成功提示：本机建主与环回入房在后台线程进行，
+            // 真正确认入房成功的是 STOC_JOIN_GAME 回执（对齐 gframe：只有 wHostPrepare 出现才代表已成房）；
+            // 成功提示改由 showRoomReadyNotice 在收到回执后经宿主调用
         });
 
         btnCancelCreate.setOnClickListener(v -> {
@@ -226,6 +224,34 @@ public class CreateHostDialog {
 
     public boolean isShowing() {
         return popupWindow != null && popupWindow.isShowing();
+    }
+
+    /**
+     * 建主请求已发向内置服务端、正在等 STOC_JOIN_GAME 回执：锁定“确定/取消”两键
+     *（对齐 gframe BUTTON_HOST_CONFIRM 成功 StartClient 后 btnHostConfirm/btnHostCancel setEnabled(false)，
+     * 失败分支重新启用并把窗口留在 wCreateHost）。
+     */
+    public void setConnecting(boolean connecting) {
+        if (btnConfirmCreate != null) btnConfirmCreate.setEnabled(!connecting);
+        if (btnCancelCreate != null) btnCancelCreate.setEnabled(!connecting);
+        if (popupWindow != null) {
+            // PopupWindow 没有 Dialog 的 setCancelable，改用关掉「点外触摸关闭」避免等回执期间被误点关
+            popupWindow.setOutsideTouchable(!connecting);
+        }
+    }
+
+    /** 成房并环回入房成功后的本机 IP 播报（由宿主在收到 STOC_JOIN_GAME 后调用，不再在点击“确定”时误报） */
+    public void showRoomReadyNotice() {
+        String localIp = LanDiscoveryManager.getLocalIpAddress();
+        if (localIp != null) {
+            Toast.makeText(context,
+                    mStringManager.getSystemString(1701, "房间已创建，本机IP: %ls，等待玩家加入")
+                            .replace("%ls", localIp + ":7911"),
+                    Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(context, mStringManager.getSystemString(1702, "房间已创建，等待玩家加入"),
+                    Toast.LENGTH_SHORT).show();
+        }
     }
 
     public void hideForNavigation() {
