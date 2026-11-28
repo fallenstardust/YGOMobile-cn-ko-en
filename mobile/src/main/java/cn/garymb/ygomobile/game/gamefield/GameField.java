@@ -133,6 +133,13 @@ public class GameField {
          *  HINT_ZONE/MSG_FIELD_DISABLED 标注据此落戳，撤回剪除时比较的是「造成者那次发动」
          *  而非标注消息到达时刻（连锁交错时后链先结算、无关发动后登记会误清保留中的标注） */
         public int activationOrdinal;
+        /** 本次发动属「须一直待在场上才适用」的魔陷（对齐 ocgcore processor.cpp L4428-4432 给链打
+         *  CHAIN_CONTINUOUS_CARD 的判据：卡种为永续/装备/场地/灵摆型的魔法或陷阱，且 MSG_CHAINED
+         *  时刻发动卡正表侧在魔陷区）：这类卡在效果适用前被连锁弄离场/变里侧时核心直接跳过本链的
+         *  效果处理，故本端也不能把它计入「持续适用中效果」（见 DuelEventHandlerBase.onChainSolving）。
+         *  在 MSG_CHAINED 落标志而非 MSG_CHAINING，是因为代价在两步之间扣完：以除外自己为代价的
+         *  永续陷阱（D.D. Wave、非再生类）此刻已在除外区，照常适用、不该被打上本标志 */
+        public boolean needStayField;
         public List<ClientCard> targets = new ArrayList<>();
         /** 连锁图标（chain 旋转图 / number 序号）位置快照：MSG_CHAINED 时捕捉发动卡 xyz，卡因结算离开原位时图标不跟随，停在原地直到连锁消失。 */
         public boolean iconPosCaptured;

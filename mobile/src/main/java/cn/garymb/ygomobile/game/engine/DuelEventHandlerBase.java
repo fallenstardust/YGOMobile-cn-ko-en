@@ -22,7 +22,9 @@ import cn.garymb.ygomobile.ui.dialogs.duel.DuelLogDialog;
 import cn.garymb.ygomobile.utils.YGOUtil;
 import ocgcore.DataManager;
 import ocgcore.StringManager;
+import ocgcore.data.Card;
 import ocgcore.enums.CardLocation;
+import ocgcore.enums.CardType;
 
 
 /**
@@ -457,6 +459,13 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
         //（即最近一次 onChaining 压入 chainCodes 的卡码）
         int curCode = chainCodes.isEmpty() ? 0 : chainCodes.get(chainCodes.size() - 1);
         engine.hintManager.setEventString(1609, "[%s]的效果发动", DataManager.get().getName(curCode));
+        // 落定「本次发动是否须一直待在场上才适用」（见 GameField.ChainInfo#needStayField）。
+        // 本消息由核心在代价执行完（processor.cpp step7/8）之后的 step9 发出，拿到的正是扣完代价后
+        // 的场地态：以除外/送墓自己为代价的永续陷阱（D.D. Wave、非再生类）此刻已不在魔陷区，
+        // 不打本标志（与核心 phandler->current.location == LOCATION_SZONE 不成立即不打
+        // CHAIN_CONTINUOUS_CARD 同口径），其效果照常进「持续适用中效果」列表
+        GameField.ChainInfo chained = engine.field.currentChain;
+        if (chained != null) chained.needStayField = isStayFieldActivation(chained);
         // duelclient.cpp MSG_CHAINED L3408：chains.push_back(current_chain)。
         // C++ 为值拷贝，Java 用引用语义（同一对象入列），使效果处理期追加的目标同样能体现在状态标签上
         if (engine.field.currentChain != null && !engine.field.chains.contains(engine.field.currentChain)) {
@@ -514,6 +523,49 @@ abstract class DuelEventHandlerBase implements GameMessageParser.MessageHandler 
         GameField.ChainInfo ci = chainCount >= 1 && chainCount <= engine.field.chains.size()
                 ? engine.field.chains.get(chainCount - 1) : null;
         engine.field.resolvingChainOrdinal = ci != null ? ci.activationOrdinal : 0;
+        // 用户新规格：永续魔法/永续陷阱/装备魔法/场地魔法的发动，若在它的效果成功适用前就被
+        // 连锁的其它卡的效果弄离场（破坏/除外/回手）或变里侧，那个效果根本不会适用，也不能
+        // 添加进「我方/对方持续适用中的效果」列表。核心正是在本步（solve_chain step2，紧接
+        // MSG_CHAIN_SOLVING 之后、效果处理之前）因发动卡失去 relation 而整段跳过处理
+        //（processor.cpp L4592/L4626：卡离开场上时 card::reset 会 clear_relate_effect），
+        // 所以本端也在这一刻判离场：本链自己的处理里才离场的卡（如场地魔法自破拿回「○○」卡）
+        // 仍然照常适用，与核心一致
+        if (ci != null && ci.code > 0 && ci.needStayField && isOffFieldOrFaceDown(ci.chainCard)) {
+            EffectActivationLedger.markVoided(ci.code,
+                    EffectActivationLedger.resolveOffset(ci.code, ci.desc), ci.controler, engine.field.turnCount);
+            GameTopInfoManager.refreshApplyingEffects();
+        }
+    }
+
+    /**
+     * 本次发动是否属「须一直待在场上才适用」的魔法陷阱（对齐 ocgcore processor.cpp L4428-4432
+     * 给链打 CHAIN_CONTINUOUS_CARD 的判据）：卡种同时命中魔法/陷阱与永续/装备/场地/灵摆位，
+     * 且此刻（MSG_CHAINED）发动卡表侧处在魔陷区。
+     * <p>卡种取 cdb 而非 {@code ClientCard.type}：后者靠查询块写入，刚从未知区域（里侧/手卡）
+     * 发动到表侧的卡可能还没刷到。取不到卡数据（未知卡码）时保守返回 false：宁可不作废，
+     * 也不把已正常适用的条目误摘掉。
+     */
+    private boolean isStayFieldActivation(GameField.ChainInfo ci) {
+        ClientCard card = ci.chainCard;
+        if (card == null || ci.code <= 0) return false;
+        if ((card.location & 0x7f) != CardLocation.SpellZone.value() || !card.isFaceUp()) return false;
+        Card cd = DataManager.get().getCardManager().getCard(ci.code);
+        if (cd == null) return false;
+        long t = cd.Type;
+        return Card.isSpellTrap(t)
+                && (Card.isType(t, CardType.Continuous) || Card.isType(t, CardType.Field)
+                    || Card.isType(t, CardType.Equip) || Card.isType(t, CardType.Pendulum));
+    }
+
+    /**
+     * 发动卡此刻已不在场上或不再表侧（对应核心 {@code !pcard->is_has_relation(chain)}）：
+     * 破坏/除外/回手/回卡组使 location 离开 MZONE/SZONE（离场落定位时 {@code removeCard} 还会把
+     * location 置 0），变里侧使 {@code isFaceUp()} 不成立；卡对象查不到（观战中途接入等）时
+     * 不作判据，保持原有行为。
+     */
+    private static boolean isOffFieldOrFaceDown(ClientCard card) {
+        return card != null
+                && ((card.location & CardLocation.Onfield.value()) == 0 || !card.isFaceUp());
     }
 
     @Override

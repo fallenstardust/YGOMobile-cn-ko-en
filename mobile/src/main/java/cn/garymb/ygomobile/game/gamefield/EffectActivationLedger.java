@@ -28,7 +28,8 @@ import ocgcore.data.Card;
  * <p>链结算结果（用户新规格）：MSG_CHAIN_NEGATED / MSG_CHAIN_DISABLED 经 {@link #markPledgeNegated}
  * 回到对应条目上，供「持续适用中效果」按用户归纳的记述规律区分两型无效收紧显示（发动被无效只留下
  * 括号内『（这个回合，○○）』；效果被无效另可留下『…发动的回合，○○』；两类都不是效果，
- * 而『这个回合/发动后/发动过的回合』是卡的效果，任一型无效都不适用）。
+ * 而『这个回合/发动后/发动过的回合』是卡的效果，任一型无效都不适用）；永续魔陷类「须在场上才适用」
+ * 的发动若在效果适用前就被连锁弄离场/变里侧，整笔经 {@link #markVoided} 作废、不入列。
  * <p>线程模型：引擎派发线程写（record/setCurrentTurn）、UI/后台绑定线程读；
  * ConcurrentHashMap + CopyOnWrite 集合 + volatile 回合号，无需外部同步；
  * 撤回回退（dropBeyond）沿追加日志剪除后缀条目，与 record 共用 LOG 监视器串行。
@@ -64,6 +65,13 @@ public final class EffectActivationLedger {
          *  MSG_CHAIN_DISABLED（链已结算完毕，括号内与『发动的回合』档按规律仍可能适用）时置位；
          *  状态不入 equals/hashCode（同 negated/disabled：它们是结算结果而非发动身份） */
         public boolean applied;
+        /** 本次发动在「效果适用」之前就已作废（用户新规格）：永续魔法/永续陷阱/装备魔法/场地魔法
+         *  被连锁的其它卡的效果在效果适用前弄离场（破坏/除外/回手）或变里侧时，核心根本不会执行
+         *  本链的效果处理（见 {@code DuelEventHandlerBase#onChainSolving}），这笔发动没有适用过；
+         *  置位后 {@link #markApplied} 与 {@link #markPledgeNegated} 都不再把它标成已适用，
+         *  条目永不进「持续适用中效果」列表（链被无效的到达顺序在本判据之后，故必须用常驻标记）。
+         *  卡详的「已发动」勾不受影响——它确实发动过，只是效果没适用 */
+        public boolean voided;
 
         Activation(int offset, int descOffset, int side, int turn, int location) {
             this.offset = offset;
@@ -206,7 +214,7 @@ public final class EffectActivationLedger {
             public void apply(Activation a) {
                 if (disabled) a.disabled = true;
                 else a.negated = true;
-                a.applied = true;
+                if (!a.voided) a.applied = true;
             }
         });
     }
@@ -214,12 +222,32 @@ public final class EffectActivationLedger {
     /**
      * 链效果处理成功（MSG_CHAIN_SOLVED）：把该笔发动标为「已适用」（用户新规格：持续适用中效果的
      * 条目与金色徽标要从「效果成功适用」那一刻起才出现，而不是刚挂上连锁就亮）。
+     * <p>已在适用前作废的条目（{@link #markVoided}，永续魔陷被连锁弄离场那类）不再置位。
      */
     public static void markApplied(int code, int offset, int side, int turn) {
         forEachMatch(code, offset, side, turn, new MatchAction() {
             @Override
             public void apply(Activation a) {
-                a.applied = true;
+                if (!a.voided) a.applied = true;
+            }
+        });
+    }
+
+    /**
+     * 该笔发动在效果适用前即作废（用户新规格）：永续魔法/永续陷阱/装备魔法/场地魔法的发动若在它的
+     * 效果适用前就被连锁的其它卡的效果弄离场（破坏/除外/回手）或变里侧，效果根本不会适用——条目
+     * 作废并退回未适用态，之后即便收到 MSG_CHAIN_SOLVED / MSG_CHAIN_NEGATED / MSG_CHAIN_DISABLED
+     * 也不再计入「持续适用中效果」。
+     * <p>同码同段落同半场同回合只有一条账本条目（{@code record} 按四字段归一），故场上另有一张家
+     * 的同名卡已把该段落效果适用成功（{@code applied} 已置位）时不作废——那只表示这个键已被适用过，
+     * 作废它会连带抹掉另一张已适用的事实。反向（先作废、后有一张同名卡把同段落发动成功）因同一
+     * 归一键无法区分两张卡而仍被压制：账本本就不按 ClientCard 对象登记，此类取保守侧（宁缺列不错列）。
+     */
+    public static void markVoided(int code, int offset, int side, int turn) {
+        forEachMatch(code, offset, side, turn, new MatchAction() {
+            @Override
+            public void apply(Activation a) {
+                if (!a.applied) a.voided = true;
             }
         });
     }
